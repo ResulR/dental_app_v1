@@ -163,7 +163,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 2.2 — Réauditer les frontières réseau et processus
-- **Statut :** ⚠ Bloqué
+- **Statut :** ☑ Validé
 - **Priorité :** Critique
 - **Catégorie / type :** Audit / décision
 - **Zone concernée :** Sécurisation initiale du VPS et de l’accès IA
@@ -3950,3 +3950,27 @@ Action humaine minimale attendue : rapport administrateur expurgé, limité aux 
 4. Contrôles retenus pour les risques constatés, ou propositions à trancher avant toute modification. Toute modification d’isolation/permissions nécessite son autorisation propre ; ne donner à l’agent aucun accès plus large.
 
 Modifications : ROADMAP.md uniquement (statut 2.2 et ce compte rendu). R02 reste ouvert. Pas d’installation, code, migration, privilège, configuration RDC, service ou projet voisin modifié. Git absent, aucun commit/push. Arrêt ici ; 2.3 non commencé. Reprise : contrôler Remote et identité, intégrer les preuves ciblées et clôturer 2.2 seulement si son critère est satisfait.
+
+### Réévaluation du point 2.2 — Service dédié et frontières effectives
+
+Session : 09/10/2026, début 12:49 Europe/Brussels. Statut final : TERMINÉ pour l’audit ; ancien blocage conservé comme historique et levé par les nouvelles preuves. Critère exact : risques de traversée identifiés et contrôles décidés ; pas une certification d’isolation complète.
+
+Contrôles directs exécutés via RDC sous UID/GID 1002 dental-ai sur vps-28bf7789 :
+- Identité, chemin réel /srv/dental-lab et ACL 700 concordants ; quatre documents de référence inchangés par SHA256 ; roadmap identique à l’état précédent avant intervention.
+- Propre processus dans /system.slice/dental-ai-remote.service. systemctl show ciblé : service active/running, enabled, User/Group dental-ai ; WorkingDirectory /srv/dental-lab. Unité réelle /etc/systemd/system/dental-ai-remote.service, root:root 644, non modifiable par dental-ai, pas de lien ni drop-in affiché. Lecture limitée aux propriétés non sensibles, sans Environment ou commandes contenant des secrets.
+- Limites effectives lues dans le cgroup : memory.max 1073741824 ; cpu.max 50000 100000 ; pids.max 100. Correspondance MemoryMax=1G (1 Gio), CPUQuota=50% d’un cœur, TasksMax=100. Quotas applicables aux processus de cette unité, pas garantie de capacité disque réservée ni borne du total de tous les futurs processus du compte.
+- NoNewPrivileges=yes et NoNewPrivs=1 ; ensembles capabilities effectifs/permis/héritables/ambiants nuls, CapabilityBoundingSet et AmbientCapabilities vides dans systemd ; Seccomp=2 pour le processus courant. ProtectSystem=strict, ReadWritePaths /home/dental-ai et /srv/dental-lab, PrivateTmp/PrivateDevices=yes, ProtectProc=invisible. ProtectHome=no : confidentialité des homes repose aussi sur les ACL, pas sur une invisibilité générale des chemins.
+- /proc courant monté hidepid=invisible ; test de métadonnées os.access('/proc/1/status', R_OK) = False, sans lecture du contenu du processus 1. Le résultat utilisateur antérieur « lisible » est conservé comme observation d’un autre contexte ; il ne décrit pas ce processus Remote actuellement confiné. kernel.yama.ptrace_scope lu = 0 ; aucune modification globale de ce réglage.
+- PrivateNetwork=no ; AF_UNIX/AF_INET/AF_INET6 autorisés ; IPAddressAllow/Deny vides au niveau de cette unité. Aucune isolation du réseau local ni politique exhaustive du filtrage hôte démontrée. ProtectSystem en lecture seule ne filtre pas les connexions aux sockets.
+- Preuves administrateur utilisateur supplémentaires attribuées comme telles : aucun socket Docker/Podman aux emplacements vérifiés (pas preuve d’absence partout), socket PostgreSQL accessible en permissions fichiers mais permissions d’audit SQL bornées ; nft/ufw absents ne démontrent pas absence de filtrage. Dental-site.service resté actif selon l’utilisateur ; aucune inspection/action de l’agent sur ce service voisin.
+- Git initialisé par l’utilisateur depuis la session précédente : main propre, cinq documents suivis, HEAD et origin/main 6d01a90e06d4aa5f9f8ebb7f972c4534efb9b228 ; remote git@github-dental:ResulR/dental_app_v1.git, alias SSH résolu vers github.com sous git ; git ls-remote confirme main distant au même hash. Identité Git existante Dental Lab Agent / dental-ai@localhost conservée. Point 5.1 non marqué automatiquement validé : audit dédié quand il devient éligible.
+
+Risques et contrôles retenus :
+1. Traversée par fichiers/processus : compte sans sudo (preuve 2.1), ACL, unité root non éditable, capabilities retirées, NoNewPrivileges, montage système protégé et /proc invisible ; pas d’essai de ptrace/signal sur un voisin.
+2. Ressources : bornes CPU/mémoire/tâches démontrées pour Remote ; disque/IO et hôte restent partagés, pas de stress test ni de réserve déduite ; capacité à traiter aux points prévus.
+3. Réseau et sockets : risque résiduel explicite, absence de confinement réseau démontré ; interdiction absolue de scan/connexion aux services voisins, seul dental_lab permis pour PostgreSQL. L’approbation du mode d’accès et de ces limites relève de 2.3 ; aucun droit réseau supplémentaire accordé ou test interprojet lancé.
+4. Secrets : aucun environnement/token/secret SQL/SSH lu ou exposé ; répertoire HOME dédié techniquement accessible, obligation de ne pas publier ses secrets. Les filtres RDC ne remplacent pas les contrôles Linux.
+
+Conclusion : informations manquantes à l’audit précédent désormais établies ou explicitement bornées ; contrôles actuels consignés, limites et responsabilités connues. Aucun contrôle imposé par 2.2 n’exige ici une isolation réseau complète ; les tests interdits sont remplacés par preuves administrateur et métadonnées autorisées. Ne pas assimiler validation 2.2 à approbation 2.3 ou porte G1 achevée.
+
+Modifications : ROADMAP.md (statut et preuve), création docs/EXECUTION_LOG.md maintenant que Git existe, conformément à CONSIGNE §6. Pas de code applicatif, paquet, migration, permission ou service modifié. Validation documentaire : statuts/217 points/244 cas, références conservées, diff limité aux deux fichiers et contrôle de secrets. Git : résultat réel communiqué après opérations, aucun hash présumé. Suite automatique : 2.3, comparaison puis application de son critère d’approbation explicite.
