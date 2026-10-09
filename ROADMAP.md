@@ -208,7 +208,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 2.5 — Réauditer PostgreSQL et les rôles dental_lab existants
-- **Statut :** ☐ À faire
+- **Statut :** ☑ Validé
 - **Priorité :** Critique
 - **Catégorie / type :** Audit / décision
 - **Zone concernée :** Sécurisation initiale du VPS et de l’accès IA
@@ -4039,3 +4039,44 @@ Vérifications réellement exécutées :
 Conclusion et limites : identité dédiée, opérations de projet dans le chemin vérifié, refus hors chemins de l’API fichier et absence d’utilisation de credentials debian satisfont le critère 2.4. Le contrôle supplémentaire sur le cwd initial ne devient pas une nouvelle exigence métier/sécurité ; le garde-fou existant produit le contexte de travail requis. Les filtres de fichiers RDC ne bornent pas à eux seuls toute commande shell : protections Linux/systemd et restrictions utilisateur restent indispensables, avec risques acceptés pour développement en 2.3. Aucun confinement complet supplémentaire revendiqué.
 
 Modifications : ROADMAP.md (statut/preuves) et docs/EXECUTION_LOG.md seulement. Aucune option de sécurité, permission, unité, service ou projet voisin modifié. Vérifications documentaires/diff/secrets avant commit ciblé ; résultat Git réel consigné ensuite. Suite automatique : 2.5, audit lecture seule exclusivement dental_lab.
+
+### Compte rendu du point 2.5 — Audit PostgreSQL dental_lab
+
+Session du 09/10/2026, début 13:31 Europe/Brussels. Statut : BLOQUÉ sur preuve de configuration HBA manquante. Commit 2.4 réel : 619a8cba8284577008d11af7840680b1c03345a2, poussé et confirmé égal au main distant ; arbre propre avant cet audit.
+
+Commande réellement exécutée : psql -X -w -U dental-ai -d dental_lab, pager désactivé et ON_ERROR_STOP ; transaction BEGIN READ ONLY, requêtes de métadonnées ciblées puis COMMIT de cette transaction en lecture seule. Aucune connexion à une autre base, aucun mot de passe demandé/affiché, aucune écriture SQL.
+
+Résultats :
+- current_database dental_lab, current_user/session_user dental-ai ; PostgreSQL 17.11 (Debian), transaction_read_only on.
+- Base appartenant à dental_lab_owner ; dental-ai CONNECT oui, CREATE et TEMP non.
+- dental-ai LOGIN sans superuser/CREATEDB/CREATEROLE/REPLICATION/BYPASSRLS.
+- dental_lab_owner/audit/migrator/app existent, NOLOGIN, aucun de ces privilèges élevés. Objets existants conservés, pas de recréation.
+- Seule appartenance visible concernant ces membres : dental-ai membre de dental_lab_audit, ADMIN OPTION non, INHERIT/SET oui ; aucune appartenance migrator/app donnée à dental-ai.
+- Schéma public possédé par pg_database_owner ; USAGE oui, CREATE non sous l’identité audit.
+- Zéro table applicative visible via information_schema sous audit : ce résultat ne prouve pas l’absence de tables invisibles. Zéro default ACL retournée pour owner/migrator/app dans cette base.
+- Précontrôle avant accès à configuration sensible : SELECT sur pg_catalog.pg_hba_file_rules = false ; accès pg_read_all_settings et pg_read_server_files = false. Aucune requête de lecture HBA ou fichier serveur tentée après ce constat ; aucune élévation demandée ou contournement par fichiers.
+- Refus de connexion aux huit autres bases déjà fournis par audit administrateur utilisateur et autorisés comme preuves, conformément à la réévaluation 2.1. Ils ne sont pas retestés par l’agent et ne sont pas présentés comme résultat de cette commande.
+
+Évaluation : base/rôles et privilèges d’audit confirmés, pas d’objet à reconstruire. Le travail attendu de 2.5 mentionne explicitement « vérifier réellement [...] pg_hba » ; les permissions du rôle empêchent de vérifier les règles applicables et leur ordre/méthode d’authentification. Les refus SQL antérieurs bornent des accès effectifs mais ne décrivent pas toute la configuration HBA applicable. Pas de validation de 2.5 en l’absence de cette preuve, pas de passage à 2.6.
+
+Action humaine minimale : administrateur PostgreSQL, fournir un rapport expurgé des seules règles pg_hba effectivement applicables à dental-ai pour dental_lab (ordre des règles, types de connexion concernés, méthode d’authentification et restriction de rôle/base). Confirmer que ce rapport correspond à la configuration en vigueur ; signaler une éventuelle erreur de règle. Aucune valeur d’auth_options, clé, mot de passe ou détail de projet voisin requis. Pas besoin d’accorder pg_read_server_files/pg_read_all_settings/superuser ou sudo à l’agent, ni de modifier pg_hba globalement. Les refus sur les huit autres bases sont déjà reçus : aucune répétition de ces tests demandée.
+
+Modifications : ROADMAP.md (statut/preuves/blocage) et docs/EXECUTION_LOG.md seulement ; base, rôles, services et permissions inchangés. Audit SQL terminé sans erreur, vérifications documentaires/diff/secrets exécutées. Ces changements de suivi 2.5 restent non commités/non poussés tant que la preuve obligatoire manque, clairement attribuables. Reprise : vérifier Remote/UID/Git et intégrer rapport HBA ciblé ; clôturer 2.5 si critères satisfaits, puis audit du mécanisme de migrations scoped à 2.6.
+
+### Réévaluation et clôture du point 2.5 — Rapport HBA administrateur
+
+Rapport utilisateur reçu le 09/10/2026 à 13:50 Europe/Brussels, audit administrateur PostgreSQL 17 en lecture seule sans modification de configuration/permissions. Statut final : TERMINÉ. Le blocage de preuve HBA précédent est levé, son historique conservé.
+
+Preuves administrateur attribuées à l’utilisateur :
+- Fichier HBA configuré /etc/postgresql/17/main/pg_hba.conf, aucune erreur dans pg_hba_file_rules, service postgresql@17-main actif.
+- Ordre déclaré : règle 2/ligne 124 local dental_lab dental-ai peer ; règle 3/ligne 125 local toutes bases dental-ai reject ; règle 4/ligne 126 host toutes bases dental-ai 127.0.0.1 reject ; règle 5/ligne 127 host toutes bases dental-ai ::1 reject ; règles générales à partir de 6.
+- Dernier rechargement déclaré : 2026-10-09 03:15:24.346768+00.
+- Tests précédents sous dental-ai : connexion dental_lab réussie et refus des huit autres bases. Aucune répétition agent vers les bases interdites, aucune extrapolation à d’autres comptes/adresses.
+
+Vérifications directes de reprise : RDC en ligne, UID/GID 1002 dental-ai, cgroup dédié ; références sources inchangées ; fichiers non commités correspondent exactement au suivi 2.5 précédent (hashes concordants), aucun changement étranger. Nouvelle connexion autorisée exclusivement à dental_lab en transaction READ ONLY : current_user/session_user dental-ai, PostgreSQL 17.11, read_only on, CONNECT oui et CREATE/TEMP non. pg_conf_load_time() retourne exactement 2026-10-09 03:15:24.346768+00, cohérent avec le rapport. Commande SQL terminée sans erreur ; pas de mot de passe, secret ou fichier HBA obtenu par l’agent.
+
+Interprétation bornée : pg_hba_file_rules décrit le fichier courant, pas une copie des règles en mémoire. La date de rechargement seule ne prouve pas l’absence d’une édition ultérieure. L’audit du fichier, la date concordante et les tests effectifs reçus/directs constituent ensemble les preuves de 2.5 ; ne pas revendiquer inspection intégrale des règles chargées ni test TCP/non-local non exécuté. Les lignes spécifiques rapportées précèdent les règles générales ; le succès local dental_lab et les refus antérieurs bornent l’identité audit dans les connexions testées. Les authentifications de runtime/migration restent à traiter séparément, pas autorisées par ces règles d’audit.
+
+Critères satisfaits : inventaire réel base/rôles NOLOGIN/privilèges et configuration HBA ciblée documentés ; refus hors base fournis par administrateur ; aucun objet à recréer. Droits minimaux d’audit conservés, pas de modification pg_hba, de rôle ni de cluster.
+
+Modifications : ROADMAP.md et docs/EXECUTION_LOG.md uniquement. Vérifications avant commit : 217 points/244 cas, références préservées, diff exclusivement suivi 2.5, check secrets/whitespace. Commit/push ciblés de 2.5 après succès, résultat réel consigné ensuite. Suite automatique : 2.6, audit de l’identité et du mécanisme d’exécution des migrations ; aucune permission PostgreSQL à modifier par l’agent.

@@ -42,3 +42,24 @@ ROADMAP.md reste la source canonique des statuts. Ce journal contient les interv
 - Statut : DÉJÀ CONFORME dans le mode de développement 2.3. Aucune reconfiguration ni credential debian. Les restrictions d’API ne constituent pas une isolation générale des commandes.
 - Fichiers : ROADMAP.md et ce journal ; diff/invariants/check secrets avant commit ciblé.
 - Git : commit de rapport 2.4 après contrôles ; résultat réel enregistré ensuite. Suite : 2.5, seulement dental_lab et lecture seule.
+
+## 09/10/2026 — Session 13:31 Europe/Brussels — Point 2.5
+
+- Commit 2.4 réel confirmé : 619a8cba8284577008d11af7840680b1c03345a2 poussé, hash distant égal, arbre propre avant audit.
+- Audit exécuté exclusivement sur dental_lab en transaction READ ONLY sous dental-ai ; PostgreSQL 17.11, rôles NOLOGIN existants, audit sans droits élevés/CREATE/TEMP, appartenance uniquement audit sans ADMIN OPTION. Détails dans ROADMAP.md.
+- Précontrôle HBA : SELECT pg_hba_file_rules non autorisé ; pas de rôle pg_read_all_settings/pg_read_server_files. Aucune lecture HBA/fichier serveur, aucun contournement ni demande d’élargissement.
+- Preuves administrateur de refus sur huit autres bases déjà reçues ; pas de connexion ni nouveau test agent sur elles.
+- Statut final : BLOQUÉ. Manque : rapport administrateur expurgé sur règles HBA réellement applicables au couple dental-ai/dental_lab, configuration en vigueur.
+- Modifications : ROADMAP.md et journal seulement ; aucune écriture SQL, aucun service/permission/paquet/migration.
+- Vérifications : audit SQL achevé avec code 0, invariants et diff ciblé sans secret ; suivi 2.5 non commité/non poussé en attente de preuve.
+- Suite : reprise 2.5 après preuve ciblée, puis 2.6 ; aucun point sauté.
+
+## 09/10/2026 — 13:50 Europe/Brussels — Clôture du point 2.5
+
+- Rapport HBA administrateur reçu : règle local dental_lab/dental-ai peer puis rejets local et loopbacks pour dental-ai avant règles générales ; fichier configuré, aucune erreur, service actif. Rapport attribué à l’utilisateur ; pas de lecture du fichier par l’agent.
+- Reprise directe : UID/GID 1002, cgroup dédié, références et changements 2.5 concordants ; connexion lecture seule à dental_lab sous dental-ai réussie, pg_conf_load_time identique à date administrateur 2026-10-09 03:15:24.346768+00.
+- Limite : vue HBA = fichier courant, pas mémoire ; date seule insuffisante à prouver absence d’édition après reload. Preuves interprétées conjointement avec succès direct et refus antérieurs reçus, sans tests TCP/voisins inventés.
+- Critères inventaire/rôles/privilèges/HBA/refus satisfaits. Fichiers modifiés : ROADMAP.md et journal seulement ; aucune permission/configuration/base/service changé.
+- Validation : invariants, diff ciblé/check secrets et whitespace avant commit ; pas de test redondant vers autres bases.
+- Git : commit de clôture 2.5 après contrôles, hash/push réels consignés ensuite.
+- Statut final : TERMINÉ. Suite : 2.6, contrôle de procédure de migrations distincte du compte d’audit.
