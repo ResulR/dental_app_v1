@@ -12,3 +12,24 @@ ROADMAP.md reste la source canonique des statuts. Ce journal contient les interv
 - Git : commit de traçabilité lié à cette entrée consultable dans Git ; hash/push final consignés lors du prochain compte rendu, jamais inventés avant exécution.
 - Risques : réseau/IPC et ressources hôte partagés, pas de garantie tous chemins/tous sockets ; R02 reste ouvert pour approbation de 2.3.
 - Statut final : TERMINÉ (audit 2.2). Suite : 2.3.
+
+## 09/10/2026 — Même session — Point 2.3
+
+- Confirmation Git 2.2 : commit 53540f67786ea4ce52ef3fa87755c19f9b69e4fa poussé sur main ; git ls-remote retourne le même hash, arbre propre. Vérifications documentaires et quotas passées, commandes terminées code 0.
+- État initial : unité et frontières décrites à 2.2, systemd 257.13 ; podman/docker/pasta/slirp4netns non disponibles dans le PATH vérifié.
+- Travail : comparaison utilisateur seul, confinement systemd existant, conteneur rootless et VPS séparé ; proposition B préparée avec périmètre et limites explicites dans ROADMAP.md.
+- Critère/raison d’arrêt : ROADMAP 2.3 exige solution explicitement approuvée pour accès IA ; acceptation du mode actuel et de ses limites réseau/IPC à confirmer par propriétaire. Aucun choix utilisateur inventé.
+- Modifications : ROADMAP.md et ce journal seulement ; ni changement de service ni nouveau droit. Pas d’installation ni de sonde interprojets.
+- Vérifications : quatre options présentes, preuves directes séparées des scénarios, critères/statuts et invariants documentaires ; diff limité et contrôle de secrets.
+- Git 2.3 : changements de documentation attribuables, non commités/non poussés en attente de décision. Pas de hash de commit 2.3 inventé.
+- Statut : BLOQUÉ (décision). Risque R02 ouvert ; prochaine action : intégrer approbation explicite, réauditer et passer 2.4 seulement après validation.
+
+## 09/10/2026 — 13:31 Europe/Brussels — Clôture du point 2.3
+
+- Décision utilisateur explicite : maintien du confinement systemd actuel pendant développement ; conditions intégrales dans ROADMAP.md. Pas d’autorisation de production, données médicales réelles ou changement global.
+- Reprise contrôlée : UID/GID 1002, cgroup dédié, quotas 1 Gio/50% CPU/100 tâches, NoNewPrivs=1 et capacités nulles, protections actuelles inchangées ; Remote en ligne.
+- État Git initial : deux changements 2.3 attribuables de la session précédente, hashes concordants ; références sources inchangées. Aucun changement étranger.
+- Fichiers modifiés : ROADMAP.md et ce journal ; aucun service/permission/paquet/migration.
+- Validation : critère d’approbation explicite satisfait pour développement ; risques réseau/processus/IPC/disque/IO partagés conservés, réévaluation avant production imposée. Invariants/diff/check secrets à réussir avant commit.
+- Git : commit ciblé de 2.3 après contrôles ; hash/push réels enregistrés dans le compte rendu suivant.
+- Statut final : TERMINÉ. Suite : 2.4, sans nouveau droit ni reconfiguration automatique.

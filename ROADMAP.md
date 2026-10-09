@@ -178,7 +178,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 2.3 — Définir le mode d’isolation de l’agent Remote
-- **Statut :** ☐ À faire
+- **Statut :** ☑ Validé
 - **Priorité :** Critique
 - **Catégorie / type :** Audit / décision
 - **Zone concernée :** Sécurisation initiale du VPS et de l’accès IA
@@ -3974,3 +3974,51 @@ Risques et contrôles retenus :
 Conclusion : informations manquantes à l’audit précédent désormais établies ou explicitement bornées ; contrôles actuels consignés, limites et responsabilités connues. Aucun contrôle imposé par 2.2 n’exige ici une isolation réseau complète ; les tests interdits sont remplacés par preuves administrateur et métadonnées autorisées. Ne pas assimiler validation 2.2 à approbation 2.3 ou porte G1 achevée.
 
 Modifications : ROADMAP.md (statut et preuve), création docs/EXECUTION_LOG.md maintenant que Git existe, conformément à CONSIGNE §6. Pas de code applicatif, paquet, migration, permission ou service modifié. Validation documentaire : statuts/217 points/244 cas, références conservées, diff limité aux deux fichiers et contrôle de secrets. Git : résultat réel communiqué après opérations, aucun hash présumé. Suite automatique : 2.3, comparaison puis application de son critère d’approbation explicite.
+
+### Compte rendu du point 2.3 — Comparaison du mode d’isolation de l’agent
+
+Session : 09/10/2026, début 12:49 Europe/Brussels. Statut : BLOQUÉ sur approbation explicite ; analyse et proposition préparées, aucune modification technique de l’isolation effectuée.
+
+État initial audité : 2.2 validé par commit 53540f67786ea4ce52ef3fa87755c19f9b69e4fa, poussé et confirmé égal au main distant ; Git propre après ce commit. systemd 257.13-1~deb13u1, unité dédiée et contrôles effectifs détaillés au compte rendu 2.2. Commandes podman/docker/pasta/slirp4netns non trouvées dans le PATH de cette session ; absence de disponibilité observée, pas affirmation d’absence de tous binaires/containers sur l’hôte.
+
+| Option | Protection envisagée / état réel | Limites et travail requis | Avis pour cette mission |
+|---|---|---|---|
+| A — Utilisateur dédié seul | ACL et droits SQL minimaux déjà établis, sans service de confinement dans cette option théorique. | Ne reprend pas les bornes CPU/mémoire/tâches et protections de montage actuellement actives ; réseau/processus nécessiteraient contrôles séparés. | Ne pas remplacer le mode actuel par une protection moindre. |
+| B — Utilisateur dédié + confinement systemd actuel | État réellement disponible : unité root non éditable, UID 1002, capacités nulles, NoNewPrivileges, quotas 1 Gio/50% CPU/100 tâches, protections système/proc/tmp/devices ; deux chemins de travail définis. | Réseau local et sockets Unix pas complètement cloisonnés ; noyau, disque/IO et hôte partagés ; permissions des fichiers encore importantes. HOME dédié accessible, ses secrets restent à protéger. | Proposition recommandée pour poursuivre l’agent dans le périmètre autorisé, sous acceptation explicite de ces limites ; pas autorisation de production ou de données patients. |
+| C — Conteneur rootless dédié | Option possible à concevoir avec namespace utilisateur, montages minimaux, réseau et ressources configurés. Aucun moteur disponible dans le PATH ici. | Faisabilité (moteur, délégations, mapping UID, réseau, volumes, accès dental_lab/Remote) non auditée ; nouvelle préparation administrateur et tests indispensables. Partage du noyau et risques de mauvais montages/réseau subsistent. | Alternative si un confinement plus fort est demandé ; ne pas installer/configurer sans décision et procédure dédiée. |
+| D — VPS séparé dédié | Séparer le système invité du laboratoire de celui portant les projets voisins ; topologie future, non disponible vérifiée. | Nouvel environnement, accès, sauvegardes, réseau et migration de préparation à organiser ; pas de prix ni de délai supposé. Les services du laboratoire nécessitent toujours leurs propres permissions et contrôles. | Alternative pour réduire la dépendance aux protections d’un hôte multi-projets ; décision d’hébergement par propriétaire, pas action automatique de l’agent. |
+
+Proposition concrète B, à approuver pour l’accès IA :
+- Conserver l’unité actuelle dental-ai-remote.service et son identité UID 1002 ; pas de sudo, de capabilities supplémentaires ou d’accès aux voisins.
+- Écritures de projet seulement dans /srv/dental-lab ; HOME dédié utilisé uniquement pour les besoins déjà autorisés du connecteur/outillage/Git, sans publier de secrets. Les tmp privés techniquement accessibles ne deviennent pas un nouveau répertoire de projet autorisé.
+- PostgreSQL exclusivement dental_lab, compte d’audit pour l’audit ; runtime/migrations restent à encadrer aux points prévus. Pas de scan ou connexion aux services voisins, même techniquement accessibles.
+- Accepter pour ce mode d’agent les limites démontrées : pas de garantie de confinement réseau/IPC complet, partage noyau/disque/IO et protections non exhaustives de tous les chemins ; toute modification de périmètre/isolation se traite séparément avant exécution.
+- Respecter toutes les portes de validation suivantes, particulièrement sécurité, sauvegardes et conformité avant patients réels. Ce choix ne vaut ni déploiement ni acceptation de toute future configuration production.
+- Réauditer identité/cgroup/limites à chaque reprise ; arrêt si connexion perdue, identité différente, limites inattendues ou besoin hors périmètre.
+
+Sources primaires consultées pour distinguer mécanismes et limites : documentation systemd, https://raw.githubusercontent.com/systemd/systemd/main/man/systemd.exec.xml (ProtectProc, ProtectSystem et sockets) ; documentation Podman, https://docs.podman.io/en/latest/markdown/podman.1.html (rootless). Les propriétés réellement observées sur systemd 257, et non des options de versions futures, fondent la proposition B. Les options C/D sont des scénarios, pas installations réalisées ni garanties testées.
+
+Critère bloquant exact, ROADMAP 2.3 : « Solution explicitement approuvée pour l’accès IA ; aucun accès global par défaut. » L’utilisateur confirme une configuration permanente opérationnelle et ses résultats ; aucune approbation explicite du choix comparé et de l’acceptation de ses limites résiduelles n’est présumée. La recommandation B est prête à être examinée ; il manque seulement cette décision de mode, pas un nouvel audit global ou une permission élargie.
+
+Action attendue : propriétaire, approuver B pour l’agent avec les limites ci-dessus, ou choisir C/D et faire organiser la préparation ciblée correspondante. Aucune question de poursuite ordinaire. À réponse, réauditer, consigner l’approbation et clôturer 2.3 si elle couvre la solution ; poursuivre alors 2.4.
+
+Modifications : ROADMAP.md (statut, comparaison/proposition/limites) et docs/EXECUTION_LOG.md (trace et commit 2.2 réel). Vérifications : comparaison des quatre options, critères relus, 217 points/244 cas préservés, diff et contrôle secrets. Aucun service/unité/permission/paquet/code/migration modifié, aucun accès voisin effectué. Changements 2.3 conservés non commités et non poussés dans l’attente de décision, attribuables à cette intervention. Arrêt avant 2.4 ; R02 reste ouvert pour cette approbation.
+
+### Décision approuvée et clôture du point 2.3
+
+Date de décision utilisateur : 09/10/2026 à 13:31 Europe/Brussels. Statut final : TERMINÉ pour la phase de développement. L’approbation explicite lève le blocage de décision du compte rendu précédent ; l’analyse comparative et son historique restent conservés.
+
+Choix approuvé : option B, maintien de dental-ai dans le confinement systemd actuel, exclusivement comme mode d’isolation de l’agent pendant le développement. Conditions utilisateur consignées :
+1. Utilisateur dédié dental-ai, sans sudo général.
+2. Maintien des protections systemd et limites CPU/mémoire/tâches existantes.
+3. Interdiction d’accéder aux projets voisins, leurs services, sockets ou données, même techniquement accessibles.
+4. Risques résiduels réseau local/processus/IPC/ressources partagées explicitement documentés ; aucune présentation comme isolation complète du VPS.
+5. Aucune donnée médicale réelle avant validation des contrôles sécurité/confidentialité/production.
+6. Réévaluation obligatoire avant production, notamment si réglementation ou tests révèlent l’insuffisance de systemd seul.
+7. Aucune modification globale du VPS ou des applications voisines autorisée par cette décision.
+
+Vérifications directes de reprise : appareil en ligne, UID/GID 1002 dental-ai ; cgroup /system.slice/dental-ai-remote.service ; NoNewPrivs=1, CapEff/CapAmb nuls ; memory.max 1073741824, cpu.max 50000 100000, pids.max 100 ; service active/enabled, User/Group dental-ai, capacités systemd vides, ProtectSystem=strict, ProtectProc=invisible, PrivateTmp/PrivateDevices=yes, chemins ReadWritePaths inchangés. PrivateNetwork=no reste consigné. RDC garde mêmes chemins autorisés et commandes bloquées. Les quatre références sont inchangées ; les deux modifications Git en attente sont exactement celles de 2.3 et leurs hashes concordent avec la session précédente.
+
+Correspondance au critère exact : solution explicitement approuvée pour accès IA en développement, aucun accès global par défaut ajouté. Aucun besoin obligatoire de développement identifié incompatible avec cette décision ; garanties de sécurité/production non encore validées restent des portes ultérieures, pas promesses acquises. R02 : approbation de développement satisfaite ; risques résiduels persistent et réévaluation obligatoire à préparer avant production (19.1–19.2 et G1/G2/G5 selon les résultats).
+
+Modifications : ROADMAP.md et docs/EXECUTION_LOG.md uniquement. Aucune modification du service, des ACL, de sudo, de SQL ou du réseau ; aucun paquet installé. Vérifications documentaires : critères/statuts, 217 points/244 cas conservés, diff ciblé, absence de secrets et whitespace check. Commit/push seulement après réussite de ces contrôles ; résultat réel consigné au point suivant. Suite automatique : 2.4.
