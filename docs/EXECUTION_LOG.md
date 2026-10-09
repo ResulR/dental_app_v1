@@ -110,3 +110,38 @@ Concordance source corrigée dans le projet uniquement : source principale et te
 Autorisation future : chaque SQL ET SHA256 exigent toujours approbation administrateur explicite. Aucun droit permanent de migration/administration pour l'IA. Sauvegarde et retour arrière adaptés obligatoires avant risque matériel ; atomicité démontrée sur ces fixtures transactionnelles uniquement, pas pour séquences/effets externes ni coupure près du commit. Pending reste bloquant et à résoudre humainement ; NOLOGIN n'arrête pas les sessions existantes. Réseau/processus/IPC/CPU/IO serveur partagés, client systemd non assimilé à isolation complète, rétention snapshots et sécurité production à réévaluer ; données médicales réelles toujours interdites avant gates dédiées. R03 : composante migrations résolue, runtime/secrets restent à traiter en2.7–2.8.
 
 Contrôles avant commit : tests unitaires rev3 (appels administrateur simulés uniquement), syntaxe scripts/blocs historiques sans exécution, manifest SHA/diff/check secrets/invariants. Git : commit ciblé puis push main après succès, résultat réel dans compte rendu/journal suivant. Suite :2.7, audit secrets/runtime sans lecture d'un secret ni projet voisin.
+
+
+## Point 2.7 — Secrets et environnement : préparation puis blocage
+
+2026-10-10T01:35:30+02:00 Europe/Brussels. Commit2.6 confirmé f1d58d4f5de7e22b387ef1e207aff691c452c2cd poussé, HEAD distant identique, arbre propre avant audit2.7. Statut : ⚠ Bloqué.
+
+Audit direct : dental-site.service sous dental-site UID999/GID989, WorkingDirectory=/srv/dental-site/current, EnvironmentFiles=/etc/dental-site/dental-site.env ; protections strict/home/NoNewPrivileges actives, limites ressources runtime non bornées selon propriétés observées, à examiner en2.8. /etc/dental-site root:GID989 0750 sans symlink, agent sans lecture/écriture ; métadonnées enfant protégées non obtenues. Aucun contenu de secret lu. dental_lab_app NOLOGIN sans CONNECT, aucun rôle changé. Projet sans .env réel, gitignore/exemple absents initialement.
+
+Préparation permise effectuée : .gitignore et .env.example sans secret réel ni identité/port HTTP supposé ; docs/ENVIRONMENT.md explique contrat, limites et bloc administrateur de métadonnées seulement. Aucun compte/permission/HBA/service/lanceur root ni chemin runtime modifié. Tests pertinents : syntaxe Bash/Python de procédure sans exécution, exclusions Git effectives, exemple sans secret, diff/whitespace et audit fichiers nouveaux.
+
+Action attendue : administrateur confirmer si le service et /srv/dental-site/current sont le runtime de ce projet, et fournir métadonnées/ACL du fichier environnement plus tests lecture runtime/agent (sans contenu). CONSIGNE §§3/4/8 interdit de contourner les protections ou de supposer le périmètre. Validation secrets privés et cloisonnés non complètement établie ; pas de2.8 avant preuve. Aucun droit supplémentaire demandé ; aucune instruction de migration autorisée. Suivi et préparation2.7 conservés non commités en attente de validation, conformément au protocole ; rapport publié dans chat.
+
+
+## Point2.7 — Rapport de protection reçu, provenance du runtime non établie
+
+2026-10-10T01:40:06+02:00 Europe/Brussels. Statut conservé : ⚠ Bloqué. Reprise RDC en ligne UID1002/cgroup dédié, /srv/dental-lab réel, HEAD f1d58d4 ; cinq changements2.7 précédents identifiés, aucune modification étrangère. Lecture critères roadmap2.7/2.8, consigne3/4, architecture et mentions runtime du suivi : aucune décision de rattachement dental-site au nouveau projet.
+
+Preuves administrateur utilisateur : service Dental_site backend actif, compte/groupe dental-site, current root:root symlink vers release20260904-e94c64a, runtime/parents root:dental-site0750 ; environnement root:root0600 et droits ACL rw-/---/--- ; agent sans lecture ni traversée ; services concernés actifs. Ces preuves sont attribuées à l’utilisateur, pas réexécutées par l’IA. La protection filesystem est documentée, pas une isolation complète ou une appartenance au nouveau projet.
+
+Correction explicite : ancien critère lecture directe du fichier par dental-site trop strict pour EnvironmentFile d’un gestionnaire système root ; aucune permission à élargir. Documentation primaire systemd consultée. État actif et description ne démontrent ni provenance, ni bonne configuration du futur laboratoire. Release antérieure au cadrage : indice seulement.
+
+Fichier mis à jour : docs/ENVIRONMENT.md, plus ce suivi ROADMAP/journal uniquement. Préparation .gitignore/.env.example conservée sans secret. Procédure précédente de métadonnées remplacée par contrôle conditionnel de provenance Git, lecture seule administrateur sans URL brute, sans réseau ni script projet root ; si métadonnées absentes, preuve de déploiement/attestation projet propriétaire. Tests syntaxe Python/Bash sans exécution, diff/check et critères inchangés à vérifier avant compte rendu.
+
+Action humaine indispensable : déterminer dépôt/commit et projet propriétaire de la release, confirmer rattachement autorisé OU classer dental-site hors périmètre puis décider runtime distinct. Aucun secret à transmettre ; aucun service/rôle/HBA/permission/lanceur root modifié, aucune fixture rejouée. Pas de2.8, aucun commit/push de validation2.7 ; préparations et suivi non commités en attente de preuve/décision.
+
+
+## Clôture2.7 — Préparation documentaire et runtime indépendant
+
+2026-10-10T01:44:30+02:00 Europe/Brussels. Statut : ☑ Validé (préparation documentaire sans installation). Décision administrateur explicite : nouveau runtime indépendant ; dental-site, son compte, environnement/secrets et /srv/dental-site intégralement exclus. Rapport attribué : packages dental-site/@dental-site/server0.0.0, release préexistante sans provenance Git exploitable ; aucune recherche supplémentaire utile après exclusion. Aucun fait de provenance inventé.
+
+Reprise : RDC en ligne UID1002/cgroup dédié, chemin physique /srv/dental-lab ; HEAD f1d58d4, changements2.7 précédents attribuables. Vérifications directes : exemple/ignore/doc réguliers UID1002 mode0600 sans symlink ; aucun env réel ni log dans projet/ fichiers Git suivis ; exemple sans secret, rôle runtime SQL non activé. Critères préparation/configuration et cloisonnement documentés ; aucune utilisation d’un secret/runtime existant.
+
+Fichiers : .gitignore, .env.example, docs/ENVIRONMENT.md et suivi ROADMAP/journal. Document actualisé retire le contrôle devenu inutile sur runtime exclu ; contrat secrets publics/privés, validation serveur future et séparation audit/runtime explicites. Point2.7 ne déclare pas les secrets futurs installés/protégés : contrôles effectifs19.3/19.4 obligatoires avant mise en service, autorisation administrateur distincte, aucune donnée patient réelle. Critères non réalisés de production ne sont pas marqués validés.
+
+Vérifications : check-ignore de variantes env/log/cache et exemple versionnable, contenu exemple sans credential, syntaxe/documentation/217points/diff--check et secrets avant commit. Aucune modification service/permission/rôle/HBA/lanceur root, aucune lecture de secret, aucune fixture rejouée. Git : commit ciblé2.7 puis push main après succès ; hash réel enregistré au compte rendu et entrée suivante. Suite automatique2.8, conception des privilèges seulement, pas installation.
