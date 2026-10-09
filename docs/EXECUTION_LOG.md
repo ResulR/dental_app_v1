@@ -33,3 +33,12 @@ ROADMAP.md reste la source canonique des statuts. Ce journal contient les interv
 - Validation : critère d’approbation explicite satisfait pour développement ; risques réseau/processus/IPC/disque/IO partagés conservés, réévaluation avant production imposée. Invariants/diff/check secrets à réussir avant commit.
 - Git : commit ciblé de 2.3 après contrôles ; hash/push réels enregistrés dans le compte rendu suivant.
 - Statut final : TERMINÉ. Suite : 2.4, sans nouveau droit ni reconfiguration automatique.
+
+## 09/10/2026 — Session 13:31 Europe/Brussels — Point 2.4
+
+- Commit 2.3 confirmé : 794af590335ab012ae66ab34f05022c65323efa1, poussé sur main ; hash distant identique, arbre propre avant 2.4.
+- Audit : UID 1002, service/cgroup dédiés, chemins RDC inchangés, lecture autorisée dans projet et refus explicite de read_file hors chemins sur /proc/self/status. Aucun contenu refusé obtenu ensuite.
+- Cwd initial terminal dans répertoire npm du HOME dédié : contrôle supplémentaire exact-cwd a quitté code 1 sans écriture ; cause établie et exigence plus stricte distinguée du critère roadmap. Test du garde-fou habituel id/cd/pwd réel réussi ; toutes opérations projet s’y soumettent.
+- Statut : DÉJÀ CONFORME dans le mode de développement 2.3. Aucune reconfiguration ni credential debian. Les restrictions d’API ne constituent pas une isolation générale des commandes.
+- Fichiers : ROADMAP.md et ce journal ; diff/invariants/check secrets avant commit ciblé.
+- Git : commit de rapport 2.4 après contrôles ; résultat réel enregistré ensuite. Suite : 2.5, seulement dental_lab et lecture seule.

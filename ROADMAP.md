@@ -193,7 +193,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 2.4 — Encadrer le connecteur Remote sur dental-ai
-- **Statut :** ☐ À faire
+- **Statut :** ☑ Validé
 - **Priorité :** Critique
 - **Catégorie / type :** Audit / décision
 - **Zone concernée :** Sécurisation initiale du VPS et de l’accès IA
@@ -4022,3 +4022,20 @@ Vérifications directes de reprise : appareil en ligne, UID/GID 1002 dental-ai ;
 Correspondance au critère exact : solution explicitement approuvée pour accès IA en développement, aucun accès global par défaut ajouté. Aucun besoin obligatoire de développement identifié incompatible avec cette décision ; garanties de sécurité/production non encore validées restent des portes ultérieures, pas promesses acquises. R02 : approbation de développement satisfaite ; risques résiduels persistent et réévaluation obligatoire à préparer avant production (19.1–19.2 et G1/G2/G5 selon les résultats).
 
 Modifications : ROADMAP.md et docs/EXECUTION_LOG.md uniquement. Aucune modification du service, des ACL, de sudo, de SQL ou du réseau ; aucun paquet installé. Vérifications documentaires : critères/statuts, 217 points/244 cas conservés, diff ciblé, absence de secrets et whitespace check. Commit/push seulement après réussite de ces contrôles ; résultat réel consigné au point suivant. Suite automatique : 2.4.
+
+### Compte rendu du point 2.4 — Encadrement du connecteur Remote
+
+Session du 09/10/2026, début 13:31 Europe/Brussels. Statut : DÉJÀ CONFORME pour le mode de développement approuvé en 2.3 ; aucune reconfiguration du connecteur nécessaire. Commit 2.3 réel : 794af590335ab012ae66ab34f05022c65323efa1, poussé et confirmé égal au main distant, arbre propre avant cet audit.
+
+Vérifications réellement exécutées :
+- Appareil d378742a-d803-4e4f-be42-22c866312043 en ligne sur vps-28bf7789 ; commandes UID/GID 1002 dental-ai, cgroup dédié confirmé. Aucun changement d’identité ou credential Linux debian utilisé.
+- Configuration RDC relue : allowedDirectories /srv/dental-lab et /home/dental-ai ; sudo/su et autres commandes sensibles toujours bloqués. Deuxième chemin conservé pour l’outillage dédié conformément à 2.3, pas nouveau périmètre de projet.
+- Contrôle positif read_file sur /srv/dental-lab/CONSIGNE.md : lecture autorisée.
+- Contrôle négatif read_file sur /proc/self/status (métadonnées publiques de son propre processus, sans secret voisin) : refus explicite « Path not allowed », chemins permis affichés. Résultat négatif attendu = test de refus réussi ; aucune tentative de lire ce contenu par une autre voie après refus.
+- Particularité du terminal : son cwd initial est /home/dental-ai/.npm/_npx/c329005a7fd3ed13/node_modules/@wonderwhy-er/desktop-commander/dist, malgré WorkingDirectory=/srv/dental-lab du service. Un contrôle initial ajoutant l’exigence plus stricte « cwd initial exactement /srv/dental-lab » a donc quitté avec code 1, avant toute écriture. Ce résultat est consigné, non masqué : ce défaut initial dans le HOME d’outillage autorisé n’est pas un accès voisin ni le répertoire retenu pour une intervention du projet.
+- Contrôle du garde-fou effectif utilisé dans toutes les commandes de projet : set -eu ; vérifier id -u =1002 et id -un =dental-ai ; cd /srv/dental-lab ; vérifier pwd -P exactement /srv/dental-lab avant audit/modification. Test avec assertions UID, cwd, cgroup et arbre Git propre : PASS. Ne jamais utiliser de chemin relatif de projet avant ce garde-fou.
+- Aucun secret du connecteur, environnement, SSH ou autre application lu/exposé ; aucune demande de credential debian.
+
+Conclusion et limites : identité dédiée, opérations de projet dans le chemin vérifié, refus hors chemins de l’API fichier et absence d’utilisation de credentials debian satisfont le critère 2.4. Le contrôle supplémentaire sur le cwd initial ne devient pas une nouvelle exigence métier/sécurité ; le garde-fou existant produit le contexte de travail requis. Les filtres de fichiers RDC ne bornent pas à eux seuls toute commande shell : protections Linux/systemd et restrictions utilisateur restent indispensables, avec risques acceptés pour développement en 2.3. Aucun confinement complet supplémentaire revendiqué.
+
+Modifications : ROADMAP.md (statut/preuves) et docs/EXECUTION_LOG.md seulement. Aucune option de sécurité, permission, unité, service ou projet voisin modifié. Vérifications documentaires/diff/secrets avant commit ciblé ; résultat Git réel consigné ensuite. Suite automatique : 2.5, audit lecture seule exclusivement dental_lab.
