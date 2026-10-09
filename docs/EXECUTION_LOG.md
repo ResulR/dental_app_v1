@@ -63,3 +63,50 @@ ROADMAP.md reste la source canonique des statuts. Ce journal contient les interv
 - Validation : invariants, diff ciblé/check secrets et whitespace avant commit ; pas de test redondant vers autres bases.
 - Git : commit de clôture 2.5 après contrôles, hash/push réels consignés ensuite.
 - Statut final : TERMINÉ. Suite : 2.6, contrôle de procédure de migrations distincte du compte d’audit.
+
+## 09/10/2026 — Session 13:50 Europe/Brussels — Point 2.6
+
+- Commit 2.5 confirmé : 502ceb08dcad21d2645df0009339c3e06a3568e9 poussé et égal au main distant ; arbre propre initial.
+- Inventaire projet : six documents hors .git, aucun runner/migration ; audit SQL READ ONLY dental_lab terminé code 0.
+- Rôle migrator : NOLOGIN, CONNECT dental_lab et USAGE/CREATE public oui, CREATE base non ; aucune identité LOGIN membre. dental-ai seulement membre d’audit, ni migrator ni owner, sans sudo selon preuve reçue.
+- Blocage : aucune invocation autorisée/authentifiable des migrations établie. Pas de SET ROLE/DDL/GRANT/secret/commande sous identité plus privilégiée tenté.
+- Préparation : contrat de mécanisme borné à dental_lab, identité distincte, protection du lanceur, secrets minimaux, revue/versionnement et sauvegarde/rollback selon risque détaillés dans ROADMAP.md ; proposition, pas implémentation validée.
+- Action attendue : administrateur fournit ou prépare mécanisme contrôlé et contrat d’invocation réel ; aucun élargissement du compte audit demandé, permissions actuelles conservées.
+- Fichiers modifiés : ROADMAP.md et journal. Vérifications invariants/diff/secrets ; aucun code/paquet/permission/service/base modifié.
+- Statut final : BLOQUÉ, R03 ouvert ; suivi 2.6 non commité/non poussé. Reprise de 2.6 après mécanisme, 2.7 non commencé.
+
+
+## 09/10/2026 — 12:33 UTC — Point 2.6, audit terminé/proposition administrateur
+
+- État initial : UID 1002, RDC en ligne, chemin physique autorisé ; deux changements de suivi 2.6 connus et hashes concordants, aucun changement étranger. Compte/role dental-migrate et chemins dédiés absents, outils requis constatés.
+- Décision utilisateur : séparation volontaire ; dental-ai reste audit, jamais migrator/owner. Choix proposé : opérateur humain root, copie SQL SHA approuvée, exécutant Linux/SQL distinct peer, rôle LOGIN temporaire puis NOLOGIN, aucune délégation IA.
+- Audit SQL supplémentaire dental_lab READ ONLY achevé code 0 : plpgsql seule extension, aucun serveur étranger, aucune fonction SECURITY DEFINER exécutable migrator, aucun attribut administratif audit/migrator.
+- Fichiers : ROADMAP.md, ce journal, docs/admin-proposals/POINT_2_6_ADMIN.md, dental-lab-migrate.py, test_migration_gate.py et migrations/0000_execution_probe.sql (SELECT uniquement, pas exécuté en base). Modes projet 600, répertoires nouveaux 700 ; aucune installation système/SQL.
+- Vérifications : quatre tests de sécurité passés local/VPS ; syntaxe Python/Bash et cohérence SHA vérifiées ; refus non-root proposé confirmé sous UID 1002 avant tout appel administrateur. Diff/invariants contrôlés avant compte rendu ; aucun résultat d'installation/test PostgreSQL du mécanisme inventé.
+- Risques : HBA/reload cluster partagé à faire uniquement administrateur après revue ; restrictions systemd du client ne limitent pas PostgreSQL serveur ; coupure peut laisser LOGIN et état SQL incertain, fermeture contrôlée et .pending interdisent reprise automatique ; revue SQL/backup/rollback selon risque obligatoires.
+- Action précise : relire/approuver/exécuter runbook contrôlé, fournir preuves de comptes/modes/HBA/reload/refus/probe/reçu et NOLOGIN/zéro session. Statut final BLOQUÉ, R03 ouvert ; prochaine étape reprendre 2.6, aucun passage 2.7.
+- Git : aucun nouveau commit/push ; changements de proposition et suivi restent non commités. Aucune permission PostgreSQL ni délégation IA élargie, aucun service/base voisin consulté/modifié.
+
+
+## 09/10/2026 13:12 UTC — Point 2.6, révision 2 après revue transactionnelle
+
+- État : RDC en ligne, UID1002/dental-ai, /srv/dental-lab réel, changements 2.6 attribuables/hashes concordants. Script et destinations root non installés. Séparation des rôles conservée ; principe approuvé, installation interdite par instruction utilisateur.
+- Défaut confirmé via documentation PostgreSQL17 : -1 sans -c/-f ; première proposition retirée. Correction explicite -c/-f/-c + -1/ON_ERROR_STOP, stdin DEVNULL, SQL exécutant limité.
+- Modifications : scripts/docs de proposition dans docs/admin-proposals, deux fixtures DDL synthétiques ajoutées dans migrations ; aucune fixture exécutée en base ; SHA et procédures actualisés ; report VALIDATION_2_6 et manifest SHA256SUMS ; suivi ROADMAP et ce journal.
+- Sécurité : parents root protégés et imports isolés ; copie source limitée sans symlinks/FIFO/liens multiples ; snapshots fsync conservés ; précontrôle roles et appartenance ; NOLOGIN/zéro session avant reçu ; pending durable bloque toutes les versions, interruptions/commit incertain nécessitent résolution humaine.
+- Vérifications réelles : audit READ ONLY dental_lab terminé code0, CREATE/TEMP false et identité migration absente. 13 tests unitaires passés local/VPS (SQL/admin simulés), 11 blocs Bash/3 Python syntaxiquement valides, checksums/permissions privées vérifiés, refus non-root réel. Intégration réelle ajoutée mais BLOQUÉ code77, aucune DDL ; résultat non assimilé à un succès.
+- Risques : atomicité limitée aux effets transactionnels ; defaults/triggers/séquences existantes et appels externes à exclure/revoir ; client systemd distinct de PostgreSQL partagé ; SIGKILL/panne peut laisser LOGIN/session et résultat incertain ; snapshots/rétention à contrôler avant production.
+- Git : aucun nouveau commit/push ; point non validé. Statut final BLOQUÉ, R03 ouvert ; prochaine action revue utilisateur des corrections, puis preuve administrateur après autorisation d'installation ; aucun passage à 2.7.
+
+
+## Clôture du point 2.6 — Révision 3 installée et intégration réelle prouvée
+
+2026-10-10T01:33:55+02:00 [Europe/Brussels, horloge VPS]. Statut : ☑ Validé. Rapport administrateur utilisateur : installation root rev3 SHA256 698472ebcc0ca0f8a1d74151cb7331ecfa9e113d8231f9262b3ba6f535de9ea1, root:root 555, rev2 sauvegardée ; comptes Linux/SQL dédiés et HBA ciblé installés. Probe 0000 identité dental_lab/dental-migrate/dental_lab_migrator et permissions 1 ; contrôle positif 9901 CREATE/INSERT/assertion/DROP ; 9900 CREATE/INSERT puis erreur 22012, rollback sans table persistante. Refus non-root/traversée/SHA erroné réussis. Deux reçus succès, archive rollback-verified et aucun pending ; snapshot/SHA de l'échec contrôlés avant archivage. Preuves administrateur attribuées, pas réexécutées par l'IA.
+
+Vérifications directes de reprise : Remote en ligne sous dental-ai UID1002/cgroup dédié ; /srv/dental-lab propriétaire privé 700 ; lanceur installé SHA exact et root:root 555. Audit dental_lab BEGIN READ ONLY/COMMIT achevé : PostgreSQL17.11, dental-migrate NOLOGIN sans attribut administratif, zéro session ; dental-ai ni migrator ni owner ni CREATE base/public ; deux tables techniques absentes. Services dental-ai-remote, dental-site et postgresql@17-main actifs. Aucun rôle/HBA/lanceur root/service modifié et aucune fixture rejouée.
+
+Concordance source corrigée dans le projet uniquement : source principale et tests alignés sur rev3 validée ; copie temporaire de revue identique retirée pour éviter deux sources concurrentes ; trois SQL et test d'intégration inchangés, versions déjà consommées à ne pas rejouer. Documents de proposition étiquetés historiques, contrat actuel ajouté et SHA actualisés. Tous changements précédents non commités attribuables au seul point2.6.
+
+Autorisation future : chaque SQL ET SHA256 exigent toujours approbation administrateur explicite. Aucun droit permanent de migration/administration pour l'IA. Sauvegarde et retour arrière adaptés obligatoires avant risque matériel ; atomicité démontrée sur ces fixtures transactionnelles uniquement, pas pour séquences/effets externes ni coupure près du commit. Pending reste bloquant et à résoudre humainement ; NOLOGIN n'arrête pas les sessions existantes. Réseau/processus/IPC/CPU/IO serveur partagés, client systemd non assimilé à isolation complète, rétention snapshots et sécurité production à réévaluer ; données médicales réelles toujours interdites avant gates dédiées. R03 : composante migrations résolue, runtime/secrets restent à traiter en2.7–2.8.
+
+Contrôles avant commit : tests unitaires rev3 (appels administrateur simulés uniquement), syntaxe scripts/blocs historiques sans exécution, manifest SHA/diff/check secrets/invariants. Git : commit ciblé puis push main après succès, résultat réel dans compte rendu/journal suivant. Suite :2.7, audit secrets/runtime sans lecture d'un secret ni projet voisin.

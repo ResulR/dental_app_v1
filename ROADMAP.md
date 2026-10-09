@@ -223,7 +223,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 2.6 — Mettre en place une exécution de migrations strictement scoped
-- **Statut :** ☐ À faire
+- **Statut :** ☑ Validé
 - **Priorité :** Critique
 - **Catégorie / type :** Audit / décision
 - **Zone concernée :** Sécurisation initiale du VPS et de l’accès IA
@@ -3883,7 +3883,7 @@ Statut : TERMINÉ pour le registre ; aucune résolution technique ou juridique n
 |---|---|---|---|
 | R01 | CLÔTURÉ à 2.1 par audit administrateur utilisateur et contrôles directs concordants ; identité/dossier/sudo/protection des chemins audités établis. Isolation réseau et autres chemins non garantie. Ancien constat : identité et dossier dédiés vérifiés ; politique sudo complète et protection effective des projets voisins non prouvées. RDC bloque sudo ; le groupe users ne démontre ni accès ni absence d’accès. | Administrateur VPS | 2.1 : audit sudo/ACL attribuable par administrateur, sans lecture de secrets voisins ni élargissement des droits. |
 | R02 | Restrictions actuelles non assimilables à une isolation réseau/processus ; interdiction utilisateur de contacter les services voisins. | Administrateur VPS + propriétaire | 2.2–2.4 / G1 : preuves administrateur des frontières et approbation explicite du mode d’isolation en 2.3. Ne pas exécuter les sondes interprojets suggérées par la roadmap. |
-| R03 | Audit SQL possible sur dental_lab ; rôles migrator/app NOLOGIN ; mécanisme contrôlé d’exécution pas encore établi. | Administrateur VPS/DB | 2.5–2.8 : identité runtime séparée, migrations bornées et secrets protégés ; aucune délégation générique ni code éditable lancé sous root/postgres. |
+| R03 | Migrations bornées validées en2.6, exécutant dédié NOLOGIN ; runtime/secrets applicatifs encore à traiter en2.7–2.8. | Administrateur VPS/DB | 2.5–2.8 : identité runtime séparée, migrations bornées et secrets protégés ; aucune délégation générique ni code éditable lancé sous root/postgres. |
 | R04 | Versions compatibles déclarées, sans résolution/installations encore faites ; évolution possible avant installation. | Agent | 5.2 et fondations : revérifier versions stables, engines/peers, résolution et contrôles ; TS6 retenu, ne pas imposer TS7. |
 | R05 | PWA et stockage chiffré réalisables par API ; quotas, éviction, verrouillage et fichiers volumineux pas éprouvés sur appareils réels. | Agent + propriétaire pour appareils cibles | 3.8, 15.3, 15.10 / G3 : crypto et récupération conçues, tests navigateurs/appareils avec quota atteint et pertes contrôlées ; aucune garantie illimitée de stockage local. |
 | R06 | Hors ligne, suspension non instantanément révocable ; conflit et envoi doivent rester explicites. | Agent + propriétaire pour recette | 15.5–15.9 / G3 : isolation par compte, purge au retour réseau, version concurrente, reprise/ack fichiers et absence de soumission automatique démontrées. |
@@ -4080,3 +4080,82 @@ Interprétation bornée : pg_hba_file_rules décrit le fichier courant, pas une 
 Critères satisfaits : inventaire réel base/rôles NOLOGIN/privilèges et configuration HBA ciblée documentés ; refus hors base fournis par administrateur ; aucun objet à recréer. Droits minimaux d’audit conservés, pas de modification pg_hba, de rôle ni de cluster.
 
 Modifications : ROADMAP.md et docs/EXECUTION_LOG.md uniquement. Vérifications avant commit : 217 points/244 cas, références préservées, diff exclusivement suivi 2.5, check secrets/whitespace. Commit/push ciblés de 2.5 après succès, résultat réel consigné ensuite. Suite automatique : 2.6, audit de l’identité et du mécanisme d’exécution des migrations ; aucune permission PostgreSQL à modifier par l’agent.
+
+### Compte rendu du point 2.6 — Exécution des migrations : audit et contrat préparé
+
+Session du 09/10/2026, début 13:50 Europe/Brussels. Statut : BLOQUÉ sur mécanisme d’exécution/identité authentifiable non disponible. Commit 2.5 réel : 502ceb08dcad21d2645df0009339c3e06a3568e9, poussé et confirmé égal au main distant ; arbre propre avant cet audit.
+
+Audit effectivement exécuté : inventaire limité à /srv/dental-lab hors .git, six fichiers documentaires, aucun runner/migration/configuration d’exécution dans le projet ; git ls-files/status et inspection bornée des noms de fichiers (pas de secret). Requêtes de privilèges et d’appartenance uniquement sur dental_lab, sous dental-ai, en transaction READ ONLY achevée code 0. Aucune interrogation d’une autre base, aucun SET ROLE/DDL/tentative d’authentification migration.
+
+Résultats réels :
+| Rôle | LOGIN | CONNECT dental_lab | CREATE base | USAGE public | CREATE public |
+|---|---|---|---|---|---|
+| dental-ai | oui | oui | non | oui | non |
+| dental_lab_audit | non | oui | non | oui | non |
+| dental_lab_migrator | non | oui | non | oui | oui |
+| dental_lab_owner | non | oui | oui | oui | oui |
+| dental_lab_app | non | non | non | non | non |
+
+Appartenances concernant ces rôles : seulement dental-ai vers dental_lab_audit (ADMIN OPTION non, INHERIT/SET oui). Aucun membre LOGIN de dental_lab_migrator retourné ; dental-ai n’est membre ni de migrator ni d’owner. La politique sudo utilisateur reçue en 2.1 ne donne aucun droit ; RDC bloque sudo/su. Aucun contrat d’invocation externe de migrations n’a été fourni. Cela ne prouve pas qu’aucun outil administrateur n’existe ailleurs, mais aucun mécanisme autorisé/utilisable par l’agent n’est établi.
+
+Conclusion : droits SQL de création dans public déjà préparés sur le rôle migrator, à conserver sans recréation ni ajout aveugle. NOLOGIN et absence de délégation/membre authentifiable empêchent d’utiliser ce rôle pour une migration sous l’accès actuel. Le compte d’audit doit rester audit ; pas de GRANT à dental-ai, activation LOGIN du rôle métier, secret improvisé, SQL superuser ou contournement Linux/Remote pour avancer.
+
+Contrat concret proposé pour le mécanisme à préparer par l’administrateur (proposition, pas configuration déjà réalisée) :
+1. Identité d’exécution distincte du compte d’audit, sans superuser/CREATEDB/CREATEROLE/REPLICATION/BYPASSRLS, utilisant les droits de dental_lab_migrator. Conserver les rôles métier NOLOGIN ; l’identité d’authentification et son mode (par exemple peer sous un exécutant Linux dédié sans privilèges) doivent être désignés et documentés par administrateur, pas inventés par l’agent.
+2. Invocation bornée à dental_lab : destination imposée et vérification current_database/session_user/current_user avant exécution ; aucune option de l’appelant ou variable de connexion ne doit permettre de choisir une autre base. Accès direct à d’autres bases et administration générale exclus. Preuves de bornage à fournir sans sonder les applications voisines.
+3. Si un lanceur délégué est nécessaire, commande/destination/arguments précisément bornés, composant de contrôle non modifiable par dental-ai ; aucun script librement éditable du projet lancé sous root/postgres. Le code et SQL de migration éventuels s’exécutent sous une identité système et SQL limitée, jamais sous superuser ; ne pas substituer un sudo générique.
+4. Aucun secret dans chat/Git/logs/arguments ; mode d’authentification ou secret protégé transmis par procédure dédiée, visibilité minimale. Aucun secret d’application voisine ou credential postgres/debian mis à disposition de l’agent.
+5. Migrations versionnées et revues, identité/objet/base attendus consignés, journal de versions/checksums et verrou d’exécution à construire aux fondations prévues ; aucun fichier de migration métier créé avant modèle/conventions appropriés. Le lanceur ne doit pas servir à exécuter arbitrairement une commande système privilégiée.
+6. Avant chaque migration : audit état courant et effets, classification du risque ; revue et autorisation humaine si destruction/perte potentielle/production ; preuve de sauvegarde cohérente et restauration/rollback adaptée avant risque matériel. Rollback SQL non supposé universel ; aucun essai destructif sur données réelles.
+7. Preuve initiale minimale : invocation du mécanisme sous contexte limité retournant identités et dental_lab, permissions effectives, absence de secret exposé ; tests de refus des destinations/arguments interdits sans connecter une base voisine. Ensuite validation d’une migration de fondation versionnée selon les points concernés et sa classification de risque, pas de DDL jetable improvisé aujourd’hui.
+
+Action humaine minimale : administrateur, fournir ou faire préparer ce mécanisme borné, puis communiquer son mode d’invocation autorisé, l’identité réellement employée et les preuves de permissions/authentification/scoping. Si un mécanisme existe déjà, fournir son contrat et ses chemins réels pour audit avant invocation. Aucune permission PostgreSQL, délégation ou configuration globale ne sera modifiée par l’agent sans autorisation distincte ; l’instruction actuelle interdit ces modifications. Aucun droit de migration supplémentaire sur dental-ai demandé.
+
+Critères de 2.6 pas encore validables : migrations exécutables uniquement dans dental_lab sous identité distincte et autorisation contrôlée non démontrées. Risque R03 ouvert. Pas de passage à 2.7 ni tentative d’installation pour masquer ce blocage.
+
+Modifications : ROADMAP.md (statut/audit/contrat/blocage) et docs/EXECUTION_LOG.md seulement. Vérifications documentaires/invariants/diff/secrets ; données, rôles, HBA, services et permissions inchangés. Suivi 2.6 non commité/non poussé en attente du mécanisme. Reprise : vérifier Remote/UID/Git, auditer la procédure fournie sans secret ni élévation générale, puis tester seulement les opérations explicitement autorisées.
+
+
+### Complément du point 2.6 — Séparation confirmée et procédure administrateur prête
+
+Session 09/10/2026 — 12:33 UTC. Statut canonique conservé : ⚠ Bloqué ; audit terminé, mécanisme proposé mais non installé. Décision utilisateur : dental-ai reste exclusivement audit, sans appartenance migrator/owner ni privilège permanent de modification. Aucun élargissement autorisé/exécuté.
+
+Reprise directe : Remote en ligne, commandes UID 1002/dental-ai, chemin physique /srv/dental-lab ; état Git et hashes des deux changements de suivi 2.6 concordants. Identifiants proposés dental-migrate et chemins d'installation absents à l'audit ; binaires administrateur présents aux chemins documentés, aucune invocation privilégiée. Dans dental_lab en READ ONLY : plpgsql 1.0 seule extension, zéro serveur étranger et zéro SECURITY DEFINER exécutable par migrator, attributs administratifs audit/migrator false. Requête achevée code 0.
+
+Proposition précise : docs/admin-proposals/POINT_2_6_ADMIN.md contient comptes, droits, commandes d'installation/HBA/reload, installation du lanceur par copie approuvée et SHA, invocation humaine bornée, contrôles et arrêt/retour arrière ciblé. docs/admin-proposals/dental-lab-migrate.py reste un fichier de proposition non privilégié dans le projet, sans installation ni délégation sudo. Copie SQL bornée sans symlinks sous dental-ai, exécution systemd/SQL distincte sous dental-migrate puis SET ROLE migrator, base/socket/port fixes, LOGIN temporaire et NOLOGIN finally, registre root version/hash et .pending durable interdisant reprise aveugle. Protection du client distincte de PostgreSQL serveur partagé ; interruption brutale/charge/verrous et réseau/IPC partagés documentés. HBA partagé : ajout ciblé administrateur seulement, revue du diff et fenêtre de rechargement nécessaires ; pas de redémarrage.
+
+migrations/0000_execution_probe.sql : probe versionné SELECT uniquement, aucune migration métier/DDL/donnée patient, NON EXÉCUTÉ dans PostgreSQL. SHA256 25e6cafc724d2b6ddd6c6be23f6fc44b4a5a21ea318cbfedac48a93bee7d1734. Lanceur SHA256 703cbb43b1d7b1b97cf6faa3cfac95832f1070d9b377ba86300f2a9235acaf02.
+
+Vérifications réelles : quatre tests de garde-fous réussis localement et sur VPS (SHA/noms/connexion-shell/transaction) ; syntaxe Python et blocs Bash vérifiée sans exécution administrative ; hashes cohérents ; refus non-root du lanceur proposé confirmé sous UID 1002 avant toute opération administrative. Ces contrôles ne prouvent ni installation root, ni règles HBA chargées pour la nouvelle identité, ni succès du probe : preuves administrateur indispensables.
+
+Action attendue : administrateur relire/approuver la proposition, exécuter les blocs contrôlés du runbook, fournir identités/modes/HBA/date reload, résultat du probe et des refus attendus, NOLOGIN/zéro session au repos et reçu/version/SHA. Consigne §§4/8 interdit toute création/élargissement par l'IA sans autorisation spécifique. Aucun autre projet/service/base sondé ou modifié. Sauvegarde/restauration selon risque avant migration matérielle ; pas de rollback SQL automatique.
+
+Fichiers de suivi et quatre fichiers de proposition/probe uniquement ; aucun rôle, permission d'exécution, service, paquet, HBA ou objet SQL modifié. Git : suivi et proposition 2.6 non commités/non poussés ; point non validé. R03 reste ouvert. Suite : reprendre 2.6 sur preuves, jamais 2.7 avant validation.
+
+
+### Révision du point 2.6 — Correction transactionnelle après revue utilisateur
+
+09/10/2026 13:12 UTC. Statut : ⚠ Bloqué, principe général approuvé mais installation explicitement NON autorisée. Défaut critique de la première proposition confirmé : psql --single-transaction employé avec stdin sans -c/-f, contrat PostgreSQL17 non respecté ; ancienne proposition retirée, ne pas installer ses anciens checksums.
+
+Correction : -c préambule fixe, -f snapshot root approuvé, -c contrôle final, --single-transaction et ON_ERROR_STOP=1, stdin DEVNULL ; SQL projet toujours sous dental-migrate/SET LOCAL ROLE migrator. Contrat atomique pour DDL/DML transactionnel ; effets hors transaction (séquences existantes, appels externes/defaults/triggers) explicitement exclus/revue obligatoire. Pas de garantie inventée du résultat après coupure autour du commit.
+
+Sécurité revue : copies et parents root non modifiables, Python -I, sources sans symlink/FIFO et UID1002 privées/un lien, limites taille/temps, snapshots root fsync conservés ; SQL admin limité aux littéraux fixes, précontrôle rôle/attributs/membership/transitivité et séparation audit ; marqueur JSON avant LOGIN, fermeture SIGINT/SIGTERM best effort, aucun reçu avant NOLOGIN/zéro session ; tout pending bloque toutes migrations, archive rollback-verified empêche rejeu. Risques SIGKILL/panne/fermeture échouée/commit incertain/charge PostgreSQL partagé maintenus.
+
+Vérifications réelles : UID1002, Remote en ligne, chemins/Git/hashes initiaux concordants ; audit dental_lab READ ONLY PostgreSQL17.11 confirme absence CREATE/TEMP et dental-migrate, tables de test absentes. 13 tests unitaires locaux et VPS réussis, avec appels admin/SQL simulés explicitement ; syntaxe 11 blocs Bash/3 Python et checksums cohérents ; refus non-root réel confirmé. Test d’intégration réel ajouté (lanceur installé, contrôle positif puis CREATE/INSERT/erreur22012 et absence table/receipt, pending et fermeture), NON EXÉCUTÉ : retourne BLOQUÉ code77 sous UID1002 avant toute DDL. Aucun cluster parallèle/installation/élargissement pour masquer ce manque.
+
+Fichiers : cinq documents/scripts dans docs/admin-proposals, trois SQL techniques versionnés dans migrations, SHA256SUMS de livraison ; ROADMAP et journal. VALIDATION_2_6.md détaille preuves et limites. Destinations /usr/local/sbin/dental-lab-migrate et /var/lib/dental-lab-migrations/admin-tests absentes : installation proposée, pas effectuée ; binaires et parents existants contrôlés, HBA/service gardent preuve administrateur antérieure sans nouvelle lecture privilégiée.
+
+Action attendue : utilisateur fait relire fichiers corrigés/rapport, aucune commande administrateur maintenant ; après approbation explicite future, installation et intégration contrôlée devront fournir les preuves avant validation 2.6. Suivi non commité/non poussé ; aucun rôle/permission/HBA/service/base modifié, aucun voisin accédé. 2.7 non commencé. R03 ouvert.
+
+
+### Clôture du point 2.6 — Révision 3 installée et intégration réelle prouvée
+
+2026-10-10T01:33:55+02:00 [Europe/Brussels, horloge VPS]. Statut : ☑ Validé. Rapport administrateur utilisateur : installation root rev3 SHA256 698472ebcc0ca0f8a1d74151cb7331ecfa9e113d8231f9262b3ba6f535de9ea1, root:root 555, rev2 sauvegardée ; comptes Linux/SQL dédiés et HBA ciblé installés. Probe 0000 identité dental_lab/dental-migrate/dental_lab_migrator et permissions 1 ; contrôle positif 9901 CREATE/INSERT/assertion/DROP ; 9900 CREATE/INSERT puis erreur 22012, rollback sans table persistante. Refus non-root/traversée/SHA erroné réussis. Deux reçus succès, archive rollback-verified et aucun pending ; snapshot/SHA de l'échec contrôlés avant archivage. Preuves administrateur attribuées, pas réexécutées par l'IA.
+
+Vérifications directes de reprise : Remote en ligne sous dental-ai UID1002/cgroup dédié ; /srv/dental-lab propriétaire privé 700 ; lanceur installé SHA exact et root:root 555. Audit dental_lab BEGIN READ ONLY/COMMIT achevé : PostgreSQL17.11, dental-migrate NOLOGIN sans attribut administratif, zéro session ; dental-ai ni migrator ni owner ni CREATE base/public ; deux tables techniques absentes. Services dental-ai-remote, dental-site et postgresql@17-main actifs. Aucun rôle/HBA/lanceur root/service modifié et aucune fixture rejouée.
+
+Concordance source corrigée dans le projet uniquement : source principale et tests alignés sur rev3 validée ; copie temporaire de revue identique retirée pour éviter deux sources concurrentes ; trois SQL et test d'intégration inchangés, versions déjà consommées à ne pas rejouer. Documents de proposition étiquetés historiques, contrat actuel ajouté et SHA actualisés. Tous changements précédents non commités attribuables au seul point2.6.
+
+Autorisation future : chaque SQL ET SHA256 exigent toujours approbation administrateur explicite. Aucun droit permanent de migration/administration pour l'IA. Sauvegarde et retour arrière adaptés obligatoires avant risque matériel ; atomicité démontrée sur ces fixtures transactionnelles uniquement, pas pour séquences/effets externes ni coupure près du commit. Pending reste bloquant et à résoudre humainement ; NOLOGIN n'arrête pas les sessions existantes. Réseau/processus/IPC/CPU/IO serveur partagés, client systemd non assimilé à isolation complète, rétention snapshots et sécurité production à réévaluer ; données médicales réelles toujours interdites avant gates dédiées. R03 : composante migrations résolue, runtime/secrets restent à traiter en2.7–2.8.
+
+Contrôles avant commit : tests unitaires rev3 (appels administrateur simulés uniquement), syntaxe scripts/blocs historiques sans exécution, manifest SHA/diff/check secrets/invariants. Git : commit ciblé puis push main après succès, résultat réel dans compte rendu/journal suivant. Suite :2.7, audit secrets/runtime sans lecture d'un secret ni projet voisin.
