@@ -253,7 +253,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 2.8 — Concevoir les privilèges ciblés des services applicatifs
-- **Statut :** ☐ À faire
+- **Statut :** ☑ Validé
 - **Priorité :** Critique
 - **Catégorie / type :** Audit / décision
 - **Zone concernée :** Sécurisation initiale du VPS et de l’accès IA
@@ -4194,3 +4194,12 @@ Reprise : RDC en ligne UID1002/cgroup dédié, chemin physique /srv/dental-lab ;
 Fichiers : .gitignore, .env.example, docs/ENVIRONMENT.md et suivi ROADMAP/journal. Document actualisé retire le contrôle devenu inutile sur runtime exclu ; contrat secrets publics/privés, validation serveur future et séparation audit/runtime explicites. Point2.7 ne déclare pas les secrets futurs installés/protégés : contrôles effectifs19.3/19.4 obligatoires avant mise en service, autorisation administrateur distincte, aucune donnée patient réelle. Critères non réalisés de production ne sont pas marqués validés.
 
 Vérifications : check-ignore de variantes env/log/cache et exemple versionnable, contenu exemple sans credential, syntaxe/documentation/217points/diff--check et secrets avant commit. Aucune modification service/permission/rôle/HBA/lanceur root, aucune lecture de secret, aucune fixture rejouée. Git : commit ciblé2.7 puis push main après succès ; hash réel enregistré au compte rendu et entrée suivante. Suite automatique2.8, conception des privilèges seulement, pas installation.
+
+
+### Point2.8 — Conception des privilèges du runtime indépendant
+
+2026-10-10T01:45:53+02:00 Europe/Brussels. Statut : ☑ Validé (conception seulement). Commit2.7 confirmé03bee91f3ae8e769725d3cb87e2941a04e68f7e3 poussé, distant égal, arbre propre. Audit : pas de code/package applicatif ; compte candidat dental-lab-runtime et rôle SQL du même nom absents, unité candidate /etc/systemd/system/dental-lab-api.service et wrapper /usr/local/sbin/dental-lab-service-control absents. Noms/emplacements proposés explicitement, pas objets installés. dental_lab_app NOLOGIN sans attributs administrateur, audit ni migrator ni owner ; transaction READ ONLY achevée. Aucune ressource dental-site réinterrogée.
+
+Document docs/RUNTIME_PRIVILEGES.md : compte indépendant non root, unité backend seule proposée, identities/configurations distinctes, artifacts protégés et secrets hors source, droits SQL uniquement runtime sans DDL/ownership, aucun wrapper nécessaire ni sudo/polkit/wildcard. Création/installation/grants/HBA/secrets/ports/limites et validation opérationnelle restent19.3/19.4 avec approbation explicite ; aucun ExecStart/port/paramètre de production inventé. Approbation SQL/SHA à chaque migration inchangée.
+
+Fichiers : nouveau document de conception et suivi ROADMAP/journal. Vérifications doc/invariants/diff/secrets avant commit ciblé ; aucune création runtime/rôle/unité/secret/wrapper/délégation ni modification de service/HBA/global/voisin. Critères de conception2.8 satisfaits, pas déclaration production prête. Risques réseau/processus/IPC/CPU/IO serveur partagés et absence de confinement complet documentés. Git : commit/push ciblés après contrôles ; résultat réel enregistré ensuite. Suite2.9, rapport des garde-fous, aucune sonde hors périmètre.
