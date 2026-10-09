@@ -268,7 +268,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 2.9 — Valider les garde-fous infrastructure
-- **Statut :** ☐ À faire
+- **Statut :** ☑ Validé
 - **Priorité :** Critique
 - **Catégorie / type :** Audit / décision
 - **Zone concernée :** Sécurisation initiale du VPS et de l’accès IA
@@ -3883,7 +3883,7 @@ Statut : TERMINÉ pour le registre ; aucune résolution technique ou juridique n
 |---|---|---|---|
 | R01 | CLÔTURÉ à 2.1 par audit administrateur utilisateur et contrôles directs concordants ; identité/dossier/sudo/protection des chemins audités établis. Isolation réseau et autres chemins non garantie. Ancien constat : identité et dossier dédiés vérifiés ; politique sudo complète et protection effective des projets voisins non prouvées. RDC bloque sudo ; le groupe users ne démontre ni accès ni absence d’accès. | Administrateur VPS | 2.1 : audit sudo/ACL attribuable par administrateur, sans lecture de secrets voisins ni élargissement des droits. |
 | R02 | Restrictions actuelles non assimilables à une isolation réseau/processus ; interdiction utilisateur de contacter les services voisins. | Administrateur VPS + propriétaire | 2.2–2.4 / G1 : preuves administrateur des frontières et approbation explicite du mode d’isolation en 2.3. Ne pas exécuter les sondes interprojets suggérées par la roadmap. |
-| R03 | Migrations bornées validées en2.6, exécutant dédié NOLOGIN ; runtime/secrets applicatifs encore à traiter en2.7–2.8. | Administrateur VPS/DB | 2.5–2.8 : identité runtime séparée, migrations bornées et secrets protégés ; aucune délégation générique ni code éditable lancé sous root/postgres. |
+| R03 | Migrations2.6 validées ; préparation/conception runtime indépendant2.7–2.8 validées sans installation ; secrets et permissions opérationnels à prouver19.3–19.4. | Administrateur VPS/DB | 2.5–2.8 : identité runtime séparée, migrations bornées et secrets protégés ; aucune délégation générique ni code éditable lancé sous root/postgres. |
 | R04 | Versions compatibles déclarées, sans résolution/installations encore faites ; évolution possible avant installation. | Agent | 5.2 et fondations : revérifier versions stables, engines/peers, résolution et contrôles ; TS6 retenu, ne pas imposer TS7. |
 | R05 | PWA et stockage chiffré réalisables par API ; quotas, éviction, verrouillage et fichiers volumineux pas éprouvés sur appareils réels. | Agent + propriétaire pour appareils cibles | 3.8, 15.3, 15.10 / G3 : crypto et récupération conçues, tests navigateurs/appareils avec quota atteint et pertes contrôlées ; aucune garantie illimitée de stockage local. |
 | R06 | Hors ligne, suspension non instantanément révocable ; conflit et envoi doivent rester explicites. | Agent + propriétaire pour recette | 15.5–15.9 / G3 : isolation par compte, purge au retour réseau, version concurrente, reprise/ack fichiers et absence de soumission automatique démontrées. |
@@ -4203,3 +4203,21 @@ Vérifications : check-ignore de variantes env/log/cache et exemple versionnable
 Document docs/RUNTIME_PRIVILEGES.md : compte indépendant non root, unité backend seule proposée, identities/configurations distinctes, artifacts protégés et secrets hors source, droits SQL uniquement runtime sans DDL/ownership, aucun wrapper nécessaire ni sudo/polkit/wildcard. Création/installation/grants/HBA/secrets/ports/limites et validation opérationnelle restent19.3/19.4 avec approbation explicite ; aucun ExecStart/port/paramètre de production inventé. Approbation SQL/SHA à chaque migration inchangée.
 
 Fichiers : nouveau document de conception et suivi ROADMAP/journal. Vérifications doc/invariants/diff/secrets avant commit ciblé ; aucune création runtime/rôle/unité/secret/wrapper/délégation ni modification de service/HBA/global/voisin. Critères de conception2.8 satisfaits, pas déclaration production prête. Risques réseau/processus/IPC/CPU/IO serveur partagés et absence de confinement complet documentés. Git : commit/push ciblés après contrôles ; résultat réel enregistré ensuite. Suite2.9, rapport des garde-fous, aucune sonde hors périmètre.
+
+
+### Point2.9 — Consolidation des garde-fous, preuve services manquante
+
+2026-10-10T01:47:53+02:00 Europe/Brussels. Statut : ⚠ Bloqué. Commit2.8 confirmé0c116d094e9c5e77b82dd058cd67a82c88e0b746 poussé, distant identique, arbre propre. Critères2.9 relus : refus projets/bases/services/secrets et limites réseau dans rapport reproductible. Preuves2.1–2.8 disponibles consolidées dans docs/INFRASTRUCTURE_GUARDS.md ; sources administrateur/directes et limites distinctes. Aucun test vers un voisin effectué.
+
+Manque : preuve de refus de gestion des services via autorisations systemd/Polkit/délégations effectives applicables à dental-ai ; absence de sudo seule insuffisante. Contrôle minimal demandé : rapport administrateur lecture seule des politiques/délégations couvrant ce compte, actions et unités hors périmètre, commandes/resultats expurgés ; aucune action start/stop/restart/reload réelle pour tester, aucune modification de politique/droits/service. La règle accès Remote activable après validation est confrontée à l’autorisation utilisateur2.3 déjà en vigueur : ne pas arrêter Remote, aucune extension autorisée. Risques réseau/IPC/ressources déjà acceptés en développement ne sont pas effacés ni transformés en isolation complète.
+
+Fichiers : document de rapport, ROADMAP/statut/R03 et journal seulement ; aucun secret/compte/runtime/rôle/service/HBA/lanceur créé ou modifié. Vérifications structure217points/doc/absence secrets/diff--check ; suivi non commité/non poussé puisque2.9 non validé. Pas de3.1. Action : preuve administrateur d’autorisation/refus des services, puis réévaluation2.9 ; aucun élargissement de permissions demandé.
+
+
+### Clôture2.9 — Garde-fous validés pour développement
+
+2026-10-10T01:51:59+02:00 Europe/Brussels. Statut : ☑ Validé (mode de développement2.3, pas production/isolation complète). Reprise Remote en ligne UID1002/cgroup dédié/projet réel ; changements2.9 identifiés, HEAD0c116d0. Rapport Polkit administrateur intégré : pas sudo/groupes administratifs/règle locale, règles système identifiées sans délégation dans lignes examinées ; manage-units auth_admin/auth_admin/auth_admin_keep, pkcheck sans interaction code2. Résultat attribué, pas absence universelle de permissions inventée.
+
+Complément direct ciblé et lecture seule : pkcheck présent /usr/bin ; manage-unit-files, reload-daemon, set-environment sous sujet bash dental-ai/cgroup Remote : trois code2 et authentification requise. Aucune option interactive ni demande d’opération réelle, aucun accès/service voisin ciblé. Audit4catégories générales plus preuves2.1–2.8 satisfont le rapport reproductible dans le mode explicitement accepté. L’exigence de rapport précédente « toutes les autorisations » est corrigée : limites non effacées, exceptions par unité/contexte/voie différente non entièrement démontrées ; tout changement entraîne réaudit.
+
+Fichiers : docs/INFRASTRUCTURE_GUARDS.md, ROADMAP et journal. Réseau/IPC/processus/ressources hôte/cluster partagés, production et runtime effectifs non validés, gates19.3/19.4 et sécurité inchangés ; Remote2.3 autorisé reste actif sans extension. Pas de service/root-lanceur/rôle/HBA/secret/permission modifié, aucune fixture rejouée. Contrôles : syntaxe du bloc sans re-test Polkit, invariants217points/diff/absence secrets. Git : commit et push ciblés après succès, résultat réel au compte rendu/journal suivant. Suite automatique3.1, audit architecture applicative.
