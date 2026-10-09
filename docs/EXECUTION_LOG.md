@@ -182,3 +182,13 @@ Modifications : docs/architecture.md et docs/decisions/0001-stack.md, 0002-modul
 Validation : comparaison JSON du graphe à 1.4 réussie ; toutes les cibles définies, parcours sans cycle ; liens relatifs résolus ; UID 1002/modes 600/non-symlinks contrôlés ; scan élémentaire de secrets et git diff --check réussis. Revue documentaire contre §§2–17 et exclusions §18, distinction de conception et implémentation maintenue. Typage/lint/build/tests applicatifs sans objet, code absent. Aucun service, permission, SQL, launcher ou fixture modifié/exécuté.
 
 Risques restants : faisabilité appareils/offline, capacité/stockage, transport, fournisseurs, sécurité/conformité et production aux jalons existants. Statut final : ☑ Validé pour 3.1. Git : commit ciblé après contrôle du diff ; identifiant porté par l'historique Git et compte rendu, push à vérifier. Suite : 3.2, modèle comptes et cliniques.
+
+### Point 3.2 — Modèle comptes et cliniques
+
+Date : 2026-10-10T01:58:10.180718+02:00 (Europe/Brussels). État initial : 3.1 validé, commit 4acb5a41d11a861e2a4bb11c62622b7d4716a56c poussé et arbre propre ; identité UID 1002 et chemin projet contrôlés. Audit SQL en lecture seule : current_database/current_user = dental_lab/dental-ai ; aucune table public. Critères 3.2 et §§2, 9, 11, 15, 17 confrontés.
+
+Modifications : docs/models/accounts-clinics.md et lien dans docs/architecture.md. Modèle proposé : compte propriétaire unique, profils individuels labo et compte partagé clinique, clés/FK/unicités, invitations et sessions, états d'approbation/suspension/blocage séparés, changement d'e-mail confirmé, historique et récupération exceptionnelle. Aucun workflow financier ou rôle ajouté ; paramètres de tokens et sécurité à préciser aux étapes d'implémentation.
+
+Validation : revue des associations et des invariants/exceptions contre le cahier des charges, liens résolus, UID/modes privés/non-symlinks, scan élémentaire secrets et diff Git contrôlés. La matrice de concurrence/refus est une conception de tests futurs ; aucun test applicatif ou migration prétendu exécuté. Aucun SQL écrit/exécuté en modification, aucune fixture ni service touché.
+
+Statut final : ☑ Validé pour la conception 3.2 ; migration et contraintes réelles non installées. Git : commit ciblé après contrôles, push à vérifier et identifiant dans l'historique/compte rendu. Risques : choix sécurité et procédures exceptionnelles avant implémentation, confidentialité et données réelles avant production. Suite automatique : 3.3, droits granulaires.
