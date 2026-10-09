@@ -1,0 +1,3952 @@
+# ROADMAP — Plateforme privée de gestion d’un laboratoire dentaire
+
+**Version :** 1.0 — 09/10/2026  
+**Statut :** plan de développement exhaustif à exécuter et vérifier — pas une preuve d’implémentation  
+**Documents sources :** `CAHIER_DES_CHARGES.md` (vérité métier), `ARCHITECTURE_ADAPTEE.md` (règles de structure ; décisions à compléter), modèle de présentation `ROADMAP.docx` de Flo’s Bikes (structure uniquement).  
+**Périmètre :** laboratoire et cliniques au Kosovo, application privée en albanais, PWA tablette-first.  
+**Environnement connu :** Debian 13, PostgreSQL 17, `/srv/dental-lab`, utilisateur Linux `dental-ai`, base `dental_lab`, rôles `dental_lab_owner`, `dental_lab_audit`, `dental_lab_migrator`, `dental_lab_app`. Les droits existants sont à **réauditer**, pas à recréer ; stack et domaine applicatifs non choisis.
+
+> Cette roadmap n'ajoute pas de fonction métier non validée. Les sujets juridiques et techniques encore ouverts sont des **portes de validation** : l'IA doit les instruire, pas inventer leur résolution. Elle ne doit jamais considérer « tous les points cochés » comme équivalent à un site exploitable si les tests terrain ou obligations avant production échouent.
+
+## Progression et règles d'exécution
+
+- Statuts permis : `☐ À faire`, `◐ En cours`, `☑ Validé`, `⚠ Bloqué`, `↷ Sans objet justifié`.
+- **Un point = un objectif atomique vérifiable.** Plusieurs fichiers peuvent être nécessaires à un même comportement, mais une même étape ne doit pas mélanger deux besoins indépendants.
+- Avant chaque point : lire le code, les décisions, les migrations et l'état effectif du VPS ; relever contradictions et dépendances ; ne pas réinitialiser des objets déjà créés.
+- La roadmap est un **plan, jamais une autorisation d'exécuter** des migrations, de modifier Nginx, de redémarrer des services ou de changer les privilèges sur un VPS partagé.
+- Les modifications sont strictement confinées au projet, à sa base et à ses services ; toute opération privilégiée exige un mécanisme validé et borné.
+- Vérifier proportionnellement : format, lint, types, tests pertinents, build, migration, sécurité, diff, état Git et effets externes. Ne jamais affirmer un test non fait.
+- Toute étape touchant des données réelles exige une revue de confidentialité ; aucune donnée réelle de patient avant les portes légales et sécurité.
+- Les catégories prix/facturation/paiement/garantie financière et portail patient sont **hors périmètre V1** ; ne pas importer Stripe, panier, SEO e-commerce ou réservations de Flo's Bikes.
+
+**Politique de dépendances :** toutes les tâches d'un chapitre exigent les fondations pertinentes des chapitres antérieurs ; la ligne « Dépend de » indique les portes minimales, sans empêcher la parallélisation sûre d'étapes indépendantes. Les chapitres architecture/UX peuvent itérer avant le choix de stack, mais aucune initialisation ne doit supposer un framework non validé.
+
+## Table des chapitres
+
+- ☐ **Chapitre 01 — Cadrage, sources et contrôle du périmètre** (6 points)
+- ☐ **Chapitre 02 — Sécurisation initiale du VPS et de l’accès IA** (9 points)
+- ☐ **Chapitre 03 — Architecture détaillée et modélisation** (11 points)
+- ☐ **Chapitre 04 — Design UX tablette-first et validation** (14 points)
+- ☐ **Chapitre 05 — Initialisation du code et qualité** (9 points)
+- ☐ **Chapitre 06 — Fondations PostgreSQL et migrations** (11 points)
+- ☐ **Chapitre 07 — Authentification, comptes et gouvernance** (15 points)
+- ☐ **Chapitre 08 — Catalogue et paramètres** (6 points)
+- ☐ **Chapitre 09 — Commande clinique : saisie et dépôt** (10 points)
+- ☐ **Chapitre 10 — Workflow et décisions des commandes** (15 points)
+- ☐ **Chapitre 11 — Retouches et refabrications** (6 points)
+- ☐ **Chapitre 12 — Fichiers privés et transferts** (13 points)
+- ☐ **Chapitre 13 — Messagerie temps réel** (9 points)
+- ☐ **Chapitre 14 — Notifications, e-mails et alertes** (9 points)
+- ☐ **Chapitre 15 — PWA, hors ligne et brouillons** (10 points)
+- ☐ **Chapitre 16 — Planning, livraisons, archives et recherche** (9 points)
+- ☐ **Chapitre 17 — Administration, audit, rétention et conformité** (13 points)
+- ☐ **Chapitre 18 — Sécurité, fiabilité et performances** (8 points)
+- ☐ **Chapitre 19 — Infrastructure production et exploitation** (12 points)
+- ☐ **Chapitre 20 — Recette de bout en bout** (12 points)
+- ☐ **Chapitre 21 — Mise en production et clôture** (10 points)
+
+## Modèle de réception d’un point
+
+Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état initial, **(2)** les fichiers/objets affectés, **(3)** la preuve de tests adaptés, **(4)** le contrôle des privilèges et du non-impact sur les autres projets le cas échéant, **(5)** un diff Git/release propre si du code a été modifié, **(6)** les limitations connues documentées. Un point de conformité nécessite en outre un justificatif vérifiable de la personne compétente, pas une auto-attestation de l'IA.
+
+---
+
+
+## Chapitre 01 — Cadrage, sources et contrôle du périmètre
+
+### 1.1 — Auditer les trois documents de référence
+- **Statut :** ☑ Validé
+- **Priorité :** Haute
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Cadrage, sources et contrôle du périmètre
+- **Dépend de :** État préalable à vérifier ; obligations et accès autorisés
+- **But :** auditer les trois documents de référence.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Établir la traçabilité entre exigences métier, principes architecturaux et étapes techniques.
+- **Validation :** Matrice sans exigence oubliée ni technologie présentée comme déjà décidée.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 1.2 — Auditer le répertoire de développement et les dépôts existants
+- **Statut :** ☑ Validé
+- **Priorité :** Haute
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Cadrage, sources et contrôle du périmètre
+- **Dépend de :** État préalable à vérifier ; obligations et accès autorisés
+- **But :** auditer le répertoire de développement et les dépôts existants.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Vérifier le contenu effectif de /srv/dental-lab, les dépôts et tout code à préserver.
+- **Validation :** État initial et décision de réutilisation documentés ; aucun écrasement.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 1.3 — Valider le choix de stack par décision d’architecture
+- **Statut :** ☑ Validé
+- **Priorité :** Haute
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Cadrage, sources et contrôle du périmètre
+- **Dépend de :** État préalable à vérifier ; obligations et accès autorisés
+- **But :** valider le choix de stack par décision d’architecture.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Comparer stack compatible PWA, temps réel, uploads, sécurité et déploiement ; choisir explicitement versions et outils avant initialisation.
+- **Validation :** ADR validée avec critères de compatibilité et sans supposer TanStack, Express ou ORM.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 1.4 — Définir les frontières et contrats des modules métier
+- **Statut :** ☑ Validé
+- **Priorité :** Haute
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Cadrage, sources et contrôle du périmètre
+- **Dépend de :** État préalable à vérifier ; obligations et accès autorisés
+- **But :** définir les frontières et contrats des modules métier.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Cartographier comptes, cliniques, commandes, travaux liés, messages, fichiers, catalogue et exploitation.
+- **Validation :** Dépendances orientées ; propriétaires métiers explicites.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 1.5 — Établir une matrice des exigences vers tests et chapitres
+- **Statut :** ☑ Validé
+- **Priorité :** Haute
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Cadrage, sources et contrôle du périmètre
+- **Dépend de :** État préalable à vérifier ; obligations et accès autorisés
+- **But :** établir une matrice des exigences vers tests et chapitres.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Pour chaque exigence du cahier, relever identifiant, couverture roadmap et preuve attendue.
+- **Validation :** Aucun besoin obligatoire orphelin ; exclusions conservées.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 1.6 — Établir registre des risques et décisions ouvertes
+- **Statut :** ☑ Validé
+- **Priorité :** Haute
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Cadrage, sources et contrôle du périmètre
+- **Dépend de :** État préalable à vérifier ; obligations et accès autorisés
+- **But :** établir registre des risques et décisions ouvertes.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Lister faisabilités PWA, réseau, capacité VPS, conformité Kosovo, continuité et sauvegardes.
+- **Validation :** Responsables, conditions et jalons bloquants explicites.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 02 — Sécurisation initiale du VPS et de l’accès IA
+
+### 2.1 — Réauditer les identités Linux et les ACL
+- **Statut :** ☑ Validé
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Sécurisation initiale du VPS et de l’accès IA
+- **Dépend de :** État préalable à vérifier ; obligations et accès autorisés
+- **But :** réauditer les identités Linux et les ACL.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Contrôler dental-ai, groupes, sudo, /srv/dental-lab et protection effective des autres projets.
+- **Validation :** Aucun droit élargi ni altération des autres services.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 2.2 — Réauditer les frontières réseau et processus
+- **Statut :** ⚠ Bloqué
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Sécurisation initiale du VPS et de l’accès IA
+- **Dépend de :** État préalable à vérifier ; obligations et accès autorisés
+- **But :** réauditer les frontières réseau et processus.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Tester ports locaux, sockets, services internes, accès interprojets et limites Linux sans privilèges.
+- **Validation :** Risques de traversée identifiés et contrôles décidés.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 2.3 — Définir le mode d’isolation de l’agent Remote
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Sécurisation initiale du VPS et de l’accès IA
+- **Dépend de :** État préalable à vérifier ; obligations et accès autorisés
+- **But :** définir le mode d’isolation de l’agent Remote.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Comparer utilisateur seul, sandbox système, conteneur rootless et VPS isolé ; documenter les risques résiduels.
+- **Validation :** Solution explicitement approuvée pour l’accès IA ; aucun accès global par défaut.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 2.4 — Encadrer le connecteur Remote sur dental-ai
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Sécurisation initiale du VPS et de l’accès IA
+- **Dépend de :** État préalable à vérifier ; obligations et accès autorisés
+- **But :** encadrer le connecteur Remote sur dental-ai.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Configurer le connecteur pour exécuter les commandes dans l’identité dédiée et le répertoire autorisé.
+- **Validation :** Test d’identité et de refus hors périmètre ; pas de credentials de debian.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 2.5 — Réauditer PostgreSQL et les rôles dental_lab existants
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Sécurisation initiale du VPS et de l’accès IA
+- **Dépend de :** État préalable à vérifier ; obligations et accès autorisés
+- **But :** réauditer PostgreSQL et les rôles dental_lab existants.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Vérifier réellement la base dental_lab, NOLOGIN, audit, migrator et pg_hba ; ne pas recréer les objets existants.
+- **Validation :** Inventaire des privilèges et test de refus sur les autres bases.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 2.6 — Mettre en place une exécution de migrations strictement scoped
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Sécurisation initiale du VPS et de l’accès IA
+- **Dépend de :** État préalable à vérifier ; obligations et accès autorisés
+- **But :** mettre en place une exécution de migrations strictement scoped.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Définir identité de migration distincte, autorisation contrôlée et revue des migrations risquées ; ne jamais exécuter SQL arbitraire en superuser.
+- **Validation :** Migrations uniquement sur dental_lab, sauvegarde/rollback selon risque.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 2.7 — Préparer les secrets et l’environnement du projet
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Sécurisation initiale du VPS et de l’accès IA
+- **Dépend de :** État préalable à vérifier ; obligations et accès autorisés
+- **But :** préparer les secrets et l’environnement du projet.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Isoler configuration, secrets et compte runtime, sans lecture des .env des autres applications.
+- **Validation :** Fichiers de secrets privés, absent de Git/logs et non accessibles à l’agent hors besoin.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 2.8 — Concevoir les privilèges ciblés des services applicatifs
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Sécurisation initiale du VPS et de l’accès IA
+- **Dépend de :** État préalable à vérifier ; obligations et accès autorisés
+- **But :** concevoir les privilèges ciblés des services applicatifs.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Définir seulement les unités propres au labo et des wrappers root-owned non modifiables par l’IA si indispensables.
+- **Validation :** Aucun sudo générique, aucun systemctl * et aucune exécution root de code éditable.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 2.9 — Valider les garde-fous infrastructure
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Sécurisation initiale du VPS et de l’accès IA
+- **Dépend de :** État préalable à vérifier ; obligations et accès autorisés
+- **But :** valider les garde-fous infrastructure.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Prouver les refus d’accès aux projets, bases, services et secrets voisins, et relever les limites réseau.
+- **Validation :** Rapport de tests reproductible ; accès Remote activable seulement après validation.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 03 — Architecture détaillée et modélisation
+
+### 3.1 — Établir l’architecture applicative détaillée
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Architecture détaillée et modélisation
+- **Dépend de :** Fondations pertinentes des chapitres 01–02 et tâches préalables de ce chapitre
+- **But :** établir l’architecture applicative détaillée.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Décliner le monolithe modulaire générique en modules propres au laboratoire avec choix de stack validé.
+- **Validation :** docs/architecture.md et ADR cohérents.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 3.2 — Concevoir le modèle de données comptes et cliniques
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Architecture détaillée et modélisation
+- **Dépend de :** Fondations pertinentes des chapitres 01–02 et tâches préalables de ce chapitre
+- **But :** concevoir le modèle de données comptes et cliniques.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Schématiser propriétaire unique, administrateurs, employés, compte partagé de clinique, invitations et états.
+- **Validation :** Clés, unicités, historique et associations explicités.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 3.3 — Concevoir le modèle des droits granulaires
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Architecture détaillée et modélisation
+- **Dépend de :** Fondations pertinentes des chapitres 01–02 et tâches préalables de ce chapitre
+- **But :** concevoir le modèle des droits granulaires.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Distinguer accès logistique/détaillé, fichiers lecture/téléchargement, messages lecture/réponse et actions.
+- **Validation :** Matrice de dépendances et contrôle serveur définis.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 3.4 — Concevoir le modèle de commande et versions
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Architecture détaillée et modélisation
+- **Dépend de :** Fondations pertinentes des chapitres 01–02 et tâches préalables de ce chapitre
+- **But :** concevoir le modèle de commande et versions.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Modéliser dentition FDI, snapshot des référentiels, dates, fichiers, versions et verrouillage.
+- **Validation :** Statuts et versions sans perte d’historique.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 3.5 — Formaliser les automates de statuts et demandes
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Architecture détaillée et modélisation
+- **Dépend de :** Fondations pertinentes des chapitres 01–02 et tâches préalables de ce chapitre
+- **But :** formaliser les automates de statuts et demandes.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Définir transitions, annulations, corrections, demandes pendantes et invariants.
+- **Validation :** Table de transitions exhaustive et scénarios concurrents documentés.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 3.6 — Concevoir les commandes liées et retouches
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Architecture détaillée et modélisation
+- **Dépend de :** Fondations pertinentes des chapitres 01–02 et tâches préalables de ce chapitre
+- **But :** concevoir les commandes liées et retouches.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Modéliser remplacement, travail supplémentaire, retouche liée au travail livré et unicité d’intervention active.
+- **Validation :** Liens cohérents, règles d’identité et anti-doublon.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 3.7 — Concevoir les fichiers, leurs ACL et leur cycle de vie
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Architecture détaillée et modélisation
+- **Dépend de :** Fondations pertinentes des chapitres 01–02 et tâches préalables de ce chapitre
+- **But :** concevoir les fichiers, leurs ACL et leur cycle de vie.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Séparer originaux de fabrication, suivi interne/partagé, messages et fragments temporaires.
+- **Validation :** Modèle de référence et politique de visibilité documentés.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 3.8 — Concevoir brouillons local/serveur et synchronisation
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Architecture détaillée et modélisation
+- **Dépend de :** Fondations pertinentes des chapitres 01–02 et tâches préalables de ce chapitre
+- **But :** concevoir brouillons local/serveur et synchronisation.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Définir versionnement, conflits, cryptographie locale, pièces jointes, soumission explicite.
+- **Validation :** Machine d’état de synchronisation et comportements de panne spécifiés.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 3.9 — Concevoir les événements, notifications et audit
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Architecture détaillée et modélisation
+- **Dépend de :** Fondations pertinentes des chapitres 01–02 et tâches préalables de ce chapitre
+- **But :** concevoir les événements, notifications et audit.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Événements métier, destinataires, e-mails asynchrones, message lu, alertes et audit immuable applicativement.
+- **Validation :** Matrice événements / canaux / visibilité / retries.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 3.10 — Concevoir rétention, sauvegardes et reprise
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Architecture détaillée et modélisation
+- **Dépend de :** Fondations pertinentes des chapitres 01–02 et tâches préalables de ce chapitre
+- **But :** concevoir rétention, sauvegardes et reprise.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Cartographier suppression, archives J+30, backups 30 jours, RPO 1h/RTO 4h sous réserve de tests.
+- **Validation :** Plan de rétention et cohérence DB-fichiers.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 3.11 — Concevoir contrat API et erreurs métier
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Audit / décision
+- **Zone concernée :** Architecture détaillée et modélisation
+- **Dépend de :** Fondations pertinentes des chapitres 01–02 et tâches préalables de ce chapitre
+- **But :** concevoir contrat API et erreurs métier.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Définir schémas, versionnage, pagination, rate limiting, idempotence et erreurs stables.
+- **Validation :** Contrats réutilisés entre clients et serveur.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 04 — Design UX tablette-first et validation
+
+### 4.1 — Définir direction visuelle en albanais
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Design
+- **Zone concernée :** Design UX tablette-first et validation
+- **Dépend de :** Fondations pertinentes des chapitres 01–03 et tâches préalables de ce chapitre
+- **But :** définir direction visuelle en albanais.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Concevoir une interface privée de laboratoire épurée, lisible et accessible, sans tableau de bord chargé.
+- **Validation :** Tokens, typographie et parcours prioritaires approuvés.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 4.2 — Dessiner navigation et accès par rôle
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Design
+- **Zone concernée :** Design UX tablette-first et validation
+- **Dépend de :** Fondations pertinentes des chapitres 01–03 et tâches préalables de ce chapitre
+- **But :** dessiner navigation et accès par rôle.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Portails labo/clinique, authentification, menu et permissions visibles.
+- **Validation :** Navigation responsive sans fuite de zones interdites.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 4.3 — Concevoir inscription, approbation et récupération
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Design
+- **Zone concernée :** Design UX tablette-first et validation
+- **Dépend de :** Fondations pertinentes des chapitres 01–03 et tâches préalables de ce chapitre
+- **But :** concevoir inscription, approbation et récupération.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Écrans et états de formulaire, invitation et sécurité de compte.
+- **Validation :** Parcours validables sur téléphone et tablette.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 4.4 — Concevoir schéma dentaire tactile FDI
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Design
+- **Zone concernée :** Design UX tablette-first et validation
+- **Dépend de :** Fondations pertinentes des chapitres 01–03 et tâches préalables de ce chapitre
+- **But :** concevoir schéma dentaire tactile FDI.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** 32 dents, 3 états au toucher, résumé accessible et sans sélection obligatoire.
+- **Validation :** Test tactile + clavier/lecteur si applicable.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 4.5 — Concevoir formulaire de commande complet
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Design
+- **Zone concernée :** Design UX tablette-first et validation
+- **Dépend de :** Fondations pertinentes des chapitres 01–03 et tâches préalables de ce chapitre
+- **But :** concevoir formulaire de commande complet.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Patient nom/prénom ou référence, matériau, teinte, dates, pièces jointes et avertissements.
+- **Validation :** Formulaire cohérent sur petit écran, sans exigences ajoutées.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 4.6 — Concevoir listes et détail des travaux
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Design
+- **Zone concernée :** Design UX tablette-first et validation
+- **Dépend de :** Fondations pertinentes des chapitres 01–03 et tâches préalables de ce chapitre
+- **But :** concevoir listes et détail des travaux.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Boîte de réception prioritaire, listes filtrées, détail, versions et actions d’état.
+- **Validation :** Travail identifiable et traitable en peu d’actions.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 4.7 — Concevoir modifications, annulations et corrections
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Design
+- **Zone concernée :** Design UX tablette-first et validation
+- **Dépend de :** Fondations pertinentes des chapitres 01–03 et tâches préalables de ce chapitre
+- **But :** concevoir modifications, annulations et corrections.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Avant/après, demande en attente, retrait, motifs et confirmation.
+- **Validation :** Actions et statuts non ambigus.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 4.8 — Concevoir retouches et chaînes de travaux
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Design
+- **Zone concernée :** Design UX tablette-first et validation
+- **Dépend de :** Fondations pertinentes des chapitres 01–03 et tâches préalables de ce chapitre
+- **But :** concevoir retouches et chaînes de travaux.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Retouche simplifiée, commande liée, remplacement, historique lisible.
+- **Validation :** Travail réellement livré identifié sans confusion.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 4.9 — Concevoir messagerie temps réel
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Design
+- **Zone concernée :** Design UX tablette-first et validation
+- **Dépend de :** Fondations pertinentes des chapitres 01–03 et tâches préalables de ce chapitre
+- **But :** concevoir messagerie temps réel.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Conversation générale versus commande, unread, pièces jointes, Lu et clôture.
+- **Validation :** Parcours complet sans croisement des conversations.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 4.10 — Concevoir calendrier et livraison groupée
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Design
+- **Zone concernée :** Design UX tablette-first et validation
+- **Dépend de :** Fondations pertinentes des chapitres 01–03 et tâches préalables de ce chapitre
+- **But :** concevoir calendrier et livraison groupée.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Semaine/mois, drag-drop desktop, détail mobile, Prêts à livrer, confirmation en lot.
+- **Validation :** Dates distinctes et manipulation mobile claire.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 4.11 — Concevoir fichiers et progression des transferts
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Design
+- **Zone concernée :** Design UX tablette-first et validation
+- **Dépend de :** Fondations pertinentes des chapitres 01–03 et tâches préalables de ce chapitre
+- **But :** concevoir fichiers et progression des transferts.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Ajout/retrait, aperçu autorisé, zip, erreurs, reprise et saturation.
+- **Validation :** États progressifs et taille affichée.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 4.12 — Concevoir brouillons PWA hors ligne
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Design
+- **Zone concernée :** Design UX tablette-first et validation
+- **Dépend de :** Fondations pertinentes des chapitres 01–03 et tâches préalables de ce chapitre
+- **But :** concevoir brouillons PWA hors ligne.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** État offline, déverrouillage, stockage limité, conflit, reprise et confirmation avant envoi.
+- **Validation :** Scénarios offline complets visibles et compréhensibles.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 4.13 — Concevoir outils propriétaire et exceptions
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Design
+- **Zone concernée :** Design UX tablette-first et validation
+- **Dépend de :** Fondations pertinentes des chapitres 01–03 et tâches préalables de ce chapitre
+- **But :** concevoir outils propriétaire et exceptions.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Permissions, comptes, catalogue interdit, audit, mails échoués, stockage, maintenance et archives.
+- **Validation :** Fonctions sensibles accessibles mais non envahissantes.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 4.14 — Auditer et valider design et accessibilité
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Design
+- **Zone concernée :** Design UX tablette-first et validation
+- **Dépend de :** Fondations pertinentes des chapitres 01–03 et tâches préalables de ce chapitre
+- **But :** auditer et valider design et accessibilité.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Tester responsive, albanais, textes longs, loading, erreurs, empty, modal, focus et contrastes.
+- **Validation :** Maquettes et règles visuelles acceptées avant câblage.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 05 — Initialisation du code et qualité
+
+### 5.1 — Initialiser le dépôt Git dans le périmètre
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Initialisation du code et qualité
+- **Dépend de :** Fondations pertinentes des chapitres 01–04 et tâches préalables de ce chapitre
+- **But :** initialiser le dépôt Git dans le périmètre.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Vérifier le dépôt existant, initialiser seulement si absent, configurer remote validé.
+- **Validation :** État Git propre et reproductible.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 5.2 — Créer les garde-fous de versionnement
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Initialisation du code et qualité
+- **Dépend de :** Fondations pertinentes des chapitres 01–04 et tâches préalables de ce chapitre
+- **But :** créer les garde-fous de versionnement.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Configurer .gitignore, env.example, fichiers sensibles et scripts interdits.
+- **Validation :** Aucun secret ni upload dans l’index Git.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 5.3 — Initialiser le monorepo ou structure retenue
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Initialisation du code et qualité
+- **Dépend de :** Fondations pertinentes des chapitres 01–04 et tâches préalables de ce chapitre
+- **But :** initialiser le monorepo ou structure retenue.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Mettre en place web/API/contracts selon ADR sans dossiers vides inutiles.
+- **Validation :** Installation reproductible et scripts stables.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 5.4 — Configurer TypeScript et conventions
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Initialisation du code et qualité
+- **Dépend de :** Fondations pertinentes des chapitres 01–04 et tâches préalables de ce chapitre
+- **But :** configurer TypeScript et conventions.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Configurer typecheck strict, formatage, lint, boundaries et règles d’import.
+- **Validation :** Commandes de contrôle fonctionnelles.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 5.5 — Configurer tests unitaires/intégration/e2e
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Initialisation du code et qualité
+- **Dépend de :** Fondations pertinentes des chapitres 01–04 et tâches préalables de ce chapitre
+- **But :** configurer tests unitaires/intégration/e2e.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Outils retenus via ADR, bases et fixtures isolées, commandes reproductibles.
+- **Validation :** Exemple de chaque type de test passe.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 5.6 — Initialiser frontend et design system
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Initialisation du code et qualité
+- **Dépend de :** Fondations pertinentes des chapitres 01–04 et tâches préalables de ce chapitre
+- **But :** initialiser frontend et design system.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Créer shell PWA web conforme aux maquettes sans logique métier.
+- **Validation :** Build fonctionnel et responsive.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 5.7 — Initialiser serveur API et santé
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Initialisation du code et qualité
+- **Dépend de :** Fondations pertinentes des chapitres 01–04 et tâches préalables de ce chapitre
+- **But :** initialiser serveur API et santé.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Démarrage contrôlé, validation config, /health, erreurs stables.
+- **Validation :** Service local et tests santé OK.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 5.8 — Configurer logging sûr et correlation IDs
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Initialisation du code et qualité
+- **Dépend de :** Fondations pertinentes des chapitres 01–04 et tâches préalables de ce chapitre
+- **But :** configurer logging sûr et correlation IDs.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Journal structuré, pas de données de santé ni secrets, journal audit distinct.
+- **Validation :** Exemple d’erreur corrélée et expurgée.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 5.9 — Configurer contrats et schémas partagés
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Initialisation du code et qualité
+- **Dépend de :** Fondations pertinentes des chapitres 01–04 et tâches préalables de ce chapitre
+- **But :** configurer contrats et schémas partagés.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Formats requêtes/réponses validés aux frontières et synchronisés.
+- **Validation :** Détection automatique de rupture contrat.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 06 — Fondations PostgreSQL et migrations
+
+### 6.1 — Mettre en place client PostgreSQL de l’application
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fondations PostgreSQL et migrations
+- **Dépend de :** Fondations pertinentes des chapitres 01–05 et tâches préalables de ce chapitre
+- **But :** mettre en place client PostgreSQL de l’application.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Connexion avec rôle dédié à droits minimaux, pool et timeout.
+- **Validation :** Aucune permission externe à dental_lab.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 6.2 — Mettre en place moteur de migrations versionnées
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fondations PostgreSQL et migrations
+- **Dépend de :** Fondations pertinentes des chapitres 01–05 et tâches préalables de ce chapitre
+- **But :** mettre en place moteur de migrations versionnées.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Historique de migration, verrous, transactions et stratégie de reprise.
+- **Validation :** Migration/rejeu testés sur base isolée.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 6.3 — Créer schéma identité/clinique/permissions
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fondations PostgreSQL et migrations
+- **Dépend de :** Fondations pertinentes des chapitres 01–05 et tâches préalables de ce chapitre
+- **But :** créer schéma identité/clinique/permissions.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Tables et contraintes pour comptes, cliniques, invitations, grants et sessions.
+- **Validation :** Contraintes et migration aller vérifiées.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 6.4 — Créer schéma catalogue et snapshots
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fondations PostgreSQL et migrations
+- **Dépend de :** Fondations pertinentes des chapitres 01–05 et tâches préalables de ce chapitre
+- **But :** créer schéma catalogue et snapshots.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Matériaux, teintes, types, états interdits et snapshots historiques.
+- **Validation :** Suppression catalogue préserve historique.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 6.5 — Créer schéma commande, dents et versions
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fondations PostgreSQL et migrations
+- **Dépend de :** Fondations pertinentes des chapitres 01–05 et tâches préalables de ce chapitre
+- **But :** créer schéma commande, dents et versions.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Commandes, dents FDI, snapshots, événements, dates et historique immuable logique.
+- **Validation :** Contraintes des champs et relations démontrées.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 6.6 — Créer schéma des demandes et travaux liés
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fondations PostgreSQL et migrations
+- **Dépend de :** Fondations pertinentes des chapitres 01–05 et tâches préalables de ce chapitre
+- **But :** créer schéma des demandes et travaux liés.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Modifications, annulations, corrections, retouches, liens et états.
+- **Validation :** Une seule demande pendante et retouche active garanties sous concurrence.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 6.7 — Créer schéma médias et transferts temporaires
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fondations PostgreSQL et migrations
+- **Dépend de :** Fondations pertinentes des chapitres 01–05 et tâches préalables de ce chapitre
+- **But :** créer schéma médias et transferts temporaires.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Métadonnées, checksum, ACL, fragments et ownership.
+- **Validation :** Aucune URL publique ni lien orphelin.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 6.8 — Créer schéma messageries et reçus de lecture
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fondations PostgreSQL et migrations
+- **Dépend de :** Fondations pertinentes des chapitres 01–05 et tâches préalables de ce chapitre
+- **But :** créer schéma messageries et reçus de lecture.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Conversations générales, par commande, messages versionnés et Lu.
+- **Validation :** Une conversation générale par clinique et une par commande.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 6.9 — Créer schéma notifications, mails et audit
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fondations PostgreSQL et migrations
+- **Dépend de :** Fondations pertinentes des chapitres 01–05 et tâches préalables de ce chapitre
+- **But :** créer schéma notifications, mails et audit.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Outbox, destinataires, retries, audit et notifications internes.
+- **Validation :** Événements conservés indépendamment des e-mails.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 6.10 — Créer schéma brouillons serveur et conflits
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fondations PostgreSQL et migrations
+- **Dépend de :** Fondations pertinentes des chapitres 01–05 et tâches préalables de ce chapitre
+- **But :** créer schéma brouillons serveur et conflits.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Révisions, états, pièces jointes et déduplication.
+- **Validation :** Deux appareils ne peuvent écraser silencieusement une révision.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 6.11 — Établir privilèges futurs et tests DB
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fondations PostgreSQL et migrations
+- **Dépend de :** Fondations pertinentes des chapitres 01–05 et tâches préalables de ce chapitre
+- **But :** établir privilèges futurs et tests DB.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** GRANT/ALTER DEFAULT PRIVILEGES sur seules tables requises ; séparation audit/migration/app.
+- **Validation :** Tests SELECT/INSERT/DDL autorisé/refusé par identité.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 07 — Authentification, comptes et gouvernance
+
+### 7.1 — Implémenter authentification email/mot de passe
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Authentification, comptes et gouvernance
+- **Dépend de :** Fondations pertinentes des chapitres 01–06 et tâches préalables de ce chapitre
+- **But :** implémenter authentification email/mot de passe.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Hash, vérification, erreurs neutres et limitation de tentatives.
+- **Validation :** Tests de connexion valide/invalide.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 7.2 — Implémenter sessions multi-appareils
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Authentification, comptes et gouvernance
+- **Dépend de :** Fondations pertinentes des chapitres 01–06 et tâches préalables de ce chapitre
+- **But :** implémenter sessions multi-appareils.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Cookies sûrs, renouvellement, révocation ciblée et globale.
+- **Validation :** Sessions révoquées rejetées côté serveur.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 7.3 — Implémenter inscription clinique
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Authentification, comptes et gouvernance
+- **Dépend de :** Fondations pertinentes des chapitres 01–06 et tâches préalables de ce chapitre
+- **But :** implémenter inscription clinique.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Champs obligatoires, validations et état non approuvé.
+- **Validation :** Inscription non approuvée ne peut commander.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 7.4 — Implémenter approbation et refus de clinique
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Authentification, comptes et gouvernance
+- **Dépend de :** Fondations pertinentes des chapitres 01–06 et tâches préalables de ce chapitre
+- **But :** implémenter approbation et refus de clinique.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Décision lab, raison du refus, notifications selon cahier.
+- **Validation :** Transitions et contrôle autorisation testés.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 7.5 — Implémenter profil clinique et modifications autorisées
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Authentification, comptes et gouvernance
+- **Dépend de :** Fondations pertinentes des chapitres 01–06 et tâches préalables de ce chapitre
+- **But :** implémenter profil clinique et modifications autorisées.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Écran informations coordonnées et historique sans suppression permanente.
+- **Validation :** Seule la clinique concernée ou l’habilité édite.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 7.6 — Implémenter demande de changement d’email
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Authentification, comptes et gouvernance
+- **Dépend de :** Fondations pertinentes des chapitres 01–06 et tâches préalables de ce chapitre
+- **But :** implémenter demande de changement d’email.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Décision lab, confirmation nouvelle adresse, alerte ancienne.
+- **Validation :** Changement non effectif avant double condition.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 7.7 — Implémenter récupération de mot de passe
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Authentification, comptes et gouvernance
+- **Dépend de :** Fondations pertinentes des chapitres 01–06 et tâches préalables de ce chapitre
+- **But :** implémenter récupération de mot de passe.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Jetons uniques expirants, invalidation des sessions selon cas.
+- **Validation :** Jeton rejoué ou expiré rejeté.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 7.8 — Implémenter invitation employés
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Authentification, comptes et gouvernance
+- **Dépend de :** Fondations pertinentes des chapitres 01–06 et tâches préalables de ce chapitre
+- **But :** implémenter invitation employés.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Lien sécurisé à durée bornée, activation individuelle et historisation.
+- **Validation :** Lien expiré ou réutilisé rejeté.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 7.9 — Implémenter gestion des administrateurs secondaires
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Authentification, comptes et gouvernance
+- **Dépend de :** Fondations pertinentes des chapitres 01–06 et tâches préalables de ce chapitre
+- **But :** implémenter gestion des administrateurs secondaires.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Propriétaire seul, invitation, habilitation, suspension.
+- **Validation :** Aucun admin ne peut gérer un autre admin.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 7.10 — Implémenter permissions granulaires et dépendances
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Authentification, comptes et gouvernance
+- **Dépend de :** Fondations pertinentes des chapitres 01–06 et tâches préalables de ce chapitre
+- **But :** implémenter permissions granulaires et dépendances.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Matrice actions/visibilité/logistique/détaillé/messages/fichiers et déléguabilité.
+- **Validation :** Tests négatifs pour chaque règle sensible.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 7.11 — Implémenter délégation limitée des employés
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Authentification, comptes et gouvernance
+- **Dépend de :** Fondations pertinentes des chapitres 01–06 et tâches préalables de ce chapitre
+- **But :** implémenter délégation limitée des employés.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Admin habilité peut gérer employés sans accorder permissions hors délégation.
+- **Validation :** Escalade impossible par édition de requête.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 7.12 — Implémenter suspension, réactivation et sécuriser compte
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Authentification, comptes et gouvernance
+- **Dépend de :** Fondations pertinentes des chapitres 01–06 et tâches préalables de ce chapitre
+- **But :** implémenter suspension, réactivation et sécuriser compte.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Révoquer sessions, bloquer actions, récupération clinique compromise.
+- **Validation :** Suspension effective sur API et événements.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 7.13 — Implémenter protections de compte propriétaire
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Authentification, comptes et gouvernance
+- **Dépend de :** Fondations pertinentes des chapitres 01–06 et tâches préalables de ce chapitre
+- **But :** implémenter protections de compte propriétaire.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Un seul propriétaire, audit global exclusif, aucune cession UI.
+- **Validation :** Autorisation sensible protégée.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 7.14 — Documenter récupération exceptionnelle propriétaire
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Authentification, comptes et gouvernance
+- **Dépend de :** Fondations pertinentes des chapitres 01–06 et tâches préalables de ce chapitre
+- **But :** documenter récupération exceptionnelle propriétaire.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Procédure technique hors UI avec preuve d’autorité, traçabilité et sessions révoquées.
+- **Validation :** Simulation encadrée vérifiée sans porte dérobée.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 7.15 — Documenter transfert exceptionnel de propriété
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Authentification, comptes et gouvernance
+- **Dépend de :** Fondations pertinentes des chapitres 01–06 et tâches préalables de ce chapitre
+- **But :** documenter transfert exceptionnel de propriété.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Procédure technique et juridique vérifiable hors UI.
+- **Validation :** Succession documentée et un propriétaire unique.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 08 — Catalogue et paramètres
+
+### 8.1 — Implémenter lecture des catalogues actifs
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Catalogue et paramètres
+- **Dépend de :** Fondations pertinentes des chapitres 01–07 et tâches préalables de ce chapitre
+- **But :** implémenter lecture des catalogues actifs.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Types, matériaux, teintes indépendantes et catalogue simple.
+- **Validation :** Seules références proposées disponibles apparaissent.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 8.2 — Implémenter administration des catalogues
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Catalogue et paramètres
+- **Dépend de :** Fondations pertinentes des chapitres 01–07 et tâches préalables de ce chapitre
+- **But :** implémenter administration des catalogues.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Ajout, renommage, désactivation et retrait du catalogue courant.
+- **Validation :** Snapshots historiques préservés.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 8.3 — Implémenter références indisponibles
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Catalogue et paramètres
+- **Dépend de :** Fondations pertinentes des chapitres 01–07 et tâches préalables de ce chapitre
+- **But :** implémenter références indisponibles.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Soumission avec avertissement, confirmation exceptionnelle avec motif.
+- **Validation :** Aucune réactivation globale implicite.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 8.4 — Implémenter références interdites
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Catalogue et paramètres
+- **Dépend de :** Fondations pertinentes des chapitres 01–07 et tâches préalables de ce chapitre
+- **But :** implémenter références interdites.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Motif obligatoire, refus de soumission/acceptation, alerte propriétaire.
+- **Validation :** Impossible de bypass par API ou édition formulaire.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 8.5 — Implémenter blocage des travaux concernés
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Catalogue et paramètres
+- **Dépend de :** Fondations pertinentes des chapitres 01–07 et tâches préalables de ce chapitre
+- **But :** implémenter blocage des travaux concernés.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Lister historiques actifs/livrés, bloquer progression non livrés sans auto-annuler.
+- **Validation :** Tests statut et levée conforme.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 8.6 — Implémenter paramètres publics du laboratoire
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Catalogue et paramètres
+- **Dépend de :** Fondations pertinentes des chapitres 01–07 et tâches préalables de ce chapitre
+- **But :** implémenter paramètres publics du laboratoire.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Nom, adresse, téléphone, mail, horaires, logo, localisation.
+- **Validation :** Édition admin et lecture clinique autorisées.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 09 — Commande clinique : saisie et dépôt
+
+### 9.1 — Implémenter formulaire d’identification patient
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Commande clinique : saisie et dépôt
+- **Dépend de :** Fondations pertinentes des chapitres 01–08 et tâches préalables de ce chapitre
+- **But :** implémenter formulaire d’identification patient.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Nom+prénom et/ou référence de clinique ; champs et validation cohérents.
+- **Validation :** Une des deux méthodes requise, deux noms si civil.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 9.2 — Implémenter sélection du matériau, teinte et type
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Commande clinique : saisie et dépôt
+- **Dépend de :** Fondations pertinentes des chapitres 01–08 et tâches préalables de ce chapitre
+- **But :** implémenter sélection du matériau, teinte et type.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Un matériau, une teinte obligatoire, type optionnel, descriptions optionnelles.
+- **Validation :** Validation client et serveur identique.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 9.3 — Implémenter schéma FDI 32 dents et pontiques
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Commande clinique : saisie et dépôt
+- **Dépend de :** Fondations pertinentes des chapitres 01–08 et tâches préalables de ce chapitre
+- **But :** implémenter schéma FDI 32 dents et pontiques.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Cycle touch normal/pontique/vide et résumé, responsive.
+- **Validation :** 32 codes corrects ; aucune dent obligatoire.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 9.4 — Implémenter dates souhaitée et planifiée distinctes
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Commande clinique : saisie et dépôt
+- **Dépend de :** Fondations pertinentes des chapitres 01–08 et tâches préalables de ce chapitre
+- **But :** implémenter dates souhaitée et planifiée distinctes.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Date souhaitée obligatoire, date serveur automatique, planification côté lab.
+- **Validation :** Aucune promesse de date planifiée par la clinique.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 9.5 — Implémenter avertissement commande peu détaillée
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Commande clinique : saisie et dépôt
+- **Dépend de :** Fondations pertinentes des chapitres 01–08 et tâches préalables de ce chapitre
+- **But :** implémenter avertissement commande peu détaillée.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Aucune dent + description vide => avertissement non bloquant.
+- **Validation :** Envoi possible après confirmation.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 9.6 — Implémenter détecteur non bloquant de doublons
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Commande clinique : saisie et dépôt
+- **Dépend de :** Fondations pertinentes des chapitres 01–08 et tâches préalables de ce chapitre
+- **But :** implémenter détecteur non bloquant de doublons.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Recherche uniquement clinique courante, preuve de similarité et option continuer.
+- **Validation :** Faux positif jamais bloquant.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 9.7 — Implémenter dépôt transactionnel et numérotation
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Commande clinique : saisie et dépôt
+- **Dépend de :** Fondations pertinentes des chapitres 01–08 et tâches préalables de ce chapitre
+- **But :** implémenter dépôt transactionnel et numérotation.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** ID unique serveur à confirmation, sauvegarde initiale et état En attente.
+- **Validation :** Échec évite commande incomplète ; idempotence garantie.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 9.8 — Implémenter interface récap et suivi clinique
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Commande clinique : saisie et dépôt
+- **Dépend de :** Fondations pertinentes des chapitres 01–08 et tâches préalables de ce chapitre
+- **But :** implémenter interface récap et suivi clinique.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Récapitulatif commandes, confirmations et retours erreurs.
+- **Validation :** Clinique ne voit que ses commandes.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 9.9 — Implémenter création au nom de la clinique par le labo
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Commande clinique : saisie et dépôt
+- **Dépend de :** Fondations pertinentes des chapitres 01–08 et tâches préalables de ce chapitre
+- **But :** implémenter création au nom de la clinique par le labo.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Commande directement Acceptée et origine auteur identifiée.
+- **Validation :** Mail + notification clinique ; aucun double accord.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 9.10 — Implémenter duplication depuis refusée/annulée
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Commande clinique : saisie et dépôt
+- **Dépend de :** Fondations pertinentes des chapitres 01–08 et tâches préalables de ce chapitre
+- **But :** implémenter duplication depuis refusée/annulée.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Nouveau numéro, lien historique, références et dates revérifiées.
+- **Validation :** Original jamais réactivé.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 10 — Workflow et décisions des commandes
+
+### 10.1 — Implémenter moteur de transitions des commandes
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Workflow et décisions des commandes
+- **Dépend de :** Fondations pertinentes des chapitres 01–09 et tâches préalables de ce chapitre
+- **But :** implémenter moteur de transitions des commandes.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** En attente, Acceptée, En fabrication, Terminée, Livrée, Refusée, Correction demandée, Annulée.
+- **Validation :** Transitions interdites systématiquement refusées.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 10.2 — Implémenter acceptation/refus initial
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Workflow et décisions des commandes
+- **Dépend de :** Fondations pertinentes des chapitres 01–09 et tâches préalables de ce chapitre
+- **But :** implémenter acceptation/refus initial.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Manuel avec motif sur refus, vérification version et permissions.
+- **Validation :** Ancienne version ne peut être acceptée.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 10.3 — Implémenter demande et renvoi de correction
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Workflow et décisions des commandes
+- **Dépend de :** Fondations pertinentes des chapitres 01–09 et tâches préalables de ce chapitre
+- **But :** implémenter demande et renvoi de correction.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Statut distinct, motif, correction de données/fichiers, renvoi explicite.
+- **Validation :** Re-validation obligatoire et email lab.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 10.4 — Implémenter modification directe En attente
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Workflow et décisions des commandes
+- **Dépend de :** Fondations pertinentes des chapitres 01–09 et tâches préalables de ce chapitre
+- **But :** implémenter modification directe En attente.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Versions et historique champ/fichier, protections concurrence.
+- **Validation :** Pas de modification silencieuse après acceptation.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 10.5 — Implémenter demandes de modification Acceptée
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Workflow et décisions des commandes
+- **Dépend de :** Fondations pertinentes des chapitres 01–09 et tâches préalables de ce chapitre
+- **But :** implémenter demandes de modification Acceptée.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Diff avant/après et acceptation/refus sans changer officiel avant décision.
+- **Validation :** Une seule demande pendante, notification décision.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 10.6 — Implémenter retrait des demandes pendantes
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Workflow et décisions des commandes
+- **Dépend de :** Fondations pertinentes des chapitres 01–09 et tâches préalables de ce chapitre
+- **But :** implémenter retrait des demandes pendantes.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Dentiste peut retirer sa demande tant que pas de décision.
+- **Validation :** Retrait historisé, aucune ambiguïté concurrente.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 10.7 — Implémenter annulation directe préacceptation
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Workflow et décisions des commandes
+- **Dépend de :** Fondations pertinentes des chapitres 01–09 et tâches préalables de ce chapitre
+- **But :** implémenter annulation directe préacceptation.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** En attente/Correction demandée, confirmation et historique.
+- **Validation :** Aucun besoin accord laboratoire.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 10.8 — Implémenter annulation sur demande Acceptée
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Workflow et décisions des commandes
+- **Dépend de :** Fondations pertinentes des chapitres 01–09 et tâches préalables de ce chapitre
+- **But :** implémenter annulation sur demande Acceptée.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Demande unique, décision laboratoire, mail résultat.
+- **Validation :** Fabrication interdite durant pendance.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 10.9 — Implémenter annulation directe côté labo
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Workflow et décisions des commandes
+- **Dépend de :** Fondations pertinentes des chapitres 01–09 et tâches préalables de ce chapitre
+- **But :** implémenter annulation directe côté labo.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Jusqu’à En fabrication inclus, motif obligatoire.
+- **Validation :** Terminée/Livrée impossible.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 10.10 — Implémenter modification labo avant fabrication
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Workflow et décisions des commandes
+- **Dépend de :** Fondations pertinentes des chapitres 01–09 et tâches préalables de ce chapitre
+- **But :** implémenter modification labo avant fabrication.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Motif, versions, diff, mail+notification clinique.
+- **Validation :** Écriture interdite si demande pendante.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 10.11 — Implémenter verrouillage des instructions dès fabrication
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Workflow et décisions des commandes
+- **Dépend de :** Fondations pertinentes des chapitres 01–09 et tâches préalables de ce chapitre
+- **But :** implémenter verrouillage des instructions dès fabrication.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Interdit changement champ officiel et fichier original.
+- **Validation :** API, jobs et concurrence protègent verrouillage.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 10.12 — Implémenter commande liée de remplacement
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Workflow et décisions des commandes
+- **Dépend de :** Fondations pertinentes des chapitres 01–09 et tâches préalables de ce chapitre
+- **But :** implémenter commande liée de remplacement.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Nouvel ID Acceptée, origine, ancienne annulée motif.
+- **Validation :** Liens bidirectionnels et audit.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 10.13 — Implémenter commande liée supplémentaire
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Workflow et décisions des commandes
+- **Dépend de :** Fondations pertinentes des chapitres 01–09 et tâches préalables de ce chapitre
+- **But :** implémenter commande liée supplémentaire.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Nouvel ID Acceptée, origine ; ancienne poursuit.
+- **Validation :** Type de lien explicite et historique indépendant.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 10.14 — Implémenter vues de la file des actions
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Workflow et décisions des commandes
+- **Dépend de :** Fondations pertinentes des chapitres 01–09 et tâches préalables de ce chapitre
+- **But :** implémenter vues de la file des actions.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Nouvelles demandes, corrections, modifications, annulations et demandes prioritaires.
+- **Validation :** Lire une notification ne traite pas une action.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 10.15 — Tester concurrence métier extrême
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Workflow et décisions des commandes
+- **Dépend de :** Fondations pertinentes des chapitres 01–09 et tâches préalables de ce chapitre
+- **But :** tester concurrence métier extrême.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Validation simultanée, retrait, double clic, remplacement et version obsolète.
+- **Validation :** Un seul résultat cohérent à chaque course.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 11 — Retouches et refabrications
+
+### 11.1 — Implémenter initiation depuis commande livrée
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Retouches et refabrications
+- **Dépend de :** Fondations pertinentes des chapitres 01–10 et tâches préalables de ce chapitre
+- **But :** implémenter initiation depuis commande livrée.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Bouton lié au travail effectivement livré, jamais à annulation.
+- **Validation :** Aucune retouche sur travail non livré.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 11.2 — Implémenter formulaire de retouche simplifié
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Retouches et refabrications
+- **Dépend de :** Fondations pertinentes des chapitres 01–10 et tâches préalables de ce chapitre
+- **But :** implémenter formulaire de retouche simplifié.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Matériau/teinte préremplis modifiables, description obligatoire, fichiers facultatifs, sans odontogramme.
+- **Validation :** Formulaire distinct et champs validés.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 11.3 — Implémenter demande retouche et historique
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Retouches et refabrications
+- **Dépend de :** Fondations pertinentes des chapitres 01–10 et tâches préalables de ce chapitre
+- **But :** implémenter demande retouche et historique.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Numéro distinct, conversation distincte, lien à commande source.
+- **Validation :** Une retouche active à la fois par commande livrée.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 11.4 — Appliquer états, modifications et annulations des commandes aux retouches
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Retouches et refabrications
+- **Dépend de :** Fondations pertinentes des chapitres 01–10 et tâches préalables de ce chapitre
+- **But :** appliquer états, modifications et annulations des commandes aux retouches.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Même workflow avec correction/acceptation/modification et livraison.
+- **Validation :** Tests communs réussis.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 11.5 — Implémenter nouvelle retouche après refus/annulation/livraison
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Retouches et refabrications
+- **Dépend de :** Fondations pertinentes des chapitres 01–10 et tâches préalables de ce chapitre
+- **But :** implémenter nouvelle retouche après refus/annulation/livraison.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Nouvelle demande liée ; refusée/ancienne conservée.
+- **Validation :** Pas de double retouche active.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 11.6 — Implémenter navigation chaîne de commandes et retouches
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Retouches et refabrications
+- **Dépend de :** Fondations pertinentes des chapitres 01–10 et tâches préalables de ce chapitre
+- **But :** implémenter navigation chaîne de commandes et retouches.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Afficher historique de remplacements/travaux supplémentaires et retouches réellement livrées.
+- **Validation :** Navigation explicite sans confusion matérielle.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 12 — Fichiers privés et transferts
+
+### 12.1 — Implémenter stockage privé des fichiers
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fichiers privés et transferts
+- **Dépend de :** Fondations pertinentes des chapitres 01–11 et tâches préalables de ce chapitre
+- **But :** implémenter stockage privé des fichiers.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Hors répertoire web, noms internes non prédictibles, clés et ACL.
+- **Validation :** URL devinée ne révèle jamais contenu.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 12.2 — Implémenter validation des formats fichiers
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fichiers privés et transferts
+- **Dépend de :** Fondations pertinentes des chapitres 01–11 et tâches préalables de ce chapitre
+- **But :** implémenter validation des formats fichiers.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** STL PLY OBJ JPG PNG HEIC PDF, signature réelle et contrôles anti-malware adaptés.
+- **Validation :** Format trompeur refusé.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 12.3 — Implémenter limites 200 Mo / 1 Go par commande
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fichiers privés et transferts
+- **Dépend de :** Fondations pertinentes des chapitres 01–11 et tâches préalables de ce chapitre
+- **But :** implémenter limites 200 Mo / 1 Go par commande.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** 200 Mo par fichier ; 1 Go total de la commande à la soumission.
+- **Validation :** Limites vérifiées côté serveur.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 12.4 — Implémenter limite 1 Go par message
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fichiers privés et transferts
+- **Dépend de :** Fondations pertinentes des chapitres 01–11 et tâches préalables de ce chapitre
+- **But :** implémenter limite 1 Go par message.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** 200 Mo par fichier, 1 Go combiné par message et pas de quota cumulatif conversation.
+- **Validation :** Tests tailles et abus réussis.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 12.5 — Implémenter téléversement par fragments
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fichiers privés et transferts
+- **Dépend de :** Fondations pertinentes des chapitres 01–11 et tâches préalables de ce chapitre
+- **But :** implémenter téléversement par fragments.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Progression, checksum, validation fragments, reprise explicite.
+- **Validation :** Reprise sans retransmettre fragments valides.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 12.6 — Implémenter idempotence et finalisation fichiers
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fichiers privés et transferts
+- **Dépend de :** Fondations pertinentes des chapitres 01–11 et tâches préalables de ce chapitre
+- **But :** implémenter idempotence et finalisation fichiers.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Assemblage atomique et prévention des doublons commande/transfert.
+- **Validation :** Pas d’ordre partiellement validé.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 12.7 — Implémenter pauses pour saturation disque
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fichiers privés et transferts
+- **Dépend de :** Fondations pertinentes des chapitres 01–11 et tâches préalables de ce chapitre
+- **But :** implémenter pauses pour saturation disque.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Réserve critique, pause, segments temporaires bornés, reprise lorsque possible.
+- **Validation :** Pas de disque saturé par uploads.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 12.8 — Implémenter nettoyage des fragments expirés
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fichiers privés et transferts
+- **Dépend de :** Fondations pertinentes des chapitres 01–11 et tâches préalables de ce chapitre
+- **But :** implémenter nettoyage des fragments expirés.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** TTL validée, jobs sûrs et conservation du brouillon local.
+- **Validation :** Jamais suppression des fichiers historiques.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 12.9 — Implémenter aperçus protégés et permissions fichier
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fichiers privés et transferts
+- **Dépend de :** Fondations pertinentes des chapitres 01–11 et tâches préalables de ce chapitre
+- **But :** implémenter aperçus protégés et permissions fichier.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Prévisualisation selon format/faisabilité, contrôle lecture et téléchargement distincts.
+- **Validation :** Accès par ID erroné refusé.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 12.10 — Implémenter fichiers de suivi internes
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fichiers privés et transferts
+- **Dépend de :** Fondations pertinentes des chapitres 01–11 et tâches préalables de ce chapitre
+- **But :** implémenter fichiers de suivi internes.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Ajouter après début fabrication sans modifier les originaux.
+- **Validation :** Interne par défaut et auteur horodaté.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 12.11 — Implémenter partage unitaire des fichiers de suivi
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fichiers privés et transferts
+- **Dépend de :** Fondations pertinentes des chapitres 01–11 et tâches préalables de ce chapitre
+- **But :** implémenter partage unitaire des fichiers de suivi.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Confirmer partage, autorisations, retrait de partage historisé.
+- **Validation :** Accès clinique révoqué pour futur.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 12.12 — Implémenter téléchargements individuels et ZIP
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fichiers privés et transferts
+- **Dépend de :** Fondations pertinentes des chapitres 01–11 et tâches préalables de ce chapitre
+- **But :** implémenter téléchargements individuels et ZIP.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Ensemble exact des fichiers autorisés, noms corrects, streaming sans copies permanentes.
+- **Validation :** Contenu zip identique originaux autorisés.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 12.13 — Implémenter audit sécuritaire des téléchargements
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Fichiers privés et transferts
+- **Dépend de :** Fondations pertinentes des chapitres 01–11 et tâches préalables de ce chapitre
+- **But :** implémenter audit sécuritaire des téléchargements.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Tester IDOR, noms malveillants, limites HTTP, race avec révocation.
+- **Validation :** Aucune fuite inter-cliniques.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 13 — Messagerie temps réel
+
+### 13.1 — Créer conversation générale par clinique
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Messagerie temps réel
+- **Dépend de :** Fondations pertinentes des chapitres 01–12 et tâches préalables de ce chapitre
+- **But :** créer conversation générale par clinique.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Une conversation durable pour chaque clinique, protégée.
+- **Validation :** Aucune clinique ne voit la conversation d’une autre.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 13.2 — Créer conversation liée à chaque commande
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Messagerie temps réel
+- **Dépend de :** Fondations pertinentes des chapitres 01–12 et tâches préalables de ce chapitre
+- **But :** créer conversation liée à chaque commande.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Une conversation spécifique par travail et retouche.
+- **Validation :** Lien et permissions serveur corrects.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 13.3 — Implémenter réception/envoi des messages
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Messagerie temps réel
+- **Dépend de :** Fondations pertinentes des chapitres 01–12 et tâches préalables de ce chapitre
+- **But :** implémenter réception/envoi des messages.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Historique paginé, fichiers et liens internes sans fuite.
+- **Validation :** Messages cohérents persistants.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 13.4 — Implémenter temps réel et reconnexion
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Messagerie temps réel
+- **Dépend de :** Fondations pertinentes des chapitres 01–12 et tâches préalables de ce chapitre
+- **But :** implémenter temps réel et reconnexion.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Transport validé, reconnexion sûre, reprise des messages manqués.
+- **Validation :** Pas de perte ni duplication après rupture réseau.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 13.5 — Implémenter Envoyé et Lu
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Messagerie temps réel
+- **Dépend de :** Fondations pertinentes des chapitres 01–12 et tâches préalables de ce chapitre
+- **But :** implémenter Envoyé et Lu.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Accusé de lecture collectif selon règle et lecture sans traitement.
+- **Validation :** Statuts exacts côté clinique et labo.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 13.6 — Implémenter édition et masquage de messages
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Messagerie temps réel
+- **Dépend de :** Fondations pertinentes des chapitres 01–12 et tâches préalables de ce chapitre
+- **But :** implémenter édition et masquage de messages.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Auteur édite, badge Modifié, versions, retrait visible et audit.
+- **Validation :** Historique non falsifiable via UI.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 13.7 — Clôturer conversation lors de livraison
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Messagerie temps réel
+- **Dépend de :** Fondations pertinentes des chapitres 01–12 et tâches préalables de ce chapitre
+- **But :** clôturer conversation lors de livraison.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Conversation commande lecture seule à Livrée ; réouverte si livraison corrigée.
+- **Validation :** Aucun envoi malgré appel API forcé.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 13.8 — Implémenter boîte de réception laboratoire
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Messagerie temps réel
+- **Dépend de :** Fondations pertinentes des chapitres 01–12 et tâches préalables de ce chapitre
+- **But :** implémenter boîte de réception laboratoire.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Recherche, filtres, non-lus et permissions générales/commandes distinctes.
+- **Validation :** Peu de clics, pas de données masquées visibles.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 13.9 — Tester pièces jointes des conversations
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Messagerie temps réel
+- **Dépend de :** Fondations pertinentes des chapitres 01–12 et tâches préalables de ce chapitre
+- **But :** tester pièces jointes des conversations.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Même ACL et limites que fichiers ; aucune pièce jointe partagée entre cliniques.
+- **Validation :** Tests d’accès et d’upload réussis.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 14 — Notifications, e-mails et alertes
+
+### 14.1 — Définir événements et notifications internes
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Notifications, e-mails et alertes
+- **Dépend de :** Fondations pertinentes des chapitres 01–13 et tâches préalables de ce chapitre
+- **But :** définir événements et notifications internes.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Six événements e-mail labo et décisions mails clinique exactement conformes au cahier.
+- **Validation :** Matrice exhaustive testable.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 14.2 — Implémenter destinataires configurables par catégorie
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Notifications, e-mails et alertes
+- **Dépend de :** Fondations pertinentes des chapitres 01–13 et tâches préalables de ce chapitre
+- **But :** implémenter destinataires configurables par catégorie.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Propriétaire par défaut, administrateurs secondaires habilités, pas d’employés automatiques.
+- **Validation :** Aucun envoi à un admin sans droit.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 14.3 — Implémenter outbox et file de relance e-mail
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Notifications, e-mails et alertes
+- **Dépend de :** Fondations pertinentes des chapitres 01–13 et tâches préalables de ce chapitre
+- **But :** implémenter outbox et file de relance e-mail.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Enregistrer action indépendamment fournisseur, retry/backoff et dédoublonnage.
+- **Validation :** Panne SMTP/API ne perd aucune commande.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 14.4 — Implémenter e-mails cliniques requis
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Notifications, e-mails et alertes
+- **Dépend de :** Fondations pertinentes des chapitres 01–13 et tâches préalables de ce chapitre
+- **But :** implémenter e-mails cliniques requis.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Acceptation, corrections, refus, Terminée, décisions modification/annulation, création labo, annulation labo.
+- **Validation :** Langue albanaise et liens privés sans données médicales.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 14.5 — Implémenter six alertes e-mail laboratoire
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Notifications, e-mails et alertes
+- **Dépend de :** Fondations pertinentes des chapitres 01–13 et tâches préalables de ce chapitre
+- **But :** implémenter six alertes e-mail laboratoire.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Nouvelle commande, inscription, modification, annulation, retouche, correction renvoyée.
+- **Validation :** Aucun envoi intempestif pour les autres statuts.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 14.6 — Implémenter rappels messages non lus
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Notifications, e-mails et alertes
+- **Dépend de :** Fondations pertinentes des chapitres 01–13 et tâches préalables de ce chapitre
+- **But :** implémenter rappels messages non lus.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Premier après 30min, suivants ≥24h seulement si nouveaux non lus ≥30min ; reset après lecture complète.
+- **Validation :** Scénarios temps simulés et absence de spam.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 14.7 — Implémenter consultation et renvoi des emails échoués
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Notifications, e-mails et alertes
+- **Dépend de :** Fondations pertinentes des chapitres 01–13 et tâches préalables de ce chapitre
+- **But :** implémenter consultation et renvoi des emails échoués.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Propriétaire voit état En attente/Envoyé/Échec et relance.
+- **Validation :** Pas de ré-expédition d’événements obsolètes.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 14.8 — Implémenter alertes techniques propriétaires
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Notifications, e-mails et alertes
+- **Dépend de :** Fondations pertinentes des chapitres 01–13 et tâches préalables de ce chapitre
+- **But :** implémenter alertes techniques propriétaires.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Échec backup, stockage, sécurité et indisponibilité avec canal indépendant.
+- **Validation :** Déclenchement testé même service app indisponible.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 14.9 — Tester délivrabilité et confidentialité des mails
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Notifications, e-mails et alertes
+- **Dépend de :** Fondations pertinentes des chapitres 01–13 et tâches préalables de ce chapitre
+- **But :** tester délivrabilité et confidentialité des mails.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** DNS domaine, SPF/DKIM/DMARC selon prestataire réel, pas de PHI.
+- **Validation :** Tests de réception en environnement contrôlé.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 15 — PWA, hors ligne et brouillons
+
+### 15.1 — Installer manifest et service worker PWA
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** PWA, hors ligne et brouillons
+- **Dépend de :** Fondations pertinentes des chapitres 01–14 et tâches préalables de ce chapitre
+- **But :** installer manifest et service worker PWA.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Installation sur appareils supportés, versioning et cache limité aux ressources non sensibles.
+- **Validation :** Installation testée tablette/mobile.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 15.2 — Implémenter stockage local des brouillons
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** PWA, hors ligne et brouillons
+- **Dépend de :** Fondations pertinentes des chapitres 01–14 et tâches préalables de ce chapitre
+- **But :** implémenter stockage local des brouillons.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Formulaire et fichiers en stockage adapté ; gestion quotas, erreurs et nettoyage manuel.
+- **Validation :** Reste accessible sans Internet.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 15.3 — Implémenter chiffrement et déverrouillage local
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** PWA, hors ligne et brouillons
+- **Dépend de :** Fondations pertinentes des chapitres 01–14 et tâches préalables de ce chapitre
+- **But :** implémenter chiffrement et déverrouillage local.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Choix cryptographique réellement supporté et testé ; liaison au compte et protection des secrets.
+- **Validation :** Accès brouillon verrouillé sans identité+déverrouillage.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 15.4 — Implémenter conservation brouillon après déconnexion
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** PWA, hors ligne et brouillons
+- **Dépend de :** Fondations pertinentes des chapitres 01–14 et tâches préalables de ce chapitre
+- **But :** implémenter conservation brouillon après déconnexion.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Données locales chiffrées restent jusqu’au retour même compte.
+- **Validation :** Autre compte ne peut consulter.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 15.5 — Implémenter révocation sur suspension lors du retour réseau
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** PWA, hors ligne et brouillons
+- **Dépend de :** Fondations pertinentes des chapitres 01–14 et tâches préalables de ce chapitre
+- **But :** implémenter révocation sur suspension lors du retour réseau.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Détection serveur, blocage et suppression locale du compte suspendu selon règle, limites forensiques documentées.
+- **Validation :** Scénario hors ligne puis reconnexion testé.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 15.6 — Implémenter synchronisation des brouillons serveur
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** PWA, hors ligne et brouillons
+- **Dépend de :** Fondations pertinentes des chapitres 01–14 et tâches préalables de ce chapitre
+- **But :** implémenter synchronisation des brouillons serveur.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Créer/modifier brouillon distant avec révisions et fichiers.
+- **Validation :** Reprise multi-appareils possible.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 15.7 — Implémenter détection des conflits
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** PWA, hors ligne et brouillons
+- **Dépend de :** Fondations pertinentes des chapitres 01–14 et tâches préalables de ce chapitre
+- **But :** implémenter détection des conflits.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Choisir serveur ou cloner local avec pièces jointes sans écraser silencieusement.
+- **Validation :** Tests modifications concurrentes.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 15.8 — Implémenter envoi explicite et récupération interruption
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** PWA, hors ligne et brouillons
+- **Dépend de :** Fondations pertinentes des chapitres 01–14 et tâches préalables de ce chapitre
+- **But :** implémenter envoi explicite et récupération interruption.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Revalidation catalogues, fichiers et jeton idempotent ; pas d’envoi auto après connexion.
+- **Validation :** Date d’envoi serveur et confirmation UI.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 15.9 — Implémenter nettoyage post-soumission confirmée
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** PWA, hors ligne et brouillons
+- **Dépend de :** Fondations pertinentes des chapitres 01–14 et tâches préalables de ce chapitre
+- **But :** implémenter nettoyage post-soumission confirmée.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Conserver jusqu’à ack entier, retirer copie locale au bon moment.
+- **Validation :** Aucune perte après coupure.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 15.10 — Tester limites browser et stabilité PWA
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** PWA, hors ligne et brouillons
+- **Dépend de :** Fondations pertinentes des chapitres 01–14 et tâches préalables de ce chapitre
+- **But :** tester limites browser et stabilité PWA.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** iOS/Android/tablettes cibles, éviction storage, fermeture navigateur, updates et connexion instable.
+- **Validation :** Matrice d’appareils documentée et exigences réalistes.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 16 — Planning, livraisons, archives et recherche
+
+### 16.1 — Implémenter recherche des travaux et filtres
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Planning, livraisons, archives et recherche
+- **Dépend de :** Fondations pertinentes des chapitres 01–15 et tâches préalables de ce chapitre
+- **But :** implémenter recherche des travaux et filtres.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Recherche patient/référence/clinique/numéro sous permissions, filtres statut/date/type.
+- **Validation :** Aucune fuite logistique vers patient.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 16.2 — Implémenter priorité et urgence
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Planning, livraisons, archives et recherche
+- **Dépend de :** Fondations pertinentes des chapitres 01–15 et tâches préalables de ce chapitre
+- **But :** implémenter priorité et urgence.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Manuel, J-2 et en retard selon planifiée ou souhaitée provisoire.
+- **Validation :** Pas d’e-mail d’urgence ; arrêt au statut terminal.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 16.3 — Implémenter calendrier semaine/mois
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Planning, livraisons, archives et recherche
+- **Dépend de :** Fondations pertinentes des chapitres 01–15 et tâches préalables de ce chapitre
+- **But :** implémenter calendrier semaine/mois.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Date planifiée ou souhaitée provisoire, lien détail.
+- **Validation :** Aucune modification silencieuse des deux dates.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 16.4 — Implémenter ajustement date par glisser-déposer desktop
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Planning, livraisons, archives et recherche
+- **Dépend de :** Fondations pertinentes des chapitres 01–15 et tâches préalables de ce chapitre
+- **But :** implémenter ajustement date par glisser-déposer desktop.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Seule date planifiée change ; confirmation/annulation et historique.
+- **Validation :** Desktop drag et mobile édition détail.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 16.5 — Implémenter Prêts à livrer
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Planning, livraisons, archives et recherche
+- **Dépend de :** Fondations pertinentes des chapitres 01–15 et tâches préalables de ce chapitre
+- **But :** implémenter Prêts à livrer.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Lister Terminée uniquement, méthode livraison décidée par lab.
+- **Validation :** Statuts non éligibles invisibles/non traitables.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 16.6 — Implémenter livraison individuelle et groupée
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Planning, livraisons, archives et recherche
+- **Dépend de :** Fondations pertinentes des chapitres 01–15 et tâches préalables de ce chapitre
+- **But :** implémenter livraison individuelle et groupée.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Sélection multi, confirmation et validation atomique adéquate.
+- **Validation :** Chaque livraison datée/mode/auteur ; pas mail clinique.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 16.7 — Implémenter correction exceptionnelle de livraison
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Planning, livraisons, archives et recherche
+- **Dépend de :** Fondations pertinentes des chapitres 01–15 et tâches préalables de ce chapitre
+- **But :** implémenter correction exceptionnelle de livraison.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Propriétaire/admin autorisé, motif, retour Terminée et réouverture chat.
+- **Validation :** Refus si retouche contradictoire ; reset archive.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 16.8 — Implémenter archivage à J+30 après Livrée
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Planning, livraisons, archives et recherche
+- **Dépend de :** Fondations pertinentes des chapitres 01–15 et tâches préalables de ce chapitre
+- **But :** implémenter archivage à J+30 après Livrée.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Sortir de travaux actifs, préserver recherche et données.
+- **Validation :** Aucune suppression matérielle.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 16.9 — Implémenter consultation des archives
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Planning, livraisons, archives et recherche
+- **Dépend de :** Fondations pertinentes des chapitres 01–15 et tâches préalables de ce chapitre
+- **But :** implémenter consultation des archives.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Selon permissions, anciens travaux et liens retouches accessibles.
+- **Validation :** Accès clinique strictement isolé.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 17 — Administration, audit, rétention et conformité
+
+### 17.1 — Implémenter journal d’audit global propriétaire
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Administration, audit, rétention et conformité
+- **Dépend de :** Fondations pertinentes des chapitres 01–16 et tâches préalables de ce chapitre
+- **But :** implémenter journal d’audit global propriétaire.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Actions comptes, permissions, catalogue, commandes, paramètres et connexions sensibles.
+- **Validation :** Aucun admin secondaire ne lit journal global.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 17.2 — Rendre journal non modifiable dans l’application
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Administration, audit, rétention et conformité
+- **Dépend de :** Fondations pertinentes des chapitres 01–16 et tâches préalables de ce chapitre
+- **But :** rendre journal non modifiable dans l’application.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Aucune route suppression/édition de traces, contrôle DB et rétention.
+- **Validation :** Tests de falsification refusés.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 17.3 — Implémenter gestion de la rétention à échéance
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Administration, audit, rétention et conformité
+- **Dépend de :** Fondations pertinentes des chapitres 01–16 et tâches préalables de ce chapitre
+- **But :** implémenter gestion de la rétention à échéance.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Signaler propriétaire, examiner et valider effacement/anonymisation autorisés.
+- **Validation :** Exceptions légales et sauvegardes traitées.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 17.4 — Implémenter informations légales et CGU
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Administration, audit, rétention et conformité
+- **Dépend de :** Fondations pertinentes des chapitres 01–16 et tâches préalables de ce chapitre
+- **But :** implémenter informations légales et CGU.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Pages albanaises, version acceptée, confirmation changements importants si nécessaire.
+- **Validation :** Textes issus de validation responsable, pas de faux contenu.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 17.5 — Implémenter politique de confidentialité
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Administration, audit, rétention et conformité
+- **Dépend de :** Fondations pertinentes des chapitres 01–16 et tâches préalables de ce chapitre
+- **But :** implémenter politique de confidentialité.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Accès public selon besoin, finalités et contacts réels.
+- **Validation :** Publication des textes revus juridiquement.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 17.6 — Implémenter demandes via messagerie générale
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Administration, audit, rétention et conformité
+- **Dépend de :** Fondations pertinentes des chapitres 01–16 et tâches préalables de ce chapitre
+- **But :** implémenter demandes via messagerie générale.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Aucune nouvelle interface ticket ; réponse du propriétaire.
+- **Validation :** Conversations retrouvables et audit des actions effectives.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 17.7 — Implémenter mode maintenance propriétaire
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Administration, audit, rétention et conformité
+- **Dépend de :** Fondations pertinentes des chapitres 01–16 et tâches préalables de ce chapitre
+- **But :** implémenter mode maintenance propriétaire.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Blocage opérations serveur ; message ; accès restreint de sortie et secours hors UI.
+- **Validation :** Aucun envoi de commande pendant maintenance.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 17.8 — Implémenter bandeau maintenance planifiée
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Administration, audit, rétention et conformité
+- **Dépend de :** Fondations pertinentes des chapitres 01–16 et tâches préalables de ce chapitre
+- **But :** implémenter bandeau maintenance planifiée.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Annonce date/heure, modification/annulation sans e-mail ni activation automatique.
+- **Validation :** Bandeau distinct de panne technique.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 17.9 — Valider qualifications juridiques des acteurs
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Administration, audit, rétention et conformité
+- **Dépend de :** Fondations pertinentes des chapitres 01–16 et tâches préalables de ce chapitre
+- **But :** valider qualifications juridiques des acteurs.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Déterminer rôles légaux clinique/labo et accords nécessaires par juriste local.
+- **Validation :** Avis et mesures formellement documentés.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 17.10 — Valider localisation et transferts de données
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Administration, audit, rétention et conformité
+- **Dépend de :** Fondations pertinentes des chapitres 01–16 et tâches préalables de ce chapitre
+- **But :** valider localisation et transferts de données.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Hébergement réel, backups et emails, transferts hors Kosovo et accords.
+- **Validation :** Conformité vérifiée avant données réelles.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 17.11 — Valider dispositifs dentaires et traçabilité
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Administration, audit, rétention et conformité
+- **Dépend de :** Fondations pertinentes des chapitres 01–16 et tâches préalables de ce chapitre
+- **But :** valider dispositifs dentaires et traçabilité.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Exigences kosovares des dispositifs sur mesure, interdiction, rappels et responsabilité.
+- **Validation :** Procédure professionnelle validée.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 17.12 — Valider durées de rétention par catégorie
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Administration, audit, rétention et conformité
+- **Dépend de :** Fondations pertinentes des chapitres 01–16 et tâches préalables de ce chapitre
+- **But :** valider durées de rétention par catégorie.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Commandes, messages, fichiers, logs, comptes, sauvegardes et brouillons.
+- **Validation :** Politique adoptée et contrôles implémentés.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 17.13 — Valider procédure d’incident et notification
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Administration, audit, rétention et conformité
+- **Dépend de :** Fondations pertinentes des chapitres 01–16 et tâches préalables de ce chapitre
+- **But :** valider procédure d’incident et notification.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Canaux chat ou direct, contact externe, obligations notification et escalade.
+- **Validation :** Exercice pratique et procédures documentées.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 18 — Sécurité, fiabilité et performances
+
+### 18.1 — Auditer autorisations de bout en bout
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Sécurité / performance
+- **Zone concernée :** Sécurité, fiabilité et performances
+- **Dépend de :** Fondations pertinentes des chapitres 01–17 et tâches préalables de ce chapitre
+- **But :** auditer autorisations de bout en bout.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Tests IDOR intercliniques, scopes propriétaire/admin/employé, temps réel, médias et exports.
+- **Validation :** Toutes tentatives non autorisées refusées.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 18.2 — Auditer sessions, CSRF, XSS et injection
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Sécurité / performance
+- **Zone concernée :** Sécurité, fiabilité et performances
+- **Dépend de :** Fondations pertinentes des chapitres 01–17 et tâches préalables de ce chapitre
+- **But :** auditer sessions, CSRF, XSS et injection.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Cookies, revocation, input validation, CSP, headers et queries paramétrées.
+- **Validation :** Tests négatifs et corrections.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 18.3 — Auditer upload hostile et ZIP
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Sécurité / performance
+- **Zone concernée :** Sécurité, fiabilité et performances
+- **Dépend de :** Fondations pertinentes des chapitres 01–17 et tâches préalables de ce chapitre
+- **But :** auditer upload hostile et ZIP.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** MIME, noms, contenu, antivirus si retenu, decompression, zip-bombs et temporaires.
+- **Validation :** Aucun fichier public ni débordement quotas.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 18.4 — Auditer dépendances, secrets et supply chain
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Sécurité / performance
+- **Zone concernée :** Sécurité, fiabilité et performances
+- **Dépend de :** Fondations pertinentes des chapitres 01–17 et tâches préalables de ce chapitre
+- **But :** auditer dépendances, secrets et supply chain.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Audit libs, lockfiles, Git, permissions runtime et mises à jour.
+- **Validation :** Risques critiques corrigés ou blocage documenté.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 18.5 — Auditer performance sur volumes réalistes
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Sécurité / performance
+- **Zone concernée :** Sécurité, fiabilité et performances
+- **Dépend de :** Fondations pertinentes des chapitres 01–17 et tâches préalables de ce chapitre
+- **But :** auditer performance sur volumes réalistes.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Grand nombre commandes, messages, modèles 200Mo et ZIP 1Go sur ressources VPS.
+- **Validation :** Seuils mesurés et améliorations justifiées.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 18.6 — Auditer accessibilité et compatibilité tablette
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Sécurité / performance
+- **Zone concernée :** Sécurité, fiabilité et performances
+- **Dépend de :** Fondations pertinentes des chapitres 01–17 et tâches préalables de ce chapitre
+- **But :** auditer accessibilité et compatibilité tablette.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Touch, clavier, Albanais, contrastes, erreurs, date et graphique FDI.
+- **Validation :** Parcours essentiels testés.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 18.7 — Auditer concurrence et idempotence serveur
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Sécurité / performance
+- **Zone concernée :** Sécurité, fiabilité et performances
+- **Dépend de :** Fondations pertinentes des chapitres 01–17 et tâches préalables de ce chapitre
+- **But :** auditer concurrence et idempotence serveur.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Double soumission, versions, retouches simultanées, livraisons en lot, file de mails.
+- **Validation :** Aucune double commande et aucun historique incohérent.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 18.8 — Auditer politique de données minimales
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Sécurité / performance
+- **Zone concernée :** Sécurité, fiabilité et performances
+- **Dépend de :** Fondations pertinentes des chapitres 01–17 et tâches préalables de ce chapitre
+- **But :** auditer politique de données minimales.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Logs sans santé, recherche sans fuite, exports limités, retention selon droits.
+- **Validation :** Revue sécurité documentée.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 19 — Infrastructure production et exploitation
+
+### 19.1 — Réauditer capacité du VPS multi-sites
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Infrastructure production et exploitation
+- **Dépend de :** Fondations pertinentes des chapitres 01–18 et tâches préalables de ce chapitre
+- **But :** réauditer capacité du VPS multi-sites.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** CPU, RAM, disques, services, ports, ACL, Nginx, PG, Node, backups et périmètre agent.
+- **Validation :** Inventaire daté et risques de cohabitation.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 19.2 — Choisir topologie et réserve stockage
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Infrastructure production et exploitation
+- **Dépend de :** Fondations pertinentes des chapitres 01–18 et tâches préalables de ce chapitre
+- **But :** choisir topologie et réserve stockage.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Chemins persistants, quota et réserve, backup hors VPS, test de croissance.
+- **Validation :** Capacité confirmée pour uploads et DB.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 19.3 — Préparer configuration production et secrets
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Infrastructure production et exploitation
+- **Dépend de :** Fondations pertinentes des chapitres 01–18 et tâches préalables de ce chapitre
+- **But :** préparer configuration production et secrets.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Rôles runtime sans droit DDL, secrets hors dépôt, séparation opérateur/agent.
+- **Validation :** Secrets uniquement service autorisé.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 19.4 — Préparer services dédiés du laboratoire
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Infrastructure production et exploitation
+- **Dépend de :** Fondations pertinentes des chapitres 01–18 et tâches préalables de ce chapitre
+- **But :** préparer services dédiés du laboratoire.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Unités et compte système propres, ports locaux sans conflit.
+- **Validation :** Démarrage/arrêt sans toucher aux autres sites.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 19.5 — Préparer reverse proxy et TLS
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Infrastructure production et exploitation
+- **Dépend de :** Fondations pertinentes des chapitres 01–18 et tâches préalables de ce chapitre
+- **But :** préparer reverse proxy et TLS.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Config dédiée vérifiée par nginx -t, domaine confirmé, redirection HTTPS.
+- **Validation :** Pas de modification globale non autorisée.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 19.6 — Préparer stockage persistant et sécurité fichiers
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Infrastructure production et exploitation
+- **Dépend de :** Fondations pertinentes des chapitres 01–18 et tâches préalables de ce chapitre
+- **But :** préparer stockage persistant et sécurité fichiers.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Chemins privés, quotas et permissions lecture écriture runtime.
+- **Validation :** Redémarrage ne perd aucun média.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 19.7 — Configurer surveillance santé applicative
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Infrastructure production et exploitation
+- **Dépend de :** Fondations pertinentes des chapitres 01–18 et tâches préalables de ce chapitre
+- **But :** configurer surveillance santé applicative.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Uptime, logs, disponibilité DB, services externes et TLS.
+- **Validation :** Alertes opérationnelles de test.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 19.8 — Configurer surveillance espace indépendante
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Infrastructure production et exploitation
+- **Dépend de :** Fondations pertinentes des chapitres 01–18 et tâches préalables de ce chapitre
+- **But :** configurer surveillance espace indépendante.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Alerte hors application avec seuils mesurés, blocage upload sécurisé.
+- **Validation :** Signal même si application indisponible.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 19.9 — Configurer sauvegardes DB + pièces jointes
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Infrastructure production et exploitation
+- **Dépend de :** Fondations pertinentes des chapitres 01–18 et tâches préalables de ce chapitre
+- **But :** configurer sauvegardes DB + pièces jointes.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Backups chiffrés hors VPS, cohérents, périodicité RPO 1h et rétention 30j selon faisabilité.
+- **Validation :** Restauration sur environnement isolé testée.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 19.10 — Tester restauration totale et RTO
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Infrastructure production et exploitation
+- **Dépend de :** Fondations pertinentes des chapitres 01–18 et tâches préalables de ce chapitre
+- **But :** tester restauration totale et RTO.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Simulation panne complète, reconstruction appli+DB+fichiers et vérification cohérence.
+- **Validation :** RPO ≤1h et RTO ≤4h démontrés, sinon blocage.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 19.11 — Configurer maintenance et rollback
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Infrastructure production et exploitation
+- **Dépend de :** Fondations pertinentes des chapitres 01–18 et tâches préalables de ce chapitre
+- **But :** configurer maintenance et rollback.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Migrations compatibles, retour version, procédure panne et communication interne.
+- **Validation :** Rollback testé sans perte incohérente.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 19.12 — Déployer préproduction sans données réelles
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Infrastructure production et exploitation
+- **Dépend de :** Fondations pertinentes des chapitres 01–18 et tâches préalables de ce chapitre
+- **But :** déployer préproduction sans données réelles.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Environnement contrôlé, fixtures fictives, tests TLS, API, PWA et e-mails.
+- **Validation :** Non-régression des autres services.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Non (rapport / décision, sauf document à versionner)
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 20 — Recette de bout en bout
+
+### 20.1 — Tester inscription/approbation/suspension clinique
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Recette de bout en bout
+- **Dépend de :** Fondations pertinentes des chapitres 01–19 et tâches préalables de ce chapitre
+- **But :** tester inscription/approbation/suspension clinique.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** De création à récupération en session multiple.
+- **Validation :** Trajet démontré et erreurs prévues.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 20.2 — Tester tous les rôles et permissions
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Recette de bout en bout
+- **Dépend de :** Fondations pertinentes des chapitres 01–19 et tâches préalables de ce chapitre
+- **But :** tester tous les rôles et permissions.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Matrice complète sur UI, API, message et fichiers.
+- **Validation :** Aucune escalade ni accès croisé.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 20.3 — Tester formulaire FDI et commandes atypiques
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Recette de bout en bout
+- **Dépend de :** Fondations pertinentes des chapitres 01–19 et tâches préalables de ce chapitre
+- **But :** tester formulaire FDI et commandes atypiques.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Sans dents/description, références patient, catalogues indisponibles/interdits.
+- **Validation :** Comportements exacts du cahier.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 20.4 — Tester cycles complets de commande
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Recette de bout en bout
+- **Dépend de :** Fondations pertinentes des chapitres 01–19 et tâches préalables de ce chapitre
+- **But :** tester cycles complets de commande.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Acceptation, correction, versions, annulation et verrouillage.
+- **Validation :** Tous statuts documentés testés.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 20.5 — Tester retouches et remplacements
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Recette de bout en bout
+- **Dépend de :** Fondations pertinentes des chapitres 01–19 et tâches préalables de ce chapitre
+- **But :** tester retouches et remplacements.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Chaine liée, retouche réellement livrée, une active et refus/annulation.
+- **Validation :** Aucun lien incohérent.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 20.6 — Tester messagerie et rappel non-lus
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Recette de bout en bout
+- **Dépend de :** Fondations pertinentes des chapitres 01–19 et tâches préalables de ce chapitre
+- **But :** tester messagerie et rappel non-lus.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Messages temps réel, offline/reconnect, lecture, pièces jointes, 30m/24h.
+- **Validation :** Aucun spam ni message perdu.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 20.7 — Tester livraison/archivage
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Recette de bout en bout
+- **Dépend de :** Fondations pertinentes des chapitres 01–19 et tâches préalables de ce chapitre
+- **But :** tester livraison/archivage.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Lot, correction, délai 30j, réouverture et rétention.
+- **Validation :** Traçabilité intacte.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 20.8 — Tester PWA sur appareils représentatifs
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Recette de bout en bout
+- **Dépend de :** Fondations pertinentes des chapitres 01–19 et tâches préalables de ce chapitre
+- **But :** tester PWA sur appareils représentatifs.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Préparation offline avec modèles volumineux, chiffrement, conflit, suspension.
+- **Validation :** Résultats d’appareils et limites reconnus.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 20.9 — Tester upload pause/reprise/ZIP et saturation
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Recette de bout en bout
+- **Dépend de :** Fondations pertinentes des chapitres 01–19 et tâches préalables de ce chapitre
+- **But :** tester upload pause/reprise/ZIP et saturation.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Fichiers 200Mo, total 1Go, seuil disque, expiration fragments.
+- **Validation :** Intégrité checksum et non-régression.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 20.10 — Tester panne email et panne service
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Recette de bout en bout
+- **Dépend de :** Fondations pertinentes des chapitres 01–19 et tâches préalables de ce chapitre
+- **But :** tester panne email et panne service.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Outbox, retries, notification erronée, mode maintenance.
+- **Validation :** Aucune action métier perdue.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 20.11 — Tester backup, redéploiement, rollback et non-régression
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Recette de bout en bout
+- **Dépend de :** Fondations pertinentes des chapitres 01–19 et tâches préalables de ce chapitre
+- **But :** tester backup, redéploiement, rollback et non-régression.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Exercice complet d’exploitation multi-sites.
+- **Validation :** RPO/RTO, monitoring et retour arrière démontrés.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 20.12 — Valider textes et obligations avant données patients
+- **Statut :** ☐ À faire
+- **Priorité :** Critique
+- **Catégorie / type :** Test / recette / exploitation
+- **Zone concernée :** Recette de bout en bout
+- **Dépend de :** Fondations pertinentes des chapitres 01–19 et tâches préalables de ce chapitre
+- **But :** valider textes et obligations avant données patients.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Validation professionnelle et juridique documentée.
+- **Validation :** Aucune donnée réelle avant feu vert.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Chapitre 21 — Mise en production et clôture
+
+### 21.1 — Préparer release Git revue et approuvée
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Mise en production et clôture
+- **Dépend de :** Fondations pertinentes des chapitres 01–20 et tâches préalables de ce chapitre
+- **But :** préparer release Git revue et approuvée.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Diff, lint, typecheck, test, build, détection secrets, tag release.
+- **Validation :** Version identifiée et reproductible.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 21.2 — Vérifier autorisations d’intervention production
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Mise en production et clôture
+- **Dépend de :** Fondations pertinentes des chapitres 01–20 et tâches préalables de ce chapitre
+- **But :** vérifier autorisations d’intervention production.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Droits ciblés root-owned, migration contrôlée, séparations des identités.
+- **Validation :** dental-ai ne peut intervenir sur autre application.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 21.3 — Effectuer déploiement initial contrôlé
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Mise en production et clôture
+- **Dépend de :** Fondations pertinentes des chapitres 01–20 et tâches préalables de ce chapitre
+- **But :** effectuer déploiement initial contrôlé.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Déployer services du labo et appliquer migrations approuvées sur dental_lab.
+- **Validation :** Services sains et aucun site voisin touché.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 21.4 — Activer TLS, domaine et configuration d’envoi réel
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Mise en production et clôture
+- **Dépend de :** Fondations pertinentes des chapitres 01–20 et tâches préalables de ce chapitre
+- **But :** activer TLS, domaine et configuration d’envoi réel.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** DNS validé et e-mails albanais vérifiés avec comptes de test.
+- **Validation :** Connexions sécurisées et chemins privés.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 21.5 — Effectuer recette production avec données fictives
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Mise en production et clôture
+- **Dépend de :** Fondations pertinentes des chapitres 01–20 et tâches préalables de ce chapitre
+- **But :** effectuer recette production avec données fictives.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Inscription, commande, retouche, fichiers, messages, offline, livraisons.
+- **Validation :** Preuves d’essai et nettoyage fixtures sans risque.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 21.6 — Valider sauvegardes, monitoring et stockage en production
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Mise en production et clôture
+- **Dépend de :** Fondations pertinentes des chapitres 01–20 et tâches préalables de ce chapitre
+- **But :** valider sauvegardes, monitoring et stockage en production.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Exécutions indépendantes et seuils réalistes, reprise testée isolée.
+- **Validation :** Rapports de restauration et alertes probants.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 21.7 — Vérifier non-régression des applications VPS existantes
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Mise en production et clôture
+- **Dépend de :** Fondations pertinentes des chapitres 01–20 et tâches préalables de ce chapitre
+- **But :** vérifier non-régression des applications VPS existantes.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Comparer disponibilité et configurations avant/après.
+- **Validation :** Aucun incident sur autres projets.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 21.8 — Documenter exploitation et procédures d’urgence
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Mise en production et clôture
+- **Dépend de :** Fondations pertinentes des chapitres 01–20 et tâches préalables de ce chapitre
+- **But :** documenter exploitation et procédures d’urgence.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** README, architecture, database, deployment, restore, incidents, utilisateurs et limites.
+- **Validation :** Un second opérateur peut restaurer et maintenir.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 21.9 — Effectuer audit final des exigences
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Mise en production et clôture
+- **Dépend de :** Fondations pertinentes des chapitres 01–20 et tâches préalables de ce chapitre
+- **But :** effectuer audit final des exigences.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Passer la matrice ligne par ligne et obtenir preuves/tests de chaque point.
+- **Validation :** Aucun critère requis restant non validé.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+### 21.10 — Déclarer clôture technique et métier
+- **Statut :** ☐ À faire
+- **Priorité :** Haute
+- **Catégorie / type :** Implémentation / test
+- **Zone concernée :** Mise en production et clôture
+- **Dépend de :** Fondations pertinentes des chapitres 01–20 et tâches préalables de ce chapitre
+- **But :** déclarer clôture technique et métier.
+- **Pourquoi :** répondre à une exigence du cahier des charges avec un résultat testable et sans régression.
+- **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
+- **Travail attendu :** Signer la recette et constater conformité, sécurité, reprise, documentation et release.
+- **Validation :** Projet terminé seulement si toutes portes critiques sont vertes.
+- **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
+- **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
+- **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+## Portes de passage et interdictions de clôture
+
+1. **G0 — Cadrage et stack :** une ADR technique réelle existe et respecte les règles génériques d'architecture ; la situation VPS est auditée. L'exemple Flo’s Bikes n'est pas une décision de stack.
+2. **G1 — Remote et isolation :** accès dédié vérifié, pas de sudo large, tests d'interdiction sur autres bases, répertoires, services et secrets ; risques réseau/hôte résiduels explicitement acceptés ou traités.
+3. **G2 — Données sensibles :** rôles métiers et séparation clinique testés sur API, messages, fichiers, exports, caches et recherches ; les identifiants patient sont minimisés.
+4. **G3 — Offline & volumétrie :** PWA, chiffrement local, limitations réelles navigateurs, uploads par fragments, ZIP et capacité VPS démontrés sur appareils et fichiers représentatifs.
+5. **G4 — Continuité :** sauvegardes chiffrées indépendantes, 30 jours de rétention, restauration cohérente DB/fichiers, RPO 1 h et RTO 4 h mesurés et non simplement déclarés. Si inatteignables : bloquer l'ouverture et faire arbitrer l'infrastructure.
+6. **G5 — Juridique Kosovo :** validation documentée du traitement des données patients, transferts internationaux, conservation, dispositifs dentaires sur mesure, incidents et textes légaux ; aucune donnée réelle avant cette porte.
+7. **G6 — Exploitation :** TLS, DNS, mails, monitoring hors application, réserve stockage, maintenance, rollback, aucune régression des autres sites VPS.
+8. **G7 — Clôture :** critères du §20 du cahier couverts par tests ; audit final signé/accepté par le responsable. Un statut administratif ne remplace aucune preuve.
+
+## Scénarios transversaux indispensables
+
+- Connexion et révocation multi-appareils ; compromis clinique et récupération propriétaire hors UI.
+- Deux cliniques distinctes : accès indirect par identifiant, fichiers ZIP, temps réel, cache et recherche refusé.
+- Deux sessions concurrentes : validation d'ancienne version, retrait de modification, annulation, livraison et retouche active.
+- Catalogue retiré puis utilisé via brouillon offline ; indisponible accepté exceptionnellement, interdit non contournable.
+- Coupure pendant upload à 700 Mo, stockage saturé, pause/reprise, retour du réseau sans soumission automatique.
+- Deux appareils modifient le même brouillon et ses fichiers : sélectionner serveur ou dupliquer local, jamais fusion automatique silencieuse.
+- E-mail indisponible au moment d'une commande, rappel non lu à 30min/24h, destinataires configurés, échec durable.
+- Livraison marquée par erreur, conversation rouverte, J+30 réinitialisé ; retouche existante bloque correction automatique.
+- Retouche après remplacement : lien au travail réellement livré ; une seule retouche active pour cette commande livrée.
+- Perte complète du VPS : restaurer base, fichiers, privilèges, TLS, services et audit, sans casser les autres applications.
+
+## Livrables de clôture
+
+- Code source versionné et reproductible ; migrations + tests ; README + ADR et architecture réelle ; interface en albanais ; documents légaux validés.
+- Instructions d'installation et d'exploitation ; schéma base/permissions ; procédure de sauvegarde/restauration ; guide incident, procédure de récupération exceptionnelle et répertoire des services/ports.
+- Rapports de tests fonctionnels, inter-cliniques, performance et sécurité ; rapports RPO/RTO ; validation conformité ; matrice exigences→preuves ; preuve non-régression des autres sites.
+- Release identifiée et procédure rollback testée.
+
+**Règle finale :** le projet est « terminé » uniquement quand toutes les exigences obligatoires sont couvertes, les portes G0–G7 sont franchies et les preuves sont vérifiables. Les tâches exclues du périmètre V1 n'empêchent pas la clôture.
+
+
+## Suivi de préparation — 09/10/2026 (Europe/Brussels)
+
+Cette section complète la roadmap originale ; les 217 points, leurs critères et leurs dépendances sont conservés. Le présent fichier est le suivi canonique dans `/srv/dental-lab`. Les documents joints sont copiés sous les noms ci-dessous, sans modifier leur contenu. Les mentions historiques `(1)` dans les documents désignent le prompt générique fourni sous `(2)` : son contenu est un principe d’organisation, pas une décision de stack. Le fichier joint `ARCHITECTURE.md` est le complément adapté, désormais nommé `ARCHITECTURE_ADAPTEE.md`.
+
+### Provenance des références
+
+| Pièce jointe | Nom dans le projet | SHA-256 de la pièce jointe |
+|---|---|---|
+| `CAHIER_DES_CHARGES(1).md` | `CAHIER_DES_CHARGES.md` | `15b97894ae4bbbfd89c7ad3ff70345b5072f07fafdd7836efce0eb346792fb29` |
+| `ARCHITECTURE.md` | `ARCHITECTURE_ADAPTEE.md` | `4a8ad8de92f2a51b809c98df526f264cd26a0cafcd207447cd2dbf9febd71c4a` |
+| `Prompt_Architecture_Web(2).md` | `Prompt_Architecture_Web.md` | `5b6259873bbf34663a071d275450ce6ee3def44ccdf6025514bbd27befbdeb3e` |
+| `CONSIGNE(1).md` | `CONSIGNE.md` | `b4c0efd857f39953ca37ce14e5c449333ccaf95f8b4fbb54a19c28765b7d4a85` |
+| `ROADMAP(3).md` | `ROADMAP.md` | `54d8ce1be8e0dc294cce6ddd370ddc62264b128d569cf036f4590a3f59aa7f96` |
+
+### Preuves initiales contrôlées
+
+- Remote sélectionné exclusivement : `vps-28bf7789`, identifiant `d378742a-d803-4e4f-be42-22c866312043`, annoncé en ligne.
+- Exécution réelle : UID/GID 1002, `dental-ai`, groupes `dental-ai` et `users`, HOME `/home/dental-ai`, hostname conforme. Le cwd initial du connecteur est son dossier d’installation ; toutes les interventions projet commencent par `cd /srv/dental-lab` et vérifient `pwd -P`.
+- Chemin réel `/srv/dental-lab`, propriétaire/groupe `dental-ai`, mode 700, ACL sans délégation supplémentaire. Inventaire initial vide ; aucune entrée `.git` à la racine.
+- Versions exécutées : Git 2.47.3, Node 22.22.2, npm 10.9.7, client psql 17.11, Python et getfacl disponibles.
+- `df -h /srv/dental-lab` : volume partagé de 74 Go, 18 Go utilisés, 54 Go disponibles (valeurs arrondies). Ce constat n’est ni un quota réservé au labo, ni une preuve de capacité production.
+- Audit SQL exclusivement dans `dental_lab`, transaction `READ ONLY` avec arrêt sur erreur : serveur 17.11 ; `current_user` et `session_user` = `dental-ai`. Owner DB = `dental_lab_owner`. CONNECT autorisé ; CREATE DB et TEMP refusés. USAGE public autorisé ; CREATE public refusé.
+- Rôles owner/audit/migrator/app présents, tous NOLOGIN et sans superuser/CREATEDB/CREATEROLE/replication/BYPASSRLS. `dental-ai` LOGIN sans ces privilèges, membre de `dental_lab_audit`, sans ADMIN OPTION. Aucune table applicative visible par information_schema ; ce dernier constat reste limité à la visibilité du compte d’audit.
+- Configuration Remote lue : chemins autorisés `/srv/dental-lab` et `/home/dental-ai`, commande sudo bloquée. Cela ne prouve ni la politique sudo Linux complète ni une isolation réseau/hôte. Aucun test de connexion à un autre service ou une autre base, aucune lecture de secrets voisins.
+- Aucun code, migration, service, rôle, privilège ou paramètre global modifié. Aucun dépôt/remote Git confirmé ; aucun commit/push.
+
+### Compte rendu du point 1.1 — Audit des références
+
+Statut : ☑ Validé pour l’audit documentaire uniquement. Les cinq documents ont été lus intégralement. Les 217 identifiants sont uniques et tous initialement à faire. La matrice ci-dessous relie chaque passage prescriptif en liste et chaque arbitrage tabulaire du cahier à des points réels. Les paragraphes introductifs et les clauses finales sont couverts par la revue de périmètre et les gates G0–G7. Le texte de chaque passage reste présent pour éviter une omission par résumé.
+
+La couverture indique des interventions et des preuves futures, jamais une fonctionnalité déjà implémentée. La définition détaillée de cas de tests reste au point 1.5. Aucun framework, ORM, domaine, port, prestataire ou seuil n’est réputé décidé. Seuls PostgreSQL 17, le périmètre système et les règles métier confirmées servent de prérequis.
+
+Lecture de cohérence à appliquer :
+
+- La limite de 1 Go au point 12.3 concerne la soumission initiale (§4.2) ; elle ne peut pas devenir un quota historique de la commande ou une nouvelle limite cumulative de modification/suivi/retouche.
+- L’accès aux commandes/fichiers exige la clinique et les droits adaptés, y compris recherche, aperçus, export, notifications et temps réel. Les aperçus 3D ne garantissent pas l’impossibilité de copier les octets.
+- Les demandes de motifs de refus d’inscription (7.4) et l’édition du profil par la clinique (7.5) seront confrontées au §2.2 avant implémentation : aucun nouveau champ obligatoire ni droit de modification ne sera ajouté sans décision si non établi. Ce sont des précisions de ces futurs points, pas des comportements développés aujourd’hui.
+- Les tests interprojets des points 2.2, 2.5, 2.9 et G1 ne constituent pas une autorisation de contacter d’autres services/bases. L’interdiction explicite de la mission prime. Leurs preuves non intrusives ou administrateur devront être définies lors de ces points ; ils restent non validés.
+- L’ordre logique des fondations pertinentes prime sur une lecture exigeant mécaniquement tout le chapitre précédent : les fixtures DB, uploads, messagerie, mails et brouillons devront disposer de leurs fondations avant validation de leurs scénarios intégrés.
+- Les validations UX sur appareils, les décisions d’infrastructure et les avis professionnels/juridiques ne peuvent être auto-attestés. Leur absence n’est pas masquée par une compilation.
+
+Vérifications effectuées : lecture complète ; décompte et unicité 217 points ; rapprochement automatique des identifiants de couverture avec les points réels ; inventaire des sources et empreintes ; contrôle manuel des interactions sensibles (demandes, versions, catalogue, retouches, fichiers, offline, e-mails, archivage/rétention, sauvegardes). Aucune exécution de test applicatif : aucun code n’existe. Suite : 1.2.
+
+### Matrice de traçabilité initiale (1.1)
+
+Les identifiants CDC ci-dessous sont créés pour la traçabilité de cet audit ; ils ne sont pas des identifiants antérieurs. Les numéros de lignes se réfèrent à la pièce jointe `CAHIER_DES_CHARGES(1).md`, dont l’empreinte figure ci-dessus. Les preuves indiquées sont À PRODUIRE. Les points des chapitres 20 et 21 assurent la recette transversale/finale ; ils ne remplacent pas les tests spécifiques.
+
+| Identifiant d’audit | Source exacte | Exigence / exclusion / condition | Couverture roadmap prévue | Preuve à produire | Cas de validation |
+|---|---|---|---|---|---|
+| CDC-1-01 | §1, ligne 17 | 1. Simplicité opérationnelle : peu de clics et d'informations inutiles, interface adaptée aux tablettes et téléphones, travail quotidien prioritaire sur les statistiques. | 1.4, 3.1, 4.1, 7.10, 18.1, 20.2 | Revue des frontières, simplicité UX, confidentialité et périmètre. | V-CDC-1-01 (F-1) |
+| CDC-1-02 | §1, ligne 18 | 2. Traçabilité : commandes, décisions, changements de statut, historiques de versions et interventions liées ne sont jamais silencieusement écrasés. | 1.4, 3.1, 4.1, 7.10, 18.1, 20.2 | Revue des frontières, simplicité UX, confidentialité et périmètre. | V-CDC-1-02 (F-1) |
+| CDC-1-03 | §1, ligne 19 | 3. Séparation des cliniques : aucune clinique n'accède aux données d'une autre. | 1.4, 3.1, 4.1, 7.10, 18.1, 20.2 | Revue des frontières, simplicité UX, confidentialité et périmètre. | V-CDC-1-03 (F-1) |
+| CDC-1-04 | §1, ligne 20 | 4. Moindre privilège : permissions granulaires, contrôlées côté serveur, accès aux données patient limité selon le besoin métier. | 1.4, 3.1, 4.1, 7.10, 18.1, 20.2 | Revue des frontières, simplicité UX, confidentialité et périmètre. | V-CDC-1-04 (F-1) |
+| CDC-1-05 | §1, ligne 21 | 5. Résilience : brouillons utilisables hors ligne, transferts volumineux reprenables, stockage protégé, sauvegardes et procédures de récupération. | 1.4, 3.1, 4.1, 7.10, 18.1, 20.2 | Revue des frontières, simplicité UX, confidentialité et périmètre. | V-CDC-1-05 (F-1) |
+| CDC-1-06 | §1, ligne 22 | 6. Une seule application, deux portails : laboratoire et clinique ; ni portail patient, ni facturation au lancement. | 1.4, 3.1, 4.1, 7.10, 18.1, 20.2 | Revue des frontières, simplicité UX, confidentialité et périmètre. | V-CDC-1-06 (F-1) |
+| CDC-2.1-01 | §2.1, ligne 28 | - Propriétaire principal : compte unique disposant du contrôle complet, sauf impossibilité de falsifier ou d'effacer l'audit. Seul lecteur du journal d'audit global. | 3.2, 7.3, 7.9, 7.10, 7.13, 17.1, 20.2 | Propriétaire unique, compte clinique partagé, délégation et refus d’escalade. | V-CDC-2.1-01 (F-2.1) |
+| CDC-2.1-02 | §2.1, ligne 29 | - Administrateurs secondaires : comptes créés et administrés par le propriétaire ; permissions déterminées individuellement ; aucune élévation personnelle de privilèges. | 3.2, 7.3, 7.9, 7.10, 7.13, 17.1, 20.2 | Propriétaire unique, compte clinique partagé, délégation et refus d’escalade. | V-CDC-2.1-02 (F-2.1) |
+| CDC-2.1-03 | §2.1, ligne 30 | - Employés du laboratoire : comptes individuels à permissions limitées, créés par invitation e-mail sécurisée ; pas d'attribution de commandes à un employé. | 3.2, 7.3, 7.9, 7.10, 7.13, 17.1, 20.2 | Propriétaire unique, compte clinique partagé, délégation et refus d’escalade. | V-CDC-2.1-03 (F-2.1) |
+| CDC-2.1-04 | §2.1, ligne 31 | - Clinique : un compte partagé par clinique, sans comptes séparés pour dentiste ou secrétaire. Les actions attribuables à une clinique sont attribuées au compte partagé, non à un individu physique précis. | 3.2, 7.3, 7.9, 7.10, 7.13, 17.1, 20.2 | Propriétaire unique, compte clinique partagé, délégation et refus d’escalade. | V-CDC-2.1-04 (F-2.1) |
+| CDC-2.2-01 | §2.2, ligne 35 | - La clinique s'inscrit avec : nom de clinique, prénom et nom du dentiste de référence, e-mail, mot de passe, téléphone et adresse complète. Son inscription nécessite l'approbation du laboratoire ; aucun envoi de commande avant approbation. | 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 7.11, 7.12, 7.14, 7.15, 20.1 | Inscription, décisions, invitations, suspension, récupération, changement d’adresse et interventions exceptionnelles. | V-CDC-2.2-01 (F-2.2) |
+| CDC-2.2-02 | §2.2, ligne 36 | - Le laboratoire peut approuver/refuser, consulter les cliniques et leurs travaux, mettre à jour leurs coordonnées selon les permissions, suspendre/réactiver et lancer une récupération d'accès. Pas de suppression permanente simple d'une clinique. | 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 7.11, 7.12, 7.14, 7.15, 20.1 | Inscription, décisions, invitations, suspension, récupération, changement d’adresse et interventions exceptionnelles. | V-CDC-2.2-02 (F-2.2) |
+| CDC-2.2-03 | §2.2, ligne 37 | - Le propriétaire administre les administrateurs secondaires. Il peut déléguer à des administrateurs secondaires la création, la suspension/réactivation et la gestion des permissions des employés, dans la limite des autorisations explicitement délégables. Aucun administrateur secondaire ne gère les comptes d'autres administrateurs secondaires. | 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 7.11, 7.12, 7.14, 7.15, 20.1 | Inscription, décisions, invitations, suspension, récupération, changement d’adresse et interventions exceptionnelles. | V-CDC-2.2-03 (F-2.2) |
+| CDC-2.2-04 | §2.2, ligne 38 | - Invitation des employés par e-mail : lien à usage unique, durée de validité bornée (durée précise à déterminer), création de mot de passe par le destinataire. Le mécanisme d'invitation des administrateurs secondaires doit suivre une sécurité équivalente. | 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 7.11, 7.12, 7.14, 7.15, 20.1 | Inscription, décisions, invitations, suspension, récupération, changement d’adresse et interventions exceptionnelles. | V-CDC-2.2-04 (F-2.2) |
+| CDC-2.2-05 | §2.2, ligne 39 | - Suspension : révocation des sessions et refus des nouvelles opérations serveur. Les actes historiques demeurent attribuables à l'ancien compte. | 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 7.11, 7.12, 7.14, 7.15, 20.1 | Inscription, décisions, invitations, suspension, récupération, changement d’adresse et interventions exceptionnelles. | V-CDC-2.2-05 (F-2.2) |
+| CDC-2.2-06 | §2.2, ligne 40 | - Changement d'e-mail d'une clinique : demande de la clinique, décision d'un administrateur habilité, confirmation par la nouvelle adresse avant activation ; alerte de sécurité à l'ancienne adresse. | 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 7.11, 7.12, 7.14, 7.15, 20.1 | Inscription, décisions, invitations, suspension, récupération, changement d’adresse et interventions exceptionnelles. | V-CDC-2.2-06 (F-2.2) |
+| CDC-2.2-07 | §2.2, ligne 41 | - Compte de clinique suspect de compromission : action propriétaire « Sécuriser le compte » ; révocation de toutes les sessions, blocage temporaire, réinitialisation obligatoire du mot de passe, vérification du demandeur, sans suppression des données. | 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 7.11, 7.12, 7.14, 7.15, 20.1 | Inscription, décisions, invitations, suspension, récupération, changement d’adresse et interventions exceptionnelles. | V-CDC-2.2-07 (F-2.2) |
+| CDC-2.2-08 | §2.2, ligne 42 | - Compte propriétaire perdu : récupération ordinaire par e-mail ; récupération technique exceptionnelle si l'e-mail est inaccessible, selon une procédure documentée vérifiant identité et autorité, révoquant les sessions et consignant l'intervention. | 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 7.11, 7.12, 7.14, 7.15, 20.1 | Inscription, décisions, invitations, suspension, récupération, changement d’adresse et interventions exceptionnelles. | V-CDC-2.2-08 (F-2.2) |
+| CDC-2.2-09 | §2.2, ligne 43 | - Changement de propriétaire principal : uniquement intervention technique exceptionnelle, documentée, vérifiée et auditée ; un seul propriétaire à la fois ; aucune action de transfert dans l'interface. | 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 7.9, 7.11, 7.12, 7.14, 7.15, 20.1 | Inscription, décisions, invitations, suspension, récupération, changement d’adresse et interventions exceptionnelles. | V-CDC-2.2-09 (F-2.2) |
+| CDC-2.3-01 | §2.3, ligne 49 | - Consultation logistique : numéro de commande, clinique, statut, priorité, dates et mode de livraison ; aucune donnée patient ni instruction technique. | 3.3, 6.3, 7.10, 7.11, 12.9, 13.8, 14.2, 18.1, 20.2 | Matrice de droits et prérequis ; tests négatifs UI/API/fichiers/messages/recherches et révocation. | V-CDC-2.3-01 (F-2.3) |
+| CDC-2.3-02 | §2.3, ligne 50 | - Consultation détaillée : données logistiques plus identification patient, dents, matériau, teinte, type et description. | 3.3, 6.3, 7.10, 7.11, 12.9, 13.8, 14.2, 18.1, 20.2 | Matrice de droits et prérequis ; tests négatifs UI/API/fichiers/messages/recherches et révocation. | V-CDC-2.3-02 (F-2.3) |
+| CDC-2.3-03 | §2.3, ligne 51 | - Visualisation des fichiers et téléchargement des fichiers : deux permissions distinctes, chacune exigeant aussi l'accès à la commande et aux données correspondantes. | 3.3, 6.3, 7.10, 7.11, 12.9, 13.8, 14.2, 18.1, 20.2 | Matrice de droits et prérequis ; tests négatifs UI/API/fichiers/messages/recherches et révocation. | V-CDC-2.3-03 (F-2.3) |
+| CDC-2.3-04 | §2.3, ligne 52 | - Lecture et réponse aux conversations de commande : deux permissions distinctes ; la réponse implique la lecture et l'accès à la commande. | 3.3, 6.3, 7.10, 7.11, 12.9, 13.8, 14.2, 18.1, 20.2 | Matrice de droits et prérequis ; tests négatifs UI/API/fichiers/messages/recherches et révocation. | V-CDC-2.3-04 (F-2.3) |
+| CDC-2.3-05 | §2.3, ligne 53 | - Lecture et réponse aux conversations générales : deux permissions distinctes des conversations de commande ; réponse implique lecture. | 3.3, 6.3, 7.10, 7.11, 12.9, 13.8, 14.2, 18.1, 20.2 | Matrice de droits et prérequis ; tests négatifs UI/API/fichiers/messages/recherches et révocation. | V-CDC-2.3-05 (F-2.3) |
+| CDC-2.3-06 | §2.3, ligne 54 | - Actions métier : accepter/refuser, demander correction, modifier instructions, démarrer fabrication, changer autres statuts, planifier livraison, modifier priorité, livrer, créer commandes pour une clinique, traiter retouches, gérer catalogue, comptes et paramètres, partager fichiers de suivi, etc., selon les besoins. | 3.3, 6.3, 7.10, 7.11, 12.9, 13.8, 14.2, 18.1, 20.2 | Matrice de droits et prérequis ; tests négatifs UI/API/fichiers/messages/recherches et révocation. | V-CDC-2.3-06 (F-2.3) |
+| CDC-2.3-07 | §2.3, ligne 55 | - Acceptation/refus, modification des instructions et démarrage fabrication exigent l'accès détaillé en plus de la permission d'action. Les actions purement logistiques peuvent être déléguées avec accès logistique. | 3.3, 6.3, 7.10, 7.11, 12.9, 13.8, 14.2, 18.1, 20.2 | Matrice de droits et prérequis ; tests négatifs UI/API/fichiers/messages/recherches et révocation. | V-CDC-2.3-07 (F-2.3) |
+| CDC-2.3-08 | §2.3, ligne 56 | - Une autorisation ne doit pas pouvoir être accordée si ses prérequis manquent. Le retrait d'un prérequis invalide les permissions dépendantes. Contrôles effectués par le serveur et lors de chaque téléchargement, recherche, notification et accès temps réel. | 3.3, 6.3, 7.10, 7.11, 12.9, 13.8, 14.2, 18.1, 20.2 | Matrice de droits et prérequis ; tests négatifs UI/API/fichiers/messages/recherches et révocation. | V-CDC-2.3-08 (F-2.3) |
+| CDC-2.3-09 | §2.3, ligne 57 | - Les utilisateurs autorisés peuvent voir toutes les commandes du laboratoire dans les limites de leurs permissions ; pas d'affectation individuelle de commande. | 3.3, 6.3, 7.10, 7.11, 12.9, 13.8, 14.2, 18.1, 20.2 | Matrice de droits et prérequis ; tests négatifs UI/API/fichiers/messages/recherches et révocation. | V-CDC-2.3-09 (F-2.3) |
+| CDC-2.3-10 | §2.3, ligne 58 | - La liste des destinataires d'e-mails métier est configurable par catégorie par le propriétaire parmi les administrateurs secondaires habilités ; propriétaire destinataire par défaut des notifications importantes. Les employés ne reçoivent pas automatiquement ces e-mails administratifs. Alertes critiques de sécurité/sauvegarde toujours transmises au propriétaire. | 3.3, 6.3, 7.10, 7.11, 12.9, 13.8, 14.2, 18.1, 20.2 | Matrice de droits et prérequis ; tests négatifs UI/API/fichiers/messages/recherches et révocation. | V-CDC-2.3-10 (F-2.3) |
+| CDC-3-01 | §3, ligne 62 | - Catalogues administrables : matériaux, teintes (communes à tous les matériaux), types de travaux (facultatifs dans les commandes). | 3.4, 6.4, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 20.3 | Catalogue, snapshots, exception commerciale et interdiction non contournable, paramètres sans finance. | V-CDC-3-01 (F-3) |
+| CDC-3-02 | §3, ligne 63 | - Ajout, renommage/modification, activation, désactivation et suppression des références du catalogue courant, sans supprimer les valeurs historiques déjà utilisées. | 3.4, 6.4, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 20.3 | Catalogue, snapshots, exception commerciale et interdiction non contournable, paramètres sans finance. | V-CDC-3-02 (F-3) |
+| CDC-3-03 | §3, ligne 64 | - Les références supprimées ou inactives restent préservées dans les commandes, brouillons, archives et duplications préremplies : il faut distinguer référence de catalogue et valeur historique figée. | 3.4, 6.4, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 20.3 | Catalogue, snapshots, exception commerciale et interdiction non contournable, paramètres sans finance. | V-CDC-3-03 (F-3) |
+| CDC-3-04 | §3, ligne 65 | - États d'utilisation : disponible, indisponible (exception commerciale possible), interdite pour raison de sécurité/conformité (aucune exception d'utilisation). | 3.4, 6.4, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 20.3 | Catalogue, snapshots, exception commerciale et interdiction non contournable, paramètres sans finance. | V-CDC-3-04 (F-3) |
+| CDC-3-05 | §3, ligne 66 | - Une référence indisponible peut figurer dans un brouillon et être soumise avec avertissement. Le laboratoire peut l'accepter exceptionnellement avec justification et confirmation explicite sans la réactiver globalement. | 3.4, 6.4, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 20.3 | Catalogue, snapshots, exception commerciale et interdiction non contournable, paramètres sans finance. | V-CDC-3-05 (F-3) |
+| CDC-3-06 | §3, ligne 67 | - Une référence interdite ne peut pas servir à une nouvelle soumission ou à une acceptation ; son motif est obligatoire. Les travaux non livrés l'utilisant sont bloqués préventivement dans leur progression, mais pas annulés automatiquement. Le propriétaire est alerté et peut examiner tous les travaux concernés ; ceux déjà livrés sont signalés pour examen. Une interdiction réglementaire ne peut pas être contournée par un administrateur. | 3.4, 6.4, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 20.3 | Catalogue, snapshots, exception commerciale et interdiction non contournable, paramètres sans finance. | V-CDC-3-06 (F-3) |
+| CDC-3-07 | §3, ligne 68 | - Informations publiques du laboratoire dans le portail : nom, adresse, téléphone, e-mail, horaires, logo, lien de localisation/carte. Mise à jour depuis les paramètres, selon permissions. | 3.4, 6.4, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 20.3 | Catalogue, snapshots, exception commerciale et interdiction non contournable, paramètres sans finance. | V-CDC-3-07 (F-3) |
+| CDC-3-08 | §3, ligne 69 | - Aucun prix ou champ financier visible dans le portail clinique au lancement. | 3.4, 6.4, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 20.3 | Catalogue, snapshots, exception commerciale et interdiction non contournable, paramètres sans finance. | V-CDC-3-08 (F-3) |
+| CDC-4.1-01 | §4.1, ligne 75 | - Numéro unique attribué par le serveur à la soumission effective, date et heure de réception serveur enregistrées automatiquement. | 6.5, 9.1, 9.2, 9.3, 9.4, 9.5, 9.7, 12.2, 20.3 | Combinaisons patient, FDI tactile, champs obligatoires/facultatifs, dates et numéro serveur. | V-CDC-4.1-01 (F-4.1) |
+| CDC-4.1-02 | §4.1, ligne 76 | - Identification patient : soit prénom ET nom, soit référence interne de la clinique ; possibilité de fournir les deux, sans exiger les deux modes. Un patient n'a pas de dossier transversal dans l'application et l'égalité des noms ne signifie pas identité commune. | 6.5, 9.1, 9.2, 9.3, 9.4, 9.5, 9.7, 12.2, 20.3 | Combinaisons patient, FDI tactile, champs obligatoires/facultatifs, dates et numéro serveur. | V-CDC-4.1-02 (F-4.1) |
+| CDC-4.1-03 | §4.1, ligne 77 | - Date de livraison souhaitée obligatoire pour la clinique ; distincte de la date de livraison planifiée par le laboratoire. Les deux restent visibles, sans promesse de respect garanti de l'échéance. | 6.5, 9.1, 9.2, 9.3, 9.4, 9.5, 9.7, 12.2, 20.3 | Combinaisons patient, FDI tactile, champs obligatoires/facultatifs, dates et numéro serveur. | V-CDC-4.1-03 (F-4.1) |
+| CDC-4.1-04 | §4.1, ligne 78 | - Matériau obligatoire, teinte obligatoire, et un seul matériau + une seule teinte par commande, communs à toutes les dents. | 6.5, 9.1, 9.2, 9.3, 9.4, 9.5, 9.7, 12.2, 20.3 | Combinaisons patient, FDI tactile, champs obligatoires/facultatifs, dates et numéro serveur. | V-CDC-4.1-04 (F-4.1) |
+| CDC-4.1-05 | §4.1, ligne 79 | - Type de travail : facultatif ; description : facultative, même sans dents sélectionnées. | 6.5, 9.1, 9.2, 9.3, 9.4, 9.5, 9.7, 12.2, 20.3 | Combinaisons patient, FDI tactile, champs obligatoires/facultatifs, dates et numéro serveur. | V-CDC-4.1-05 (F-4.1) |
+| CDC-4.1-06 | §4.1, ligne 80 | - Schéma dentaire FDI permanent à 32 dents : 11–18, 21–28, 31–38, 41–48. Premier appui : dent normale ; deuxième : pontic/« antar » ; troisième : non sélectionnée. Fonctionne au toucher sur tablette. Aucune dent obligatoire, aucun regroupement automatique des bridges ; expliciter au besoin dans la description. | 6.5, 9.1, 9.2, 9.3, 9.4, 9.5, 9.7, 12.2, 20.3 | Combinaisons patient, FDI tactile, champs obligatoires/facultatifs, dates et numéro serveur. | V-CDC-4.1-06 (F-4.1) |
+| CDC-4.1-07 | §4.1, ligne 81 | - Si aucune dent ni description, afficher un avertissement non bloquant avant envoi : ne pas créer une obligation contredisant le choix métier. | 6.5, 9.1, 9.2, 9.3, 9.4, 9.5, 9.7, 12.2, 20.3 | Combinaisons patient, FDI tactile, champs obligatoires/facultatifs, dates et numéro serveur. | V-CDC-4.1-07 (F-4.1) |
+| CDC-4.1-08 | §4.1, ligne 82 | - Pièces jointes facultatives : STL, PLY, OBJ, JPG, PNG, HEIC et PDF. | 6.5, 9.1, 9.2, 9.3, 9.4, 9.5, 9.7, 12.2, 20.3 | Combinaisons patient, FDI tactile, champs obligatoires/facultatifs, dates et numéro serveur. | V-CDC-4.1-08 (F-4.1) |
+| CDC-4.2-01 | §4.2, ligne 86 | - 200 Mo par fichier. | 3.7, 12.2, 12.3, 12.4, 12.5, 12.7, 12.13, 20.9 | Limites de taille exactes, intégrité, formats et droits ; aucune nouvelle limite cumulative hors décision. | V-CDC-4.2-01 (F-4.2) |
+| CDC-4.2-02 | §4.2, ligne 87 | - 1 Go cumulé pour les fichiers de la commande initiale lors de sa création ; pas de nombre maximal arbitraire de fichiers. | 3.7, 12.2, 12.3, 12.4, 12.5, 12.7, 12.13, 20.9 | Limites de taille exactes, intégrité, formats et droits ; aucune nouvelle limite cumulative hors décision. | V-CDC-4.2-02 (F-4.2) |
+| CDC-4.2-03 | §4.2, ligne 88 | - 1 Go par message dans la messagerie, toujours dans la limite de 200 Mo par fichier ; pas de quota cumulatif fixe par conversation. | 3.7, 12.2, 12.3, 12.4, 12.5, 12.7, 12.13, 20.9 | Limites de taille exactes, intégrité, formats et droits ; aucune nouvelle limite cumulative hors décision. | V-CDC-4.2-03 (F-4.2) |
+| CDC-4.2-04 | §4.2, ligne 89 | - Limites des fichiers ajoutés lors des modifications, des fichiers de suivi ou des retouches : appliquer au minimum 200 Mo/fichier, prévoir des règles de capacité cohérentes avec le stockage ; ne pas présumer une limite cumulative supplémentaire non décidée. | 3.7, 12.2, 12.3, 12.4, 12.5, 12.7, 12.13, 20.9 | Limites de taille exactes, intégrité, formats et droits ; aucune nouvelle limite cumulative hors décision. | V-CDC-4.2-04 (F-4.2) |
+| CDC-4.2-05 | §4.2, ligne 90 | - Validation du type, du contenu, des droits, de la taille et de l'intégrité côté serveur ; progression, erreurs explicites, reprise sécurisée, aucune exposition par URL publique. | 3.7, 12.2, 12.3, 12.4, 12.5, 12.7, 12.13, 20.9 | Limites de taille exactes, intégrité, formats et droits ; aucune nouvelle limite cumulative hors décision. | V-CDC-4.2-05 (F-4.2) |
+| CDC-4.3-01 | §4.3, ligne 94 | - Protection technique contre les doubles soumissions d'une même commande (idempotence). | 9.6, 9.7, 10.15, 18.7 | Idempotence sous concurrence ; similarité limitée à la clinique et jamais bloquante. | V-CDC-4.3-01 (F-4.3) |
+| CDC-4.3-02 | §4.3, ligne 95 | - Avertissement non bloquant lorsqu'une commande semble similaire à une autre de la même clinique ; le dentiste peut consulter l'existante ou poursuivre. Aucune comparaison entre cliniques ni blocage fondé uniquement sur un nom de patient. | 9.6, 9.7, 10.15, 18.7 | Idempotence sous concurrence ; similarité limitée à la clinique et jamais bloquante. | V-CDC-4.3-02 (F-4.3) |
+| CDC-5.1-01 | §5.1, ligne 105 | - `En attente` : soumission enregistrée, à décider manuellement par le laboratoire. | 3.5, 10.1, 10.2, 10.3, 9.9, 16.6, 20.4 | Automate exhaustif, décisions manuelles, correction explicitement renvoyée, blocage séparé du statut. | V-CDC-5.1-01 (F-5.1) |
+| CDC-5.1-02 | §5.1, ligne 106 | - `Correction demandée` : motif de correction obligatoire, attente d'une action du dentiste. Il corrige informations et fichiers, puis renvoie explicitement ; retour `En attente`, nouvelle décision manuelle du laboratoire et e-mail au laboratoire. | 3.5, 10.1, 10.2, 10.3, 9.9, 16.6, 20.4 | Automate exhaustif, décisions manuelles, correction explicitement renvoyée, blocage séparé du statut. | V-CDC-5.1-02 (F-5.1) |
+| CDC-5.1-03 | §5.1, ligne 107 | - `Refusée` : décision lab avec motif obligatoire, historique conservé, pas de réouverture directe. | 3.5, 10.1, 10.2, 10.3, 9.9, 16.6, 20.4 | Automate exhaustif, décisions manuelles, correction explicitement renvoyée, blocage séparé du statut. | V-CDC-5.1-03 (F-5.1) |
+| CDC-5.1-04 | §5.1, ligne 108 | - `Acceptée` : acceptation manuelle d'une commande venant de la clinique ; acceptation automatique si commande créée par le laboratoire pour une clinique existante. | 3.5, 10.1, 10.2, 10.3, 9.9, 16.6, 20.4 | Automate exhaustif, décisions manuelles, correction explicitement renvoyée, blocage séparé du statut. | V-CDC-5.1-04 (F-5.1) |
+| CDC-5.1-05 | §5.1, ligne 109 | - `En fabrication`, `Terminée`, `Livrée` : transitions manuelles selon permissions. `Terminée` = travail prêt, pas encore expédié/retiré. `Livrée` = travail physiquement sorti du laboratoire ou récupéré par la clinique, sans confirmation du dentiste. | 3.5, 10.1, 10.2, 10.3, 9.9, 16.6, 20.4 | Automate exhaustif, décisions manuelles, correction explicitement renvoyée, blocage séparé du statut. | V-CDC-5.1-05 (F-5.1) |
+| CDC-5.1-06 | §5.1, ligne 110 | - Le changement de statut, ses dates et son auteur sont historisés. Ne pas confondre drapeaux de blocage de sécurité et statut métier ; une commande `En fabrication` bloquée demeure dans ce statut tant qu'une action métier valide n'est pas prise. | 3.5, 10.1, 10.2, 10.3, 9.9, 16.6, 20.4 | Automate exhaustif, décisions manuelles, correction explicitement renvoyée, blocage séparé du statut. | V-CDC-5.1-06 (F-5.1) |
+| CDC-5.2-01 | §5.2, ligne 114 | - `En attente` : la clinique modifie directement formulaire, dents et fichiers, avec versions et historique. La commande reste `En attente` ; si le laboratoire lit une ancienne version, il doit recharger la dernière avant acceptation. | 3.4, 6.5, 6.6, 10.4, 10.5, 10.6, 10.10, 10.11, 10.15, 20.4 | Versions, demande pendante unique, version obsolète, verrouillage et absence de changement officiel via chat. | V-CDC-5.2-01 (F-5.2) |
+| CDC-5.2-02 | §5.2, ligne 115 | - `Correction demandée` : la clinique peut corriger, sans retour automatique en attente ; renvoi explicite nécessaire. | 3.4, 6.5, 6.6, 10.4, 10.5, 10.6, 10.10, 10.11, 10.15, 20.4 | Versions, demande pendante unique, version obsolète, verrouillage et absence de changement officiel via chat. | V-CDC-5.2-02 (F-5.2) |
+| CDC-5.2-03 | §5.2, ligne 116 | - `Acceptée` : la clinique peut soumettre une demande de modification proposant les valeurs avant/après ; l'original reste inchangé jusqu'à acceptation lab ; acceptation/refus motivé ou historisé et notifié par e-mail. | 3.4, 6.5, 6.6, 10.4, 10.5, 10.6, 10.10, 10.11, 10.15, 20.4 | Versions, demande pendante unique, version obsolète, verrouillage et absence de changement officiel via chat. | V-CDC-5.2-03 (F-5.2) |
+| CDC-5.2-04 | §5.2, ligne 117 | - Une seule demande de modification ou d'annulation en attente au total par commande. La première doit être traitée ou retirée avant une autre demande. La demande peut être retirée par la clinique avant décision, avec confirmation et historique. Une demande pendante interdit le début de fabrication et interdit au laboratoire de modifier directement les instructions ; les opérations logistiques compatibles restent possibles. | 3.4, 6.5, 6.6, 10.4, 10.5, 10.6, 10.10, 10.11, 10.15, 20.4 | Versions, demande pendante unique, version obsolète, verrouillage et absence de changement officiel via chat. | V-CDC-5.2-04 (F-5.2) |
+| CDC-5.2-05 | §5.2, ligne 118 | - Laboratoire : modification directe d'une commande `Acceptée` uniquement avant fabrication, permission adéquate, motif obligatoire, historique des versions, e-mail et notification interne à la clinique. Idem pour retouches. Une demande du dentiste pendante doit être résolue d'abord. | 3.4, 6.5, 6.6, 10.4, 10.5, 10.6, 10.10, 10.11, 10.15, 20.4 | Versions, demande pendante unique, version obsolète, verrouillage et absence de changement officiel via chat. | V-CDC-5.2-05 (F-5.2) |
+| CDC-5.2-06 | §5.2, ligne 119 | - Dès le début de fabrication, les instructions et fichiers de fabrication sont verrouillés ; ils ne peuvent plus être écrasés ou remplacés. Les ajouts documentaires de suivi sont distincts (voir §8). | 3.4, 6.5, 6.6, 10.4, 10.5, 10.6, 10.10, 10.11, 10.15, 20.4 | Versions, demande pendante unique, version obsolète, verrouillage et absence de changement officiel via chat. | V-CDC-5.2-06 (F-5.2) |
+| CDC-5.2-07 | §5.2, ligne 120 | - Les instructions contenues dans un message de chat ne changent jamais automatiquement la commande officielle. | 3.4, 6.5, 6.6, 10.4, 10.5, 10.6, 10.10, 10.11, 10.15, 20.4 | Versions, demande pendante unique, version obsolète, verrouillage et absence de changement officiel via chat. | V-CDC-5.2-07 (F-5.2) |
+| CDC-5.3-01 | §5.3, ligne 124 | - Clinique : annulation directe avec confirmation en `En attente` et `Correction demandée` ; en `Acceptée`, demande nécessitant la décision du laboratoire ; aucune annulation directe par clinique dès `En fabrication`. | 9.10, 10.7, 10.8, 10.9, 10.15, 20.4 | Annulations selon acteur/statut, demande/retrait, motifs et duplication sous nouveau numéro. | V-CDC-5.3-01 (F-5.3) |
+| CDC-5.3-02 | §5.3, ligne 125 | - Laboratoire : annulation directe possible jusqu'à `En fabrication` inclus, motif obligatoire, notification e-mail à la clinique, conservation des traces. Pas d'annulation ordinaire à `Terminée` ou `Livrée`. | 9.10, 10.7, 10.8, 10.9, 10.15, 20.4 | Annulations selon acteur/statut, demande/retrait, motifs et duplication sous nouveau numéro. | V-CDC-5.3-02 (F-5.3) |
+| CDC-5.3-03 | §5.3, ligne 126 | - Demande d'annulation pendante bloque passage en fabrication ; retrait autorisé avant décision. | 9.10, 10.7, 10.8, 10.9, 10.15, 20.4 | Annulations selon acteur/statut, demande/retrait, motifs et duplication sous nouveau numéro. | V-CDC-5.3-03 (F-5.3) |
+| CDC-5.3-04 | §5.3, ligne 127 | - Envoi d'une commande préremplie depuis une commande `Refusée` ou `Annulée` : nouveau numéro, statut `En attente`, lien de filiation, ancien historique inchangé ; revalidation de dates, référentiels et disponibilité réelle des fichiers. | 9.10, 10.7, 10.8, 10.9, 10.15, 20.4 | Annulations selon acteur/statut, demande/retrait, motifs et duplication sous nouveau numéro. | V-CDC-5.3-04 (F-5.3) |
+| CDC-5.4-01 | §5.4, ligne 131 | - Création pour une clinique existante par utilisateur habilité ; origine clairement indiquée « Créée par le laboratoire », avec auteur. | 9.9, 14.4, 10.5, 10.8 | Création labo immédiatement acceptée, auteur/origine, e-mail et notification, demandes avant fabrication. | V-CDC-5.4-01 (F-5.4) |
+| CDC-5.4-02 | §5.4, ligne 132 | - Statut immédiat `Acceptée`, sans approbation obligatoire de la clinique. | 9.9, 14.4, 10.5, 10.8 | Création labo immédiatement acceptée, auteur/origine, e-mail et notification, demandes avant fabrication. | V-CDC-5.4-02 (F-5.4) |
+| CDC-5.4-03 | §5.4, ligne 133 | - Envoi d'un e-mail et d'une notification interne à la clinique, avec lien privé vers la commande et sans données patient excessives. | 9.9, 14.4, 10.5, 10.8 | Création labo immédiatement acceptée, auteur/origine, e-mail et notification, demandes avant fabrication. | V-CDC-5.4-03 (F-5.4) |
+| CDC-5.4-04 | §5.4, ligne 134 | - La clinique peut demander modification ou annulation tant que le travail est `Acceptée`, avant `En fabrication`. | 9.9, 14.4, 10.5, 10.8 | Création labo immédiatement acceptée, auteur/origine, e-mail et notification, demandes avant fabrication. | V-CDC-5.4-04 (F-5.4) |
+| CDC-5.5-01 | §5.5, ligne 138 | - Les instructions initiales restent verrouillées. Un utilisateur habilité crée une nouvelle commande liée ayant ses propres données, fichiers et numéro ; en tant que commande créée par le laboratoire, elle est immédiatement `Acceptée`. | 3.6, 6.6, 10.11, 10.12, 10.13, 10.15, 20.5 | Travail lié atomique, remplacement ou supplément, liens réciproques sans écraser les instructions. | V-CDC-5.5-01 (F-5.5) |
+| CDC-5.5-02 | §5.5, ligne 139 | - Deux types explicites de lien : remplacement (l'ancienne commande est annulée, motif obligatoire) ou travail supplémentaire (l'ancienne commande continue). | 3.6, 6.6, 10.11, 10.12, 10.13, 10.15, 20.5 | Travail lié atomique, remplacement ou supplément, liens réciproques sans écraser les instructions. | V-CDC-5.5-02 (F-5.5) |
+| CDC-5.5-03 | §5.5, ligne 140 | - Les liens sont visibles dans les deux sens ; les opérations sont atomiques autant que nécessaire pour éviter une filiation incomplète. | 3.6, 6.6, 10.11, 10.12, 10.13, 10.15, 20.5 | Travail lié atomique, remplacement ou supplément, liens réciproques sans écraser les instructions. | V-CDC-5.5-03 (F-5.5) |
+| CDC-5.5-04 | §5.5, ligne 141 | - L'ancien travail n'est jamais réécrit silencieusement. Si la décision implique une interdiction de sécurité, le nouveau travail doit respecter les références autorisées. | 3.6, 6.6, 10.11, 10.12, 10.13, 10.15, 20.5 | Travail lié atomique, remplacement ou supplément, liens réciproques sans écraser les instructions. | V-CDC-5.5-04 (F-5.5) |
+| CDC-6-01 | §6, ligne 145 | - Le dentiste ouvre une commande Livrée et sélectionne « Demander une retouche » ; possibilité de qualifier l'intervention (retouche ou refabrication). | 3.6, 6.6, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 14.5, 20.5 | Retouche du travail réellement livré, description obligatoire, sans FDI/finance, une active sous concurrence. | V-CDC-6-01 (F-6) |
+| CDC-6-02 | §6, ligne 146 | - Nouvelle intervention liée à la commande livrée réellement concernée, même si cette commande est elle-même un remplacement ; traçabilité complète de la chaîne. | 3.6, 6.6, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 14.5, 20.5 | Retouche du travail réellement livré, description obligatoire, sans FDI/finance, une active sous concurrence. | V-CDC-6-02 (F-6) |
+| CDC-6-03 | §6, ligne 147 | - Formulaire simplifié : matériau et teinte préremplis mais modifiables, description du problème et des dents concernées obligatoire, sans schéma dentaire, pièces jointes facultatives. | 3.6, 6.6, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 14.5, 20.5 | Retouche du travail réellement livré, description obligatoire, sans FDI/finance, une active sous concurrence. | V-CDC-6-03 (F-6) |
+| CDC-6-04 | §6, ligne 148 | - La retouche est un travail distinct, avec numéro, conversation, historique et même workflow d'approbation, correction, modification, annulation, fabrication, livraison et verrouillage des instructions que les commandes normales. | 3.6, 6.6, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 14.5, 20.5 | Retouche du travail réellement livré, description obligatoire, sans FDI/finance, une active sous concurrence. | V-CDC-6-04 (F-6) |
+| CDC-6-05 | §6, ligne 149 | - Nouvelle retouche signalée en priorité et e-mail au laboratoire ; acceptation/refus/correction manuels. | 3.6, 6.6, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 14.5, 20.5 | Retouche du travail réellement livré, description obligatoire, sans FDI/finance, une active sous concurrence. | V-CDC-6-05 (F-6) |
+| CDC-6-06 | §6, ligne 150 | - Une seule retouche active par commande livrée ; une nouvelle devient possible quand la précédente est `Refusée`, `Annulée` ou `Livrée`. Une retouche refusée reste dans l'historique et une nouvelle demande peut être déposée sur le travail original. | 3.6, 6.6, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 14.5, 20.5 | Retouche du travail réellement livré, description obligatoire, sans FDI/finance, une active sous concurrence. | V-CDC-6-06 (F-6) |
+| CDC-6-07 | §6, ligne 151 | - L'annulation d'une retouche ne change pas le statut du travail initial. Une commande historique annulée ou refusée ne peut pas recevoir de retouche. | 3.6, 6.6, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 14.5, 20.5 | Retouche du travail réellement livré, description obligatoire, sans FDI/finance, une active sous concurrence. | V-CDC-6-07 (F-6) |
+| CDC-6-08 | §6, ligne 152 | - Tarification, garantie, prise en charge et coût de retouche : hors périmètre de la version initiale ; à traiter dans la phase financière future. | 3.6, 6.6, 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 14.5, 20.5 | Retouche du travail réellement livré, description obligatoire, sans FDI/finance, une active sous concurrence. | V-CDC-6-08 (F-6) |
+| CDC-7-01 | §7, ligne 156 | - Le laboratoire choisit le mode : livraison par laboratoire, retrait par clinique, coursier externe. | 10.14, 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7, 20.7 | Planning, urgences sans e-mail, dates distinctes, livraisons en lot, correction bloquée avec retouche, filtres autorisés. | V-CDC-7-01 (F-7) |
+| CDC-7-02 | §7, ligne 157 | - Vue « Prêts à livrer » = commandes `Terminée` non encore déclarées livrées ; marquage individuel ou multi-sélection après confirmation, uniquement sur commandes éligibles. | 10.14, 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7, 20.7 | Planning, urgences sans e-mail, dates distinctes, livraisons en lot, correction bloquée avec retouche, filtres autorisés. | V-CDC-7-02 (F-7) |
+| CDC-7-03 | §7, ligne 158 | - Date, mode et auteur de sortie du laboratoire enregistrés. La clinique ne confirme pas la livraison. Pas d'e-mail au dentiste lors de la livraison. | 10.14, 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7, 20.7 | Planning, urgences sans e-mail, dates distinctes, livraisons en lot, correction bloquée avec retouche, filtres autorisés. | V-CDC-7-03 (F-7) |
+| CDC-7-04 | §7, ligne 159 | - Erreur de livraison : le propriétaire ou un administrateur secondaire spécifiquement autorisé peut exceptionnellement revenir de `Livrée` à `Terminée`, avec motif et historique. Réouverture de la conversation, annulation de l'ancien compteur d'archivage. S'il existe une retouche liée, correction automatique bloquée jusqu'à résolution explicite de la contradiction. | 10.14, 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7, 20.7 | Planning, urgences sans e-mail, dates distinctes, livraisons en lot, correction bloquée avec retouche, filtres autorisés. | V-CDC-7-04 (F-7) |
+| CDC-7-05 | §7, ligne 160 | - Date souhaitée par la clinique et date planifiée par le laboratoire visibles et distinctes ; date planifiée modifiable sans approbation de la clinique, chaque changement historisé. | 10.14, 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7, 20.7 | Planning, urgences sans e-mail, dates distinctes, livraisons en lot, correction bloquée avec retouche, filtres autorisés. | V-CDC-7-05 (F-7) |
+| CDC-7-06 | §7, ligne 161 | - Alerte d'urgence à J-2 avant la date planifiée et alerte de retard après ; à défaut, date souhaitée comme repère provisoire. Drapeau de priorité manuel. Les alertes de progression cessent pour les travaux clôturés (`Livrée`, `Refusée`, `Annulée`). Pas d'e-mails automatiques pour ces alertes. | 10.14, 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7, 20.7 | Planning, urgences sans e-mail, dates distinctes, livraisons en lot, correction bloquée avec retouche, filtres autorisés. | V-CDC-7-06 (F-7) |
+| CDC-7-07 | §7, ligne 162 | - Calendrier hebdomadaire et mensuel : travail positionné sur date planifiée, sinon souhaitée (provisoire) ; ouverture détail en un clic. Glisser-déposer sur desktop pour modifier seulement date planifiée avec confirmation/annulation et trace ; édition détaillée sur mobile. | 10.14, 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7, 20.7 | Planning, urgences sans e-mail, dates distinctes, livraisons en lot, correction bloquée avec retouche, filtres autorisés. | V-CDC-7-07 (F-7) |
+| CDC-7-08 | §7, ligne 163 | - Liste des travaux : recherche par patient (nom ou référence), clinique, numéro ; filtres statut, date, normal/retouche ; pas de filtre matériau prévu. | 10.14, 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7, 20.7 | Planning, urgences sans e-mail, dates distinctes, livraisons en lot, correction bloquée avec retouche, filtres autorisés. | V-CDC-7-08 (F-7) |
+| CDC-7-09 | §7, ligne 164 | - Vue principale laboratoire : boîte de réception prioritaire pour nouvelles commandes, demandes de correction renvoyées, modifications, annulations, retouches et inscriptions, avec distinction entre notification lue et action restant à traiter. Liste simple, peu de colonnes. | 10.14, 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7, 20.7 | Planning, urgences sans e-mail, dates distinctes, livraisons en lot, correction bloquée avec retouche, filtres autorisés. | V-CDC-7-09 (F-7) |
+| CDC-8-01 | §8, ligne 168 | - Fichiers de fabrication : versions officielles attachées à une commande, modifiables seulement avant `En fabrication` suivant les règles métier, ensuite verrouillés ; versions retirées non disponibles comme instructions actives, éventuelle conservation selon politique légale. | 3.7, 12.1, 12.9, 12.10, 12.11, 12.12, 12.13, 18.1 | Originaux verrouillés, suivi interne par défaut, partage unitaire révocable, ZIP limité aux fichiers autorisés. | V-CDC-8-01 (F-8) |
+| CDC-8-02 | §8, ligne 169 | - Fichiers de suivi : documents/photos ajoutés par le laboratoire, séparés des instructions, y compris pendant et après fabrication ; auteur, date, droits et conservation tracés. | 3.7, 12.1, 12.9, 12.10, 12.11, 12.12, 12.13, 18.1 | Originaux verrouillés, suivi interne par défaut, partage unitaire révocable, ZIP limité aux fichiers autorisés. | V-CDC-8-02 (F-8) |
+| CDC-8-03 | §8, ligne 170 | - Visibilité des fichiers de suivi : interne au laboratoire par défaut ; un utilisateur habilité peut partager individuellement avec la clinique, après confirmation ; partage révocable pour les accès futurs, mais aucune promesse de suppression des copies déjà téléchargées. | 3.7, 12.1, 12.9, 12.10, 12.11, 12.12, 12.13, 18.1 | Originaux verrouillés, suivi interne par défaut, partage unitaire révocable, ZIP limité aux fichiers autorisés. | V-CDC-8-03 (F-8) |
+| CDC-8-04 | §8, ligne 171 | - Chaque fichier est soumis à authentification, autorisation et isolation par clinique, sans URL publique permanente ni partage externe anonyme. Le stockage n'expose pas directement les fichiers via un répertoire web public. | 3.7, 12.1, 12.9, 12.10, 12.11, 12.12, 12.13, 18.1 | Originaux verrouillés, suivi interne par défaut, partage unitaire révocable, ZIP limité aux fichiers autorisés. | V-CDC-8-04 (F-8) |
+| CDC-8-05 | §8, ligne 172 | - Téléchargement individuel et ZIP de tous les fichiers autorisés de la commande, sans contourner les droits ni conserver inutilement des archives permanentes. ZIP non destructif : contenu extrait identique aux originaux. | 3.7, 12.1, 12.9, 12.10, 12.11, 12.12, 12.13, 18.1 | Originaux verrouillés, suivi interne par défaut, partage unitaire révocable, ZIP limité aux fichiers autorisés. | V-CDC-8-05 (F-8) |
+| CDC-8-06 | §8, ligne 173 | - Séparer juridiquement et techniquement les fichiers de commande, messagerie, suivi, transferts temporaires, brouillons et archives. Une interdiction d'accès doit aussi s'appliquer aux aperçus, noms, miniatures, moteurs de recherche et téléchargements en masse. | 3.7, 12.1, 12.9, 12.10, 12.11, 12.12, 12.13, 18.1 | Originaux verrouillés, suivi interne par défaut, partage unitaire révocable, ZIP limité aux fichiers autorisés. | V-CDC-8-06 (F-8) |
+| CDC-9-01 | §9, ligne 177 | - Une conversation générale permanente par clinique, indépendante des commandes, possible sans commande préalable. | 6.8, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 13.9, 17.6, 17.13, 20.6 | Conversations séparées, non-lus/Lu, versions, droits d’auteur, clôture/réouverture et absence de décision métier via chat. | V-CDC-9-01 (F-9) |
+| CDC-9-02 | §9, ligne 178 | - Une conversation distincte par commande, y compris chaque retouche, accessible depuis sa fiche ; ne pas mélanger les conversations de différentes commandes. | 6.8, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 13.9, 17.6, 17.13, 20.6 | Conversations séparées, non-lus/Lu, versions, droits d’auteur, clôture/réouverture et absence de décision métier via chat. | V-CDC-9-02 (F-9) |
+| CDC-9-03 | §9, ligne 179 | - Interface type messagerie moderne, quasi temps réel, pièces jointes selon §4.2, compteurs de messages non lus, statuts `Envoyé` et `Lu`. | 6.8, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 13.9, 17.6, 17.13, 20.6 | Conversations séparées, non-lus/Lu, versions, droits d’auteur, clôture/réouverture et absence de décision métier via chat. | V-CDC-9-03 (F-9) |
+| CDC-9-04 | §9, ligne 180 | - Lecture d'une conversation partagée côté laboratoire constatée lorsqu'un utilisateur autorisé l'ouvre ; la lecture ne vaut pas traitement métier. | 6.8, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 13.9, 17.6, 17.13, 20.6 | Conversations séparées, non-lus/Lu, versions, droits d’auteur, clôture/réouverture et absence de décision métier via chat. | V-CDC-9-04 (F-9) |
+| CDC-9-05 | §9, ligne 181 | - Édition des messages avec indication « Modifié » et conservation des versions ; suppression apparente/masquage avec traçabilité, pas d'effacement silencieux. Un utilisateur ne réécrit pas les messages d'un autre. Les exigences légales de conservation priment. | 6.8, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 13.9, 17.6, 17.13, 20.6 | Conversations séparées, non-lus/Lu, versions, droits d’auteur, clôture/réouverture et absence de décision métier via chat. | V-CDC-9-05 (F-9) |
+| CDC-9-06 | §9, ligne 182 | - À `Livrée`, conversation de commande automatiquement close en lecture seule ; reste accessible selon permissions ; nouvelle retouche = nouvelle conversation. Conversation générale toujours active. Si livraison erronée corrigée selon §7, conversation rouverte si aucune contradiction avec une retouche existante. | 6.8, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 13.9, 17.6, 17.13, 20.6 | Conversations séparées, non-lus/Lu, versions, droits d’auteur, clôture/réouverture et absence de décision métier via chat. | V-CDC-9-06 (F-9) |
+| CDC-9-07 | §9, ligne 183 | - Fichiers : jusqu'à 200 Mo chacun, 1 Go par message, pas de quota cumulatif fixe par conversation ; surveillance de capacité et protection contre l'abus. | 6.8, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 13.9, 17.6, 17.13, 20.6 | Conversations séparées, non-lus/Lu, versions, droits d’auteur, clôture/réouverture et absence de décision métier via chat. | V-CDC-9-07 (F-9) |
+| CDC-9-08 | §9, ligne 184 | - Les messages ne remplacent jamais les demandes formelles de modification/cancellation ni les instructions officielles. | 6.8, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 13.9, 17.6, 17.13, 20.6 | Conversations séparées, non-lus/Lu, versions, droits d’auteur, clôture/réouverture et absence de décision métier via chat. | V-CDC-9-08 (F-9) |
+| CDC-9-09 | §9, ligne 185 | - Demandes d'accès, rectification, effacement de données : formulées par la clinique via messagerie générale, traitées par le propriétaire sans module dédié de tickets ; contact externe possible pour patients sans compte. La procédure interne doit garantir le traitement légal même sans outil de suivi automatisé. | 6.8, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 13.9, 17.6, 17.13, 20.6 | Conversations séparées, non-lus/Lu, versions, droits d’auteur, clôture/réouverture et absence de décision métier via chat. | V-CDC-9-09 (F-9) |
+| CDC-9-10 | §9, ligne 186 | - Signalement de sécurité : via messagerie générale pour cliniques ; contact direct propriétaire pour employés et administrateurs secondaires ; informations de contact disponibles sans connexion si l'application le permet. | 6.8, 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 13.9, 17.6, 17.13, 20.6 | Conversations séparées, non-lus/Lu, versions, droits d’auteur, clôture/réouverture et absence de décision métier via chat. | V-CDC-9-10 (F-9) |
+| CDC-10.1-01 | §10.1, ligne 194 | 1. Nouvelle commande. | 3.9, 14.1, 14.2, 14.5 | Six déclencheurs et destinataires exacts, propriétaire par défaut, pas d’envoi automatique hors matrice. | V-CDC-10.1-01 (F-10.1) |
+| CDC-10.1-02 | §10.1, ligne 195 | 2. Nouvelle demande d'inscription de clinique. | 3.9, 14.1, 14.2, 14.5 | Six déclencheurs et destinataires exacts, propriétaire par défaut, pas d’envoi automatique hors matrice. | V-CDC-10.1-02 (F-10.1) |
+| CDC-10.1-03 | §10.1, ligne 196 | 3. Demande de modification. | 3.9, 14.1, 14.2, 14.5 | Six déclencheurs et destinataires exacts, propriétaire par défaut, pas d’envoi automatique hors matrice. | V-CDC-10.1-03 (F-10.1) |
+| CDC-10.1-04 | §10.1, ligne 197 | 4. Demande d'annulation. | 3.9, 14.1, 14.2, 14.5 | Six déclencheurs et destinataires exacts, propriétaire par défaut, pas d’envoi automatique hors matrice. | V-CDC-10.1-04 (F-10.1) |
+| CDC-10.1-05 | §10.1, ligne 198 | 5. Nouvelle demande de retouche. | 3.9, 14.1, 14.2, 14.5 | Six déclencheurs et destinataires exacts, propriétaire par défaut, pas d’envoi automatique hors matrice. | V-CDC-10.1-05 (F-10.1) |
+| CDC-10.1-06 | §10.1, ligne 199 | 6. Commande corrigée et renvoyée. | 3.9, 14.1, 14.2, 14.5 | Six déclencheurs et destinataires exacts, propriétaire par défaut, pas d’envoi automatique hors matrice. | V-CDC-10.1-06 (F-10.1) |
+| CDC-10.2-01 | §10.2, ligne 205 | - Acceptation d'une commande, demande de correction, refus, travail terminé. | 3.9, 14.1, 14.4, 14.9, 20.10 | Déclencheurs cliniques exacts, retouches équivalentes, exclusions et absence de données patient dans les mails. | V-CDC-10.2-01 (F-10.2) |
+| CDC-10.2-02 | §10.2, ligne 206 | - Décisions d'acceptation/refus des modifications et des demandes d'annulation. | 3.9, 14.1, 14.4, 14.9, 20.10 | Déclencheurs cliniques exacts, retouches équivalentes, exclusions et absence de données patient dans les mails. | V-CDC-10.2-02 (F-10.2) |
+| CDC-10.2-03 | §10.2, ligne 207 | - Annulation directe par le laboratoire, modification directe d'instructions par le laboratoire avant fabrication. | 3.9, 14.1, 14.4, 14.9, 20.10 | Déclencheurs cliniques exacts, retouches équivalentes, exclusions et absence de données patient dans les mails. | V-CDC-10.2-03 (F-10.2) |
+| CDC-10.2-04 | §10.2, ligne 208 | - Création d'une commande au nom de la clinique par le laboratoire (e-mail et notification interne). | 3.9, 14.1, 14.4, 14.9, 20.10 | Déclencheurs cliniques exacts, retouches équivalentes, exclusions et absence de données patient dans les mails. | V-CDC-10.2-04 (F-10.2) |
+| CDC-10.2-05 | §10.2, ligne 209 | - Notifications équivalentes des retouches lorsqu'applicables. | 3.9, 14.1, 14.4, 14.9, 20.10 | Déclencheurs cliniques exacts, retouches équivalentes, exclusions et absence de données patient dans les mails. | V-CDC-10.2-05 (F-10.2) |
+| CDC-10.2-06 | §10.2, ligne 210 | - Pas d'e-mail systématique pour nouvelle commande soumise par la clinique, entrée en fabrication, livraison, urgence interne, ou annonce de maintenance. | 3.9, 14.1, 14.4, 14.9, 20.10 | Déclencheurs cliniques exacts, retouches équivalentes, exclusions et absence de données patient dans les mails. | V-CDC-10.2-06 (F-10.2) |
+| CDC-10.2-07 | §10.2, ligne 211 | - Les changements d'adresse e-mail déclenchent des avis de sécurité à l'ancienne adresse suivant §2.2. | 3.9, 14.1, 14.4, 14.9, 20.10 | Déclencheurs cliniques exacts, retouches équivalentes, exclusions et absence de données patient dans les mails. | V-CDC-10.2-07 (F-10.2) |
+| CDC-10.3-01 | §10.3, ligne 215 | - Notification temps réel si connecté. | 13.5, 14.6, 20.6 | Horloge simulée : 30 min, puis au moins 24 h avec nouveaux messages non lus ; lecture complète réinitialise. | V-CDC-10.3-01 (F-10.3) |
+| CDC-10.3-02 | §10.3, ligne 216 | - Rappel e-mail si conversation contient toujours des messages non lus 30 minutes après réception. | 13.5, 14.6, 20.6 | Horloge simulée : 30 min, puis au moins 24 h avec nouveaux messages non lus ; lecture complète réinitialise. | V-CDC-10.3-02 (F-10.3) |
+| CDC-10.3-03 | §10.3, ligne 217 | - Pour la même période continue de non-lecture, rappel supplémentaire au moins 24 heures après le précédent, seulement si de nouveaux messages sont arrivés depuis le précédent rappel et sont restés non lus 30 minutes. | 13.5, 14.6, 20.6 | Horloge simulée : 30 min, puis au moins 24 h avec nouveaux messages non lus ; lecture complète réinitialise. | V-CDC-10.3-03 (F-10.3) |
+| CDC-10.3-04 | §10.3, ligne 218 | - Lecture complète réinitialise le cycle ; regrouper les arrivées proches dans un seul e-mail. Aucune donnée patient sensible dans le contenu du rappel. Appliquer les droits et destinataires pertinents pour les boîtes de messagerie partagées. | 13.5, 14.6, 20.6 | Horloge simulée : 30 min, puis au moins 24 h avec nouveaux messages non lus ; lecture complète réinitialise. | V-CDC-10.3-04 (F-10.3) |
+| CDC-10.4-01 | §10.4, ligne 222 | - Une transaction métier réussie ne dépend jamais de l'envoi immédiat d'un e-mail. | 6.9, 14.3, 14.7, 14.8, 20.10 | Panne fournisseur indépendante de la transaction, retries/dédoublonnage, obsolescence et alertes indépendantes. | V-CDC-10.4-01 (F-10.4) |
+| CDC-10.4-02 | §10.4, ligne 223 | - Envois en attente, acceptés par le fournisseur, échoués ; relances automatiques progressives, possibilité de consultation et de relance manuelle par le propriétaire. | 6.9, 14.3, 14.7, 14.8, 20.10 | Panne fournisseur indépendante de la transaction, retries/dédoublonnage, obsolescence et alertes indépendantes. | V-CDC-10.4-02 (F-10.4) |
+| CDC-10.4-03 | §10.4, ligne 224 | - Éviter les doublons autant que possible ; un statut `Envoyé` ne garantit ni réception ni lecture. | 6.9, 14.3, 14.7, 14.8, 20.10 | Panne fournisseur indépendante de la transaction, retries/dédoublonnage, obsolescence et alertes indépendantes. | V-CDC-10.4-03 (F-10.4) |
+| CDC-10.4-04 | §10.4, ligne 225 | - Réévaluer l'utilité d'une notification avant un envoi très tardif lorsque son action a déjà été traitée. | 6.9, 14.3, 14.7, 14.8, 20.10 | Panne fournisseur indépendante de la transaction, retries/dédoublonnage, obsolescence et alertes indépendantes. | V-CDC-10.4-04 (F-10.4) |
+| CDC-10.4-05 | §10.4, ligne 226 | - Alertes techniques critiques indépendantes des e-mails métier, propriétaire systématiquement destinataire. | 6.9, 14.3, 14.7, 14.8, 20.10 | Panne fournisseur indépendante de la transaction, retries/dédoublonnage, obsolescence et alertes indépendantes. | V-CDC-10.4-05 (F-10.4) |
+| CDC-11-01 | §11, ligne 230 | - PWA installable et responsive : smartphone, tablette (usage principal) et ordinateur. Interface exclusivement en albanais ; dates `JJ/MM/AAAA`, fuseau `Europe/Pristina` ; labels techniques de matériaux/teintes conservés. | 3.8, 7.1, 7.2, 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8, 15.9, 15.10, 20.8 | Appareils réels, brouillons chiffrés isolés par compte, quotas, conflits avec fichiers, envoi explicite, pas de cache commandes officielles. | V-CDC-11-01 (F-11) |
+| CDC-11-02 | §11, ligne 231 | - Connexion par e-mail/mot de passe ; pas de 2FA obligatoire retenue. Mots de passe protégés, limitation des tentatives, anti-abus, cookies/sessions sûrs, possibilité de sessions simultanées et de révocation ; authentification persistante avec renouvellement sécurisé, non « connexion éternelle ». | 3.8, 7.1, 7.2, 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8, 15.9, 15.10, 20.8 | Appareils réels, brouillons chiffrés isolés par compte, quotas, conflits avec fichiers, envoi explicite, pas de cache commandes officielles. | V-CDC-11-02 (F-11) |
+| CDC-11-03 | §11, ligne 232 | - Préparation hors ligne de brouillons complets, fichiers inclus, avec données de catalogue précédemment chargées ; pas d'envoi officiel hors connexion. | 3.8, 7.1, 7.2, 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8, 15.9, 15.10, 20.8 | Appareils réels, brouillons chiffrés isolés par compte, quotas, conflits avec fichiers, envoi explicite, pas de cache commandes officielles. | V-CDC-11-03 (F-11) |
+| CDC-11-04 | §11, ligne 233 | - Protection forte du stockage local des brouillons, déverrouillage local supplémentaire et isolation par compte ; chiffrage effectif à concevoir et tester sur les navigateurs visés, sans présumer que les protections de la PWA suffisent. | 3.8, 7.1, 7.2, 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8, 15.9, 15.10, 20.8 | Appareils réels, brouillons chiffrés isolés par compte, quotas, conflits avec fichiers, envoi explicite, pas de cache commandes officielles. | V-CDC-11-04 (F-11) |
+| CDC-11-05 | §11, ligne 234 | - Déconnexion volontaire : conserver les brouillons locaux protégés, accessibles uniquement au retour du même compte et après déverrouillage. | 3.8, 7.1, 7.2, 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8, 15.9, 15.10, 20.8 | Appareils réels, brouillons chiffrés isolés par compte, quotas, conflits avec fichiers, envoi explicite, pas de cache commandes officielles. | V-CDC-11-05 (F-11) |
+| CDC-11-06 | §11, ligne 235 | - Suspension du compte hors ligne : impossibilité de révoquer immédiatement les données sur un appareil déconnecté ; à la reconnexion, refuser l'accès et demander la purge locale des brouillons/fichiers associés au compte suspendu, au mieux des possibilités du système. Pas de garantie d'effacement forensic à distance. | 3.8, 7.1, 7.2, 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8, 15.9, 15.10, 20.8 | Appareils réels, brouillons chiffrés isolés par compte, quotas, conflits avec fichiers, envoi explicite, pas de cache commandes officielles. | V-CDC-11-06 (F-11) |
+| CDC-11-07 | §11, ligne 236 | - Brouillons synchronisés sur serveur pour reprise multi-appareils, sans envoi automatique. Détecter versions divergentes : permettre de prendre la version serveur ou conserver la version locale sous un nouveau brouillon, pièces jointes comprises. Pas d'écrasement silencieux. Avertir avant abandon éventuel d'une version locale. | 3.8, 7.1, 7.2, 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8, 15.9, 15.10, 20.8 | Appareils réels, brouillons chiffrés isolés par compte, quotas, conflits avec fichiers, envoi explicite, pas de cache commandes officielles. | V-CDC-11-07 (F-11) |
+| CDC-11-08 | §11, ligne 237 | - Brouillons supprimables manuellement ; pas de purge par âge des brouillons métier demandée, sous réserve des obligations de minimisation/rétention à valider. Les transferts temporaires expirés suivent une règle de nettoyage distincte. | 3.8, 7.1, 7.2, 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8, 15.9, 15.10, 20.8 | Appareils réels, brouillons chiffrés isolés par compte, quotas, conflits avec fichiers, envoi explicite, pas de cache commandes officielles. | V-CDC-11-08 (F-11) |
+| CDC-11-09 | §11, ligne 238 | - Reconnexion : mise à jour du catalogue, contrôles métier, avertissements pour références indisponibles, refus des références interdites ; le dentiste valide toujours explicitement la soumission. | 3.8, 7.1, 7.2, 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8, 15.9, 15.10, 20.8 | Appareils réels, brouillons chiffrés isolés par compte, quotas, conflits avec fichiers, envoi explicite, pas de cache commandes officielles. | V-CDC-11-09 (F-11) |
+| CDC-11-10 | §11, ligne 239 | - Ordre recommandé : transferts temporaires vérifiés, confirmation finale, enregistrement serveur unique/atomique de la commande, acquittement ; conserver le brouillon local jusqu'à confirmation certaine. | 3.8, 7.1, 7.2, 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8, 15.9, 15.10, 20.8 | Appareils réels, brouillons chiffrés isolés par compte, quotas, conflits avec fichiers, envoi explicite, pas de cache commandes officielles. | V-CDC-11-10 (F-11) |
+| CDC-11-11 | §11, ligne 240 | - Les commandes déjà officiellement envoyées et leurs pièces jointes ne sont pas conservées automatiquement hors ligne dans la PWA. Consultation de leurs fichiers via connexion au serveur. Les fichiers téléchargés volontairement dans le système d'exploitation restent hors contrôle de l'application. | 3.8, 7.1, 7.2, 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8, 15.9, 15.10, 20.8 | Appareils réels, brouillons chiffrés isolés par compte, quotas, conflits avec fichiers, envoi explicite, pas de cache commandes officielles. | V-CDC-11-11 (F-11) |
+| CDC-12-01 | §12, ligne 244 | - Transferts par portions avec reprise des segments déjà reçus et vérifiés tant que les données temporaires existent ; reprise après coupure réseau ou interruption liée au manque d'espace ; progression visible. | 12.5, 12.6, 12.7, 12.8, 14.8, 19.1, 19.2, 19.8, 20.9 | Pause/reprise, seuils et TTL à décider, réserve indépendante, consultation préservée, aucune purge des fichiers historiques. | V-CDC-12-01 (F-12) |
+| CDC-12-02 | §12, ligne 245 | - Aucune commande officielle créée en double après reconnexion ; confirmation finale explicite. | 12.5, 12.6, 12.7, 12.8, 14.8, 19.1, 19.2, 19.8, 20.9 | Pause/reprise, seuils et TTL à décider, réserve indépendante, consultation préservée, aucune purge des fichiers historiques. | V-CDC-12-02 (F-12) |
+| CDC-12-03 | §12, ligne 246 | - Refus temporaire des nouveaux transferts à l'approche d'une réserve de stockage de sécurité ; alertes préventives au propriétaire, message explicite aux utilisateurs ; consultation des données existantes préservée dans la mesure où le service reste fonctionnel. | 12.5, 12.6, 12.7, 12.8, 14.8, 19.1, 19.2, 19.8, 20.9 | Pause/reprise, seuils et TTL à décider, réserve indépendante, consultation préservée, aucune purge des fichiers historiques. | V-CDC-12-03 (F-12) |
+| CDC-12-04 | §12, ligne 247 | - Les portions temporaires interrompues sont gardées dans des limites bornées en durée et capacité, puis nettoyées si expirées. Les brouillons locaux ne sont pas détruits par cette opération. | 12.5, 12.6, 12.7, 12.8, 14.8, 19.1, 19.2, 19.8, 20.9 | Pause/reprise, seuils et TTL à décider, réserve indépendante, consultation préservée, aucune purge des fichiers historiques. | V-CDC-12-04 (F-12) |
+| CDC-12-05 | §12, ligne 248 | - Protection de la base de données, du système, des autres sites/services du VPS et des sauvegardes ; surveillance indépendante de l'application, car une panne disque peut rendre le portail indisponible. | 12.5, 12.6, 12.7, 12.8, 14.8, 19.1, 19.2, 19.8, 20.9 | Pause/reprise, seuils et TTL à décider, réserve indépendante, consultation préservée, aucune purge des fichiers historiques. | V-CDC-12-05 (F-12) |
+| CDC-12-06 | §12, ligne 249 | - Afficher l'espace occupé et capacité disponible réelle dans l'administration ; seuils, politique de nettoyage temporaire, dimensionnement, éventuel stockage déporté : à fixer après audit du VPS et de `architecture.md`. | 12.5, 12.6, 12.7, 12.8, 14.8, 19.1, 19.2, 19.8, 20.9 | Pause/reprise, seuils et TTL à décider, réserve indépendante, consultation préservée, aucune purge des fichiers historiques. | V-CDC-12-06 (F-12) |
+| CDC-12-07 | §12, ligne 250 | - Aucune purge automatique des fichiers déjà attachés à des travaux pour résoudre un manque d'espace. | 12.5, 12.6, 12.7, 12.8, 14.8, 19.1, 19.2, 19.8, 20.9 | Pause/reprise, seuils et TTL à décider, réserve indépendante, consultation préservée, aucune purge des fichiers historiques. | V-CDC-12-07 (F-12) |
+| CDC-13.1-01 | §13.1, ligne 256 | - Accueil prioritaire orienté actions à traiter, distinct des notifications lues : commandes à décider, demandes de modification, annulation, retouches, corrections renvoyées, inscriptions, alertes importantes. | 4.2, 4.6, 4.10, 4.13, 10.14, 13.8, 16.1, 17.1 | Parcours laboratoire/actions à traiter, permissions, fichiers, clinique, planning et paramètres sans dashboard financier. | V-CDC-13.1-01 (F-13.1) |
+| CDC-13.1-02 | §13.1, ligne 257 | - Liste Travaux, filtres et recherche (§7), fiche de commande claire : informations, schéma dentaire, pièces jointes, conversation, historique, décisions disponibles et liens vers travaux liés. | 4.2, 4.6, 4.10, 4.13, 10.14, 13.8, 16.1, 17.1 | Parcours laboratoire/actions à traiter, permissions, fichiers, clinique, planning et paramètres sans dashboard financier. | V-CDC-13.1-02 (F-13.1) |
+| CDC-13.1-03 | §13.1, ligne 258 | - Vue des travaux prêts à livrer, calendrier, fiches cliniques avec coordonnées/historique/conversation générale, messagerie unifiée et compteurs non lus. | 4.2, 4.6, 4.10, 4.13, 10.14, 13.8, 16.1, 17.1 | Parcours laboratoire/actions à traiter, permissions, fichiers, clinique, planning et paramètres sans dashboard financier. | V-CDC-13.1-03 (F-13.1) |
+| CDC-13.1-04 | §13.1, ligne 259 | - Paramètres : gestion des référentiels, informations du laboratoire, utilisateurs/permissions, destinataires d'e-mails, annonces de maintenance, stockage. Journal d'audit intégral et incidents d'envoi accessibles au propriétaire. | 4.2, 4.6, 4.10, 4.13, 10.14, 13.8, 16.1, 17.1 | Parcours laboratoire/actions à traiter, permissions, fichiers, clinique, planning et paramètres sans dashboard financier. | V-CDC-13.1-04 (F-13.1) |
+| CDC-13.1-05 | §13.1, ligne 260 | - Pas de tableaux de bord financiers ni surabondance de métriques. | 4.2, 4.6, 4.10, 4.13, 10.14, 13.8, 16.1, 17.1 | Parcours laboratoire/actions à traiter, permissions, fichiers, clinique, planning et paramètres sans dashboard financier. | V-CDC-13.1-05 (F-13.1) |
+| CDC-13.2-01 | §13.2, ligne 264 | - Inscription / attente de validation, connexion et récupération de mot de passe. | 4.3, 4.5, 4.7, 4.8, 4.9, 4.12, 7.3, 9.8, 11.1, 15.10 | Parcours clinique tactile albanais, étapes authentification/commande/retouche/messages/brouillons et indication réseau. | V-CDC-13.2-01 (F-13.2) |
+| CDC-13.2-02 | §13.2, ligne 265 | - Création et consultation des commandes, brouillons synchronisés et hors ligne, suivi des statuts et dates, modifications/corrections/annulations selon conditions, duplications de commandes refusées/annulées, retouches depuis travaux livrés. | 4.3, 4.5, 4.7, 4.8, 4.9, 4.12, 7.3, 9.8, 11.1, 15.10 | Parcours clinique tactile albanais, étapes authentification/commande/retouche/messages/brouillons et indication réseau. | V-CDC-13.2-02 (F-13.2) |
+| CDC-13.2-03 | §13.2, ligne 266 | - Conversations générales et par travail, fichiers autorisés, notifications, coordonnées du laboratoire, documents légaux. | 4.3, 4.5, 4.7, 4.8, 4.9, 4.12, 7.3, 9.8, 11.1, 15.10 | Parcours clinique tactile albanais, étapes authentification/commande/retouche/messages/brouillons et indication réseau. | V-CDC-13.2-03 (F-13.2) |
+| CDC-13.2-04 | §13.2, ligne 267 | - Interface optimisée tactile et en albanais, indication claire des opérations nécessitant une connexion. | 4.3, 4.5, 4.7, 4.8, 4.9, 4.12, 7.3, 9.8, 11.1, 15.10 | Parcours clinique tactile albanais, étapes authentification/commande/retouche/messages/brouillons et indication réseau. | V-CDC-13.2-04 (F-13.2) |
+| CDC-14-01 | §14, ligne 271 | - Une commande `Livrée` est automatiquement archivée 30 jours après la livraison effective. Ce délai est une règle d'organisation de l'interface, non une durée légale de conservation. | 3.10, 16.7, 16.8, 16.9, 17.3, 17.6, 17.12, 19.9, 19.10, 20.7 | Archivage UI J+30 distinct de la rétention, exceptions et effacement autorisé, restauration sans réapparition durable. | V-CDC-14-01 (F-14) |
+| CDC-14-02 | §14, ligne 272 | - Archives consultables et recherchables par utilisateurs habilités ; statut `Livrée` inchangé, pièces jointes, conversations et historique préservés selon leurs règles de conservation. Une retouche peut être initiée depuis une commande livrée archivée. | 3.10, 16.7, 16.8, 16.9, 17.3, 17.6, 17.12, 19.9, 19.10, 20.7 | Archivage UI J+30 distinct de la rétention, exceptions et effacement autorisé, restauration sans réapparition durable. | V-CDC-14-02 (F-14) |
+| CDC-14-03 | §14, ligne 273 | - Correction exceptionnelle de livraison : annuler l'échéance d'archivage en cours ; repartir de la livraison réelle suivante. | 3.10, 16.7, 16.8, 16.9, 17.3, 17.6, 17.12, 19.9, 19.10, 20.7 | Archivage UI J+30 distinct de la rétention, exceptions et effacement autorisé, restauration sans réapparition durable. | V-CDC-14-03 (F-14) |
+| CDC-14-04 | §14, ligne 274 | - En fin de durée légale ou contractuellement justifiée, les données concernées sont signalées au propriétaire avant effacement ou anonymisation, sous réserve d'exceptions légales (litige, traçabilité, obligation de conservation). Historiser les décisions sans conserver indûment les données à supprimer. | 3.10, 16.7, 16.8, 16.9, 17.3, 17.6, 17.12, 19.9, 19.10, 20.7 | Archivage UI J+30 distinct de la rétention, exceptions et effacement autorisé, restauration sans réapparition durable. | V-CDC-14-04 (F-14) |
+| CDC-14-05 | §14, ligne 275 | - Distinguer les durées par catégories : commandes, documents médicaux et pièces jointes, conversations, sauvegardes, brouillons locaux/serveur, fichiers temporaires et audits. Aucune durée légale universelle n'est présumée ici. | 3.10, 16.7, 16.8, 16.9, 17.3, 17.6, 17.12, 19.9, 19.10, 20.7 | Archivage UI J+30 distinct de la rétention, exceptions et effacement autorisé, restauration sans réapparition durable. | V-CDC-14-05 (F-14) |
+| CDC-14-06 | §14, ligne 276 | - Sauvegardes : conservation décidée de 30 jours, avec une politique de rotation compatible avec RPO et restauration ; gestion des suppressions légitimes après restauration (éviter la réapparition durable de données effacées). | 3.10, 16.7, 16.8, 16.9, 17.3, 17.6, 17.12, 19.9, 19.10, 20.7 | Archivage UI J+30 distinct de la rétention, exceptions et effacement autorisé, restauration sans réapparition durable. | V-CDC-14-06 (F-14) |
+| CDC-14-07 | §14, ligne 277 | - Droit des personnes : procédure hors application possible pour les patients ; demandes des cliniques via messagerie générale, sans formulaire ni suivi de tickets spécifiques. Identité, autorité, fondement et délais applicables doivent être gérés selon une procédure interne. | 3.10, 16.7, 16.8, 16.9, 17.3, 17.6, 17.12, 19.9, 19.10, 20.7 | Archivage UI J+30 distinct de la rétention, exceptions et effacement autorisé, restauration sans réapparition durable. | V-CDC-14-07 (F-14) |
+| CDC-14-08 | §14, ligne 278 | - Usages autorisés des données patients : fabrication, suivi des commandes, communication professionnelle, retouches, traçabilité nécessaire ; pas d'utilisation marketing ou revente. | 3.10, 16.7, 16.8, 16.9, 17.3, 17.6, 17.12, 19.9, 19.10, 20.7 | Archivage UI J+30 distinct de la rétention, exceptions et effacement autorisé, restauration sans réapparition durable. | V-CDC-14-08 (F-14) |
+| CDC-15-01 | §15, ligne 282 | - Auditer les actions importantes : créations/acceptations/refus, modifications de versions, décisions, annulations, retouches, livraisons et corrections de livraison ; comptes, permissions, suspensions et reprises d'accès ; catalogues et interdictions ; authentifications sensibles ; paramètres, activation/désactivation maintenance, interventions techniques exceptionnelles. | 5.8, 7.13, 7.14, 17.1, 17.2, 17.13, 18.1, 18.2, 18.8, 20.2 | Audit global propriétaire seul non modifiable, données minimales, incident, limites compte partagé et protections sans 2FA imposée. | V-CDC-15-01 (F-15) |
+| CDC-15-02 | §15, ligne 283 | - Chaque événement : auteur/compte ou processus, horodatage, action, identifiant d'objet, motif et différence utile sans enregistrer inutilement des données médicales ou secrets. | 5.8, 7.13, 7.14, 17.1, 17.2, 17.13, 18.1, 18.2, 18.8, 20.2 | Audit global propriétaire seul non modifiable, données minimales, incident, limites compte partagé et protections sans 2FA imposée. | V-CDC-15-02 (F-15) |
+| CDC-15-03 | §15, ligne 284 | - Seul le propriétaire consulte le journal d'audit global ; ni employés, ni administrateurs secondaires. Aucun utilisateur ne peut le modifier ou le purger librement via l'interface. Les historiques métier de commandes restent visibles selon droits. | 5.8, 7.13, 7.14, 17.1, 17.2, 17.13, 18.1, 18.2, 18.8, 20.2 | Audit global propriétaire seul non modifiable, données minimales, incident, limites compte partagé et protections sans 2FA imposée. | V-CDC-15-03 (F-15) |
+| CDC-15-04 | §15, ligne 285 | - Sécuriser les fichiers téléchargés, les API, les échanges temps réel, les exports, les recherches, l'affichage des noms de patients et les aperçus. Pas de stockage direct public des pièces jointes. | 5.8, 7.13, 7.14, 17.1, 17.2, 17.13, 18.1, 18.2, 18.8, 20.2 | Audit global propriétaire seul non modifiable, données minimales, incident, limites compte partagé et protections sans 2FA imposée. | V-CDC-15-04 (F-15) |
+| CDC-15-05 | §15, ligne 286 | - Incidents : signalement via messagerie générale (clinique) ou contact direct propriétaire (personnel) ; procédure de réponse, révocation de sessions, conservation de preuves, analyse des impacts et obligations de notification à vérifier. | 5.8, 7.13, 7.14, 17.1, 17.2, 17.13, 18.1, 18.2, 18.8, 20.2 | Audit global propriétaire seul non modifiable, données minimales, incident, limites compte partagé et protections sans 2FA imposée. | V-CDC-15-05 (F-15) |
+| CDC-15-06 | §15, ligne 287 | - Une seule identité partagée par clinique ne permet pas d'attribuer avec certitude une action à un dentiste précis. Risque accepté fonctionnellement, à signaler au laboratoire et au conseil juridique ; pas de promesse d'audit individuel interne à une clinique. | 5.8, 7.13, 7.14, 17.1, 17.2, 17.13, 18.1, 18.2, 18.8, 20.2 | Audit global propriétaire seul non modifiable, données minimales, incident, limites compte partagé et protections sans 2FA imposée. | V-CDC-15-06 (F-15) |
+| CDC-15-07 | §15, ligne 288 | - Le choix de ne pas imposer de 2FA ne doit pas conduire à affaiblir les comptes propriétaires : protections compensatoires, alertes de connexion, révocation et récupération encadrée à valider. | 5.8, 7.13, 7.14, 17.1, 17.2, 17.13, 18.1, 18.2, 18.8, 20.2 | Audit global propriétaire seul non modifiable, données minimales, incident, limites compte partagé et protections sans 2FA imposée. | V-CDC-15-07 (F-15) |
+| CDC-16-01 | §16, ligne 292 | - Objectifs demandés : RPO maximum 1 heure ; RTO cible 4 heures. Ce sont des objectifs, pas des garanties sans validation du plan d'infrastructure, tests de restauration et prise en compte des fichiers volumineux. | 3.10, 14.8, 17.7, 17.8, 19.7, 19.8, 19.9, 19.10, 19.11, 20.10, 20.11 | RPO/RTO mesurés, backups chiffrés hors VPS 30 j, alertes indépendantes, maintenance et sortie de secours. | V-CDC-16-01 (F-16) |
+| CDC-16-02 | §16, ligne 293 | - Sauvegardes automatiques, chiffrées, hors VPS, cohérentes entre base de données et pièces jointes, rétention 30 jours, restauration testée régulièrement ; les seuls brouillons locaux non synchronisés ne sont pas couverts. | 3.10, 14.8, 17.7, 17.8, 19.7, 19.8, 19.9, 19.10, 19.11, 20.10, 20.11 | RPO/RTO mesurés, backups chiffrés hors VPS 30 j, alertes indépendantes, maintenance et sortie de secours. | V-CDC-16-02 (F-16) |
+| CDC-16-03 | §16, ligne 294 | - Surveillance stockage/état des services indépendante si possible ; alertes critiques au propriétaire. | 3.10, 14.8, 17.7, 17.8, 19.7, 19.8, 19.9, 19.10, 19.11, 20.10, 20.11 | RPO/RTO mesurés, backups chiffrés hors VPS 30 j, alertes indépendantes, maintenance et sortie de secours. | V-CDC-16-03 (F-16) |
+| CDC-16-04 | §16, ligne 295 | - Mode maintenance activable/désactivable par le propriétaire : blocage des opérations serveur, message clair pour utilisateurs, possibilité technique de sortie d'urgence si le portail ne fonctionne pas. Les brouillons locaux restent préparables ; aucune synchronisation pendant maintenance. | 3.10, 14.8, 17.7, 17.8, 19.7, 19.8, 19.9, 19.10, 19.11, 20.10, 20.11 | RPO/RTO mesurés, backups chiffrés hors VPS 30 j, alertes indépendantes, maintenance et sortie de secours. | V-CDC-16-04 (F-16) |
+| CDC-16-05 | §16, ligne 296 | - Annonce préalable facultative via bandeau dans l'application, date/heure en heure locale ; pas d'e-mail ; annonce ne déclenche pas automatiquement maintenance. Maintenance urgente sans préavis possible. | 3.10, 14.8, 17.7, 17.8, 19.7, 19.8, 19.9, 19.10, 19.11, 20.10, 20.11 | RPO/RTO mesurés, backups chiffrés hors VPS 30 j, alertes indépendantes, maintenance et sortie de secours. | V-CDC-16-05 (F-16) |
+| CDC-16-06 | §16, ligne 297 | - Distinguer panne réseau/serveur du mode maintenance volontaire, sans afficher de fausse annonce. | 3.10, 14.8, 17.7, 17.8, 19.7, 19.8, 19.9, 19.10, 19.11, 20.10, 20.11 | RPO/RTO mesurés, backups chiffrés hors VPS 30 j, alertes indépendantes, maintenance et sortie de secours. | V-CDC-16-06 (F-16) |
+| CDC-16-07 | §16, ligne 298 | - Toute mise à jour ordinaire devrait viser l'absence d'interruption, lorsque l'architecture le permet. | 3.10, 14.8, 17.7, 17.8, 19.7, 19.8, 19.9, 19.10, 19.11, 20.10, 20.11 | RPO/RTO mesurés, backups chiffrés hors VPS 30 j, alertes indépendantes, maintenance et sortie de secours. | V-CDC-16-07 (F-16) |
+| CDC-17-01 | §17, ligne 304 | 1. Politique de confidentialité. | 17.4, 17.5, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12, 21.10 | Validation professionnelle/juridique attribuable, textes albanais versionnés, lieu réel et politique rétention ; aucune auto-attestation. | V-CDC-17-01 (F-17) |
+| CDC-17-02 | §17, ligne 305 | 2. Conditions d'utilisation professionnelles. | 17.4, 17.5, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12, 21.10 | Validation professionnelle/juridique attribuable, textes albanais versionnés, lieu réel et politique rétention ; aucune auto-attestation. | V-CDC-17-02 (F-17) |
+| CDC-17-03 | §17, ligne 306 | 3. Informations légales du laboratoire. | 17.4, 17.5, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12, 21.10 | Validation professionnelle/juridique attribuable, textes albanais versionnés, lieu réel et politique rétention ; aucune auto-attestation. | V-CDC-17-03 (F-17) |
+| CDC-17-04 | §17, ligne 312 | - Loi kosovare n° 06/L-082 sur la protection des données personnelles, applicable au traitement et à la protection des données personnelles ; autorité : Information and Privacy Agency (AIP). | 17.4, 17.5, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12, 21.10 | Validation professionnelle/juridique attribuable, textes albanais versionnés, lieu réel et politique rétention ; aucune auto-attestation. | V-CDC-17-04 (F-17) |
+| CDC-17-05 | §17, ligne 313 | - Rôles réels des cliniques et du laboratoire dans les traitements (responsable, sous-traitant, responsabilités potentiellement propres), base juridique, données de santé et mesures renforcées, contrats nécessaires. | 17.4, 17.5, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12, 21.10 | Validation professionnelle/juridique attribuable, textes albanais versionnés, lieu réel et politique rétention ; aucune auto-attestation. | V-CDC-17-05 (F-17) |
+| CDC-17-06 | §17, ligne 314 | - Localisation réelle du VPS, de l'e-mail et des sauvegardes ; transferts internationaux éventuels et conditions applicables. | 17.4, 17.5, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12, 21.10 | Validation professionnelle/juridique attribuable, textes albanais versionnés, lieu réel et politique rétention ; aucune auto-attestation. | V-CDC-17-06 (F-17) |
+| CDC-17-07 | §17, ligne 315 | - Droits des personnes et procédures de traitement des demandes ; délais légaux à confirmer à partir du texte et des circonstances, sans les coder arbitrairement dans cette spécification. | 17.4, 17.5, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12, 21.10 | Validation professionnelle/juridique attribuable, textes albanais versionnés, lieu réel et politique rétention ; aucune auto-attestation. | V-CDC-17-07 (F-17) |
+| CDC-17-08 | §17, ligne 316 | - Obligations de conservation, sécurité, notification des incidents, traçabilité des dispositifs médicaux dentaires sur mesure et éventuelles exigences sectorielles : examiner les textes kosovars pertinents et leurs versions à jour, notamment loi n° 04/L-190 et ses amendements, avec conseil local qualifié. | 17.4, 17.5, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12, 21.10 | Validation professionnelle/juridique attribuable, textes albanais versionnés, lieu réel et politique rétention ; aucune auto-attestation. | V-CDC-17-08 (F-17) |
+| CDC-17-09 | §17, ligne 317 | - La conservation indéfinie des brouillons ou de documents médicaux doit être réexaminée au regard de la minimisation des données ; les décisions ergonomiques ne peuvent l'emporter sur les obligations de protection des données. | 17.4, 17.5, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12, 21.10 | Validation professionnelle/juridique attribuable, textes albanais versionnés, lieu réel et politique rétention ; aucune auto-attestation. | V-CDC-17-09 (F-17) |
+| CDC-17-10 | §17, ligne 320 | - Agence kosovare d'information et de protection de la vie privée : https://aip.rks-gov.net/personal-data-protection/legislation/ | 17.4, 17.5, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12, 21.10 | Validation professionnelle/juridique attribuable, textes albanais versionnés, lieu réel et politique rétention ; aucune auto-attestation. | V-CDC-17-10 (F-17) |
+| CDC-17-11 | §17, ligne 321 | - Journal officiel, loi 06/L-082 : https://gzk.rks-gov.net/ActDetail.aspx?ActID=18616&langid=2 | 17.4, 17.5, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12, 21.10 | Validation professionnelle/juridique attribuable, textes albanais versionnés, lieu réel et politique rétention ; aucune auto-attestation. | V-CDC-17-11 (F-17) |
+| CDC-17-12 | §17, ligne 322 | - Journal officiel, loi 04/L-190 relative aux produits et dispositifs médicaux : https://gzk.rks-gov.net/ActDetail.aspx?ActID=9437&langid=2 | 17.4, 17.5, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12, 21.10 | Validation professionnelle/juridique attribuable, textes albanais versionnés, lieu réel et politique rétention ; aucune auto-attestation. | V-CDC-17-12 (F-17) |
+| CDC-18-01 | §18, ligne 326 | - Finance reportée volontairement : prix par dent/matériau, devis, tarification, factures, paiements, suivi des sommes dues, marges, tableaux de bord financiers, gestion des garanties et prix des retouches. | 1.4, 1.5, 4.14, 9.2, 9.5, 18.8, 21.9 | Revue de périmètre : pas de finance/patient/affectation/2FA imposée, pas d’e-mails ni de liens publics ajoutés. | V-CDC-18-01 (F-18) |
+| CDC-18-02 | §18, ligne 327 | - Aucun espace patient, aucune base de dossiers patient transversale, aucune intégration médicale externe décidée. | 1.4, 1.5, 4.14, 9.2, 9.5, 18.8, 21.9 | Revue de périmètre : pas de finance/patient/affectation/2FA imposée, pas d’e-mails ni de liens publics ajoutés. | V-CDC-18-02 (F-18) |
+| CDC-18-03 | §18, ligne 328 | - Aucun compte individuel dentiste/secrétaire au sein d'une clinique ; un seul compte partagé par clinique. | 1.4, 1.5, 4.14, 9.2, 9.5, 18.8, 21.9 | Revue de périmètre : pas de finance/patient/affectation/2FA imposée, pas d’e-mails ni de liens publics ajoutés. | V-CDC-18-03 (F-18) |
+| CDC-18-04 | §18, ligne 329 | - Aucun système d'affectation des commandes aux employés. | 1.4, 1.5, 4.14, 9.2, 9.5, 18.8, 21.9 | Revue de périmètre : pas de finance/patient/affectation/2FA imposée, pas d’e-mails ni de liens publics ajoutés. | V-CDC-18-04 (F-18) |
+| CDC-18-05 | §18, ligne 330 | - Pas d'e-mails pour toutes les actions, pas de chat entre cliniques, pas de partage de fichiers par liens publics, pas de transfert de propriété depuis le portail. | 1.4, 1.5, 4.14, 9.2, 9.5, 18.8, 21.9 | Revue de périmètre : pas de finance/patient/affectation/2FA imposée, pas d’e-mails ni de liens publics ajoutés. | V-CDC-18-05 (F-18) |
+| CDC-18-06 | §18, ligne 331 | - Pas de fonctionnalité imposant de remplir description ou dents lorsque les deux sont vides ; avertissement non bloquant seulement. | 1.4, 1.5, 4.14, 9.2, 9.5, 18.8, 21.9 | Revue de périmètre : pas de finance/patient/affectation/2FA imposée, pas d’e-mails ni de liens publics ajoutés. | V-CDC-18-06 (F-18) |
+| CDC-18-07 | §18, ligne 332 | - Pas de multi-matériau ou multi-teinte par commande ; envoyer plusieurs commandes si nécessaire. | 1.4, 1.5, 4.14, 9.2, 9.5, 18.8, 21.9 | Revue de périmètre : pas de finance/patient/affectation/2FA imposée, pas d’e-mails ni de liens publics ajoutés. | V-CDC-18-07 (F-18) |
+| CDC-18-08 | §18, ligne 333 | - Pas de promesse de consultation des modèles 3D sans possibilité technique d'en copier les octets. | 1.4, 1.5, 4.14, 9.2, 9.5, 18.8, 21.9 | Revue de périmètre : pas de finance/patient/affectation/2FA imposée, pas d’e-mails ni de liens publics ajoutés. | V-CDC-18-08 (F-18) |
+| CDC-18-09 | §18, ligne 334 | - Pas de suppression automatique de fichiers historiques pour dégager de l'espace. | 1.4, 1.5, 4.14, 9.2, 9.5, 18.8, 21.9 | Revue de périmètre : pas de finance/patient/affectation/2FA imposée, pas d’e-mails ni de liens publics ajoutés. | V-CDC-18-09 (F-18) |
+| CDC-19-01 | §19, ligne 342 |  Demande pendante  /  Une seule modification ou annulation à la fois ; pas de démarrage fabrication ; pas de modification directe des instructions par le laboratoire avant décision/retrait.  | 3.4, 3.5, 3.6, 3.7, 3.8, 3.10, 10.15, 18.1, 20.4, 20.5, 20.7, 20.8, 21.9 | Scénarios transversaux reproduisant les interactions consolidées et les exclusions. | V-CDC-19-01 (F-19) |
+| CDC-19-02 | §19, ligne 343 |  Commande en attente modifiée  /  Dernière version soumise visible ; acceptation d'une version obsolète interdite.  | 3.4, 3.5, 3.6, 3.7, 3.8, 3.10, 10.15, 18.1, 20.4, 20.5, 20.7, 20.8, 21.9 | Scénarios transversaux reproduisant les interactions consolidées et les exclusions. | V-CDC-19-02 (F-19) |
+| CDC-19-03 | §19, ligne 344 |  Correction demandée  /  Distincte d'`En attente` ; retour seulement après renvoi explicite.  | 3.4, 3.5, 3.6, 3.7, 3.8, 3.10, 10.15, 18.1, 20.4, 20.5, 20.7, 20.8, 21.9 | Scénarios transversaux reproduisant les interactions consolidées et les exclusions. | V-CDC-19-03 (F-19) |
+| CDC-19-04 | §19, ligne 345 |  Travail commencé  /  Instructions et fichiers verrouillés ; nouveau travail lié de remplacement ou supplémentaire.  | 3.4, 3.5, 3.6, 3.7, 3.8, 3.10, 10.15, 18.1, 20.4, 20.5, 20.7, 20.8, 21.9 | Scénarios transversaux reproduisant les interactions consolidées et les exclusions. | V-CDC-19-04 (F-19) |
+| CDC-19-05 | §19, ligne 346 |  Livraison erronée  /  Retour exceptionnel à `Terminée` ; vérifier absence de retouche contradictoire.  | 3.4, 3.5, 3.6, 3.7, 3.8, 3.10, 10.15, 18.1, 20.4, 20.5, 20.7, 20.8, 21.9 | Scénarios transversaux reproduisant les interactions consolidées et les exclusions. | V-CDC-19-05 (F-19) |
+| CDC-19-06 | §19, ligne 347 |  Référence supprimée  /  Non proposée dans le catalogue courant, mais valeurs figées historiques et brouillons préservés.  | 3.4, 3.5, 3.6, 3.7, 3.8, 3.10, 10.15, 18.1, 20.4, 20.5, 20.7, 20.8, 21.9 | Scénarios transversaux reproduisant les interactions consolidées et les exclusions. | V-CDC-19-06 (F-19) |
+| CDC-19-07 | §19, ligne 348 |  Référence indisponible  /  Soumission possible avec avertissement ; acceptation exceptionnelle avec motif.  | 3.4, 3.5, 3.6, 3.7, 3.8, 3.10, 10.15, 18.1, 20.4, 20.5, 20.7, 20.8, 21.9 | Scénarios transversaux reproduisant les interactions consolidées et les exclusions. | V-CDC-19-07 (F-19) |
+| CDC-19-08 | §19, ligne 349 |  Référence interdite  /  Soumission/acceptation impossible ; blocage préventif des travaux non livrés, sans annulation automatique ; examen des travaux livrés.  | 3.4, 3.5, 3.6, 3.7, 3.8, 3.10, 10.15, 18.1, 20.4, 20.5, 20.7, 20.8, 21.9 | Scénarios transversaux reproduisant les interactions consolidées et les exclusions. | V-CDC-19-08 (F-19) |
+| CDC-19-09 | §19, ligne 350 |  Rétention versus archivage  /  30 jours avant archivage UI ≠ durée de conservation ; fin de rétention signalée au propriétaire pour décision légalement encadrée.  | 3.4, 3.5, 3.6, 3.7, 3.8, 3.10, 10.15, 18.1, 20.4, 20.5, 20.7, 20.8, 21.9 | Scénarios transversaux reproduisant les interactions consolidées et les exclusions. | V-CDC-19-09 (F-19) |
+| CDC-19-10 | §19, ligne 351 |  Téléchargement ZIP  /  Identiques permissions que le téléchargement individuel ; inclusion sélective automatique des seuls fichiers autorisés.  | 3.4, 3.5, 3.6, 3.7, 3.8, 3.10, 10.15, 18.1, 20.4, 20.5, 20.7, 20.8, 21.9 | Scénarios transversaux reproduisant les interactions consolidées et les exclusions. | V-CDC-19-10 (F-19) |
+| CDC-19-11 | §19, ligne 352 |  PWA hors ligne  /  Brouillons seulement ; aucune promesse d'effacement ou de révocation instantanée sur appareil sans connexion.  | 3.4, 3.5, 3.6, 3.7, 3.8, 3.10, 10.15, 18.1, 20.4, 20.5, 20.7, 20.8, 21.9 | Scénarios transversaux reproduisant les interactions consolidées et les exclusions. | V-CDC-19-11 (F-19) |
+| CDC-19-12 | §19, ligne 353 |  Compte de clinique partagé  /  Confidentialité par clinique assurée, mais responsabilité individuelle des membres de la clinique non identifiable techniquement.  | 3.4, 3.5, 3.6, 3.7, 3.8, 3.10, 10.15, 18.1, 20.4, 20.5, 20.7, 20.8, 21.9 | Scénarios transversaux reproduisant les interactions consolidées et les exclusions. | V-CDC-19-12 (F-19) |
+| CDC-19.1-01 | §19.1, ligne 359 | - Motifs / procédure interne de refus, corrections et annulations ; formulations albanaises exactes. | 1.6, 2.9, 15.10, 18.3, 19.1, 19.10, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12 | Responsables métier/juridique et preuves terrain nécessaires ; faisabilités/limites explicitement non acquises. | V-CDC-19.1-01 (F-19.1) |
+| CDC-19.1-02 | §19.1, ligne 360 | - Traitement pratique des demandes de retouche sans prix ni garantie dans la version initiale. | 1.6, 2.9, 15.10, 18.3, 19.1, 19.10, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12 | Responsables métier/juridique et preuves terrain nécessaires ; faisabilités/limites explicitement non acquises. | V-CDC-19.1-02 (F-19.1) |
+| CDC-19.1-03 | §19.1, ligne 361 | - Confirmation du fonctionnement opérationnel avec patient identifié uniquement par référence et avec commandes sans dents/description ; ces choix sont validés mais impliquent un risque de dossier incomplet. | 1.6, 2.9, 15.10, 18.3, 19.1, 19.10, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12 | Responsables métier/juridique et preuves terrain nécessaires ; faisabilités/limites explicitement non acquises. | V-CDC-19.1-03 (F-19.1) |
+| CDC-19.1-04 | §19.1, ligne 362 | - Qui est habilité à décider une mesure sur matériau interdit ou sur une commande livrée concernée, sous réserve des prescriptions légales et de la responsabilité du laboratoire. | 1.6, 2.9, 15.10, 18.3, 19.1, 19.10, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12 | Responsables métier/juridique et preuves terrain nécessaires ; faisabilités/limites explicitement non acquises. | V-CDC-19.1-04 (F-19.1) |
+| CDC-19.1-05 | §19.1, ligne 366 | - Audit du VPS existant, volumes/disques, services et autres applications, capacité d'extension, confidentialité des autres sites. | 1.6, 2.9, 15.10, 18.3, 19.1, 19.10, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12 | Responsables métier/juridique et preuves terrain nécessaires ; faisabilités/limites explicitement non acquises. | V-CDC-19.1-05 (F-19.1) |
+| CDC-19.1-06 | §19.1, ligne 367 | - Faisabilité éprouvée du chiffrement et déverrouillage local des brouillons PWA selon les navigateurs/appareils réellement utilisés ; gestion de l'expiration des espaces temporaires, des quotas navigateurs et des pertes de stockage local. | 1.6, 2.9, 15.10, 18.3, 19.1, 19.10, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12 | Responsables métier/juridique et preuves terrain nécessaires ; faisabilités/limites explicitement non acquises. | V-CDC-19.1-06 (F-19.1) |
+| CDC-19.1-07 | §19.1, ligne 368 | - Faisabilité de la reprise d'upload des fragments et fichiers jusqu'à 1 Go par commande, gestion du ZIP, contrôle antivirus/fichiers malveillants, monitoring et contraintes de coût. | 1.6, 2.9, 15.10, 18.3, 19.1, 19.10, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12 | Responsables métier/juridique et preuves terrain nécessaires ; faisabilités/limites explicitement non acquises. | V-CDC-19.1-07 (F-19.1) |
+| CDC-19.1-08 | §19.1, ligne 369 | - Conception et tests des sauvegardes incluant gros fichiers, RPO 1h / RTO 4h, indépendance des alertes et restauration depuis un incident complet. | 1.6, 2.9, 15.10, 18.3, 19.1, 19.10, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12 | Responsables métier/juridique et preuves terrain nécessaires ; faisabilités/limites explicitement non acquises. | V-CDC-19.1-08 (F-19.1) |
+| CDC-19.1-09 | §19.1, ligne 370 | - Sécurité des sessions persistantes et procédure d'intervention technique exceptionnelle sur le propriétaire. | 1.6, 2.9, 15.10, 18.3, 19.1, 19.10, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12 | Responsables métier/juridique et preuves terrain nécessaires ; faisabilités/limites explicitement non acquises. | V-CDC-19.1-09 (F-19.1) |
+| CDC-19.1-10 | §19.1, ligne 374 | - Qualifications des acteurs dans le traitement des données, droits d'accès et de rectification, consentements/accords si requis et clauses contractuelles. | 1.6, 2.9, 15.10, 18.3, 19.1, 19.10, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12 | Responsables métier/juridique et preuves terrain nécessaires ; faisabilités/limites explicitement non acquises. | V-CDC-19.1-10 (F-19.1) |
+| CDC-19.1-11 | §19.1, ligne 375 | - Hébergement et transferts internationaux éventuels ; sécurité du prestataire e-mail et sauvegardes. | 1.6, 2.9, 15.10, 18.3, 19.1, 19.10, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12 | Responsables métier/juridique et preuves terrain nécessaires ; faisabilités/limites explicitement non acquises. | V-CDC-19.1-11 (F-19.1) |
+| CDC-19.1-12 | §19.1, ligne 376 | - Durées exactes par catégorie de données, conservation des versions médicales, anonymisation, effacement, demandes patient, incidents et notifications. | 1.6, 2.9, 15.10, 18.3, 19.1, 19.10, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12 | Responsables métier/juridique et preuves terrain nécessaires ; faisabilités/limites explicitement non acquises. | V-CDC-19.1-12 (F-19.1) |
+| CDC-19.1-13 | §19.1, ligne 377 | - Exigences de traçabilité et obligations relatives aux dispositifs dentaires sur mesure, y compris les retraits/interdictions de sécurité. | 1.6, 2.9, 15.10, 18.3, 19.1, 19.10, 17.9, 17.10, 17.11, 17.12, 17.13, 20.12 | Responsables métier/juridique et preuves terrain nécessaires ; faisabilités/limites explicitement non acquises. | V-CDC-19.1-13 (F-19.1) |
+| CDC-19.2-01 | §19.2, ligne 381 | - Les seuils de stockage, durées de conservation des uploads temporaires, durée d'expiration des invitations et cadence des tests de restauration sont des paramètres à déterminer, et non des chiffres approuvés. | 1.6, 3.8, 4.14, 7.8, 12.8, 19.2 | Paramètres ouverts enregistrés ; aucune durée/seuil/obligation supplémentaire arbitraire. | V-CDC-19.2-01 (F-19.2) |
+| CDC-19.2-02 | §19.2, ligne 382 | - Les libellés exacts et le design des pages devront suivre une conception UI simplifiée ultérieure, sans changer les workflows. | 1.6, 3.8, 4.14, 7.8, 12.8, 19.2 | Paramètres ouverts enregistrés ; aucune durée/seuil/obligation supplémentaire arbitraire. | V-CDC-19.2-02 (F-19.2) |
+| CDC-19.2-03 | §19.2, ligne 383 | - La mise en œuvre technique peut proposer des garanties meilleures que les exigences ci-dessus, mais ne doit pas ajouter de validation clinique obligatoire, de 2FA obligatoire, de module financier ou de suppression automatique de commandes sans nouvel accord. | 1.6, 3.8, 4.14, 7.8, 12.8, 19.2 | Paramètres ouverts enregistrés ; aucune durée/seuil/obligation supplémentaire arbitraire. | V-CDC-19.2-03 (F-19.2) |
+| CDC-20-01 | §20, ligne 389 | 1. Une clinique peut s'inscrire, être approuvée, se connecter et soumettre une commande complète avec ou sans sélection de dents, et avec patient identifié par nom/prénom ou référence. | 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7, 20.8, 20.9, 20.10, 20.11, 20.12, 21.9 | Critères d’acceptation à prouver individuellement en recette ; aucune preuve de réalisation à ce stade. | V-CDC-20-01 (F-20) |
+| CDC-20-02 | §20, ligne 390 | 2. Deux cliniques ne peuvent consulter ni deviner les données ou fichiers l'une de l'autre, y compris dans la messagerie, les téléchargements et les recherches. | 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7, 20.8, 20.9, 20.10, 20.11, 20.12, 21.9 | Critères d’acceptation à prouver individuellement en recette ; aucune preuve de réalisation à ce stade. | V-CDC-20-02 (F-20) |
+| CDC-20-03 | §20, ligne 391 | 3. Le laboratoire traite une commande de `En attente` à `Livrée` et peut demander une correction avant acceptation ; toutes les dates et décisions restent traçables. | 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7, 20.8, 20.9, 20.10, 20.11, 20.12, 21.9 | Critères d’acceptation à prouver individuellement en recette ; aucune preuve de réalisation à ce stade. | V-CDC-20-03 (F-20) |
+| CDC-20-04 | §20, ligne 392 | 4. Les corrections directes avant acceptation et les modifications soumises après acceptation respectent l'historique et les verrouillages concurrentiels. | 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7, 20.8, 20.9, 20.10, 20.11, 20.12, 21.9 | Critères d’acceptation à prouver individuellement en recette ; aucune preuve de réalisation à ce stade. | V-CDC-20-04 (F-20) |
+| CDC-20-05 | §20, ligne 393 | 5. Les règles d'annulation, retrait des demandes, duplications, commandes créées par le laboratoire et retouches se comportent selon §§5–6. | 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7, 20.8, 20.9, 20.10, 20.11, 20.12, 21.9 | Critères d’acceptation à prouver individuellement en recette ; aucune preuve de réalisation à ce stade. | V-CDC-20-05 (F-20) |
+| CDC-20-06 | §20, ligne 394 | 6. Les instructions/fichiers de fabrication restent verrouillés après le début de fabrication ; un remplacement crée bien une commande liée sans réécriture de l'ancienne. | 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7, 20.8, 20.9, 20.10, 20.11, 20.12, 21.9 | Critères d’acceptation à prouver individuellement en recette ; aucune preuve de réalisation à ce stade. | V-CDC-20-06 (F-20) |
+| CDC-20-07 | §20, ligne 395 | 7. Les permissions logistiques/détaillées, visualisation/téléchargement, lecture/réponse et actions métier sont effectivement contrôlées côté serveur. | 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7, 20.8, 20.9, 20.10, 20.11, 20.12, 21.9 | Critères d’acceptation à prouver individuellement en recette ; aucune preuve de réalisation à ce stade. | V-CDC-20-07 (F-20) |
+| CDC-20-08 | §20, ligne 396 | 8. Les e-mails et rappels respectent leur matrice de destinataires, leurs déclencheurs et leur politique de relance ; les actions métier survivent à une panne d'e-mail. | 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7, 20.8, 20.9, 20.10, 20.11, 20.12, 21.9 | Critères d’acceptation à prouver individuellement en recette ; aucune preuve de réalisation à ce stade. | V-CDC-20-08 (F-20) |
+| CDC-20-09 | §20, ligne 397 | 9. Les brouillons hors ligne conservent informations et fichiers, exigent un déverrouillage adéquat, détectent les conflits, et ne soumettent jamais automatiquement une commande. | 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7, 20.8, 20.9, 20.10, 20.11, 20.12, 21.9 | Critères d’acceptation à prouver individuellement en recette ; aucune preuve de réalisation à ce stade. | V-CDC-20-09 (F-20) |
+| CDC-20-10 | §20, ligne 398 | 10. Un transfert interrompu peut reprendre sans doublon tant que les fragments existent ; les limites de taille et seuils de sécurité sont appliqués. | 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7, 20.8, 20.9, 20.10, 20.11, 20.12, 21.9 | Critères d’acceptation à prouver individuellement en recette ; aucune preuve de réalisation à ce stade. | V-CDC-20-10 (F-20) |
+| CDC-20-11 | §20, ligne 399 | 11. Une référence interdite empêche effectivement une nouvelle fabrication et signale/bloque les commandes actives concernées ; une référence simplement indisponible conserve le parcours d'exception validé. | 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7, 20.8, 20.9, 20.10, 20.11, 20.12, 21.9 | Critères d’acceptation à prouver individuellement en recette ; aucune preuve de réalisation à ce stade. | V-CDC-20-11 (F-20) |
+| CDC-20-12 | §20, ligne 400 | 12. La livraison groupée, sa correction exceptionnelle, le calendrier, l'archivage à J+30 et les conversations clôturées/réouvertes restent cohérents. | 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7, 20.8, 20.9, 20.10, 20.11, 20.12, 21.9 | Critères d’acceptation à prouver individuellement en recette ; aucune preuve de réalisation à ce stade. | V-CDC-20-12 (F-20) |
+| CDC-20-13 | §20, ligne 401 | 13. Les alertes de stockage et de sauvegarde, le mode maintenance et les procédures de reprise sont testés dans l'environnement effectivement retenu. | 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7, 20.8, 20.9, 20.10, 20.11, 20.12, 21.9 | Critères d’acceptation à prouver individuellement en recette ; aucune preuve de réalisation à ce stade. | V-CDC-20-13 (F-20) |
+| CDC-20-14 | §20, ligne 402 | 14. Les validations légales et professionnelles ont été réalisées et documentées avant de traiter des données réelles de patients. | 20.1, 20.2, 20.3, 20.4, 20.5, 20.6, 20.7, 20.8, 20.9, 20.10, 20.11, 20.12, 21.9 | Critères d’acceptation à prouver individuellement en recette ; aucune preuve de réalisation à ce stade. | V-CDC-20-14 (F-20) |
+
+### Compte rendu du point 1.2 — Répertoire et dépôts
+
+Date de clôture : 09/10/2026, Europe/Brussels. Statut : ☑ Validé.
+
+État initial contrôlé : /srv/dental-lab était vide avant copie des cinq références. L’inventaire Remote, le chemin réel, mode 700 et ACL ont été lus ; aucune entrée .git ni code ni migration ni fichier de suivi préexistant. Aucun dépôt/remote n’a donc été repris ou supposé. Les cinq fichiers actuellement présents sont uniquement les références copiées au point 1.1, avec annexe de suivi dans ROADMAP.md.
+
+Décision de réutilisation : préserver les préparations système et SQL observées ; aucune recréation. Préserver le contenu des références. Ne pas initialiser le dépôt avant le point 5.1 et ses dépendances ; ne pas choisir de remote ou d’identité Git sans donnée confirmée.
+
+Fichiers modifiés à ce point : ROADMAP.md (statut 1.2 et ce compte rendu). Aucune modification de code/SQL/service/privilège. Validation : inventaire relu, absence de .git vérifiée, absence de lien symbolique dans le projet, identifiants et couverture documentaire contrôlés. Git : sans objet, aucune initialisation/commit/push. Risques restants : politique sudo et isolation réseau non prouvées ; mode runtime/migration absent ; remote Git non défini. Suite : 1.3, décision de stack à valider avant initialisation.
+
+### Compte rendu du point 1.3 — Proposition d’ADR à approuver
+
+Date : 09/10/2026, Europe/Brussels. Statut : ⚠ Bloqué — décision de stack non encore approuvée par le propriétaire du projet. Aucun point suivant entamé. Aucun paquet installé, aucun squelette généré.
+
+Contexte établi : application privée sans besoin de SEO public, usage tactile/PWA, brouillons hors ligne chiffrés, messages temps réel, gros fichiers privés, monolithe modulaire. PostgreSQL 17 existe. Node 22.22.2 et npm 10.9.7 ont été exécutés sous dental-ai. Aucun code préexistant ni choix de framework validé dans les sources.
+
+Comparaison préparée (analyse d’architecture, pas benchmark exécuté) :
+
+| Option | Intérêt pour ce projet | Compromis | Proposition |
+|---|---|---|---|
+| React + Vite SPA + Express, TypeScript partagé | Client PWA clairement séparé de l’autorité API, contrats communs, SQL explicite, outillage compatible avec Node existant | Autorisations, sessions, transferts et temps réel restent à concevoir/tester ; le framework ne fournit pas ces garanties | Recommandée |
+| React + Vite SPA + Fastify | Frontend identique ; API avec primitives de plugins et validation orientées serveur | Autre convention API à adopter ; aucune mesure ici ne démontre un besoin de performance imposant ce choix | Alternative viable |
+| Next.js full-stack | Conventions full-stack et routage intégrés ; évite un framework API séparé dans certains usages | Le rendu serveur n’est pas une exigence métier de cette application ; organisation spécifique à documenter pour PWA/offline/fichiers/jobs | Alternative viable |
+
+Proposition concrète (À APPROUVER, rien de ceci n’est encore décidé) :
+
+- Monorepo npm workspaces, apps/web, apps/api, packages/contracts. Modules réellement nécessaires seulement. API structurée routes → controllers → services → repositories, PostgreSQL via pg et migrations SQL versionnées.
+- Frontend React + Vite SPA, TanStack Router (sans supposer TanStack Start), TanStack Query pour l’état serveur, Tailwind pour les styles avec composants accessibles à concevoir au chapitre 4.
+- TypeScript 6 strict et Zod partagé pour les frontières. TypeScript 7 est désormais latest au registre interrogé mais n’est PAS retenu dans cette proposition : le peer déclaré de typescript-eslint 8.71.1 est >=4.8.4 <6.1.0. Ne pas forcer une incompatibilité pour adopter latest.
+- Tests : Vitest pour règles et intégration ; Playwright pour E2E. Installation réelle, navigateur système et environnement PostgreSQL de test restent à auditer ; aucune promesse que les dépendances système Playwright existent déjà.
+- Conservation de Node 22.22.2 pendant le développement initial, sous réserve des audits de sécurité/support ultérieurs. Aucune modification de Node global sur VPS partagé.
+- Sessions, transport temps réel, cryptographie offline, stockage/antimalware, emails, backups et runtime isolé restent aux ADR/points pertinents. Ne pas les déduire du choix de frameworks.
+
+Versions exactes candidates, vérifiées par GET HTTPS publics du registre npm depuis dental-ai, le 09/10/2026 ; métadonnées seulement :
+
+| Paquet | Version candidate |
+|---|---|
+| react / react-dom | 19.3.0 / 19.3.0 |
+| vite / @vitejs/plugin-react | 8.3.4 / 6.1.2 |
+| typescript | 6.0.3 |
+| express | 5.2.1 |
+| pg | 8.23.1 |
+| zod | 4.6.5 |
+| @tanstack/react-router | 1.170.41 |
+| @tanstack/react-query | 5.104.1 |
+| tailwindcss / @tailwindcss/vite | 4.3.3 / 4.3.3 |
+| vitest | 5.0.3 |
+| @playwright/test | 1.64.0 |
+| eslint / typescript-eslint | 10.12.0 / 8.71.1 |
+| prettier | 3.9.9 |
+
+Contrôle réellement fait : moteurs Node et peerDependencies déclarés sont compatibles pour les versions candidates principales listées ci-dessus (Node 22.22.2 ; React 19.3 ; Vite 8 ; TS 6.0.3). Ce contrôle documentaire n’est ni une installation complète ni une preuve de résolution de toutes les dépendances transitives, ni un build, ni une preuve de sécurité. Un lockfile et les types/plugins nécessaires seront définis et contrôlés lors de l’initialisation autorisée ; réauditer les métadonnées si la reprise est tardive.
+
+Sources primaires consultées :
+- https://react.dev/versions
+- https://vite.dev/guide/
+- https://vite.dev/blog/announcing-vite8.html
+- https://expressjs.com/en/guide/migrating-5/
+- https://registry.npmjs.org/ (ressources package/latest, et versions stables 6.x de typescript).
+
+Action humaine minimale attendue : approuver cette proposition React/Vite/Express/PostgreSQL avec TypeScript 6, npm workspaces, Zod et outillage proposé, ou désigner une alternative. Cette décision débloque la finalisation de l’ADR 1.3 ; elle n’accorde aucun nouveau privilège ni une autorisation de production.
+
+Fichiers modifiés : ROADMAP.md uniquement (statut et proposition). Git : dépôt absent, aucun commit/push. Reprise : vérifier identité dental-ai, état du répertoire, empreintes et proposition ; enregistrer la décision reçue au point 1.3, terminer ses validations, puis seulement passer à 1.4.
+
+### ADR du point 1.3 — Stack validée le 09/10/2026 à 05:54 Europe/Brussels
+
+Statut : ☑ Validé pour la décision d’architecture et la compatibilité structurelle. La proposition antérieure bloquée est un état historique ; la présente décision la remplace pour le cœur de stack. Autorité : validation explicite de Resul dans la conversation, le 09/10/2026 à 05:53–05:54 Europe/Brussels.
+
+Décision actée : frontend React + Vite + TypeScript 6 ; backend Express + TypeScript 6 ; PostgreSQL 17 exclusivement dental_lab ; monolithe modulaire. Les versions candidates du tableau précédent sont des métadonnées vérifiées, pas des paquets installés. Les versions stables, leurs moteurs et leurs peers seront revérifiés à l’installation ; aucun passage forcé à TS 7 ni changement du runtime global. L’outillage annexe (npm workspaces, pg, Zod, qualité et tests) demeure une proposition d’implémentation cohérente à contrôler lors des fondations, sans imposer de nouvel accord de confort.
+
+Audit de reprise : identité dental-ai/UID 1002, hostname vps-28bf7789, HOME attendu, chemin physique /srv/dental-lab, mode 700 et sources inchangées vérifiés. SHA-256 ROADMAP initial = 5e4f1c1c0f5a6b9f89ba8d1c27a732d441df5f09bbfc508102a9435a1f73de75. Git absent. Aucun code à préserver autre que les références. Node 22.22.2, npm 10.9.7 confirmés.
+
+| Exigence obligatoire | Capacité envisagée avec la stack | Limite et preuve requise avant validation fonctionnelle |
+|---|---|---|
+| PWA installable tablette/mobile | Manifest, service worker, shell React/Vite servi en HTTPS | Installation et mises à jour sur appareils cibles aux points 15.1, 15.10, 20.8 ; domaine/TLS non encore configurés |
+| Brouillons complets hors ligne, fichiers compris | Stockage navigateur adapté au binaire, séparation par compte, Web Crypto ; cache du shell seulement | Quotas/éviction et mémoire réels, clé/déverrouillage et pertes à tester ; aucun cache automatique des commandes officielles |
+| Chiffrement et retour du même compte | Primitives de cryptographie authentifiée utilisables côté navigateur, clé liée à l’espace du compte | La stratégie cryptographique complète reste à concevoir en 3.8/15.3 ; aucune garantie de révocation instantanée hors réseau |
+| Synchronisation multi-appareils | API Express, versions serveur PostgreSQL et transactions ; conflit explicite serveur ou nouveau brouillon local | Tests de divergence avec fichiers, acquittement et reprise ; jamais d’envoi officiel automatique |
+| 200 Mo/fichier et 1 Go initial/message | HTTP par fragments, streaming Node, métadonnées/checksums et finalisation contrôlée | Réserve disque/quota, validation du contenu et antivirus à décider, interruptions/ZIP à éprouver ; aucun gros fichier intégral en mémoire |
+| Droits fins et isolement clinique | Contrôles serveur par ressource et action, requêtes SQL paramétrées et projections selon droits | Tests IDOR/concurrence/révocation sur API, recherche, fichiers, ZIP, événements et notifications ; React/Express n’assurent pas ces droits seuls |
+| Temps réel et lecture | Express peut héberger un transport adapté ; messages persistants et reprise pilotée par serveur | Choix de transport en 3.9/13.4, recontrôle des droits et récupération des messages manqués |
+| Traçabilité, e-mail indépendant et maintenance | Transactions PostgreSQL, événements/outbox et workers propres au projet | Outbox/relances, audit propriétaire, verrouillages et tests de panne à réaliser ; fournisseur non sélectionné |
+| Backups, rétention et exploitation | La stack permet des sauvegardes SQL/fichiers et un runtime dédié | RPO/RTO, budgets, délégations, localisation/conformité sont des préconditions externes, jamais garanties par la stack |
+
+Sources primaires lues le 09/10/2026 : MDN Using Service Workers (HTTPS et cycle de vie), Storage quotas and eviction criteria, SubtleCrypto.encrypt (AES-GCM), documentation Node 22 Stream/pipeline, documentation officielle Express Production Best Practices: Security. URLs : https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/Using_Service_Workers ; https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria ; https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt ; https://nodejs.org/docs/latest-v22.x/api/stream.html ; https://expressjs.com/en/advanced/best-practice-security/ .
+
+Vérification exécutée sous dental-ai sans installer ni écrire de code : disponibilité de Web Crypto dans Node et pipeline en mémoire de deux fragments de 4096 octets, résultat 8192 octets, assertions réussies. Ce contrôle prouve uniquement la présence de primitives serveur, pas la cryptographie navigateur ni un transfert réel de 1 Go. Revue des APIs et règles : aucune incompatibilité importante identifiée pour la stack validée, sous réserve des portes de faisabilité déjà prévues.
+
+Modifications : ROADMAP.md, statut 1.3 et présente ADR. Installation/migration/service/privilège : aucune. Git : absent, aucun commit/push. Risques restants : appareils/quotas, cryptographie, capacité et G1–G7 ; enregistrés au point 1.6. Suite : 1.4.
+
+### Compte rendu du point 1.4 — Frontières et contrats des modules métier
+
+Date : 09/10/2026, Europe/Brussels. Statut : ☑ Validé pour la cartographie de cadrage. La structure détaillée sera déclinée en 3.1 ; ces noms sont des frontières proposées, pas des dossiers déjà créés. Audit préalable : références inchangées et seuls cinq fichiers de documentation dans le projet, Git absent, décision 1.3 actée ; aucun code, schéma ou convention existante à déplacer.
+
+| Module propriétaire | Données / décisions qu’il possède | Contrats publics attendus (intentions, pas routes existantes) |
+|---|---|---|
+| identity | Compte, identité, credentials, sessions, invitations, accès exceptionnel propriétaire | Authentifier, renouveler/révoquer, inviter, activer, récupérer ; identité serveur minimale et état de compte |
+| clinics | Profil clinique, approbation/refus/suspension, compte partagé et demande d’e-mail | Lire la clinique autorisée, décider son état, proposer/confirmer le changement d’adresse ; aucune attribution à un dentiste individuel |
+| permissions | Grants individuels, prérequis et délégabilité | Calculer les droits effectifs, refuser un grant sans prérequis, autoriser action/visibilité dans un contexte serveur |
+| catalog | Matériaux, teintes, types ; disponibilité/interdiction et valeurs historiques | Lire le catalogue courant, valider une référence et son état, fournir un snapshot, signaler les références touchées |
+| orders | Identité de travail, version officielle, dents, dates, statut, demandes pendantes, verrouillage | Soumettre une version idempotente, corriger/renvoyer, accepter/refuser, demander/retirer/décider, avancer/annuler ; lecture logistique ou détaillée |
+| linked-works | Liens remplacement/supplément, retouche/refabrication liée au travail livré, unicité active | Créer atomiquement un travail lié, appliquer le workflow orders, lire la chaîne ; jamais remplacer les instructions de l’ancien travail |
+| delivery | Planification/priorité/calendrier, sortie physique et correction exceptionnelle, échéance UI d’archive | Planifier, choisir mode, livrer individuellement/en lot, corriger avec droits/motif et contrôle de retouche ; déléguer les transitions à orders |
+| files | Métadonnées/checksums, stockage privé, fragments, catégories de fichier, cycle de partage | Initialiser/reprendre/finaliser, attacher sans perte, lire/streamer un contenu autorisé, générer ZIP filtré ; ni URL publique ni propriété dérivée d’un body client |
+| drafts | Version de brouillon serveur, liens fichiers, protocole de conflit, acquittement | Synchroniser sous révision attendue, lire/supprimer son brouillon, conserver serveur ou cloner local ; aucun envoi officiel automatique |
+| messaging | Conversation générale/par travail, messages, versions, masquage, lecture et clôture | Garantir une conversation, envoyer/éditer/masquer par auteur, marquer Lu, fermer/rouvrir, publier les changements autorisés |
+| notifications | Notifications internes et livraison e-mail par catégorie, rappels et retries | Traiter des événements/outbox, sélectionner des destinataires encore habilités, réévaluer l’utilité d’un envoi tardif, exposer incidents au propriétaire |
+| audit | Append des traces importantes et projection globale propriétaire | Ajouter une trace expurgée, consulter selon autorité propriétaire ; aucune commande publique d’édition/purge |
+| settings | Coordonnées du laboratoire, destinataires par catégorie, paramètres opérationnels approuvés | Lire/mettre à jour selon droits ; modifications historisées et valeurs validées, pas de prix |
+| compliance | Versions de documents légaux, preuves d’acceptation, décisions de rétention validées | Lire le document applicable, enregistrer la version acceptée, signaler une échéance ; aucune auto-attestation juridique ni durée légale inventée |
+| operations | Santé, maintenance/annonce, capacité, tâches d’exploitation propres au labo | Déterminer si une opération est permise, publier l’état non sensible, appliquer une politique approuvée ; aucun accès aux services voisins |
+| events | Enregistrement transactionnel d’événements/outbox et dispatch technique | Émettre/consommer de façon rejouable sans dépendre du fournisseur e-mail ; transport générique, aucune décision métier déplacée ici |
+
+Règles de contrats et dépendances :
+- Frontend : app → features → shared ; shared ne connaît pas le métier. Web/API réutilisent des DTO/schémas de packages/contracts sans secret ni code SQL.
+- Backend : routes → controllers → services → repositories ; le service décide, le repository persiste. Aucun import inverse. La composition de l’application raccorde les modules et fournisseurs ; les contrôleurs ne deviennent pas des orchestrateurs métier géants.
+- Graph proposé (A → B signifie A utilise uniquement l’API publique de B) : {"permissions":[],"audit":[],"events":[],"compliance":["permissions","audit","events"],"identity":["permissions","compliance","audit","events"],"clinics":["identity","permissions","audit","events"],"catalog":["permissions","audit","events"],"files":["permissions","audit","events"],"messaging":["clinics","files","permissions","audit","events"],"orders":["clinics","catalog","files","messaging","permissions","audit","events"],"drafts":["clinics","catalog","files","permissions","audit","events"],"linked-works":["orders","permissions","audit","events"],"delivery":["orders","permissions","audit","events"],"notifications":["identity","permissions"],"settings":["permissions","audit","events"],"operations":["settings","events"]}.
+- files et messaging ont besoin de l’autorisation de leur ressource parente, mais ne doivent pas importer orders en retour. Ils déclarent un port d’autorisation ; l’adaptateur serveur de composition utilise une lecture d’accès orders/clinics/permissions qui ne rappelle pas files/messaging. Le contexte ne vient jamais directement du navigateur. La politique est recontrôlée pour aperçu, téléchargement, ZIP, événements et recherches.
+- orders peut garantir la conversation via l’API publique messaging ; la finalisation d’un travail et de ses références utilise une unité de transaction partagée. La clôture/réouverture d’une conversation et la livraison/archive doivent rester cohérentes dans l’opération métier, pas dépendre d’un e-mail réussi.
+- Les contraintes croisées de retouche/livraison passent par un port de lecture minimal de linked-works ou une orchestration de service dédiée ; aucune dépendance inverse delivery/orders et linked-works/orders. Tests de liens et transactions exigés aux points 3.6, 6.6, 10.15, 16.7.
+- Un événement durable est enregistré dans la transaction de la décision. Les handlers sont enregistrés dans la composition, events n’importe aucun module métier. Les payloads externes/logs ne contiennent pas de données patient.
+- Les listes/logistique utilisent une projection serveur ne contenant aucun identifiant patient ou instruction technique. La réponse implique lecture ; accès fichier implique l’accès parent et les données concernées. Aucun rôle, workflow ou champ financier ajouté.
+- La synchronisation serveur des brouillons relève de drafts ; le coffre local et son chiffrement restent dans la fonctionnalité web drafts. Le service worker ne cache pas les données de commandes soumises.
+
+Validation effectuée : revue de propriété contre §§2–17 et exclusions §18 ; toutes les dépendances du graphe ciblent un module défini ; parcours de graphe sans cycle ; aucun module financier/patient/affectation. Ce contrôle est une preuve de conception, pas un test d’import de code absent. Modifications : ROADMAP.md seulement. Git absent, aucun commit/push. Suite : 1.5.
+
+### Compte rendu du point 1.5 — Matrice exigences → cas → preuves
+
+Date : 09/10/2026, Europe/Brussels. Statut : ☑ Validé pour le plan de validation et sa couverture. Audit : matrice 1.1 relue, 244 passages identifiés et 217 points uniques ; frontières 1.4 définies ; aucun code/tests exécutables encore présents.
+
+La matrice initiale est enrichie en place par la colonne « Cas de validation ». Chaque passage CDC possède un identifiant V-CDC unique, une famille et la source exacte qui fournit ses assertions. La source reste intacte : toutes les propositions/conjonctions de sa ligne sont à vérifier, les variantes ci-dessous ne sont pas une réduction de la règle. Aucun test n’est réputé exécuté ; les rapports futurs porteront ces identifiants et les points concernés.
+
+Protocole commun : données fictives uniquement ; propriétaire, admin délégué/non délégué, employé logistique/détaillé et cliniques A/B selon cas ; état initial explicite ; action nominale puis refus/conflict/rejeu pertinent ; contrôle effet serveur, versions/événements/outbox et absence de fuite. « A/B » sont des noms de fixtures conceptuelles, pas des identifiants existants. Les tests DB/stockage/charge seront isolés et bornés avant exécution, jamais des essais de saturation sur le volume partagé.
+
+| Famille (section du cahier) | Fixture / contexte | Variantes concrètes et observations attendues | Niveau de preuve à produire |
+|---|---|---|---|
+| F-1 | Architecture + recette UX | Revoir portails privés, séparation des cliniques, opérations quotidiennes, historique et périmètre ; vérifier l’absence de finance/patient/affectation. | Revue de conception puis E2E |
+| F-3 | Trois catalogues et travaux fictifs | Renommer/désactiver/retirer des références utilisées ; conserver snapshots ; soumettre indisponible avec avertissement, accepter avec justification sans réactiver ; interdire et tester progression/non-annulation/alerte/examen livré. | Unitaire + transactions + E2E |
+| F-6 | Source livrée, remplacement et retouches | Tenter retouche sur non-livrée, refusée ou annulée ; formulaire sans FDI avec description obligatoire ; créer deux demandes en course, une active ; appliquer workflow commun ; rouvrir possibilité après refus/annulation/livraison ; vérifier lien au travail effectivement livré et absence de finance. | Concurrence + E2E chaîne |
+| F-7 | Dates, planning et sortie physique | Comparer souhaitée/planifiée, repère provisoire et J-2/retard avec horloge Pristina ; drag desktop confirmer/annuler, mobile détail ; prêts uniquement Terminée ; livraison en lot revalidée ; correction motivée avec droits, refus si retouche contradictoire ; pas d’e-mail livraison/urgence ni filtre matériau. | Horloge + E2E appareils + transactions |
+| F-8 | Originaux, suivi interne et pièces autorisées | Remplacer originaux avant fabrication selon workflow puis refuser après ; ajouter suivi interne sans écraser ; partager un fichier confirmé, révoquer futurs accès ; comparer ZIP/octets originaux et filtrage des noms/miniatures sous droits. | ACL/API + intégrité binaire |
+| F-9 | Conversations A/B et par travail | Créer générale sans commande et distincte par travail/retouche ; reconnecter après rupture, vérifier déduplication et Lu partagé ; éditer/masquer seulement son message avec traces ; livrer et forcer envoi refusé, corriger livraison et rouvrir ; demandes vie privée restent messagerie générale. | Temps réel + concurrence + E2E |
+| F-11 | Deux comptes, deux appareils, brouillons fictifs | Installer PWA, couper réseau et relancer ; joindre fichiers au brouillon chiffré ; verrouiller/déconnecter puis changer de compte ; suspendre pendant offline et reconnecter ; diverger local/serveur avec fichiers ; choix serveur ou copie locale ; acquittement perdu et catalogue actualisé ; aucune soumission automatique/cache officiel. | Appareils réels + crypto + interruption |
+| F-12 | Flux artificiels et stockage de test borné | Couper upload, reprendre fragments validés, simuler réserve/ENOSPC sans remplir disque partagé ; expirer temporaires sans détruire brouillon/historique ; finalisation/idempotence ; consultation préservée et alertes hors app. | Stockage isolé simulé + contrôle capacité |
+| F-14 | Horloge livraison, archives et rétention | Avancer à J+29 puis J+30, consulter archive et demander retouche ; corriger livraison et réinitialiser ; distinguer archive et suppression ; signaler échéance au propriétaire, gérer exception ; restaurer sauvegarde sans réapparition durable d’un effacement légitime. | Horloge + exercice rétention/restauration |
+| F-15 | Traces sensibles et rôles fictifs | Déclencher actions importantes, contrôler auteur/date/objet/motif/diff minimal ; tenter lecture globale par admin/employé et édition/purge via UI/API ; inspecter logs/export ; exercer incident/révocation et limites de l’identité clinique partagée. | Sécurité négative + exercice responsable |
+| F-16 | Pannes contrôlées hors production | Mesurer cohérence et RPO/RTO sur environnement isolé, sauvegardes chiffrées hors VPS et rotation30j ; arrêter app de test et vérifier alerte ; maintenance bloque opérations/sync mais brouillon local possible, sortie de secours ; annonce distincte de panne, sans e-mail/activation automatique. | Restauration chronométrée + exercice maintenance |
+| F-17 | Documents et responsable compétent | Présenter textes albanais/version acceptée ; collecter validation attribuable des acteurs, transferts, dispositifs, rétention et incidents ; vérifier contacts/localisations réels et absence de données patient avant feu vert. | Revue juridique/professionnelle manuelle documentée |
+| F-18 | Revue des exclusions | Chercher finance, patient transversal, comptes individuels internes clinique, affectation employés, mails non prévus, liens publics, transfert propriétaire UI, champs dents/description obligatoires, multi-matériau/teinte, purge historique et promesse anticopie ; vérifier leur absence. | Revue code/schéma/UI + tests négatifs |
+| F-19 | Scénarios transversaux | Exécuter les interactions exactes de chaque ligne : pendance/version/correction/verrouillage, livraison-retouche, snapshot/cataloque, archive-rétention, ZIP, offline et attribution clinique. | Intégration + concurrence + revue |
+| F-20 | Recette finale des 14 critères | Pour chaque critère numéroté, joindre résultats de ses cas fonctionnels et négatifs, appareils/exercices/avis requis ; refuser validation par simple build ou présence de fichiers. | Recette de bout en bout + responsable |
+| F-2.1 | Quatre profils fictifs | Connecter propriétaire, admin secondaire, employé et clinique ; tenter gestion d’un autre admin et attribution individuelle ; vérifier compte partagé unique et audit global exclusif. | Intégration/API + E2E |
+| F-2.2 | Comptes et tokens fictifs | Inscrire clinique non approuvée puis approuver/refuser ; inviter, expirer/rejouer, suspendre sessions multiples ; changer e-mail avec deux conditions et alerte ancienne adresse ; simuler récupération/transfert exceptionnel encadré. | Intégration + horloge simulée + exercice opérateur |
+| F-2.3 | Matrice de grants | Pour chaque permission, enlever son prérequis puis tester accord/retrait ; comparer projections logistique/détaillée, lecture/réponse générale/commande, aperçu/téléchargement ; révoquer durant téléchargement/temps réel et vérifier destinataires. | Tests paramétrés négatifs/API/fichiers/événements |
+| F-4.1 | Formulaires patients fictifs | Tester nom+prénom, référence seule et les deux ; refuser identité absente ou nom incomplet sans référence ; matériau/teinte uniques, type/description/dents facultatifs, 32 codes/cycle FDI, date souhaitée, numéro/horodatage serveur. | Validation frontière + tactile/E2E |
+| F-4.2 | Fichiers artificiels de limites | Tester chaque format accepté et contenu trompeur ; limites exacte et ±1 octet (unité à acter), total initial/message, nombre non plafonné arbitrairement ; modifications/suivi/retouches sans quota nouveau non décidé. | Intégration/flux + appareils + capacité |
+| F-4.3 | Deux cliniques A/B et concurrence | Rejouer la même soumission et une course ; un seul numéro. Proposer un travail similaire au sein de A et permettre continuer ; ne révéler aucun résultat de B, ne fusionner aucun patient sur nom. | Concurrence/transactions + E2E |
+| F-5.1 | Chaque statut de travail | Parcourir transitions autorisées et refusées ; correction avec motif et renvoi explicite, refus sans réouverture, autoacceptation d’origine labo ; vérifier auteur/date et blocage sécurité distinct du statut. | Automate unitaire + intégration |
+| F-5.2 | Deux sessions et version officielle | Modifier avant acceptation ; accepter une ancienne version doit échouer ; proposer sans changer officiel ; créer modification/annulation simultanément ; bloquer fabrication/édition labo durant demande ; retirer versus décider ; vérifier originaux verrouillés et chat sans effet officiel. | Concurrence + versions + API |
+| F-5.3 | Clinique et labo à chaque statut | Annuler directement avant acceptation ; demander puis retirer/décider en Acceptée ; refuser clinique dès fabrication ; labo annule jusque fabrication avec motif ; refus ordinaire à Terminée/Livrée ; duplication nouveau numéro et revalidation. | Table acteur/statut + E2E |
+| F-5.4 | Origine labo et clinique existante | Créer sous utilisateur habilité, obtenir Acceptée et auteur/origine ; refuser requête clinique usurpant origine ; vérifier e-mail/notification et demandes possibles avant fabrication sans approbation clinique supplémentaire. | API + outbox + E2E |
+| F-5.5 | Travail commencé et nouveaux liens | Créer remplacement avec ancienne annulation motivée et nouveau numéro Acceptée ; créer supplément sans arrêter original ; provoquer un échec à mi-opération et contrôler atomicité, bidirection et instructions historiques ; revalider références. | Transactions + concurrence |
+| F-10.1 | Six événements labo | Déclencher chacun des six événements, vérifier destinataires autorisés par catégorie et propriétaire par défaut ; traiter l’action puis contrôler un envoi devenu tardif ; les autres statuts ne créent pas un e-mail labo arbitraire. | Outbox avec fournisseur simulé |
+| F-10.2 | Décisions cliniques et retouches | Déclencher chaque décision positive/négative prévue, création/édition/annulation labo ; vérifier liens privés sans patient ; vérifier exclusions soumission clinique/fabrication/livraison/urgence/maintenance et avis sécurité d’e-mail. | Outbox + confidentialité |
+| F-10.3 | Horloge virtuelle et non-lus | Lire avant 30 min, attendre 30 min sans lecture ; tester nouveaux messages, absence de nouveaux, seuil ≥24 h après rappel, nouveaux non lus ≥30 min ; lecture complète réinitialise et regroupe les arrivées. | Horloge déterministe + boîte partagée |
+| F-10.4 | Fournisseur e-mail simulé en panne | Faire réussir une décision avec fournisseur indisponible ; contrôler outbox/relances/doublons, statut accepté fournisseur sans promesse de réception, obsolescence tardive et alerte critique indépendante vers propriétaire. | Panne contrôlée + worker |
+| F-13.1 | Parcours laboratoire par habilitation | Traiter file d’actions, liste/détail, calendriers/livraison, cliniques et conversations, paramètres/audit/mails/stockage ; ouvrir notification sans solder action ; pas de métriques financières envahissantes. | Recette UX/E2E tablet |
+| F-13.2 | Parcours clinique albanais | Inscription/attente/login/récupération, commande/correction/demande/retrait/duplication/retouche, messages/fichiers/notifications/brouillons ; tester petit écran, réseau et documents légaux. | Recette tactile/E2E |
+| F-19.1 | Responsables et preuves de faisabilité | Obtenir validations ciblées métier ; auditer infrastructure sans toucher voisins ; tester navigateurs/chiffrement, fichiers/ZIP/antimalware, restauration et récupération ; obtenir décisions juridiques avant patients. | Exercices techniques + validations attribuables |
+| F-19.2 | Paramètres non encore actés | Identifier seuils/TTL/invitations/restore non décidés, les figer seulement au point pertinent ; vérifier que design et garanties ne créent pas finance/2FA/validation clinique/suppression non autorisée. | Revue ADR/périmètre avant implantation |
+
+Compléments non tabulaires : introduction/objectifs généraux sont couverts par F-1 ; paragraphes légaux non listés par F-17 ; distinction architecturale du §19.2 par F-19.2 ; §21 et interdiction finale de patients réels avant sécurité/conformité par F-17/F-20 et G2–G7. Les valeurs à décider (octets de Mo/Go, seuils/TTL, crypto, durée invitations, rôles légaux) ne deviennent pas des fixtures arbitraires : elles restent décisions ouvertes en 1.6. Les précisions métier signalées lors de 1.1 restent à traiter au point concerné avant de coder leur assertion.
+
+Critères de réception du plan : 244 passages = 244 identifiants de cas distincts ; chaque cas pointe une famille définie et des points roadmap existants ; chaque source et exclusion est conservée ; les avis humains et preuves terrain sont distingués de l’automatisation. Vérification exécutée : parse/décompte, unicité des cas et références, comparaison des colonnes de source/points/preuve à la matrice précédente, revue manuelle des interactions critiques. Aucune validation applicative/clinique/juridique aujourd’hui.
+
+Modifications : ROADMAP.md uniquement (colonne et catalogue des variantes, statut 1.5). Git absent, aucun commit/push. Suite : 1.6.
+
+### Compte rendu du point 1.6 — Registre des risques et décisions ouvertes
+
+Statut : TERMINÉ pour le registre ; aucune résolution technique ou juridique n’est présumée. Responsables ci-dessous : rôles attendus, pas personnes déjà désignées. L’agent prépare les preuves dans son périmètre ; le propriétaire désigne les intervenants manquants et tranche les choix métier. Chaque entrée reste OUVERTE jusqu’à preuve ou décision consignée.
+
+| ID | Constat / risque ou décision ouverte | Responsable attendu | Point bloquant et condition de clôture |
+|---|---|---|---|
+| R01 | CLÔTURÉ à 2.1 par audit administrateur utilisateur et contrôles directs concordants ; identité/dossier/sudo/protection des chemins audités établis. Isolation réseau et autres chemins non garantie. Ancien constat : identité et dossier dédiés vérifiés ; politique sudo complète et protection effective des projets voisins non prouvées. RDC bloque sudo ; le groupe users ne démontre ni accès ni absence d’accès. | Administrateur VPS | 2.1 : audit sudo/ACL attribuable par administrateur, sans lecture de secrets voisins ni élargissement des droits. |
+| R02 | Restrictions actuelles non assimilables à une isolation réseau/processus ; interdiction utilisateur de contacter les services voisins. | Administrateur VPS + propriétaire | 2.2–2.4 / G1 : preuves administrateur des frontières et approbation explicite du mode d’isolation en 2.3. Ne pas exécuter les sondes interprojets suggérées par la roadmap. |
+| R03 | Audit SQL possible sur dental_lab ; rôles migrator/app NOLOGIN ; mécanisme contrôlé d’exécution pas encore établi. | Administrateur VPS/DB | 2.5–2.8 : identité runtime séparée, migrations bornées et secrets protégés ; aucune délégation générique ni code éditable lancé sous root/postgres. |
+| R04 | Versions compatibles déclarées, sans résolution/installations encore faites ; évolution possible avant installation. | Agent | 5.2 et fondations : revérifier versions stables, engines/peers, résolution et contrôles ; TS6 retenu, ne pas imposer TS7. |
+| R05 | PWA et stockage chiffré réalisables par API ; quotas, éviction, verrouillage et fichiers volumineux pas éprouvés sur appareils réels. | Agent + propriétaire pour appareils cibles | 3.8, 15.3, 15.10 / G3 : crypto et récupération conçues, tests navigateurs/appareils avec quota atteint et pertes contrôlées ; aucune garantie illimitée de stockage local. |
+| R06 | Hors ligne, suspension non instantanément révocable ; conflit et envoi doivent rester explicites. | Agent + propriétaire pour recette | 15.5–15.9 / G3 : isolation par compte, purge au retour réseau, version concurrente, reprise/ack fichiers et absence de soumission automatique démontrées. |
+| R07 | Volume partagé : espace disponible observé, aucune réserve dédiée garantie. Unités exactes Mo/Go, seuils disque et TTL fragments non actés. | Agent pour proposition ; propriétaire + administrateur pour capacité | 3.7, 12.3–12.8, 19.1–19.2 : unités et seuils consignés, réserve/topologie approuvées, charge/ZIP/reprise/antimalware évalués sans saturation des voisins. |
+| R08 | Rétention catégories, qualification des acteurs, localisation/transferts et traçabilité réglementaire Kosovo non validés. Archive UI 30 jours ne fixe pas la suppression. | Propriétaire + conseil juridique compétent à désigner | 3.10, 17.9–17.13 / G5 : avis et décisions attribuables avant données de patients réels ; aucune durée légale inventée. |
+| R09 | RPO ≤1 h, RTO ≤4 h et sauvegarde hors hôte chiffrée 30 jours exigés ; destination, clé, cohérence fichiers/DB et restauration non démontrées. | Administrateur + propriétaire ; agent pour protocole | 3.10, 19.9–19.10 / G4 : destination et accès bornés, exercice de restauration chronométré et preuve de cohérence, gestion clés/incident. |
+| R10 | Fournisseur e-mail, identité expéditeur/DNS et destinataires opérationnels non définis ; alerte critique doit survivre à panne applicative. | Propriétaire + administrateur ; agent pour intégration | Chapitre 14, 19.3, 19.7–19.8 : choix/configuration et tests panne/retry/doublons/non-lus ; pas de promesse de réception à partir de l’acceptation fournisseur. |
+| R11 | Domaine/TLS et services dédiés non configurés ; pas de modification autorisée des services existants par défaut. | Propriétaire + administrateur | 19.4–19.6 : identité et chemins dédiés, TLS, routage et changements revus ; arrêter si un autre projet peut être affecté. |
+| R12 | Git absent, remote et identité de commit non établis. | Agent pour dépôt local ; propriétaire pour remote/identité | 5.1 : configuration examinée, identité/remote autorisés avant commit/push applicable ; aucun remote déduit d’un projet voisin. |
+| R13 | Compte clinique partagé demandé ; attribution individuelle limitée. Invitations/expiration/récupération et textes légaux non figés. | Propriétaire + conseil juridique ; agent pour sécurité | 7.8, chapitre 7, 17.4–17.5 : paramètres/textes validés et permissions/session testées ; ne pas imposer 2FA obligatoire ni comptes employés cliniques. |
+| R14 | Précisions métier déjà repérées en 1.1 : motif de refus clinique (7.4), modifications du profil par clinique (7.5), limites des travaux de remplacement selon état source à formaliser. | Propriétaire | 3.5–3.6, 7.4–7.5 : confronter clauses exactes et poser question ciblée avant toute règle supplémentaire ; aucune fonctionnalité déduite du seul intitulé roadmap. |
+| R15 | Interface albanaise, tactile et scénarios complets non réalisés ; conformité documentaire ne prouve pas qualité clinique ni applicative. | Agent + propriétaire pour recette albanaise | Chapitre 4, chapitre 20 / G6–G7 : contrôle traductions/accessibilité et recette réelle ; tous points obligatoires doivent disposer de leur propre preuve. |
+
+Validation du registre : 15 identifiants distincts, responsables et conditions de clôture renseignés ; correspondance revue avec cahier des charges §19.1–19.2, consigne et jalons existants. Pas de nouvelle exigence métier. Les inconnues sont conservées comme telles ; R01 sera traité immédiatement au prochain audit, sans contourner le connecteur.
+
+Modifications : ROADMAP.md uniquement (registre et statut 1.6). Aucun paquet installé, code applicatif, migration, service ou permission modifié. Git absent, aucun commit/push. Suite : 2.1.
+
+### Compte rendu du point 2.1 — Réaudit identités Linux et ACL
+
+Statut : BLOQUÉ. Date de session : 09/10/2026, UTC. Audit effectivement exécuté par RDC sur vps-28bf7789 : id, hostname, getent passwd dental-ai, getfacl du projet et du HOME dédié, chemin réel, inventaire limité aux cinq documents du projet, propriétaires/modes/liens/hachages, absence de Git ; configuration RDC relue.
+
+Résultats : UID/GID 1002 dental-ai, groupe additionnel users (100), HOME /home/dental-ai ; dossier /srv/dental-lab et HOME 700 sans ACL étendue affichée ; cinq fichiers 600 appartenant à dental-ai, aucun lien symbolique ; quatre références inchangées. Six points du chapitre 1 validés. Aucun code installé, SQL modifié, service ou permission changé.
+
+Cause : critère 2.1 exige contrôle sudo et protection effective des autres projets. Commande sudo explicitement bloquée par RDC ; ne pas tenter chemin alternatif, wrapper ou changement de configuration. L’absence du groupe sudo ne prouve pas l’absence de règles sudoers individuelles. Les ACL du dossier dédié ne prouvent pas les protections des dossiers voisins. Aucune lecture de projet voisin/secrets ni connexion à service voisin effectuée. Point non validable avec les seules preuves obtenues.
+
+Action humaine minimale : administrateur VPS, fournir résultat expurgé de sudo -l -U dental-ai (en identité administrateur, sans modifier la politique) et rapport de contrôle des permissions/ACL effectives du compte dental-ai, y compris groupe users, sur les autres projets et leurs répertoires parents. Confirmer absence de lecture/écriture des secrets et absence de droits d’altération des autres projets ; si une délégation existe, préciser commandes et cibles bornées et qui peut modifier les exécutables concernés. Aucun besoin d’accorder sudo à l’agent ni de transmettre des secrets. L’administrateur choisit les chemins réels depuis son inventaire ; l’agent ne les invente pas.
+
+Modifications : ROADMAP.md uniquement, statut 2.1 et ce rapport ; registre R01 reste ouvert. Aucun commit/push (Git absent). Arrêt avant 2.2 et avant installation. Reprise : vérifier identité, hachages, preuves administrateur et état réel ; clôturer 2.1 seulement si son critère est satisfait, puis poursuivre 2.2 avec les restrictions utilisateur prévalant sur les sondes suggérées.
+
+### Réévaluation du point 2.1 — Preuves administrateur intégrées
+
+Date : 09/10/2026, session commencée à 12:32 Europe/Brussels. Statut final : TERMINÉ. Le blocage du précédent compte rendu est levé pour 2.1 ; ce compte rendu historique reste conservé.
+
+Preuve fournie par l’utilisateur, issue de son audit administrateur complémentaire, et explicitement autorisée comme preuve : sudo -l -U dental-ai ne donne aucun droit sudo ; UID/GID 1002, groupes dental-ai et users (100) ; /srv/dental-lab dental-ai:dental-ai 700 ; /home/debian drwx--x--- avec ACL de traversée uniquement pour remote-planning-walibi, pas dental-ai ; /home/debian/apps et huit dossiers voisins debian:debian 775, aucune ACL supplémentaire pour dental-ai. Tests effectifs sous dental-ai rapportés : lecture refusée sur /home/debian/apps, flos-bikes, elamora, llg, /home/debian/.ssh et /etc/shadow. Résultats attribués à l’audit utilisateur, non présentés comme commandes exécutées par l’agent ; aucun contenu secret demandé.
+
+Vérification directe à la reprise : appareil RDC d378742a-d803-4e4f-be42-22c866312043 en ligne, hostname vps-28bf7789 ; commandes exécutées UID/GID 1002 dental-ai, groupes concordants ; chemin réel /srv/dental-lab ; ACL projet rwx/---/--- ; cinq documents 600 appartenant à dental-ai sans lien symbolique ; quatre références inchangées par hachage ; Git absent. RDC conserve sudo bloqué et chemins autorisés /srv/dental-lab, /home/dental-ai.
+
+Conclusion limitée : critères identités/groupes/sudo/dossier/protection des projets voisins satisfaits par ces preuves combinées ; aucun droit élargi ni altération de service. Le parent /home/debian protège la traversée malgré les modes 775 en aval. Aucune conclusion d’isolation complète des ports, processus, ressources partagées ou de tous les chemins système. Les refus PostgreSQL des huit autres bases rapportés par l’utilisateur seront considérés à 2.5, sans nouvelle tentative vers ces bases.
+
+R01 du registre : CLÔTURÉ pour les éléments demandés à 2.1 sur les chemins audités ; R02 reste ouvert et toute protection non démontrée reste non garantie. Modifications : ROADMAP.md uniquement, statut 2.1 et cette preuve. Aucun paquet, migration, permission ou service modifié ; aucun commit/push (Git absent). Suite : 2.2.
+
+### Compte rendu du point 2.2 — Frontières réseau et processus
+
+Date : 09/10/2026, Europe/Brussels (UTC+02:00). Statut : BLOQUÉ ; audit partiel terminé en lecture seule, pas de validation du point.
+
+Périmètre effectivement audité : propre processus lancé via RDC sous dental-ai (UID/GID effectifs, réels et sauvegardés 1002), /proc/self uniquement pour métadonnées de sécurité/namespaces/cgroup, limites du processus et espace du volume portant /srv/dental-lab. Aucun environnement, ligne de commande de processus voisin, secret ou contenu de service inspecté ; aucun scan, connexion, listener, bind, accès à socket voisin ou tentative sur autre base. Documents et restrictions relus ; configuration RDC inchangée. Les noms de namespaces ci-dessous identifient uniquement le processus courant ; aucune comparaison aux processus voisins n’a été faite.
+
+Résultats réels :
+- CapInh/CapPrm/CapEff/CapAmb : 0 ; CapBnd : 000001ffffffffff ; NoNewPrivs : 0 ; Seccomp : 0 et Seccomp_filters : 0. L’absence de capabilities effectives ne constitue pas une isolation réseau.
+- Namespaces propres : user [4026531837], net [4026531840], pid [4026531836], mnt [4026531841]. Ces identifiants seuls ne prouvent pas la séparation de l’hôte ou des voisins.
+- Cgroup propre : 0::/user.slice/user-1000.slice/session-173.scope. UID effectif 1002 confirmé indépendamment ; ce chemin ne démontre pas une unité de confinement dédiée à dental-ai, ni des quotas dédiés. Aucun processus du compte 1000 inspecté.
+- RLIMIT_CPU, RLIMIT_AS, RLIMIT_FSIZE : (-1, -1) ; RLIMIT_NPROC : (30859, 30859) ; RLIMIT_NOFILE : (524288, 524288). Aucune limite cgroup CPU/mémoire/IO dédiée démontrée.
+- Volume projet : total 79048540160 octets, utilisé 18406973440, libre 57378197504 ; instantané de volume partagé, pas une réserve contractuelle dédiée.
+- Commande d’audit achevée avec code 0 ; reprise 2.1 également achevée avec code 0. Aucun échec de connexion Remote.
+
+Risques identifiés et limites des preuves : protection fichiers établie en 2.1 ne protège pas automatiquement services accessibles par réseau local, sockets, visibilité des processus ou consommation des ressources partagées. Inventaire des chemins réseau/socket réellement accessibles, réglages de visibilité des processus et restrictions effectives non établis dans le périmètre permis. Les interdictions opérationnelles sont appliquées, mais leur respect par l’agent ne prouve pas un confinement système.
+
+Cause de blocage : 2.2 demande audit des frontières et contrôles décidés. Les sondes interprojets suggérées par la roadmap sont interdites par l’utilisateur et ne seront pas exécutées. Sans preuves administrateur des frontières effectives, leur évaluation reste partielle et aucun contrôle technique suffisant ne peut être déclaré décidé/vérifié. Il ne s’agit pas d’exiger une isolation complète du VPS par défaut : le niveau retenu et ses limites doivent être documentés, puis le mode d’isolation fera l’objet de 2.3, sans sauter 2.2.
+
+Action humaine minimale attendue : rapport administrateur expurgé, limité aux droits et restrictions de dental-ai/RDC, précisant :
+1. Séparation ou partage des namespaces réseau/processus et règles effectives bornant les accès réseau locaux ; si aucune restriction dédiée, le dire explicitement sans présenter les ACL fichiers comme une protection réseau.
+2. Visibilité et possibilités d’action sur les processus des autres identités, et accessibilité des sockets sensibles/administrateurs réellement présents, contrôlées depuis l’inventaire administrateur ; aucun secret ni test vers les applications en production demandé.
+3. Unité/cgroup et limites éventuelles CPU/mémoire/IO/processus applicables à dental-ai/RDC ; distinguer limites effectives et absence de quotas.
+4. Contrôles retenus pour les risques constatés, ou propositions à trancher avant toute modification. Toute modification d’isolation/permissions nécessite son autorisation propre ; ne donner à l’agent aucun accès plus large.
+
+Modifications : ROADMAP.md uniquement (statut 2.2 et ce compte rendu). R02 reste ouvert. Pas d’installation, code, migration, privilège, configuration RDC, service ou projet voisin modifié. Git absent, aucun commit/push. Arrêt ici ; 2.3 non commencé. Reprise : contrôler Remote et identité, intégrer les preuves ciblées et clôturer 2.2 seulement si son critère est satisfait.
