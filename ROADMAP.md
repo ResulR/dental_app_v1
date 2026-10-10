@@ -604,7 +604,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 4.11 — Concevoir fichiers et progression des transferts
-- **Statut :** ☐ À faire
+- **Statut :** ☑ Validé
 - **Priorité :** Haute
 - **Catégorie / type :** Design
 - **Zone concernée :** Design UX tablette-first et validation
@@ -4397,3 +4397,9 @@ Date : 2026-10-10T10:04:55.392606+02:00. État initial : arbre propre, HEAD 4103
 Validation réellement exécutée : revue règles/sources, HTMLParser (sq, IDs uniques, labels, liens, contrôles inertes, aucune ressource externe), JSON si présent, tokens R16 (16px/44px/règle mobile), droits1002/mode600, diff avant commit. Cohérence de conception évaluée sur structure et scénarios ; aucun rendu navigateur ni test fonctionnel/accessibilité réel prétendu. Recette mobile/clavier/lecteur et intégration aux gates4.14/implémentation ;4.4 reste bloqué. Statut final ☑ Validé pour conception4.10 uniquement. Aucun SQL/migration/secret/runtime/service/privilège modifié. Commit/push ciblés après revue ; identifiant dans historique Git et chat. Suite 4.11.
 
 Contrôle complémentaire4.10 : libellé français résiduel Semaine corrigé en Javë ; maquette mensuelle31jours ajoutée avec grille sept jours, liste chronologique mobile conservée. Calendar Python vérifie octobre2026 ; aucune interaction/rendu réel prétendu. Commit correctif ciblé, historique conservé.
+
+### Point4.11 — Fichiers et progression des transferts
+
+Date : 2026-10-10T10:06:39.995009+02:00. État initial : arbre propre, HEAD 3927fb3. Audit : CDC§§4.2/8/12 et modèle files-lifecycle3.7 reconsultés ; aucun écran transfert existant. Conception indépendante de la recette FDI selon exception du propriétaire ; aucune clôture4.4 implicite. Fichiers : docs/design/files-ux.md, docs/design/files-preview.html. États par fichier avec progression/verification distincte, reprise/expiration/saturation, fichiers de fabrication verrouillés et suivi interne/partagé, ZIP autorisé.
+
+Validation réellement exécutée : revue règles/sources, HTMLParser (sq, IDs uniques, labels, liens, contrôles inertes, aucune ressource externe), JSON si présent, tokens R16 (16px/44px/règle mobile), droits1002/mode600, diff avant commit. Cohérence de conception évaluée sur structure et scénarios ; aucun rendu navigateur ni test fonctionnel/accessibilité réel prétendu. Recette mobile/clavier/lecteur et intégration aux gates4.14/implémentation ;4.4 reste bloqué. Statut final ☑ Validé pour conception4.11 uniquement. Aucun SQL/migration/secret/runtime/service/privilège modifié. Commit/push ciblés après revue ; identifiant dans historique Git et chat. Suite 4.12.
