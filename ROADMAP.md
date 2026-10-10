@@ -649,7 +649,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 4.14 — Auditer et valider design et accessibilité
-- **Statut :** ☐ À faire
+- **Statut :** ⚠ Bloqué
 - **Priorité :** Haute
 - **Catégorie / type :** Design
 - **Zone concernée :** Design UX tablette-first et validation
@@ -4415,3 +4415,11 @@ Validation réellement exécutée : revue règles/sources, HTMLParser (sq, IDs u
 Date : 2026-10-10T10:09:23.687190+02:00. État initial : arbre propre, HEAD 9182755. Audit : CDC§§2–3/14–16 et modèles droits/événements/rétention ; aucun écran propriétaire existant. Conception indépendante de la recette FDI selon exception du propriétaire ; aucune clôture4.4 implicite. Fichiers : docs/design/owner-tools.md, docs/design/owner-tools-preview.html. Outils sensibles secondaires selon grants, dépendances de permissions, interdiction sans contournement, audit et mails owner-only, capacité non inventée, maintenance explicite et archives distinctes de purge.
 
 Validation réellement exécutée : revue règles/sources, HTMLParser (sq, IDs uniques, labels, liens, contrôles inertes, aucune ressource externe), JSON si présent, tokens R16 (16px/44px/règle mobile), droits1002/mode600, diff avant commit. Cohérence de conception évaluée sur structure et scénarios ; aucun rendu navigateur ni test fonctionnel/accessibilité réel prétendu. Recette mobile/clavier/lecteur et intégration aux gates4.14/implémentation ;4.4 reste bloqué. Statut final ☑ Validé pour conception4.13 uniquement. Aucun SQL/migration/secret/runtime/service/privilège modifié. Commit/push ciblés après revue ; identifiant dans historique Git et chat. Suite 4.14 (audit préparatoire puis attente de recette réelle).
+
+### Point4.14 — Audit préparatoire, recette réelle BLOQUÉE
+
+Date : 2026-10-10T10:12:02.985220+02:00. État initial : HEAD4272f4a poussé, arbre propre ;4.5–4.13 conceptions indépendantes validées,4.4 encore bloqué conformément consigne propriétaire. Audit exact4.14 : responsive/albanais/textes longs/loading/erreurs/empty/modal/focus/contrastes, acceptation avant câblage. Créations docs/design/check-design.py, design-validation.json, design-review.html, design-acceptance.md, design-review.sha256 et design-review.zip.
+
+Vérifications réelles :13maquettes HTMLParser (sq/viewport/labels/IDs/liens locaux/contrôles inertes, scripts seulementFDI), tokens16px/44px/règlesresponsive, rapportsSHA256 ; contrastes calculés17.85 texte,7.58 secondaire,5.47 primaire,6.84 warning,5.91 danger,6.81 success,6.70 focus,4.76 border. Index13liens revus en albanais, propriétés1002/mode600, archive et manifeste octet-identiques contrôlés. Empreinte archive complète c2dc88a8063d9fc46c3a4778249208d6796189450440d67e7e95a32e72489e87. Pas de lancement Chromium, aucun test tactile/clavier/lecteur/rendu réel prétendu. Prototypes statiques ne prouvent pas formulaires/modales/ACL/PWA/crypto/ZIP/runtime ; ces preuves restent aux jalons correspondants.
+
+Statut final ⚠ Bloqué4.14 : recette FDI4.4 réelle, revue navigateur responsive/focus/états et acceptation maquettes manquantes ; directionR16 seule ne vaut pas ces tests. Chapitre5 non commencé. Commit/push de préparation et suivi uniquement, pas clôture de point. Aucun service/sécurité/permission/SQL/migration/fixture modifié. Action minimale : télécharger dossier, extraire ensemble sur navigateur/appareil local isolé, retourner fiches complétées (appareil/version/testeur/date/SHA/résultats/preuves), puis corriger/retester tout échec. Aucun élargissement VPS autorisé. Reprise après ces preuves, pas nouvelle confirmation pour les opérations ordinaires.

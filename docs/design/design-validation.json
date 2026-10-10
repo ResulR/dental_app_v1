@@ -1,0 +1,100 @@
+{
+  "scope": "synthetic static design only",
+  "structural_previews": [
+    {
+      "file": "account-preview.html",
+      "sha256": "cbcc2335d1a08349c5f6b60bddcb8de1e24c880a34b494ac8d5d00acdc597df9",
+      "structural": "passed",
+      "browser": "not_executed"
+    },
+    {
+      "file": "delivery-preview.html",
+      "sha256": "cd8fbbc0493744b8427cf7e0e5a324fb8477f42fbe565997438d2a7ff49dfe29",
+      "structural": "passed",
+      "browser": "not_executed"
+    },
+    {
+      "file": "direction-preview.html",
+      "sha256": "1cbffae13db3c3b93f22e19c79e487806069469ce56680bbd9b8ce99a4550c2f",
+      "structural": "passed",
+      "browser": "not_executed"
+    },
+    {
+      "file": "drafts-preview.html",
+      "sha256": "1c0ebb870a40c5cb4d9061d2352e8b3365e07d523bd913c466bc22e937129747",
+      "structural": "passed",
+      "browser": "not_executed"
+    },
+    {
+      "file": "fdi-preview.html",
+      "sha256": "d4b5690c6812c55df7ef853ed90d7f899986c492cce737f969a330db4e9a90e4",
+      "structural": "passed",
+      "browser": "not_executed"
+    },
+    {
+      "file": "files-preview.html",
+      "sha256": "587f7d2145a8a1d46ae090ee7174b38cf2cbaffdd1a59fec079c222180b94119",
+      "structural": "passed",
+      "browser": "not_executed"
+    },
+    {
+      "file": "linked-works-preview.html",
+      "sha256": "c9a998faac62d158a338ab832b0221a2ecdecca364f415b816cda022cec45921",
+      "structural": "passed",
+      "browser": "not_executed"
+    },
+    {
+      "file": "messaging-preview.html",
+      "sha256": "7d261ff360cf6921514151449826b70291b24cd07d40092fdaa7389a3be354cf",
+      "structural": "passed",
+      "browser": "not_executed"
+    },
+    {
+      "file": "navigation-preview.html",
+      "sha256": "dce963be3938552fec73319c82bc17ffdf858e13001d4290618f0ab357251d3e",
+      "structural": "passed",
+      "browser": "not_executed"
+    },
+    {
+      "file": "order-decisions-preview.html",
+      "sha256": "6c43f6741568f739cb65ee7675a0445353e73824c1c33d1b90dd8653961289c1",
+      "structural": "passed",
+      "browser": "not_executed"
+    },
+    {
+      "file": "order-form-preview.html",
+      "sha256": "427e168588fa7fe6b115ddadb514cc66f26b83bec1251054c45dd6d86ce1ed96",
+      "structural": "passed",
+      "browser": "not_executed"
+    },
+    {
+      "file": "owner-tools-preview.html",
+      "sha256": "46b9945783addd6151dd5b6ce62e227f7dae9fa2333caaaf4b400b3788a2cf5a",
+      "structural": "passed",
+      "browser": "not_executed"
+    },
+    {
+      "file": "works-preview.html",
+      "sha256": "c2469505d8db2b33b5bb587cbb482c7fda38e1d52f9e40e2f43d2ccf6f677692",
+      "structural": "passed",
+      "browser": "not_executed"
+    }
+  ],
+  "contrast_calculated": {
+    "text/surface": 17.85,
+    "secondary/surface": 7.58,
+    "on_primary/primary": 5.47,
+    "warning/warning_bg": 6.84,
+    "danger/danger_bg": 5.91,
+    "success/success_bg": 6.81,
+    "focus/surface": 6.7,
+    "input_border/surface": 4.76
+  },
+  "browser": "not_executed",
+  "touch": "not_executed",
+  "keyboard": "not_executed",
+  "screen_reader": "not_executed",
+  "certification": false,
+  "point_4_4": "pending_real_acceptance",
+  "point_4_14": "blocked_real_acceptance"
+}
