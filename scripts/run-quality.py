@@ -114,6 +114,11 @@ def plan(name):
         "check:boundaries": [(node("scripts/check-boundaries.mjs"), "boundaries")],
         "check:workspace": [(node("scripts/check-workspace.mjs"), "workspace")],
     }
+    commands["check:migrations"] = [(["/usr/bin/python3", "scripts/migration-catalog.py"], "migration source inventory")]
+    commands["test:migrations"] = [
+        (["/usr/bin/python3", "-m", "unittest", "discover", "-s", "tests/migrations", "-p", "test_*.py", "-v"], "migration engine offline tests"),
+        (["/usr/bin/python3", "docs/admin-proposals/test_migration_gate.py"], "unchanged gate regression tests"),
+    ]
     commands["snapshot:prepare"] = [(node("scripts/prepare-contract-snapshot.mjs"), "prepare new contract snapshot")]
     commands["check:contracts"] = [(node("scripts/check-contracts.mjs"), "contract snapshot")]
     commands["build:web"] = [(node("scripts/build-web.mjs"), "build web")]

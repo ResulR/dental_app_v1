@@ -26,7 +26,9 @@
     "test:integration": "python3 scripts/run-quality.py test:integration",
     "test:e2e-api": "python3 scripts/run-quality.py test:e2e-api",
     "build:web": "python3 scripts/run-quality.py build:web",
-    "check:contracts": "python3 scripts/run-quality.py check:contracts"
+    "check:contracts": "python3 scripts/run-quality.py check:contracts",
+    "check:migrations": "python3 scripts/run-quality.py check:migrations",
+    "test:migrations": "python3 scripts/run-quality.py test:migrations"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

@@ -822,7 +822,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 6.2 — Mettre en place moteur de migrations versionnées
-- **Statut :** ☐ À faire
+- **Statut :** ⚠ Bloqué
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fondations PostgreSQL et migrations
@@ -832,6 +832,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
 - **Travail attendu :** Historique de migration, verrous, transactions et stratégie de reprise.
 - **Validation :** Migration/rejeu testés sur base isolée.
+- **Audit/préparation11/10/2026 :** moteur installé2.6 rev3 conservé/SHA confirmé ; historique root, flock/advisoryxactlock, transactionpsql et reprisepending déjà présents. Catalogue source privé/pinsfixtures,11tests6.2 et18tests2.6 horsligne réussis ; anciennesfixtures non rejouées. Nouvelle sondeSELECT0001/SHA et réceptionrejeu/concurrence proposées dans docs/admin-proposals/POINT_6_2_ADMIN.md. Réceptionréelle complémentaire après approbation SQL/SHA requise ;6.2 nonvalidé et aucun6.3. Baseprojet dental_lab dédiée/zérotablesapp, pas d’isolationcomplète du cluster.
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
