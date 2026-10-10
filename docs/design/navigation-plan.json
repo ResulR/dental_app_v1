@@ -1,0 +1,124 @@
+{
+  "design_only": true,
+  "direction": "R16",
+  "permission_source": "../models/permissions.md",
+  "public": [
+    "login",
+    "clinic_registration",
+    "account_recovery",
+    "legal_documents",
+    "laboratory_contact"
+  ],
+  "clinic": {
+    "state": "approved_active",
+    "scope": "own_clinic",
+    "primary": [
+      "new_order",
+      "drafts",
+      "works",
+      "messages"
+    ],
+    "secondary": [
+      "notifications",
+      "account",
+      "laboratory_contact",
+      "legal_documents"
+    ],
+    "server_data_online_only": true,
+    "offline": "authorized_local_drafts_only"
+  },
+  "lab": [
+    {
+      "key": "inbox",
+      "label": "Për t’u trajtuar",
+      "any_capability": [
+        "orders.accept",
+        "orders.reject",
+        "orders.request_correction",
+        "linked_works.manage",
+        "clinics.manage"
+      ],
+      "projection": "authorized_action_categories"
+    },
+    {
+      "key": "works",
+      "label": "Punët",
+      "any_capability": [
+        "orders.read_logistics"
+      ],
+      "projection": "logistics_without_patient"
+    },
+    {
+      "key": "ready",
+      "label": "Gati për dorëzim",
+      "any_capability": [
+        "orders.read_logistics"
+      ],
+      "action_requires": "delivery.mark_delivered"
+    },
+    {
+      "key": "calendar",
+      "label": "Kalendari",
+      "any_capability": [
+        "orders.read_logistics"
+      ],
+      "action_requires": "delivery.plan"
+    },
+    {
+      "key": "messages",
+      "label": "Mesazhet",
+      "any_capability": [
+        "messaging.general.read",
+        "messaging.order.read"
+      ],
+      "projection": "authorized_conversations_only"
+    },
+    {
+      "key": "clinics",
+      "label": "Klinikat",
+      "any_capability": [
+        "clinics.manage"
+      ],
+      "projection": "clinic_profile_no_implicit_work_access"
+    },
+    {
+      "key": "settings",
+      "label": "Parametrat",
+      "any_capability": [
+        "settings.manage",
+        "catalog.manage",
+        "employees.create",
+        "employees.suspend",
+        "employees.manage_permissions"
+      ],
+      "projection": "authorized_subsections_only"
+    }
+  ],
+  "owner_only": [
+    "global_audit",
+    "mail_failure_console",
+    "maintenance",
+    "secondary_administrators",
+    "secure_compromised_account"
+  ],
+  "default_policy": "deny_unless_effective_prerequisites_and_resource_authorized",
+  "responsive": {
+    "mobile_max_px": 600,
+    "min_target_px": 44,
+    "menu": "native_non_modal_details_candidate",
+    "order_matches_dom": true
+  },
+  "guards": [
+    "current_session",
+    "current_account_state",
+    "resource_scope",
+    "effective_grants_and_prerequisites",
+    "current_business_state"
+  ],
+  "not_present": [
+    "patient_portal",
+    "finance",
+    "employee_work_assignment",
+    "owner_transfer"
+  ]
+}

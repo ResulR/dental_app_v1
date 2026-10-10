@@ -469,7 +469,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 4.2 — Dessiner navigation et accès par rôle
-- **Statut :** ☐ À faire
+- **Statut :** ☑ Validé
 - **Priorité :** Haute
 - **Catégorie / type :** Design
 - **Zone concernée :** Design UX tablette-first et validation
@@ -4335,3 +4335,9 @@ Validation réelle : JSON/HTMLParser, langue sq, ancres et absence de ressources
 Date : 2026-10-10T09:36:31.768987+02:00. Remote en ligne, UID1002 dental-ai, /srv/dental-lab et cgroup dental-ai-remote vérifiés ; HEAD1fab333, seuls changements préparatoires4.1 présents. R16 approuve la maquette existante, couleurs/police16px/cibles44px/responsive mobile-first clinique/albanais/parcours et critères complémentaires. Mise à jour visual-direction, tokens et validation ; HTML approuvé conservé. Historique du blocage conservé.
 
 Validation : reprise des fichiers réellement présents et critères4.1, JSON/HTML/liens/modes/propriétés et diff contrôlés avant commit ; contrastes calculés préalables inchangés. Statuts textuels, erreurs/confirmations claires, confidentialité selon droits et tests clavier/mobile/contrastes à l'implémentation documentés. Pas de test navigateur réel ni certification accessibilité prétendu. Statut final ☑ Validé conception4.1, R16 consignée, détail esthétique réversible autonome. Aucun runtime/permission/SQL/fixture/service modifié. Commit/push ciblés après revue ; hash historique/compte rendu. Suite automatique4.2.
+
+### Point4.2 — Navigation et accès par rôle
+
+Date : 2026-10-10T09:39:47.881893+02:00. État initial : HEADd873e5a poussé, arbre propre ; audit CDC§§2/11/13 et modèle droits3.3/R16, aucun modèle navigation existant. Créations : navigation.md, navigation-plan.json et navigation-preview.html. Deux portails, profils/session inconnue/pending/suspendu, menus par grants effectifs, owner-only et projection logistique sans patient ; règle responsive mobile-first clinique/cibles44px, focus et refus direct/caches/revocation décrits. Aucun sélecteur de rôle produit ajouté.
+
+Validation conception : planJSON et capacités retrouvées dans modèle3.3, scopes clinic/owner-only et deny-by-default. Premier parseur de contrôle limité à deux segments a mal lu messaging.order.read ; cause identifiée, correction des segments puis contrôle réussi, aucune permission produit changée. Prototype statique sq sans donnée sensible, liens/modes/diff contrôlés. Ce contrôle ne prouve pas un routeur/serveur absent : tests responsive/clavier/IDOR réels à implémentation et4.14. Statut final ☑ Validé conception4.2. Aucun runtime/SQL/fixture/service/secret/privilège touché. Commit/push ciblés après revue ; hash historique/compte rendu. Suite automatique4.3.
