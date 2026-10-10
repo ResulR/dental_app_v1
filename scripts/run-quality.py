@@ -104,16 +104,19 @@ def node(script, *args):
 
 def plan(name):
     tsc = "node_modules/typescript/bin/tsc"
-    formats = ["apps", "packages", *sorted(glob.glob("scripts/*.mjs")), *sorted(glob.glob("*.json")), *sorted(glob.glob("*.mjs"))]
+    formats = ["apps", "packages", "tests", *sorted(glob.glob("scripts/*.mjs")), *sorted(glob.glob("*.json")), *sorted(glob.glob("*.mjs"))]
     commands = {
         "build:packages": [(node(tsc, "-p", f"{p}/tsconfig.json"), f"build {p}") for p in ["packages/contracts", "apps/api"]],
         "typecheck": [(node(tsc, "--noEmit", "-p", f"{p}/tsconfig.json"), f"typecheck {p}") for p in ["packages/contracts", "apps/api", "apps/web"]],
-        "lint": [(node("node_modules/eslint/bin/eslint.js", "apps", "packages", *sorted(glob.glob("scripts/*.mjs")), "eslint.config.mjs"), "lint")],
+        "lint": [(node("node_modules/eslint/bin/eslint.js", "apps", "packages", "tests", *sorted(glob.glob("scripts/*.mjs")), *sorted(glob.glob("*.mjs"))), "lint")],
         "format": [(node("node_modules/prettier/bin/prettier.cjs", "--write", *formats), "format")],
         "format:check": [(node("node_modules/prettier/bin/prettier.cjs", "--check", *formats), "format check")],
         "check:boundaries": [(node("scripts/check-boundaries.mjs"), "boundaries")],
         "check:workspace": [(node("scripts/check-workspace.mjs"), "workspace")],
     }
+    for kind in ("unit", "integration"):
+        commands["test:" + kind] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/" + kind), "test " + kind)]
+    commands["test:e2e-api"] = [(node("node_modules/@playwright/test/cli.js", "test", "--config=playwright.config.mjs"), "test e2e API")]
     for workspace in ("packages/contracts", "apps/api", "apps/web"):
         suffix = workspace.split("/")[-1]
         commands["typecheck:" + suffix] = [(node(tsc, "--noEmit", "-p", workspace + "/tsconfig.json"), "typecheck " + workspace)]

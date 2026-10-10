@@ -408,3 +408,11 @@ Modifications : configs TS strict/ESLint/Prettier et frontières initialement pr
 Vérifications réellement exécutées : probe5threads ; tests admission tâches/mémoire refusées, environnement parent inchangé, timeout avec enfant ignorant TERM nettoyé et résultat non nul, verrou exclusif et portée workspace, refus/import public OK. Pipeline quality complet exit0 en29.25s : builds contrats3.60s/API5.11s, trois typechecks2.89/4.91/4.00s, lint5.50s, format1.41s, boundaries1.58s, résolution0.20s ; pic52/100. Dernier format check après ajustement alias exit0 pic53/100. Diff/check secrets revus avant commit. Aucun succès navigateur déclaré sous R17 ; aucune migration, permission ou opération sur service voisin.
 
 Statut final : ☑ Validé. Commit/push ciblés après revue ; hash vérifiable Git et compte rendu. Risques résiduels : outils natifs peuvent créer d’autres workers, surveillance non isolation VPS, pics très courts entre échantillons possibles ; conservation limites et absence concurrence obligatoire. Suite :5.5.
+
+### Point5.5 — Outils de tests et fixtures isolées
+
+Date : 2026-10-10T23:30:58.950374+02:00. État initial : HEAD66e4b6d propre, versions Vitest5.0.3/Playwright1.64.0 vérifiées dans packages locaux et ADR0004. Fichiers : vitest.config.mjs, playwright.config.mjs, tests unit/intégration/e2e API et probe Express/Zod test-only ; commandes bornées et documentation. Créations initiales des fixtures refusées ENOENT (dossiers absents), puis dossiers privés explicitement créés ; aucune fixture SQL modifiée.
+
+Résultats réels :8 tests unitaires frontières passent (4.14s,pic64),1 intégration Express/ESM/Zod sur serveur éphémère (2.72s,pic65),1 Playwright client API requêtes valide/refusée (8.52s,pic58), lint5.54s/pic55 et format1.49s/pic52 exit0. Un seul worker et contrôles séquentiels. Aucune connexion à services existants ; port0 créé et serveur fermé en finally. Pas DB/migration/donnée médicale ni Chromium. Exemple transport démontre outillage, pas validation de parcours métier.
+
+Statut final : ☑ Validé pour configuration et exemples de chaque type, E2E API explicitement distinct de navigateur. R17 garde les recettes visuelles/tactile/clavier/lecteur reportées ; aucune aptitude production. Diff et guard examinés avant commit/push ciblés, hash dans Git et compte rendu. Suite :5.6, build et parties indépendantes de recette responsive.

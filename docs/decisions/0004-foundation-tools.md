@@ -7,3 +7,5 @@ ESLint/import-boundaries/typecheck strict au point5.4 ; test configs5.5 ; shell5
 Installation scripts lifecycle désactivés, cache dans projet ignoré, engines strict. Extensions natives précompilées vérifiées aux contrôles, pas contournement si indisponibles.
 Sources primaires vérifiées : vite.dev/guide (Node20.19+/22.12+), TypeScript6 release notes et Express5 installation ; métadonnées npm peers/engines. Lockfile représente la résolution effective, pas tableau documentaire.
 Aucun service, compte système, secret, SQL ou privilège créé. E2E API n'est pas recette tactile/visuelle ; readiness production non accordée.
+
+Point5.5 : Vitest forks/maxWorkers1/fileParallelismfalse et Playwright client API workers1, sorties .local, exécution via lanceur R18. Exemples tests de transport exclusivement dans tests/support, aucun endpoint métier ni DB test créée. La recette navigateur R17 reste distincte. Voir docs/TESTING.md.

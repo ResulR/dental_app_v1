@@ -21,7 +21,10 @@
     "format": "python3 scripts/run-quality.py format",
     "format:check": "python3 scripts/run-quality.py format:check",
     "check:boundaries": "python3 scripts/run-quality.py check:boundaries",
-    "quality": "python3 scripts/run-quality.py quality"
+    "quality": "python3 scripts/run-quality.py quality",
+    "test:unit": "python3 scripts/run-quality.py test:unit",
+    "test:integration": "python3 scripts/run-quality.py test:integration",
+    "test:e2e-api": "python3 scripts/run-quality.py test:e2e-api"
   },
   "devDependencies": {
     "typescript": "6.0.3",
