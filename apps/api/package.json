@@ -1,0 +1,10 @@
+{
+  "name": "@dental-lab/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "express": "5.3.0",
+    "@dental-lab/contracts": "0.0.0"
+  }
+}

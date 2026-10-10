@@ -697,7 +697,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 5.3 — Initialiser le monorepo ou structure retenue
-- **Statut :** ☐ À faire
+- **Statut :** ☑ Validé
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Initialisation du code et qualité
@@ -4435,3 +4435,7 @@ Date : 2026-10-10T10:51:51.375236+02:00. État initial : HEADa493dd5, main, arbr
 ### Point5.2 — Garde-fous de versionnement
 
 Date : 2026-10-10T10:54:11.298161+02:00. État initial : HEADcff8327 propre ; .gitignore et .env.example PostgreSQL préexistants lus/audités sans affichage secrets. Modifications : exclusions runtime/cache/clés/backups ; scripts/check-versioning.py, hook pré-commit local et docs/VERSIONING.md ; modèle env conservé. Vérifications réellement exécutées : première création arrêtée par assertion fichier existant sans écriture, cause identifiée puis modèle réutilisé ; base dédiée et credential vide vérifiés sans sortie valeurs ; cas synthétiques chemins refusés/autorisé et token détecté OK ; check-ignore et contrôle index/staged OK ; diff et hook avant commit. Statut final : ☑ Validé. R17 maintient4.4/4.14 reportés ; aucun succès navigateur ou aptitude production déclaré. Aucun service voisin/permission/SQL/migration modifié. Commit/push ciblés après revue, hash dans historique Git et compte rendu. Suite : 5.3 (versions stables/peers avant installation).
+
+### Point5.3 — Monorepo npm et versions verrouillées
+
+Date : 2026-10-10T10:58:38.077972+02:00. État initial : HEADd24af58 propre, aucun package/apps/packages ; ADR0001 confirmé, Node22.22.2/npm10.9.7 linuxx64 existants. Modifications : npm workspaces web/api/contracts, entrée publique contracts, manifests privés, lockfile et .npmrc sans lifecycle automatique, ADR0004 et contrôle résolution. Vérifications réellement exécutées : versions/engines/peers npm view ; TypeScript6.0.3 et TS-eslint<6.1 compatibles ; npm install puis npm ci ignore-scripts réussis ; lockSHA identique d12be81a1a42ca9a908e481e03014ee9082eaee0622441c7a7e01d3384ff0e3f ; check:workspace et imports Vite/plugin natifs OK ; npm ls sans rupture ; audit npm0 vulnérabilité, aucun upgradeglobal/browser. Statut final : ☑ Validé. R17 maintient4.4/4.14 reportés ; aucun succès navigateur ou aptitude production déclaré. Aucun service voisin/permission/SQL/migration modifié. Commit/push ciblés après revue, hash dans historique Git et compte rendu. Suite : 5.4.
