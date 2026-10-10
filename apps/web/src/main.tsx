@@ -1,0 +1,16 @@
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { App } from "./app/App.js";
+import "./shared/styles.css";
+const root = document.getElementById("root");
+if (!root) throw new Error("Application root missing");
+createRoot(root).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+);
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  void navigator.serviceWorker.register("/sw.js").catch(() => {
+    // Public shell only. No diagnostics containing URLs, account data or secrets.
+  });
+}

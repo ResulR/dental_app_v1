@@ -742,7 +742,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 5.6 — Initialiser frontend et design system
-- **Statut :** ☐ À faire
+- **Statut :** ◐ En cours
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Initialisation du code et qualité
@@ -752,6 +752,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
 - **Travail attendu :** Créer shell PWA web conforme aux maquettes sans logique métier.
 - **Validation :** Build fonctionnel et responsive.
+- **Dépendance ouverte R17 :** build et contrôles code réussis ; recette responsive/installation/offline/interactions navigateur reportée, point non clôturé. Suite serveur indépendante autorisée.
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
@@ -4465,3 +4466,11 @@ Date : 2026-10-10T23:30:58.950374+02:00. État initial : HEAD66e4b6d propre, ver
 Résultats réels :8 tests unitaires frontières passent (4.14s,pic64),1 intégration Express/ESM/Zod sur serveur éphémère (2.72s,pic65),1 Playwright client API requêtes valide/refusée (8.52s,pic58), lint5.54s/pic55 et format1.49s/pic52 exit0. Un seul worker et contrôles séquentiels. Aucune connexion à services existants ; port0 créé et serveur fermé en finally. Pas DB/migration/donnée médicale ni Chromium. Exemple transport démontre outillage, pas validation de parcours métier.
 
 Statut final : ☑ Validé pour configuration et exemples de chaque type, E2E API explicitement distinct de navigateur. R17 garde les recettes visuelles/tactile/clavier/lecteur reportées ; aucune aptitude production. Diff et guard examinés avant commit/push ciblés, hash dans Git et compte rendu. Suite :5.6, build et parties indépendantes de recette responsive.
+
+### Point5.6 — Shell React/PWA, recette responsive reportée
+
+Date : 2026-10-10T23:34:12.474691+02:00. État initial : HEAD7d55552 propre ; prototypes direction/navigation lus et CDC privé/installable revérifié. Fichiers : entry HTML React, App/public-shell sans identité/données/navigations privées, composants shared et CSS R16 ; manifeste/icônes, build via API Vite sans npm enfant, serviceworker généré sur whitelist publique. Commandes et docs/FRONTEND.md. Aucun déploiement/port permanent/runtime/secret créé.
+
+Tests réels : buildweb1.55s/pic63, TSweb5.80s/pic52, lint6.95s/pic53, frontières9sources1.76s/pic52,9tests unitaires4.40s/pic65 incluant refuscache API/fichier/query/externe/POST, format2.46s/pic52 ; exit0. Manifeste lang/display, dimensions192/512 et7assets publics vérifiés. Refus de cache privé testé comme politique, pas exécutionSW dans navigateur. Archives/prototypes préexistants inchangés.
+
+Statut final : ◐ En cours — implémentation/build validés, recette responsive/installation/offline/clavier/tactile/lecteur/contraste réelle reportée R17. Aucun faux succès ni readinessproduction. Commit des parties indépendantes après diff/guard, autorisé R17 ; hash dans Git/compte rendu. Dépendance ouverte suivie ici et docs/FRONTEND.md, ne bloque pas serveur indépendant. Suite :5.7.

@@ -9,6 +9,7 @@
     "@dental-lab/contracts": "0.0.0"
   },
   "scripts": {
-    "typecheck": "python3 ../../scripts/run-quality.py typecheck:web"
+    "typecheck": "python3 ../../scripts/run-quality.py typecheck:web",
+    "build": "python3 ../../scripts/run-quality.py build:web"
   }
 }
