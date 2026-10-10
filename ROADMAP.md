@@ -529,7 +529,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 4.6 — Concevoir listes et détail des travaux
-- **Statut :** ☐ À faire
+- **Statut :** ☑ Validé
 - **Priorité :** Haute
 - **Catégorie / type :** Design
 - **Zone concernée :** Design UX tablette-first et validation
@@ -4365,3 +4365,9 @@ Date : 2026-10-10T09:57:29.278296+02:00. Remote/UID1002/cgroup/chemin confirmés
 Date : 2026-10-10T09:59:27.698026+02:00. État initial : arbre propre, HEAD ffad617. Audit : CDC§§3–4/5.4/11/12, contrat ClinicSubmission3.11, navigation4.2 et tokensR16 ; aucun formulaire de commande existant. Conception indépendante de la recette FDI selon exception du propriétaire ; aucune clôture4.4 implicite. Fichiers : docs/design/order-form.md, docs/design/order-form-preview.html. Identification alternative, matériau/teinte uniques, date souhaitée obligatoire, FDI facultatif et avertissements non bloquants ; catalogue interdit bloque. H45-01 formulaire une colonne + récapitulatif avant envoi réversible.
 
 Validation réellement exécutée : revue règles/sources, HTMLParser (sq, IDs uniques, labels, liens, contrôles inertes, aucune ressource externe), JSON si présent, tokens R16 (16px/44px/règle mobile), droits1002/mode600, diff avant commit. Cohérence de conception évaluée sur structure et scénarios ; aucun rendu navigateur ni test fonctionnel/accessibilité réel prétendu. Recette mobile/clavier/lecteur et intégration aux gates4.14/implémentation ;4.4 reste bloqué. Statut final ☑ Validé pour conception4.5 uniquement. Aucun SQL/migration/secret/runtime/service/privilège modifié. Commit/push ciblés après revue ; identifiant dans historique Git et chat. Suite 4.6.
+
+### Point4.6 — Listes et détail des travaux
+
+Date : 2026-10-10T10:00:35.553320+02:00. État initial : arbre propre, HEAD c55caa9. Audit : CDC§§2.3/5/7/13, automate3.5 et projections3.11 ; aucun écran travaux existant. Conception indépendante de la recette FDI selon exception du propriétaire ; aucune clôture4.4 implicite. Fichiers : docs/design/works.md, docs/design/works-preview.html. Réception orientée action, recherche selon droits, fiches logistique/détaillée distinctes, versions et actions contextuelles. H46-01 cartes compactes mobile et sections de détail, sans tableau financier.
+
+Validation réellement exécutée : revue règles/sources, HTMLParser (sq, IDs uniques, labels, liens, contrôles inertes, aucune ressource externe), JSON si présent, tokens R16 (16px/44px/règle mobile), droits1002/mode600, diff avant commit. Cohérence de conception évaluée sur structure et scénarios ; aucun rendu navigateur ni test fonctionnel/accessibilité réel prétendu. Recette mobile/clavier/lecteur et intégration aux gates4.14/implémentation ;4.4 reste bloqué. Statut final ☑ Validé pour conception4.6 uniquement. Aucun SQL/migration/secret/runtime/service/privilège modifié. Commit/push ciblés après revue ; identifiant dans historique Git et chat. Suite 4.7.
