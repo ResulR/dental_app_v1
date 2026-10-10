@@ -210,3 +210,19 @@ Modifications : docs/models/orders-versions.md et lien architecture. Identité o
 Validation : revue des clés/FK de même commande, unicités et scénarios de concurrence contre CDC ; dates, avertissements non bloquants et exclusions préservés ; liens/propriété/modes et scan élémentaire secrets OK ; diff Git contrôlé. Tests SQL/API et transfert réels non exécutés à cette étape de conception. Aucun fichier de migration, objet SQL, service ou privilège modifié.
 
 Statut final : ☑ Validé pour 3.4, statuts et stockage de versions sans écrasement décrits. Git : commit ciblé après contrôle du diff, push à vérifier. Suite : 3.5 ; consulter R14 et arrêter pour décision si la table de transitions ne peut pas être complète sans trancher le remplacement après fabrication.
+
+### Point 3.5 — Automate partiel et décision R14 indispensable
+
+Date : 2026-10-10T02:04:13.462575+02:00 (Europe/Brussels). État initial : 3.4 validé, commit 9326b5823372009dda5ba9a869ffdb97df27d805 poussé, arbre propre ; UID 1002 et chemin projet contrôlés. Audit critères 3.5, CDC §§5.3/5.5/6/7/19 et registre R14 existant.
+
+Préparation : docs/models/order-state-machine.md, table des transitions établies, automate des demandes et scénarios de concurrence. Aucun choix adopté pour les états source Terminée/Livrée des travaux liés. Le §5.5 parle d'après démarrage et exige annulation du remplacé ; le §5.3 exclut l'annulation ordinaire Terminée/Livrée ; le §6 définit retouche après livraison. Sans préciser la portée de l'exception, table exhaustive non validable.
+
+Décision minimale attendue du propriétaire : états autorisés pour remplacement et travail supplémentaire ; proposition à confirmer = En fabrication seulement, parcours normal à Terminée et retouche/refabrication §6 à Livrée. Si d'autres états autorisés, préciser par type et autorisation exceptionnelle d'annuler le remplacé. Aucune nouvelle règle implémentée ou présumée.
+
+Vérifications : revue partielle contre clauses, liens/propriétés/modes privés et scan élémentaire secrets, diff de suivi contrôlé. Aucun test applicatif/migration/service/privilège modifié. Statut final : ⚠ Bloqué (R14) ; document partiel et suivi laissés non committés, aucun commit/push du point non validé. 3.6 et suivants non commencés. Reprise : lire décision et arbre Git, compléter/valider l'automate puis commit ciblé et push seulement après critères satisfaits.
+
+### Clôture 3.5 — R14 et progression approuvées
+
+Date : 2026-10-10T02:08:10.070339+02:00. Reprise : Remote en ligne, UID/GID 1002, cgroup dental-ai-remote.service et /srv/dental-lab vérifiés ; modifications précédentes exactement attribuables à la préparation bloquée 3.5, HEAD 9326b58. R14 reçue explicitement le 10/10/2026 : remplacement En fabrication annule la source ; remplacement exceptionnel Terminée/Livrée la laisse inchangée. §5.5 complété/version 1.1, §§5.3/6 inchangés. CONSIGNE 1.1 consigne la progression sur ambiguïtés mineures ; aucune protection diminuée.
+
+Modifications : automate finalisé, modèle de demandes ajusté pour clôture technique closed, CDC et protocole ; H35-01/02/03 explicitement réversibles et non présentées comme accord supplémentaire. Validation documentaire : revue des huit statuts, transitions autorisées/refus par défaut, demandes exclusives, concurrence, R14 et séparation retouche/remplacement ; liens, fichiers UID1002/modes600, scan secrets élémentaire et diff OK. Espaces de fin de ligne du titre de version corrigés après diff-check ; aucun échec critique. Aucune migration, fixture, permission ni service modifié. Statut final : ☑ Validé pour conception 3.5. Risques d'implémentation et production conservés. Commit ciblé/push après contrôle du diff ; identifiant dans historique et compte rendu. Suite automatique 3.6.

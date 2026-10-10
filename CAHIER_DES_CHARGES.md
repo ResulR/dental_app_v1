@@ -1,6 +1,6 @@
 # CAHIER DES CHARGES — Plateforme de gestion d'un laboratoire dentaire
 
-**Version :** 1.0 — 08/10/2026  
+**Version :** 1.1 — 10/10/2026 (décision R14 du propriétaire)
 **Statut :** cadrage fonctionnel consolidé ; conformité et faisabilité à vérifier avant mise en production  
 **Langue du présent document :** français. **Langue de l'application :** albanais.  
 **Périmètre géographique :** laboratoire et cliniques au Kosovo.  
@@ -136,7 +136,10 @@ Statuts particuliers : `Correction demandée`, `Refusée`, `Annulée`.
 ### 5.5 Changement nécessaire après démarrage de fabrication
 
 - Les instructions initiales restent verrouillées. Un utilisateur habilité crée une **nouvelle commande liée** ayant ses propres données, fichiers et numéro ; en tant que commande créée par le laboratoire, elle est immédiatement `Acceptée`.
-- Deux types explicites de lien : **remplacement** (l'ancienne commande est annulée, motif obligatoire) ou **travail supplémentaire** (l'ancienne commande continue).
+- Deux types explicites de lien : **remplacement** ou **travail supplémentaire**, autorisés à partir de `En fabrication` ; chaque nouveau travail est distinct et lié au travail source.
+- **Décision R14 — 10/10/2026 :** remplacement depuis `En fabrication` : ancienne commande annulée, motif obligatoire. Remplacement exceptionnel depuis `Terminée` ou `Livrée` : nouvelle commande liée immédiatement `Acceptée`, sans annuler ni modifier rétroactivement le statut de l'ancienne ; conserver ses instructions, historique et traces de livraison.
+- Le travail supplémentaire laisse le travail source et son statut inchangés. Précision réversible retenue pour « à partir de En fabrication » : source `En fabrication`, `Terminée` ou `Livrée`, jamais `Refusée`/`Annulée`.
+- Le remplacement exceptionnel initié par le laboratoire est distinct de la demande clinique de retouche/refabrication du §6 : cette dernière conserve son approbation manuelle et sa règle d'unicité active.
 - Les liens sont visibles dans les deux sens ; les opérations sont atomiques autant que nécessaire pour éviter une filiation incomplète.
 - L'ancien travail n'est jamais réécrit silencieusement. Si la décision implique une interdiction de sécurité, le nouveau travail doit respecter les références autorisées.
 

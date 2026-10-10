@@ -13,7 +13,7 @@ Modèle de conception, fondé sur CAHIER_DES_CHARGES §§3–8, 11, 14–15 et 1
 | order_logistics | order_id PK/FK ; planned_delivery_date nullable ; priority ; delivery_mode nullable ; revision | Date planifiée distincte de souhaitée ; mode requis lors de sortie ; pas de patient/instructions |
 | order_status_events | id PK ; order_id FK ; previous_status ; next_status ; actor/process ; at ; reason ; decided_version_id si pertinent | Append des décisions et transitions, pas écrasement du dernier auteur |
 | order_logistics_events | id PK ; order_id FK ; actor ; at ; champs avant/après et motif selon action | Changements de planification/priorité/livraison historisés sans créer une nouvelle instruction |
-| order_requests | id PK ; order_id FK ; kind modification/cancellation ; base_version_id ; proposed_version_id nullable ; state pending/accepted/rejected/withdrawn ; actor ; dates/décision | Une seule demande pending au total par order, toutes catégories confondues ; original inchangé avant décision |
+| order_requests | id PK ; order_id FK ; kind modification/cancellation ; base_version_id ; proposed_version_id nullable ; state pending/accepted/rejected/withdrawn/closed ; actor ; dates/décision | Une seule demande pending au total par order, toutes catégories confondues ; original inchangé avant décision |
 | submission_receipts | id PK ; account_id FK ; intent ; idempotency_key ; payload_fingerprint ; order_id FK ; committed_at | UNIQUE(account_id, intent, idempotency_key) ; résultat récupérable après réponse perdue ; même clé avec payload différent = conflit |
 | order_security_blocks | id PK ; order_id FK ; cause/reference ; état et décisions | Drapeau indépendant du statut, progression empêchée selon interdiction sans annulation automatique |
 
@@ -57,7 +57,7 @@ Chaque décision reçoit une révision d'agrégat et, pour instructions/acceptat
 
 L'unicité de demande pending se traduit par un index partiel sur order_id ; elle ne peut pas être séparée par kind. Fabrication et création/retrait/décision de demande se sérialisent sur le même agrégat pour éviter le passage en fabrication simultané à une nouvelle demande.
 
-L'automate exhaustif relève de 3.5. La limite d'état source du remplacement signalée R14 reste ouverte : ce modèle stocke le lien sans autoriser une transition supplémentaire ni trancher une annulation exceptionnelle de Terminée/Livrée.
+L'automate est détaillé en [3.5](order-state-machine.md). R14, décidée le 10/10/2026 : un remplacement depuis En fabrication annule la source ; depuis Terminée/Livrée, le remplacement exceptionnel conserve son statut. Le nouveau travail reste distinct et Acceptée à création labo. Une demande devenue sans objet par annulation directe utilise closed avec cause explicite, sans fausse acceptation (hypothèse technique H35-01).
 
 ## Attachement, réception et acquittement
 

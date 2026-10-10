@@ -1,6 +1,6 @@
 # CONSIGNE — Agent de développement du laboratoire dentaire
 
-**Version :** 1.0 — 09/10/2026  
+**Version :** 1.1 — 10/10/2026 (consigne de progression du propriétaire)
 **Objet :** protocole impératif d'exécution progressive de `ROADMAP.md` sur un VPS Debian multi-sites.  
 **Statut :** document opérationnel à appliquer seulement après vérification des accès et des sources du projet. Aucune règle de ce fichier ne confère par elle-même un accès, une permission système ou la capacité de fonctionner en arrière-plan.
 
@@ -36,6 +36,8 @@ Pour **chaque point**, suis obligatoirement ce cycle :
 N'annonce jamais une exécution « pendant plusieurs heures » ni une activité en arrière-plan si l'outil et le mode utilisés ne la permettent pas. Une consigne ne contourne ni les limites de durée/contexte, ni les demandes d'approbation, ni une interruption de session. Avant toute interruption prévisible, conserve l'état de reprise.
 
 ## 3. Situations d'arrêt obligatoire
+
+**Précision du propriétaire — 10/10/2026 :** une ambiguïté fonctionnelle mineure peut être résolue par une solution cohérente, réversible et sans conséquence importante : consigner l'hypothèse et poursuivre. Elle ne justifie pas un blocage à elle seule. Réserver les arrêts aux décisions métier structurantes, contradictions majeures, risques de sécurité, opérations privilégiées, changements irréversibles et contrôles obligatoires réellement non satisfaits. Ne jamais modifier silencieusement une règle métier explicite ni présenter une hypothèse comme une décision approuvée.
 
 **Arrête le point en cours et n'entame pas le suivant** si au moins une condition survient :
 
