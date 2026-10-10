@@ -1,6 +1,6 @@
 # CONSIGNE — Agent de développement du laboratoire dentaire
 
-**Version :** 1.1 — 10/10/2026 (consigne de progression du propriétaire)
+**Version :** 1.2 — 10/10/2026 (décision R17)
 **Objet :** protocole impératif d'exécution progressive de `ROADMAP.md` sur un VPS Debian multi-sites.  
 **Statut :** document opérationnel à appliquer seulement après vérification des accès et des sources du projet. Aucune règle de ce fichier ne confère par elle-même un accès, une permission système ou la capacité de fonctionner en arrière-plan.
 
@@ -37,8 +37,7 @@ N'annonce jamais une exécution « pendant plusieurs heures » ni une activité 
 
 ## 3. Situations d'arrêt obligatoire
 
-**Exception ciblée du propriétaire — point 4.4, 10/10/2026 :** conserver la recette FDI en attente, sans diminuer aucune protection du VPS. Les conceptions suivantes réellement indépendantes peuvent avancer malgré ce blocage ; documenter leur indépendance et maintenir les preuves manquantes. Cette exception ne valide pas le navigateur, ne lève pas la porte de recette/accessibilité4.14 et ne concerne aucune opération privilégiée ou migration.
-
+**Décision R17 — 10/10/2026 :** les points4.4 et4.14 conservent le statut « conception préparée — recette navigateur reportée ». Aucun test tactile/clavier/lecteur/responsive déclaré réussi. Prototypes, archives, empreintes et fiches existants sont conservés. Le chapitre5 et les travaux suivants indépendants de cette recette peuvent avancer ; une dépendance interactive/visuelle réelle est signalée et ses parties indépendantes poursuivies. Ce report ne permet ni affaiblissement des protections VPS, ni opération privilégiée, ni interface déclarée prête pour production sans réussite des tests requis. R17 remplace l'exception limitée aux conceptions indépendantes ; les autres conditions d'arrêt restent applicables.
 
 **Précision du propriétaire — 10/10/2026 :** une ambiguïté fonctionnelle mineure peut être résolue par une solution cohérente, réversible et sans conséquence importante : consigner l'hypothèse et poursuivre. Elle ne justifie pas un blocage à elle seule. Réserver les arrêts aux décisions métier structurantes, contradictions majeures, risques de sécurité, opérations privilégiées, changements irréversibles et contrôles obligatoires réellement non satisfaits. Ne jamais modifier silencieusement une règle métier explicite ni présenter une hypothèse comme une décision approuvée.
 
@@ -89,6 +88,7 @@ Une validation de formatage/compilation ne remplace pas un test de permission cl
 
 - `☐ À faire` — non traité.
 - `◐ En cours` — intervention commencée, pas encore prouvée.
+- `◐ Conception préparée — recette navigateur reportée` — état spécifique4.4/4.14 sous R17, jamais équivalent à Validé.
 - `☑ Validé` — tous les critères satisfaits avec preuves.
 - `⚠ Bloqué` — impossibilité précise et documentée.
 - `↷ Sans objet justifié` — exclusion formellement justifiée.
