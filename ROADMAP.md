@@ -454,7 +454,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 04 — Design UX tablette-first et validation
 
 ### 4.1 — Définir direction visuelle en albanais
-- **Statut :** ☐ À faire
+- **Statut :** ☑ Validé
 - **Priorité :** Haute
 - **Catégorie / type :** Design
 - **Zone concernée :** Design UX tablette-first et validation
@@ -4323,3 +4323,15 @@ Validation documentaire contre critères3.10 : couverture rétention/cohérence 
 Date : 2026-10-10T08:06:06.771701+02:00. État initial : HEAD96e6a73d4fe72b52241907c5d9f94f1d96eab2e7 poussé, arbre propre ; audit ADRstack, versions/permissions, chapitre3 complet et absence de contrats. Correction de suite : annonce4.1 prématurée après3.10 ; aucun fichier UX créé, 3.11 traité avant chapitre4. Modifications : api-contract, common.schema.json, consumers.json, check_contracts.py, lien architecture et suivi. H311-01 préfixe APIv1 et H311-02 pagination technique sont réversibles ; aucune limite métier additionnelle.
 
 Portée de réception : point Audit/décision = mêmes schémas réutilisés dans spécifications web/API via références identiques ; imports React/Express effectifs aux fondations après création des applications. Pas de preuve de code client/serveur absent. Validation réelle : python3 docs/contracts/check_contracts.py avec jsonschema préexistant, méta-schéma2020-12, références communes résolues, exemples synthétiques et refus identification vide, autorité injectée, date/FDI/fichiers invalides, fuite projection logistique et erreurs sensibles : OK. Sources primaires RFC9457/JSONSchema consultées. Liens/propriétés/modes/diff contrôlés avant commit. Statut final ☑ Validé pour conception3.11, imports/types/middleware/CSRF/concurrence futurs non validés. Aucun SQL/fixture/service/secret/privilège modifié. Commit/push ciblés après revue ; hash historique/compte rendu. Suite4.1.
+
+### Point4.1 — Direction visuelle proposée, approbation attendue
+
+Date : 2026-10-10T08:08:24.690824+02:00. État initial : HEAD1fab333 poussé, arbre propre ; architecture3.1–3.11 conception validée, aucun frontend/asset/charte/logo présent. Audit CDC§§1/7/11/13/18 et critères chapitre4. Modifications : docs/design/visual-direction.md, tokens.json, direction-preview.html et validation.md ; suivi canonique et journal. Proposition H41-01 sobre blanc/gris, accent vert pétrole, police système16px, cibles44px et parcours priorisés labo/draft/livraison/message/coffre. Libellés albanais candidats, données fictives seulement, maquette statique locale sans réseau/JS/secret. Skill Superdesign consulté mais CLI/service externe non exécuté pour conserver périmètre Remote/VPS autorisé.
+
+Validation réelle : JSON/HTMLParser, langue sq, ancres et absence de ressources externes/scripts/formulaires ; calculs de contrastes texte≥4.5 et bordure/focus≥3 : OK, détails validation.md. Pas de rendu navigateur/tactile/lecteur ou revue linguistique prétendu. Diff/propriétés/modes et liens contrôlés. Blocage limité : ROADMAP4.1 exige « Tokens, typographie et parcours prioritaires approuvés » ; proposition concrète prête mais aucune approbation de direction visuelle reçue. Statut final ⚠ Bloqué, aucun commit/push de4.1 avant validation ; 4.2 non commencé. Action attendue : approbation ou modification ciblée de cette direction, pas autorisation système. Aucun runtime/permission/SQL/fixture/service modifié. Reprise : intégrer revue, clôturer4.1 avec commit/push puis4.2 automatiquement.
+
+### Point4.1 — Clôture avec R16
+
+Date : 2026-10-10T09:36:31.768987+02:00. Remote en ligne, UID1002 dental-ai, /srv/dental-lab et cgroup dental-ai-remote vérifiés ; HEAD1fab333, seuls changements préparatoires4.1 présents. R16 approuve la maquette existante, couleurs/police16px/cibles44px/responsive mobile-first clinique/albanais/parcours et critères complémentaires. Mise à jour visual-direction, tokens et validation ; HTML approuvé conservé. Historique du blocage conservé.
+
+Validation : reprise des fichiers réellement présents et critères4.1, JSON/HTML/liens/modes/propriétés et diff contrôlés avant commit ; contrastes calculés préalables inchangés. Statuts textuels, erreurs/confirmations claires, confidentialité selon droits et tests clavier/mobile/contrastes à l'implémentation documentés. Pas de test navigateur réel ni certification accessibilité prétendu. Statut final ☑ Validé conception4.1, R16 consignée, détail esthétique réversible autonome. Aucun runtime/permission/SQL/fixture/service modifié. Commit/push ciblés après revue ; hash historique/compte rendu. Suite automatique4.2.

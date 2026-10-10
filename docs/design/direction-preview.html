@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="sq">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Propozim vizual — Laboratori dentar</title>
+<style>
+:root{--bg:#F4F7FA;--surface:#FFFFFF;--text:#0F172A;--secondary:#475569;--primary:#0F766E;--border:#64748B;--line:#CBD5E1;--focus:#1D4ED8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+a{color:var(--primary);text-underline-offset:3px}a:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+header{background:white;border-bottom:1px solid var(--line)}.head,main{max-width:1200px;margin:auto;padding:24px}.head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+nav{display:flex;flex-wrap:wrap;gap:8px}nav a,.action{display:inline-flex;align-items:center;min-height:44px;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600}nav a[aria-current]{background:#E6F3F1}
+.action{background:var(--primary);color:white}.secondary{background:white;color:var(--primary);border:1px solid var(--border)}
+h1{font-size:28px;line-height:1.2;margin:0 0 8px}h2{font-size:20px;line-height:1.3;margin:0 0 8px}p{margin:0 0 16px}.muted{color:var(--secondary)}.small{font-size:14px}
+.note{padding:12px 16px;background:#FFFBEB;color:#92400E;border-radius:8px;margin-bottom:24px}
+section{margin:32px 0}.row{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.card{background:white;border:1px solid var(--line);border-radius:12px;padding:24px;margin:12px 0}.badge{display:inline-block;background:#FFFBEB;color:#92400E;border-radius:6px;padding:4px 8px;font-size:14px;font-weight:600}
+.meta{display:flex;gap:24px;flex-wrap:wrap;margin-top:12px}.meta span{display:block}.success{background:#F0FDF4;color:#166534}.draft{max-width:720px}.separator{margin:32px 0;border:0;border-top:1px solid var(--line)}.skip{position:absolute;top:-100px}.skip:focus{top:8px;left:8px;background:white;padding:12px}
+@media(max-width:600px){.head,main{padding:16px}.card{padding:16px}.meta{gap:12px}.row .action{width:100%;justify-content:center}h1{font-size:24px}}
+</style></head>
+<body><a class="skip" href="#main">Kalo te përmbajtja</a>
+<header><div class="head"><strong>Laboratori dentar</strong><span class="muted small">Propozim · Të dhëna shembull</span></div></header>
+<main id="main">
+<p class="note">Pamje statike për shqyrtim. Nuk kryhen veprime dhe nuk ruhen të dhëna.</p>
+<nav aria-label="Navigimi i laboratorit"><a href="#inbox" aria-current="page">Për t’u trajtuar</a><a href="#works">Punët</a><a href="#delivery">Gati për dorëzim</a><a href="#messages">Mesazhet</a></nav>
+<section id="inbox"><h1>Për t’u trajtuar</h1><p class="muted">Kërkesat që kanë nevojë për një vendim. Leximi i njoftimit nuk e përfundon veprimin.</p>
+<article class="card"><div class="row"><div><span class="badge">Porosi e re</span><h2>DEMO-001 · Klinika shembull A</h2></div><a class="action" href="#works">Shiko kërkesën</a></div><div class="meta"><div><span class="muted small">Statusi</span><span>Në pritje</span></div><div><span class="muted small">Data e dëshiruar</span><span>20/10/2026</span></div><div><span class="muted small">Data e planifikuar</span><span>Ende pa planifikuar</span></div></div></article>
+<article class="card"><div class="row"><div><span class="badge">Kërkesë për ndryshim</span><h2>DEMO-002 · Klinika shembull B</h2></div><a class="action secondary" href="#works">Shiko ndryshimet</a></div><p class="muted small">Vendimi është ende në pritje. Nuk fillon prodhimi pa u zgjidhur kërkesa.</p></article></section>
+<section id="works"><h2>Punët</h2><p class="muted">Numri, klinika, statusi dhe datat janë të ndara qartë. Të dhënat e pacientit shfaqen vetëm sipas lejeve.</p></section>
+<section id="delivery"><h2>Gati për dorëzim</h2><p class="muted">Punët e përfunduara. Dorëzimi konfirmohet kur puna del fizikisht nga laboratori.</p></section>
+<section id="messages"><h2>Mesazhet</h2><p class="muted">Biseda e përgjithshme e klinikës është e veçuar nga biseda e çdo pune.</p></section>
+<hr class="separator">
+<section class="draft" id="clinic"><div class="row"><h1>Portali i klinikës</h1><a class="action" href="#draft">Porosi e re</a></div><p class="muted">Përgatitni një draft dhe konfirmoni dërgimin vetëm kur jeni në lidhje.</p>
+<article class="card" id="draft"><span class="badge success">Draft lokal i enkriptuar</span><h2>Draftet në këtë pajisje</h2><p>Fraza e zhbllokimit është e ndryshme nga fjalëkalimi i llogarisë. Kodi i rikuperimit duhet ruajtur në një vend privat dhe të sigurt.</p><p class="muted">Nëse humben të dy sekretet, draftet vetëm lokale nuk rikuperohen. Kodi nuk rikrijon të dhënat nëse fshihet ruajtja e shfletuesit.</p><a class="action secondary" href="#clinic">Zhblloko draftet</a><p class="muted small" style="margin:12px 0 0">Lidhje demonstrimi. Asnjë kod ose çelës nuk gjenerohet.</p></article></section>
+<footer class="muted small">Propozim i drejtimit vizual · Nuk është aplikacion funksional.</footer>
+</main></body></html>
