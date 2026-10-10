@@ -3,6 +3,7 @@
 Outils installés et verrouillés en ADR0004 : Vitest5.0.3 (unitaires/intégration), Playwright1.64.0 (API HTTP et future recette navigateur). Aucun nouveau téléchargement navigateur ou changement VPS. Configurations : un worker, fichiers séquentiels, aucun retry masquant une défaillance ; deadline du lanceur R18 en complément des timeouts de tests.
 
 ```sh
+python3 scripts/run-quality.py build:packages
 python3 scripts/run-quality.py test:unit
 python3 scripts/run-quality.py test:integration
 python3 scripts/run-quality.py test:e2e-api

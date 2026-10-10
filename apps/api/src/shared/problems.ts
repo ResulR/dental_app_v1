@@ -2,12 +2,19 @@ import { randomUUID } from "node:crypto";
 import type { NextFunction, Request, Response } from "express";
 type ProblemCode =
   "VALIDATION_FAILED" | "RESOURCE_NOT_FOUND" | "INTERNAL_ERROR";
+import { ProblemSchema } from "@dental-lab/contracts";
+import type { FieldIssue } from "@dental-lab/contracts";
 const titles: Record<ProblemCode, string> = {
   VALIDATION_FAILED: "Kërkesa nuk është e vlefshme.",
   RESOURCE_NOT_FOUND: "Burimi nuk u gjet.",
   INTERNAL_ERROR: "Ndodhi një gabim. Ju lutemi provoni përsëri.",
 };
-export function sendProblem(res: Response, code: ProblemCode, status: number) {
+export function sendProblem(
+  res: Response,
+  code: ProblemCode,
+  status: number,
+  errors?: FieldIssue[],
+) {
   const requestId: string =
     typeof res.locals.requestId === "string"
       ? res.locals.requestId
@@ -15,13 +22,16 @@ export function sendProblem(res: Response, code: ProblemCode, status: number) {
   res
     .status(status)
     .type("application/problem+json")
-    .json({
-      type: "/api/v1/problems/" + code.toLowerCase(),
-      title: titles[code],
-      status,
-      code,
-      request_id: requestId,
-    });
+    .json(
+      ProblemSchema.parse({
+        type: "/api/v1/problems/" + code.toLowerCase(),
+        title: titles[code],
+        status,
+        code,
+        request_id: requestId,
+        ...(errors === undefined ? {} : { errors }),
+      }),
+    );
 }
 export function errorHandler(
   error: unknown,

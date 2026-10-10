@@ -25,7 +25,8 @@
     "test:unit": "python3 scripts/run-quality.py test:unit",
     "test:integration": "python3 scripts/run-quality.py test:integration",
     "test:e2e-api": "python3 scripts/run-quality.py test:e2e-api",
-    "build:web": "python3 scripts/run-quality.py build:web"
+    "build:web": "python3 scripts/run-quality.py build:web",
+    "check:contracts": "python3 scripts/run-quality.py check:contracts"
   },
   "devDependencies": {
     "typescript": "6.0.3",

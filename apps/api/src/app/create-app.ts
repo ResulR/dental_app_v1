@@ -1,9 +1,10 @@
+import { HealthSchema } from "@dental-lab/contracts";
 import express from "express";
 import type { Express } from "express";
 import { createTechnicalLogger } from "../shared/logging.js";
 import type { TechnicalLogger } from "../shared/logging.js";
 import { requestContext } from "./request-context.js";
-import { errorHandler, sendProblem } from "./problems.js";
+import { errorHandler, sendProblem } from "../shared/problems.js";
 export function createApp(
   registerRoutes?: (app: Express) => void,
   logger: TechnicalLogger = createTechnicalLogger(),
@@ -16,7 +17,7 @@ export function createApp(
   // Process liveness only; no assertion about database/storage readiness.
   app.get("/health", (_req, res) => {
     res.locals.routeId = "health";
-    res.json({ status: "ok" });
+    res.json(HealthSchema.parse({ status: "ok" }));
   });
   registerRoutes?.(app);
   app.use((_req, res) => {

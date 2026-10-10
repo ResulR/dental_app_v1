@@ -114,6 +114,8 @@ def plan(name):
         "check:boundaries": [(node("scripts/check-boundaries.mjs"), "boundaries")],
         "check:workspace": [(node("scripts/check-workspace.mjs"), "workspace")],
     }
+    commands["snapshot:prepare"] = [(node("scripts/prepare-contract-snapshot.mjs"), "prepare new contract snapshot")]
+    commands["check:contracts"] = [(node("scripts/check-contracts.mjs"), "contract snapshot")]
     commands["build:web"] = [(node("scripts/build-web.mjs"), "build web")]
     for kind in ("unit", "integration"):
         commands["test:" + kind] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/" + kind), "test " + kind)]
