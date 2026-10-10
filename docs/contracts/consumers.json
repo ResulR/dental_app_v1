@@ -1,0 +1,19 @@
+{
+  "design_only": true,
+  "consumers": {
+    "web": {
+      "submit": "common.schema.json#/$defs/ClinicSubmission",
+      "error": "common.schema.json#/$defs/Problem",
+      "logistics": "common.schema.json#/$defs/LogisticsProjection",
+      "receipt": "common.schema.json#/$defs/SubmissionReceipt",
+      "precondition": "common.schema.json#/$defs/MutationPrecondition"
+    },
+    "api": {
+      "submit": "common.schema.json#/$defs/ClinicSubmission",
+      "error": "common.schema.json#/$defs/Problem",
+      "logistics": "common.schema.json#/$defs/LogisticsProjection",
+      "receipt": "common.schema.json#/$defs/SubmissionReceipt",
+      "precondition": "common.schema.json#/$defs/MutationPrecondition"
+    }
+  }
+}

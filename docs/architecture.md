@@ -135,3 +135,5 @@ Le [modèle brouillons/synchronisation](models/drafts-sync.md) et l'[ADR R15](de
 Le [modèle événements, notifications et audit](models/events-notifications-audit.md) détaille le point3.9, les matrices de canaux, reprises et lecture ; SSE/HTTP est le choix technique réversible H39-01, à éprouver aux appareils et au déploiement.
 
 Le [plan rétention, sauvegardes et reprise](models/retention-backup-recovery.md) détaille le point3.10 : archive UI distincte, politiques légales à valider, snapshot/manifeste DB-fichiers et suppressions après restauration. RPO/RTO non garantis avant exercices.
+
+Le [contrat API](models/api-contract.md) et les [schémas communs](contracts/common.schema.json) détaillent le point3.11. Le [référencement web/API](contracts/consumers.json) partage les mêmes définitions ; les imports réels suivront l'initialisation applicative.
