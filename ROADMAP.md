@@ -544,7 +544,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 4.7 — Concevoir modifications, annulations et corrections
-- **Statut :** ☐ À faire
+- **Statut :** ☑ Validé
 - **Priorité :** Haute
 - **Catégorie / type :** Design
 - **Zone concernée :** Design UX tablette-first et validation
@@ -4371,3 +4371,9 @@ Validation réellement exécutée : revue règles/sources, HTMLParser (sq, IDs u
 Date : 2026-10-10T10:00:35.553320+02:00. État initial : arbre propre, HEAD c55caa9. Audit : CDC§§2.3/5/7/13, automate3.5 et projections3.11 ; aucun écran travaux existant. Conception indépendante de la recette FDI selon exception du propriétaire ; aucune clôture4.4 implicite. Fichiers : docs/design/works.md, docs/design/works-preview.html. Réception orientée action, recherche selon droits, fiches logistique/détaillée distinctes, versions et actions contextuelles. H46-01 cartes compactes mobile et sections de détail, sans tableau financier.
 
 Validation réellement exécutée : revue règles/sources, HTMLParser (sq, IDs uniques, labels, liens, contrôles inertes, aucune ressource externe), JSON si présent, tokens R16 (16px/44px/règle mobile), droits1002/mode600, diff avant commit. Cohérence de conception évaluée sur structure et scénarios ; aucun rendu navigateur ni test fonctionnel/accessibilité réel prétendu. Recette mobile/clavier/lecteur et intégration aux gates4.14/implémentation ;4.4 reste bloqué. Statut final ☑ Validé pour conception4.6 uniquement. Aucun SQL/migration/secret/runtime/service/privilège modifié. Commit/push ciblés après revue ; identifiant dans historique Git et chat. Suite 4.7.
+
+### Point4.7 — Modifications, annulations et corrections
+
+Date : 2026-10-10T10:01:39.883426+02:00. État initial : arbre propre, HEAD 71522d8. Audit : CDC§§5.1–5.3 et automate3.5 reconsultés ; aucun écran de décision existant. Conception indépendante de la recette FDI selon exception du propriétaire ; aucune clôture4.4 implicite. Fichiers : docs/design/order-decisions.md, docs/design/order-decisions-preview.html. Matrice acteur/état, original/proposition séparés, un seul pending, retrait et conflits, motifs et confirmations sans changer les statuts.
+
+Validation réellement exécutée : revue règles/sources, HTMLParser (sq, IDs uniques, labels, liens, contrôles inertes, aucune ressource externe), JSON si présent, tokens R16 (16px/44px/règle mobile), droits1002/mode600, diff avant commit. Cohérence de conception évaluée sur structure et scénarios ; aucun rendu navigateur ni test fonctionnel/accessibilité réel prétendu. Recette mobile/clavier/lecteur et intégration aux gates4.14/implémentation ;4.4 reste bloqué. Statut final ☑ Validé pour conception4.7 uniquement. Aucun SQL/migration/secret/runtime/service/privilège modifié. Commit/push ciblés après revue ; identifiant dans historique Git et chat. Suite 4.8.
