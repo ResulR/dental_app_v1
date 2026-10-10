@@ -1,6 +1,6 @@
 # CAHIER DES CHARGES — Plateforme de gestion d'un laboratoire dentaire
 
-**Version :** 1.1 — 10/10/2026 (décision R14 du propriétaire)
+**Version :** 1.2 — 10/10/2026 (décisions R14 et R15 du propriétaire)
 **Statut :** cadrage fonctionnel consolidé ; conformité et faisabilité à vérifier avant mise en production  
 **Langue du présent document :** français. **Langue de l'application :** albanais.  
 **Périmètre géographique :** laboratoire et cliniques au Kosovo.  
@@ -241,6 +241,13 @@ Destinataires choisis par le propriétaire **par événement**, parmi administra
 - Reconnexion : mise à jour du catalogue, contrôles métier, avertissements pour références indisponibles, refus des références interdites ; le dentiste valide toujours explicitement la soumission.
 - Ordre recommandé : transferts temporaires vérifiés, confirmation finale, enregistrement serveur unique/atomique de la commande, acquittement ; conserver le brouillon local jusqu'à confirmation certaine.
 - Les commandes **déjà officiellement envoyées** et leurs pièces jointes ne sont pas conservées automatiquement hors ligne dans la PWA. Consultation de leurs fichiers via connexion au serveur. Les fichiers téléchargés volontairement dans le système d'exploitation restent hors contrôle de l'application.
+
+### Décision R15 — coffre local et récupération
+
+Décision du propriétaire, 10/10/2026 : coffre chiffré côté navigateur, phrase de déverrouillage distincte du mot de passe de connexion, code de secours cryptographiquement aléatoire remis à la clinique pour conservation privée et sûre. Le serveur ne reçoit jamais phrase, code ni clés de déchiffrement. La récupération protège la même clé par un moyen distinct et éprouvé et permet une nouvelle phrase sans perdre les brouillons existants ; aucun contournement du chiffrement, secours administrateur ou synchronisation automatique du coffre.
+
+Phrase/code exclus des logs, URL et événements de suivi. Si tous deux sont perdus, les brouillons locaux chiffrés deviennent irrécupérables ; les données déjà synchronisées au serveur ne sont pas affectées. Perte du navigateur/appareil ou suppression du stockage local : les secrets seuls ne recréent pas les données absentes. Expliquer ces limites et la conservation du code à l'initialisation, en albanais. Conception cryptographique et contraintes navigateur à vérifier ; tests navigateur obligatoires pour valider l'implémentation et avant production, sans bloquer les conceptions indépendantes.
+
 
 ## 12. Transferts volumineux, quotas et saturation
 

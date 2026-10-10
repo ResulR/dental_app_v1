@@ -129,3 +129,5 @@ Archivage UI à J+30 distinct de rétention légale ; durées par catégorie à 
 | Production/exploitation | Runtime séparé, permissions effectives, sécurité, conformité, sauvegarde/restauration et recette |
 
 Les ADR ci-dessous enregistrent les décisions déjà établies, sans clôturer ces preuves futures : [stack](decisions/0001-stack.md), [frontières et atomicité](decisions/0002-module-boundaries.md). Le [modèle comptes et cliniques](models/accounts-clinics.md) détaille le point 3.2. Le [modèle des droits](models/permissions.md) détaille le point 3.3. Le [modèle commandes et versions](models/orders-versions.md) détaille le point 3.4. Le [modèle des travaux liés](models/linked-works.md) détaille le point 3.6. Le [modèle des fichiers](models/files-lifecycle.md) détaille le point 3.7. Le suivi des états reste dans ROADMAP.md et EXECUTION_LOG.md.
+
+Le [modèle brouillons/synchronisation](models/drafts-sync.md) et l'[ADR R15](decisions/0003-local-vault-recovery.md) détaillent le point 3.8 : deux enveloppes indépendantes de la même clé locale, récupération privée, absence de clés serveur et validations navigateur futures.

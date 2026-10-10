@@ -391,7 +391,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 3.8 — Concevoir brouillons local/serveur et synchronisation
-- **Statut :** ☐ À faire
+- **Statut :** ☑ Validé
 - **Priorité :** Critique
 - **Catégorie / type :** Audit / décision
 - **Zone concernée :** Architecture détaillée et modélisation
@@ -4287,3 +4287,21 @@ Validation documentaire : revue contre critères 3.6, distinction replacement/su
 Date : 2026-10-10T02:11:47.453147+02:00. État initial : 3.6 validé/poussé 67468d0a8faaca57b356fa198e9c18f77d345ec2, arbre propre ; audit des clauses fichiers §§4.2/8/9/11/12 et droits/modelés existants. Modifications : docs/models/files-lifecycle.md, lien architecture et suivi. Catégories/associations typées, ACL par parent/clinique, états de fragments/finalisation/réparation, objets immuables, partage individuel/révocation, ZIP fidèle et capacité séparée documentés.
 
 H37-01 réversible : Mo/Go décimaux pour contrats ; aucune limite cumulative non demandée. Réserve, budgets, TTL, topologie et antimalware restent aux audits opérationnels R07/chapitre12 avant tout transfert réel. Validation documentaire : revue matrices visibilité/cycle selon CDC, liens/propriété/modes/non-symlinks, scan secrets élémentaire et diff OK. Tests upload/ZIP/charge refus/scan sont futurs, non exécutés. Aucun stockage/service/SQL/migration/permission modifié, pas de fixture rejouée. Statut final ☑ Validé pour conception 3.7. Commit/push après revue ; hash dans historique/compte rendu. Suite automatique 3.8.
+
+### Point 3.8 — Synchronisation préparée, récupération à décider
+
+Date : 2026-10-10T02:16:15.568470+02:00. État initial : 3.7 validé/poussé 1c479068074a99f10435a82f23e953059f9703de, arbre propre ; audit CDC §11, modèles et critères 3.8, Node22.22.2 confirmé. Conception préparée dans docs/models/drafts-sync.md : CAS, conflits fichiers compris, tombstones, incertitude/ack/idempotence, soumission explicite, coffre par compte, quota/pannes/maintenance/suspension, proposition d'enveloppe et formats cryptographiques.
+
+Vérification réelle préparatoire : probe Node en mémoire sous UID1002, données synthétiques, PBKDF2 600000 + AES-KW/AES-GCM round-trip4096 octets ; ciphertext altéré, AAD différent, phrase incorrecte et export nonextractable refusés, succès. Sources primaires MDN/OWASP lues ; ce contrôle ne valide ni navigateur ni app absente. Liens/propriétés/modes600/non-symlinks, scan secrets élémentaire et diff contrôlés. Aucun stockage sensible, clé réelle, SQL, fixture, service ou privilège changé.
+
+Blocage unique R05 : récupération du coffre. Option recommandée A = phrase locale indépendante et code de secours privé détenu par clinique, sans clé serveur ; option B = phrase seule, oubli rend brouillons non synchronisés irrécupérables. Choix important sécurité/perte irréversible, non assimilable à une ambiguïté mineure : aucun choix adopté. Action attendue : valider option de récupération ; l'email de récupération du compte ne doit pas promettre la récupération de clé locale.
+
+Statut final ⚠ Bloqué pour3.8 ; document et suivi laissés non committés, pas de commit/push du point non validé. 3.9 non commencé. Reprise après décision : finaliser ADR et coffre, contrôler critères/diff, commit/push puis poursuite automatique. Les tests sur appareils réels demeurent aux jalons PWA, pas une prétention de réussite de conception.
+
+### Point 3.8 — Clôture de conception avec R15
+
+Date : 2026-10-10T07:56:16.363822+02:00. Remote en ligne, UID1002/cgroup dental-ai-remote et /srv/dental-lab confirmés ; HEAD1c47906, changements préparatoires uniquement attribuables à3.8. R15 reçue : deux enveloppes indépendantes, code aléatoire privé, nouvelle phrase sans perte et aucune clé serveur. Fichiers : CDC1.2, modèle drafts-sync, ADR0003, lien architecture et suivi. Limites stockage/appareil, procédure clinique, absence de logs/URL/télémétrie et secours administrateur documentées. Historique du blocage conservé.
+
+Validation : revue de conception contre CDC§11/R15 et critères3.8, machine de synchronisation et pannes/conflicts/fichiers/soumission explicite documentées. Probe Node préparatoire antérieur seulement ; aucun test navigateur prétendu. Contrôle liens, permissions et diff avant commit ; pas de migration, fixture, service, privilège ou donnée réelle modifié. Statut final ☑ Validé pour conception3.8 ; R05 conserve les gates navigateur/revue crypto/production. Commit ciblé et push après contrôle, hash dans historique/compte rendu. Suite automatique3.9.
+
+Complément de validation3.8 : probe R15 Node en mémoire réussi (secours indépendant → nouvelle phrase → même ciphertext lisible, ancienne phrase refusée sur nouvelle enveloppe, nonextractable et ancienne enveloppe conservée). HTTPS/support/quota et absence de fallback clair documentés après lecture MDN. Le contrôle trop large des espaces a rencontré les doubles espaces Markdown historiques du CDC ; permissions réinspectées conformes et diff-check ciblé OK, aucun changement de sécurité nécessaire.
