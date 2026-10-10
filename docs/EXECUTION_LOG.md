@@ -470,3 +470,13 @@ Suivi seul versionné après diff/guard, commit/push confirmé dans compte rendu
 - Git : commit de préparation6.1 prévu après contrôle diff/index/absence secrets ; hash exact à reconstituer depuis l’historique, push à confirmer dans le compte rendu.
 - Risques et manque : authentification/HBA non lisibles à l’agent, identité absente ; tests réels applicatifs/permissions NON exécutés. Pas d’isolationcomplète réseau/processus/IPC/ressources, pas de donnéesmédicales réelles. R17 recettebrowserreportée intacte ; lanceur2.6/fixtures/SHA inchangés.
 - Statut final :6.1 BLOQUÉ sur rapportA puis revue/approbation/installation contrôlée et preuves réelles. Suite : reprendre6.1 à réception, aucun6.2.
+
+## 2026-10-11T00:09:23+02:00 — Point6.1 — RéceptionR19 VALIDÉE
+
+- Initial : Remoteenligne, UID1002, chemin/cgroupautorisés, mainpropre44dcb45. CompteLinuxruntimeUID994. PostgreSQLdental_lab/audit170011.
+- Preuve administrateur explicitement reçue dans le chat : B1–B5, real_pg_client passed/code0, HBA4règles sans erreur/rechargé sansrestart, copiearchive protégée/SHA, quatre refusSQL42501 et quatre refusconnexion(horsDB/TCPv4/TCPv6/usurpationaudit), aucun objettest/sessionrésiduel. Ces actions ne sont pas des tests réexécutés parIA.
+- Corroborations directesreadonly : runtimeLOGIN/max2/nonadmin et appseul/adminoptionfalse, CONNECT/USAGEpublictrue ; CREATEdb/TEMP/CREATEpublicfalse ; probeabsent/session0 ; migrateurNOLOGIN/max1 ; archiveinstallée inaccessibleaudit. Lanceurroot2.6 UID0/GID0/mode555/SHA698472ebcc0ca0f8a1d74151cb7331ecfa9e113d8231f9262b3ba6f535de9ea1 inchangé. Aucun accèsroot/HBA/registreprivé ou voisin, aucun replayfixture.
+- Changements : ROADMAP6.1VALIDÉ, étatRUNTIME_PRIVILEGES corrigé par réceptionhistorique. Code/tests44dcb45 inchangés ; pas de répétition des testsqualité déjàsuffisants pour cette modificationdocumentaire ; diff/index/versioningguard requisavantcommit.
+- Commit clôture6.1 prévu, empreinte à retrouver dans historique ; push vérifié danscompterendu.
+- Limites : preuveHBA/clientréel/refusauth provientadministrateur ; aucune isolationcomplète ni readinessproduction affirmée ; gatesR17/production inchangés ; chaque futureSQL/SHA doitêtre approuvé.
+- Statut6.1VALIDÉ ; suite6.2 : audit du moteur2.6 existant(historyreceipts, flock, advisoryxactlock, transactionpsql, pending/reprisehumaine), préparer seuls manques sans modifiermécanisme installé.

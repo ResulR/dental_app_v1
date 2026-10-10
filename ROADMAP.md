@@ -806,7 +806,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 06 — Fondations PostgreSQL et migrations
 
 ### 6.1 — Mettre en place client PostgreSQL de l’application
-- **Statut :** ⚠ Bloqué
+- **Statut :** ☑ Validé
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fondations PostgreSQL et migrations
@@ -816,7 +816,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
 - **Travail attendu :** Connexion avec rôle dédié à droits minimaux, pool et timeout.
 - **Validation :** Aucune permission externe à dental_lab.
-- **R19 — préparation réalisée, réception BLOQUÉE :** client pg8.23.1 et tests indépendants implémentés ; identité Linux/SQL absente, app NOLOGIN sans CONNECT/CREATE/TEMP/USAGEpublic. Proposition peer sans secret et commandes/tests/rollback dans docs/admin-proposals/POINT_6_1_ADMIN.md. Audit HBA administrateur et approbation des commandes requis avant installation. Aucun grant/HBA/runtime/migration exécuté, aucun passage6.2 ; réception réelle client/permissions encore obligatoire.
+- **Réception R19 validée11/10/2026 :** rapport administrateur B1–B5 reçu : vrai clientNode passed/code0, quatre refusSQL42501, quatre refusauth, HBA dédié sans erreur/rechargé, copie protégée. Audit direct UID994/runtimeLOGIN/limite2/membreappuniquement/nonadmin ; CONNECT/USAGE true, CREATE/TEMP/CREATEschéma false ; tableprobeabsente, session0, migrateurNOLOGIN ; copieclient inaccessibleaudit. Client pool/timeouts/tests de44dcb45. Aucune modification privilégiée ni migration IA. Réseau/processus/IPC/ressources partagés : aucune isolationcomplète/production revendiquée.
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.

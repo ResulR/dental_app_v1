@@ -41,3 +41,7 @@ Audit direct : compteLinux et rôleSQL candidat dental-lab-runtime absents ; den
 ## Décision R19 — anticipation limitée6.1
 
 R19 remplace l’attente calendaire19.3/19.4 pour les seuls prérequis de développement/testSQL. Proposition peer sans secret, identité Linux/SQL dental-lab-runtime distincte, sans service de production. Client et tests indépendants préparés ; aucun compte, grant, HBA ou runtime installé. Procédure exacte et contrôle HBA administrateur restant : docs/admin-proposals/POINT_6_1_ADMIN.md. Réception réelle obligatoire avant clôture6.1 ; gates de production inchangés.
+
+## Réception R19 —11/10/2026
+
+Le contrat de conception2.8 ci-dessus décrit l’état historique. Prérequis Linux/SQL6.1 désormais installés par l’administrateur : dental-lab-runtime UID994, rôleLOGIN/max2/appuniquement, peer sans secret, copietest root protégée inaccessibleaudit, HBA ciblé reçu et testsréels acceptés. Audit direct confirme les droitsminimaux/sessions0/migrateurNOLOGIN. Aucun serviceAPI/portpublic/Nginx deproduction installé par l’agent ; gatesproduction19.3/19.4 inchangés. Étatcanonique6.1 VALIDÉ et provenancepreuves dans ROADMAP/EXECUTION_LOG.
