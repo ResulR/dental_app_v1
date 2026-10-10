@@ -1,6 +1,6 @@
 # CONSIGNE — Agent de développement du laboratoire dentaire
 
-**Version :** 1.3 — 10/10/2026 (décisions R17 et R18)
+**Version :** 1.4 — 10/10/2026 (décisions R17, R18 et R19)
 **Objet :** protocole impératif d'exécution progressive de `ROADMAP.md` sur un VPS Debian multi-sites.  
 **Statut :** document opérationnel à appliquer seulement après vérification des accès et des sources du projet. Aucune règle de ce fichier ne confère par elle-même un accès, une permission système ou la capacité de fonctionner en arrière-plan.
 
@@ -124,6 +124,8 @@ Avant tout comportement métier sensible : retrouver **l'exigence exacte** dans 
 L'architecture est un monolithe modulaire par fonctionnalités ; garder les routes minces, la logique dans les services, la persistance dans les repositories, la validation aux frontières et des contrats partagés lorsque cela est pertinent. Les exemples de répertoires et de stack restent indicatifs tant que la décision technique correspondante n'est pas actée.
 
 ## 8. Gates : opérations nécessitant une intervention explicite
+
+**Décision R19 :** anticiper seulement les prérequis techniques de développement/testSQL du chapitre6 avant19.3/19.4. Préparer client et tests indépendants, audit rôle/auth/grants, commandes administrateur exactes et retour arrière. Identité applicative distincte et minimale, dental_lab exclusivement, aucun secret accessible IA, aucun DDL/droit administratif ou accès voisin, aucune réutilisation dental-site, aucun service/port public/Nginx prématuré. Le mécanisme2.6 reste intact. Aucune exécution administrateur avant approbation explicite des commandes ;6.1 non validé sans preuves réelles du client et des permissions.
 
 Une tâche de la roadmap n'est **pas en elle-même une approbation**. Demander autorisation spécifique, avec impact, vérifications préalables et retour arrière, pour :
 

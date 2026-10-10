@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@dental-lab/contracts": "0.0.0",
     "express": "5.3.0",
-    "@dental-lab/contracts": "0.0.0"
+    "pg": "8.23.1"
   },
   "scripts": {
     "typecheck": "python3 ../../scripts/run-quality.py typecheck:api",

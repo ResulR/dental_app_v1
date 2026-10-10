@@ -816,7 +816,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
 - **Travail attendu :** Connexion avec rôle dédié à droits minimaux, pool et timeout.
 - **Validation :** Aucune permission externe à dental_lab.
-- **Blocage audité10/10/2026 :** dental_lab_app NOLOGIN/sans CONNECT, identité runtimeLinux/SQL absente ; choix administrateur du mécanisme de test requis, création actuelle prévue19.3/19.4. Aucun grant/secret/runtime/client installé, aucun passage6.2.
+- **R19 — préparation réalisée, réception BLOQUÉE :** client pg8.23.1 et tests indépendants implémentés ; identité Linux/SQL absente, app NOLOGIN sans CONNECT/CREATE/TEMP/USAGEpublic. Proposition peer sans secret et commandes/tests/rollback dans docs/admin-proposals/POINT_6_1_ADMIN.md. Audit HBA administrateur et approbation des commandes requis avant installation. Aucun grant/HBA/runtime/migration exécuté, aucun passage6.2 ; réception réelle client/permissions encore obligatoire.
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.

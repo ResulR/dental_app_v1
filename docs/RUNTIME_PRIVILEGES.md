@@ -37,3 +37,7 @@ Critères de conception2.8 : seule unité propre au nouveau labo proposée, aucu
 ## Reprise6.1 —10/10/2026
 
 Audit direct : compteLinux et rôleSQL candidat dental-lab-runtime absents ; dental_lab_app NOLOGIN sans CONNECTdental_lab, audit dental-ai non membreapp. La conception2.8 reste non installée. Point6.1 bloqué sur une identité/méthode de test applicative ; création19.3/19.4 ou mécanisme provisoire nécessite décision et autorisation administrateur distinctes, sans droits permanents IA. Aucune permission ni HBA/service modifié. État canonique et preuves : ROADMAP.md/EXECUTION_LOG.md.
+
+## Décision R19 — anticipation limitée6.1
+
+R19 remplace l’attente calendaire19.3/19.4 pour les seuls prérequis de développement/testSQL. Proposition peer sans secret, identité Linux/SQL dental-lab-runtime distincte, sans service de production. Client et tests indépendants préparés ; aucun compte, grant, HBA ou runtime installé. Procédure exacte et contrôle HBA administrateur restant : docs/admin-proposals/POINT_6_1_ADMIN.md. Réception réelle obligatoire avant clôture6.1 ; gates de production inchangés.
