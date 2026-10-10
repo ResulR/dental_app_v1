@@ -1,0 +1,11 @@
+# Logs et corrélation — point5.8
+
+Le middleware attribue un UUID serveur à chaque requête, renvoyé dans X-Request-Id et request_id des problèmes. Un identifiant client n'est jamais accepté ou réfléchi. Un seul événement technique à finish/close : canal technical, instant UTC, code fermé, sévérité, id, nom de route statique health/unmatched, méthode contrôlée, statut, durée. Aucun accès aux bodies/headers/cookies/URL/query/stack/message d'exception ni donnée patient/phrase/code/clé. Startup/échec/arrêt utilisent le même format. Les routes métier ajouteront leurs noms statiques sans inclure leurs paramètres.
+
+Les champs sont reconstruits explicitement, jamais un spread d'objet d'erreur/requête. Une défaillance du sink technique émet seulement un code constant sur stderr. Destination technique actuelle : stdout du seul processus API de test/développement ; rotation/rétention runtime à configurer aux étapes autorisées, pas sur un service voisin.
+
+Le module audit expose un port append-only séparé, avec une liste fermée d'actions initiales et des références internes minimales. Pas motifs libres, patient ou copie de message. Le writer construit un record readonly et propage l'échec append ; aucun fallback vers le log technique ni API lecture/update/delete. La future composition lie l'append à la transaction métier et à la persistance SQL approuvée. La liste sera complétée avec chaque module métier, pas des événements clients arbitraires.
+
+La séparation de destinations est éprouvée par deux fichiers techniques privés temporaires dans .local, supprimés après test, sans donnée réelle. Cela ne prétend pas que le futur audit SQL durable, ses droits INSERT/lecture owner ou son immutabilité applicative sont déjà installés : ces validations dépendent des migrations et des modules dédiés. Ne jamais remplacer l'audit de succès transactionnel par une ligne stdout.
+
+Test HTTP500 réel : même UUID réponse/log, marqueur synthétique absent malgré header Authorization, query, body patient/password/recovery_code et exception. Test destinations distinctes : aucune contamination technical/audit, extra champs sensibles exclus, action arbitraire refusée et panne append propagée. Exécution séquentielle bornée R18 ; aucun secret ou patient réel recueilli. Recettes navigateur R17 inchangées.

@@ -773,7 +773,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 5.8 — Configurer logging sûr et correlation IDs
-- **Statut :** ☐ À faire
+- **Statut :** ☑ Validé
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Initialisation du code et qualité
@@ -4482,3 +4482,11 @@ Date : 2026-10-10T23:37:06.663402+02:00. État initial : HEADf079365 propre ; co
 Résultats : build6.21s puis6.26s exit0,10 unitaires4.81s/pic66,3intégration4.04s/pic65 (health200,404générique,no-store,no-XPoweredBy,500sansmarqueur/stack,JSONmalformé400, fermeture serveur finally). Premierlint échoue _next inutilisé ; cause identifiée (signature Express4paramètres), ajout void explicite sans changer arité. Lint relancé6.96s exit0,pic53 ; frontières13sources1.74s et format3.07s OK. Tests réseau ciblent leurs seuls serveurs loopback port0, aucun voisin.
 
 Statut final : ☑ Validé. Diff/guard avant commit/push ciblés, hash dans Git/compte rendu. Port/runtime/identitéSQL production toujours non créés ni approuvés ; R17 maintient5.6/4.4/4.14 recette reportée. Suite :5.8.
+
+### Point5.8 — Logs expurgés, corrélation et canal audit séparé
+
+Date : 2026-10-10T23:40:18.384249+02:00. État initial : HEAD724cc8f propre ; modèle événements/audit3.9 relu. Modifications : logger technique whitelist/UTC/JSON, middleware UUIDserveur finish-close sans doublon, lifecycle même format ; port append-only audit distinct reconstruisant record minimal readonly, codes fermés et échec propagé. Docs/LOGGING.md distingue infrastructure de logs et futur auditSQL transactionnel/policies owner encore non installés. Aucune routeaudit ni événement métier créé.
+
+Validation réelle : exempleHTTP500 réponse/header/log UUIDidentique ; marqueur synthétique absent malgré body/Authorization/query/error ; pas body/url/header/stack/patient. Deux destinations fichiers privés temporaires distinctes, extra champs sensibles exclus, panneappend propagée, action arbitraire et UUIDmalformé refusés ; fichiers test supprimés finally. Build6.55s/6.75s exit0,pic52 ;5intégration5.01s/5.18s exit0,pic66/64 ; lint7.74s/pic53, frontières16sources1.86s/pic52, format3.26s/pic52 OK. Modifications finales UUIDregex/tests reformatées, compilées et retestées ; pas retests redondants des contrôles indépendants.
+
+Statut final : ☑ Validé pour fondations5.8 ; durableauditSQL/transaction/ACL restent aux étapes dédiées, jamais prétendus opérationnels. Diff/guard avant commit/push ciblés. R17 et limites Remote inchangés, aucun voisin/secret/migration. Suite :5.9.
