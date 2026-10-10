@@ -200,3 +200,13 @@ Date : 2026-10-10T02:00:39.771078+02:00 (Europe/Brussels). État initial : 3.2 v
 Modifications : docs/models/permissions.md et lien architecture. Grants individuels, prérequis, accès parent serveur, enveloppe explicite de délégation employés et refus d'auto-élévation ; capacités logistique/détail, view/download, général/travail, lecture/réponse et actions séparées. La lecture de chat est une autorisation distincte de contenu libre, sans prétendu filtrage automatique patient ; les projections officielles logistiques restent expurgées.
 
 Validation : revue matrice/prérequis et retrait des dépendances contre CDC, liens et fichiers privés contrôlés ; diff et scan élémentaire secrets OK. Tests API/IDOR/révocation/ZIP/temps réel listés pour implémentation, non prétendus exécutés ; pas de code, grant système/SQL ni service modifié. Statut final : ☑ Validé pour conception 3.3. Git : commit ciblé après revue, push à vérifier ; hash via historique et compte rendu. Suite : 3.4, modèle de commandes et versions.
+
+### Point 3.4 — Commandes et versions
+
+Date : 2026-10-10T02:02:22.164297+02:00 (Europe/Brussels). État initial : 3.3 validé et poussé (87597f80e102c150d47bdabc18f0d10a7fec28bb), arbre propre et UID 1002 ; critères 3.4 et clauses §§3–8/11/14/15/19 relus. Pas de table métier ni code à adapter.
+
+Modifications : docs/models/orders-versions.md et lien architecture. Identité officielle/numéro serveur, versions append, FDI, snapshots, identifications patient alternatives, dates souhaitée/planifiée distinctes, fichiers versionnés/verrouillés, demandes exclusives, reçu idempotent, historique/logistique séparés. R14 (état source du remplacement) conservé explicitement ouvert pour l'automate 3.5 ; aucune transition non validée ajoutée.
+
+Validation : revue des clés/FK de même commande, unicités et scénarios de concurrence contre CDC ; dates, avertissements non bloquants et exclusions préservés ; liens/propriété/modes et scan élémentaire secrets OK ; diff Git contrôlé. Tests SQL/API et transfert réels non exécutés à cette étape de conception. Aucun fichier de migration, objet SQL, service ou privilège modifié.
+
+Statut final : ☑ Validé pour 3.4, statuts et stockage de versions sans écrasement décrits. Git : commit ciblé après contrôle du diff, push à vérifier. Suite : 3.5 ; consulter R14 et arrêter pour décision si la table de transitions ne peut pas être complète sans trancher le remplacement après fabrication.
