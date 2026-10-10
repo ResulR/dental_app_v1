@@ -316,7 +316,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 3.3 — Concevoir le modèle des droits granulaires
-- **Statut :** ☐ À faire
+- **Statut :** ☑ Validé
 - **Priorité :** Critique
 - **Catégorie / type :** Audit / décision
 - **Zone concernée :** Architecture détaillée et modélisation
@@ -4241,3 +4241,11 @@ Modifications : docs/models/accounts-clinics.md et lien dans docs/architecture.m
 Validation : revue des associations et des invariants/exceptions contre le cahier des charges, liens résolus, UID/modes privés/non-symlinks, scan élémentaire secrets et diff Git contrôlés. La matrice de concurrence/refus est une conception de tests futurs ; aucun test applicatif ou migration prétendu exécuté. Aucun SQL écrit/exécuté en modification, aucune fixture ni service touché.
 
 Statut final : ☑ Validé pour la conception 3.2 ; migration et contraintes réelles non installées. Git : commit ciblé après contrôles, push à vérifier et identifiant dans l'historique/compte rendu. Risques : choix sécurité et procédures exceptionnelles avant implémentation, confidentialité et données réelles avant production. Suite automatique : 3.3, droits granulaires.
+
+### Point 3.3 — Droits granulaires
+
+Date : 2026-10-10T02:00:39.771078+02:00 (Europe/Brussels). État initial : 3.2 validé et poussé (d48dc12107a1fb1a8b7663c451dcf5198deb390b), arbre propre ; audit des modèles et critères 3.3, §2.3 et frontières §§8–10/15. Le registre R14 reste ouvert pour 3.5–3.6.
+
+Modifications : docs/models/permissions.md et lien architecture. Grants individuels, prérequis, accès parent serveur, enveloppe explicite de délégation employés et refus d'auto-élévation ; capacités logistique/détail, view/download, général/travail, lecture/réponse et actions séparées. La lecture de chat est une autorisation distincte de contenu libre, sans prétendu filtrage automatique patient ; les projections officielles logistiques restent expurgées.
+
+Validation : revue matrice/prérequis et retrait des dépendances contre CDC, liens et fichiers privés contrôlés ; diff et scan élémentaire secrets OK. Tests API/IDOR/révocation/ZIP/temps réel listés pour implémentation, non prétendus exécutés ; pas de code, grant système/SQL ni service modifié. Statut final : ☑ Validé pour conception 3.3. Git : commit ciblé après revue, push à vérifier ; hash via historique et compte rendu. Suite : 3.4, modèle de commandes et versions.
