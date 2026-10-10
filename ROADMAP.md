@@ -712,7 +712,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 5.4 — Configurer TypeScript et conventions
-- **Statut :** ☐ À faire
+- **Statut :** ☑ Validé
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Initialisation du code et qualité
@@ -4439,3 +4439,21 @@ Date : 2026-10-10T10:54:11.298161+02:00. État initial : HEADcff8327 propre ; .g
 ### Point5.3 — Monorepo npm et versions verrouillées
 
 Date : 2026-10-10T10:58:38.077972+02:00. État initial : HEADd24af58 propre, aucun package/apps/packages ; ADR0001 confirmé, Node22.22.2/npm10.9.7 linuxx64 existants. Modifications : npm workspaces web/api/contracts, entrée publique contracts, manifests privés, lockfile et .npmrc sans lifecycle automatique, ADR0004 et contrôle résolution. Vérifications réellement exécutées : versions/engines/peers npm view ; TypeScript6.0.3 et TS-eslint<6.1 compatibles ; npm install puis npm ci ignore-scripts réussis ; lockSHA identique d12be81a1a42ca9a908e481e03014ee9082eaee0622441c7a7e01d3384ff0e3f ; check:workspace et imports Vite/plugin natifs OK ; npm ls sans rupture ; audit npm0 vulnérabilité, aucun upgradeglobal/browser. Statut final : ☑ Validé. R17 maintient4.4/4.14 reportés ; aucun succès navigateur ou aptitude production déclaré. Aucun service voisin/permission/SQL/migration modifié. Commit/push ciblés après revue, hash dans historique Git et compte rendu. Suite : 5.4.
+
+### Point5.4 — Configuration préparée, exécution Remote indisponible
+
+Date : 10/10/2026, Europe/Brussels (heure précise non récupérable après refus d'exécution). État initial : HEAD4e3d446 poussé, point5.3 validé ; arbre propre avant5.4. Fichiers préparés : tsconfig.base.json, tsconfig web/API/contracts, eslint.config.mjs, .prettierrc.json/.prettierignore, scripts/check-boundaries.mjs, docs/QUALITY.md, entrées src/index.ts web/API ; manifests/scripts et check-workspace ajustés. Aucun service/SQL/privilège/protection modifié. npm run format a réussi sur code/config uniquement, prototypes approuvés conservés.
+
+Processus de vérification1939479 : build:packages est entré dans tsc contracts ; sortie finale et succès non établis. Typecheck/lint/format:check/boundaries/exemples négatifs/workspace suivants non prouvés. Aucun relancement ni arrêt global. Une commande ciblée de diagnostic puis la commande minimale id ont reçu « Failed to get process ID. The command could not be executed. » (INVALID_ARGUMENT). Device reste listé Online, lecture de fichiers/process output fonctionne ; ceci ne prouve pas exécution active ni cause (ressources/service à vérifier). Aucun contournement/augmentation des limites tenté.
+
+Statut5.4 ⚠ Bloqué, pas commit/push de ses modifications ;5.5 non commencé. Suivi conservé par opérations fichier Remote normales uniquement, sans shell ni poursuite de code. Dernier point validé5.3, commit4e3d446 ; R17 garde4.4/4.14 reportés et ne constitue pas ce blocage. Action minimale administrateur : vérifier en lecture seule l'état et TasksCurrent/TasksMax/MemoryCurrent/MemoryMax du seul dental-ai-remote.service et le processus1939479 si encore présent, puis rétablir l'exécution autorisée sous dental-ai sans affaiblir les protections. À reprise : revérifier UID1002/Git, état du processus existant et diff, établir cause avant nouveaux tests ; ne pas supposer qu'un build a fini ni recommencer migrations/fixtures.
+
+### Point5.4 — TypeScript strict et contrôles bornés R18
+
+Date : 2026-10-10T23:28:47.966131+02:00. Reprise contrôlée : UID1002, chemin réel /srv/dental-lab, Remote Online, cgroup dental-ai-remote.service, TasksMax100/NoNewPrivileges conservés ; baseline46 hors commande,47–48 pendant audit. Ancien build interrompu par administrateur : aucun succès attribué. Origine16workers prouvée dans bootstrap Remote DEFAULT_THREADPOOL_SIZE16, héritage enfant16 ; aucun changement Remote. Mémoire audit anon182661120/file581672960/kernel38588416, pas assimilation cache à heap.
+
+Modifications : configs TS strict/ESLint/Prettier et frontières initialement préparées ; lanceur Python séquentiel sans npm imbriqué, pool libuv1/Rayon1/V8pool1/heap192MiB par enfant, deadline90s, verrou exclusif, admission24tâches et448MiB hors cache, surveillance, TERM/KILL groupe enfant seulement. Commandes workspace conservent leur portée. CONSIGNEv1.3 et docs/QUALITY.md documentent R18. Prototypes, fixturesSQL et services conservés.
+
+Vérifications réellement exécutées : probe5threads ; tests admission tâches/mémoire refusées, environnement parent inchangé, timeout avec enfant ignorant TERM nettoyé et résultat non nul, verrou exclusif et portée workspace, refus/import public OK. Pipeline quality complet exit0 en29.25s : builds contrats3.60s/API5.11s, trois typechecks2.89/4.91/4.00s, lint5.50s, format1.41s, boundaries1.58s, résolution0.20s ; pic52/100. Dernier format check après ajustement alias exit0 pic53/100. Diff/check secrets revus avant commit. Aucun succès navigateur déclaré sous R17 ; aucune migration, permission ou opération sur service voisin.
+
+Statut final : ☑ Validé. Commit/push ciblés après revue ; hash vérifiable Git et compte rendu. Risques résiduels : outils natifs peuvent créer d’autres workers, surveillance non isolation VPS, pics très courts entre échantillons possibles ; conservation limites et absence concurrence obligatoire. Suite :5.5.

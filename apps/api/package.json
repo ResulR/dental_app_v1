@@ -6,5 +6,9 @@
   "dependencies": {
     "express": "5.3.0",
     "@dental-lab/contracts": "0.0.0"
+  },
+  "scripts": {
+    "typecheck": "python3 ../../scripts/run-quality.py typecheck:api",
+    "build": "python3 ../../scripts/run-quality.py build:api"
   }
 }

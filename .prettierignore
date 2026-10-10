@@ -1,0 +1,13 @@
+node_modules
+.npm-cache
+.local
+dist
+coverage
+package-lock.json
+docs
+migrations
+CAHIER_DES_CHARGES.md
+ROADMAP.md
+CONSIGNE.md
+ARCHITECTURE_ADAPTEE.md
+Prompt_Architecture_Web.md

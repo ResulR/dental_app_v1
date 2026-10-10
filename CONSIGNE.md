@@ -1,6 +1,6 @@
 # CONSIGNE — Agent de développement du laboratoire dentaire
 
-**Version :** 1.2 — 10/10/2026 (décision R17)
+**Version :** 1.3 — 10/10/2026 (décisions R17 et R18)
 **Objet :** protocole impératif d'exécution progressive de `ROADMAP.md` sur un VPS Debian multi-sites.  
 **Statut :** document opérationnel à appliquer seulement après vérification des accès et des sources du projet. Aucune règle de ce fichier ne confère par elle-même un accès, une permission système ou la capacité de fonctionner en arrière-plan.
 
@@ -73,6 +73,8 @@ Le serveur héberge **d'autres projets en fonctionnement**. **N'y touche jamais*
 - Les modifications de production ne deviennent possibles qu'après les portes de validation prévues : confidentialité/conformité, sécurité, recette, sauvegardes et plan de retour arrière.
 
 ## 5. Commandes, contrôle des changements et Git
+
+**Décision R18 :** conserver TasksMax100 et toutes les protections du service. Aucun changement global Remote. Les outils lourds sont séquentiels, limités localement en threads, soumis à admission de marge de tâches/mémoire, verrou exclusif et deadline ; nettoyage uniquement du groupe enfant créé. Méthode reproductible : `docs/QUALITY.md`, `python3 scripts/run-quality.py quality`. Un timeout est un échec. L’origine du pool Remote16 est documentée sans optimisation de son service.
 
 **Avant modification**, inspecte les ressources pertinentes : identité (`id`, `whoami`), chemin réel, état Git et fichiers ciblés, services/ports si concernés, droits SQL si concernés. Préfère les audits précis aux inventaires intrusifs de tout le VPS. Affiche un plan très court si l'intervention est substantielle, avec son périmètre et ses validations.
 

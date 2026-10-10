@@ -4,9 +4,17 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
   "dependencies": {
     "zod": "4.6.5"
-  }
+  },
+  "scripts": {
+    "typecheck": "python3 ../../scripts/run-quality.py typecheck:contracts",
+    "build": "python3 ../../scripts/run-quality.py build:contracts"
+  },
+  "types": "./dist/index.d.ts"
 }

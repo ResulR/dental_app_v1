@@ -14,7 +14,14 @@
   },
   "scripts": {
     "check:versioning": "python3 scripts/check-versioning.py",
-    "check:workspace": "node scripts/check-workspace.mjs"
+    "check:workspace": "python3 scripts/run-quality.py check:workspace",
+    "typecheck": "python3 scripts/run-quality.py typecheck",
+    "build:packages": "python3 scripts/run-quality.py build:packages",
+    "lint": "python3 scripts/run-quality.py lint",
+    "format": "python3 scripts/run-quality.py format",
+    "format:check": "python3 scripts/run-quality.py format:check",
+    "check:boundaries": "python3 scripts/run-quality.py check:boundaries",
+    "quality": "python3 scripts/run-quality.py quality"
   },
   "devDependencies": {
     "typescript": "6.0.3",
