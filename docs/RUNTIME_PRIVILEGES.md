@@ -33,3 +33,7 @@ Socket PostgreSQL uniquement dental_lab sous identité dédiée, refus d'autres 
 En19.3/19.4 : compte/service/chemins exacts et non-collision, mode/propriétaires/ACL/secrets et accès agent refusé, identité SQL/permissions sans DDL, commande de lancement non root, limites et accès données, lancement/arrêt ciblés sans toucher aux voisins, sauvegarde et retour arrière. Configuration du réseau/proxy/cluster ou délégation implique une nouvelle autorisation. Aucun contrôle de production n'est marqué accompli en2.8.
 
 Critères de conception2.8 : seule unité propre au nouveau labo proposée, aucun wrapper non nécessaire, pas de sudo générique ni wildcard de service, aucune exécution root de code éditable. Ces critères sont satisfaits comme contrat documentaire, avec installation et preuve opérationnelle restant obligatoires dans leurs étapes.
+
+## Reprise6.1 —10/10/2026
+
+Audit direct : compteLinux et rôleSQL candidat dental-lab-runtime absents ; dental_lab_app NOLOGIN sans CONNECTdental_lab, audit dental-ai non membreapp. La conception2.8 reste non installée. Point6.1 bloqué sur une identité/méthode de test applicative ; création19.3/19.4 ou mécanisme provisoire nécessite décision et autorisation administrateur distinctes, sans droits permanents IA. Aucune permission ni HBA/service modifié. État canonique et preuves : ROADMAP.md/EXECUTION_LOG.md.

@@ -806,7 +806,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 06 — Fondations PostgreSQL et migrations
 
 ### 6.1 — Mettre en place client PostgreSQL de l’application
-- **Statut :** ☐ À faire
+- **Statut :** ⚠ Bloqué
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fondations PostgreSQL et migrations
@@ -816,6 +816,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
 - **Travail attendu :** Connexion avec rôle dédié à droits minimaux, pool et timeout.
 - **Validation :** Aucune permission externe à dental_lab.
+- **Blocage audité10/10/2026 :** dental_lab_app NOLOGIN/sans CONNECT, identité runtimeLinux/SQL absente ; choix administrateur du mécanisme de test requis, création actuelle prévue19.3/19.4. Aucun grant/secret/runtime/client installé, aucun passage6.2.
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
@@ -4498,3 +4499,13 @@ Date : 2026-10-10T23:45:09.683095+02:00. État initial : HEADf9530a7 propre ; CD
 Résultats réels : buildscontracts9.38s/API7.80s, puisAPI7.50/7.72s aprèsmiddleware ; TSweb11.08s exit0. Snapshotversion/structure0.40s OK.14unitaires5.65s/pic65 dont correspondance champs/required/enums conception, patientref/noms/both,32FDI/doublons/white/calendar/unsafeinteger,120fichiers acceptés et pas réflexionvaleurs.6intégration6.88s puis6.90s/pic66 : décisionsidentiquesweb/API, refusclinic_id,500sanspatientpourréponsehorscontrat async, health/Problemdécodés. Lint7.88s,pic53 ; frontières19sources1.89s,pic52 ; format4.27s,pic53 ; webbuild1.41s,pic64 ; E2EAPI confirmé avantcommit dans sortieRemote. Aucunendpointofficiel/soumission/DB créé. Les refinements non représentablesJSON restent protégés par tests sémantiques, snapshotseul ne prouve pas compatibilité métier.
 
 Statut final : ☑ Validé. Diff/guard avantcommit/push ciblés ; hashdansGit/compterendu. R17 garde recettes4.4/4.14/5.6reportées. Aucun secret/service/migration/privilège modifié. Suite :6.1, auditer connexionruntime dédiée sans élargir identité dental-ai.
+
+### Point6.1 — Blocage identité PostgreSQL applicative
+
+Date : 2026-10-10T23:47:14.974029+02:00. État initial : HEADfb113d4 propre/push confirmé,5.9validé ;6.1 exige client PostgreSQL avec connexion rôle dédié minimal, pool/timeout et preuve de périmètre dental_lab. Audit ciblé docs/ENVIRONMENT.md et RUNTIME_PRIVILEGES.md : création identité/runtime/secrets prévue19.3/19.4, aucune autorisation de création anticipée. LookupLinux candidat dental-lab-runtime absent.
+
+AuditSQL réellement exécuté sous UID1002, psql/usr/bin/psql -X/-w sur socket/port du modèle public vérifié /var/run/postgresql:5432, database dental_lab et rôle dental-ai ; options read-only/timeout5s, deadline15s. Aucune lecture secret/connexion autrebase. Résultat : dental_lab/dental-ai/version170011 (PostgreSQL17.11) ; dental-ai LOGIN sans superuser/createdb/createrole/replication/bypassrls ; dental_lab_app NOLOGIN sans attributs administratifs, CONNECTdental_lab=false ; audit membreapp=false. Aucun rôle dental-lab-runtime dans résultat ciblé. WarningPGPASSFILE/dev/null nonplain consigné, aucune utilisation de motdepasse ni modification SQL.
+
+Statut : ⚠ Bloqué avant installation/client/connexionruntime. Aucun code6.1, compte/secret/grant/HBA/service/migration créé. Le manque n’est pas la recette navigateur R17. Il faut une décision administrateur sur l’identité et le mécanisme de test contrôlé limité dental_lab, compatible avec créationruntime19.3/19.4 : ne pas utiliser dental-ai/audit ou migrateur comme runtime et ne pas donner à l’IA des privilèges permanents. Les choix/commandes privilégiées exactes ne peuvent pas être fixés sans ce choix ; aucun changement administrateur proposé à exécuter aveuglément. Rapport public suffisant attendu, jamais secret dans chat.
+
+Suivi seul versionné après diff/guard, commit/push confirmé dans compte rendu. Arrêt au6.1,6.2 non commencé. État R18 conservé : Remote actif, NoNewPrivilegesyes/TasksMax100, compilations séquentielles terminées et aucun enfant de build laissé. Recettes4.4/4.14/5.6toujoursreportées, pas productionready.
