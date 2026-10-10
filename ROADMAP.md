@@ -376,7 +376,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 3.7 — Concevoir les fichiers, leurs ACL et leur cycle de vie
-- **Statut :** ☐ À faire
+- **Statut :** ☑ Validé
 - **Priorité :** Critique
 - **Catégorie / type :** Audit / décision
 - **Zone concernée :** Architecture détaillée et modélisation
@@ -4281,3 +4281,9 @@ Modifications : automate finalisé, modèle de demandes ajusté pour clôture te
 Date : 2026-10-10T02:09:56.371312+02:00. État initial : 3.5 finalisé/poussé a6b1b6991f5bdaf5800a3b71a0b32fb42847831a, arbre propre avant création ; audit CDC §§5.3–6/R14 et modèles présents. Modifications : docs/models/linked-works.md, liens architecture et suivi. Clés/FK de même clinique, enfant distinct, filiation append sans cycle, transitions R14, slot d'unicité retouche active et libération atomique, reçu idempotent et ordre des verrous documentés.
 
 Validation documentaire : revue contre critères 3.6, distinction replacement/supplement/resubmission/retouch, contrôles de concurrence et historiques ; liens, UID1002/modes600/non-symlinks, scan secrets et diff OK. Tests d'intégration futurs spécifiés, pas exécutés ; aucun schéma/migration/fixture/service/privilège modifié. Statut final : ☑ Validé pour conception 3.6 ; risques réels de concurrence/stockage à valider à l'implémentation. Git : commit/push ciblés après diff, hash dans historique/compte rendu. Suite automatique : 3.7.
+
+### Point 3.7 — Fichiers et cycle de vie
+
+Date : 2026-10-10T02:11:47.453147+02:00. État initial : 3.6 validé/poussé 67468d0a8faaca57b356fa198e9c18f77d345ec2, arbre propre ; audit des clauses fichiers §§4.2/8/9/11/12 et droits/modelés existants. Modifications : docs/models/files-lifecycle.md, lien architecture et suivi. Catégories/associations typées, ACL par parent/clinique, états de fragments/finalisation/réparation, objets immuables, partage individuel/révocation, ZIP fidèle et capacité séparée documentés.
+
+H37-01 réversible : Mo/Go décimaux pour contrats ; aucune limite cumulative non demandée. Réserve, budgets, TTL, topologie et antimalware restent aux audits opérationnels R07/chapitre12 avant tout transfert réel. Validation documentaire : revue matrices visibilité/cycle selon CDC, liens/propriété/modes/non-symlinks, scan secrets élémentaire et diff OK. Tests upload/ZIP/charge refus/scan sont futurs, non exécutés. Aucun stockage/service/SQL/migration/permission modifié, pas de fixture rejouée. Statut final ☑ Validé pour conception 3.7. Commit/push après revue ; hash dans historique/compte rendu. Suite automatique 3.8.
