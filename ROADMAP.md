@@ -634,7 +634,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 4.13 — Concevoir outils propriétaire et exceptions
-- **Statut :** ☐ À faire
+- **Statut :** ☑ Validé
 - **Priorité :** Haute
 - **Catégorie / type :** Design
 - **Zone concernée :** Design UX tablette-first et validation
@@ -4409,3 +4409,9 @@ Validation réellement exécutée : revue règles/sources, HTMLParser (sq, IDs u
 Date : 2026-10-10T10:07:55.695226+02:00. État initial : arbre propre, HEAD 5443c6f. Audit : CDC§11/R15/12 et modèle drafts-sync3.8 reconsultés ; aucune interface offline existante. Conception indépendante de la recette FDI selon exception du propriétaire ; aucune clôture4.4 implicite. Fichiers : docs/design/drafts-ux.md, docs/design/drafts-preview.html. États local/synchronisé/offline/coffre, initialisation et secours sans secret réel, conflit serveur/clone local fichiers compris, quotas et reprise, soumission explicite.
 
 Validation réellement exécutée : revue règles/sources, HTMLParser (sq, IDs uniques, labels, liens, contrôles inertes, aucune ressource externe), JSON si présent, tokens R16 (16px/44px/règle mobile), droits1002/mode600, diff avant commit. Cohérence de conception évaluée sur structure et scénarios ; aucun rendu navigateur ni test fonctionnel/accessibilité réel prétendu. Recette mobile/clavier/lecteur et intégration aux gates4.14/implémentation ;4.4 reste bloqué. Statut final ☑ Validé pour conception4.12 uniquement. Aucun SQL/migration/secret/runtime/service/privilège modifié. Commit/push ciblés après revue ; identifiant dans historique Git et chat. Suite 4.13.
+
+### Point4.13 — Outils propriétaire et exceptions
+
+Date : 2026-10-10T10:09:23.687190+02:00. État initial : arbre propre, HEAD 9182755. Audit : CDC§§2–3/14–16 et modèles droits/événements/rétention ; aucun écran propriétaire existant. Conception indépendante de la recette FDI selon exception du propriétaire ; aucune clôture4.4 implicite. Fichiers : docs/design/owner-tools.md, docs/design/owner-tools-preview.html. Outils sensibles secondaires selon grants, dépendances de permissions, interdiction sans contournement, audit et mails owner-only, capacité non inventée, maintenance explicite et archives distinctes de purge.
+
+Validation réellement exécutée : revue règles/sources, HTMLParser (sq, IDs uniques, labels, liens, contrôles inertes, aucune ressource externe), JSON si présent, tokens R16 (16px/44px/règle mobile), droits1002/mode600, diff avant commit. Cohérence de conception évaluée sur structure et scénarios ; aucun rendu navigateur ni test fonctionnel/accessibilité réel prétendu. Recette mobile/clavier/lecteur et intégration aux gates4.14/implémentation ;4.4 reste bloqué. Statut final ☑ Validé pour conception4.13 uniquement. Aucun SQL/migration/secret/runtime/service/privilège modifié. Commit/push ciblés après revue ; identifiant dans historique Git et chat. Suite 4.14 (audit préparatoire puis attente de recette réelle).
