@@ -499,7 +499,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 4.4 — Concevoir schéma dentaire tactile FDI
-- **Statut :** ☐ À faire
+- **Statut :** ⚠ Bloqué
 - **Priorité :** Haute
 - **Catégorie / type :** Design
 - **Zone concernée :** Design UX tablette-first et validation
@@ -4347,3 +4347,15 @@ Validation conception : planJSON et capacités retrouvées dans modèle3.3, scop
 Date : 2026-10-10T09:42:13.297699+02:00. État initial : HEADb7378aa poussé, arbre propre ; audit CDC§§2/11/15/17 et comptes3.2/navigation/R15/R16. Créations account-access.md, account-flows.json et account-preview.html. Champs inscription exacts, approbation manuelle, compte partagé, invitation bornée/usage unique, récupération générique, suspension/blocage distincts et e-mail en étapes ; aucun compte/secret créé. H43-01 adresse complète multiligne réversible sans champ obligatoire ajouté.
 
 Validation réelle de conception : planJSON/champsCDC, HTMLsq/labels/IDs et contrôles inertes, reset sans déblocage suspension/coffre, liens/propriétés/modes/diff. Formulaires en une colonne validables téléphone/tablette ; aucun rendu/test navigateur/anti-énumération opérationnel prétendu. Token TTL/politique hash et conformité aux jalons dédiés. Statut final ☑ Validé conception4.3. Aucun mail réel/SQL/fixture/runtime/service/permission modifié. Commit/push ciblés après revue ; hash historique/compte rendu. Suite automatique4.4.
+
+### Point4.4 — FDI préparé, test navigateur BLOQUÉ
+
+Date : 2026-10-10T09:48:58.558248+02:00. État initial : HEADe9189d9 poussé, arbre propre ; CDC§4.1/versions/R16 audités. Chromium154 présent /usr/bin/chromium ; Playwright/Puppeteer absents depuis projet. Créations fdi.md, fdi-model.js, fdi-preview.html, check-fdi-browser.mjs, fdi-validation.md ; .gitignore exclut uniquement profil/rapport QA privé docs/design/.browser-qa. H44-01 quadrants et grille responsive réversibles,32dents/cycle/textes/clavier/cibles44px sans dents obligatoires ni bridge automatique.
+
+Vérifications réellement exécutées : Node logique32dents/cycles/entrée intacte/état vide/refus horsFDI OK, HTMLsq/32boutons/noms accessibles/ressource locale OK. Test navigateur CDP avec sandbox intact échoue avant page : SIGTRAP/exit1, pthread_create EAGAIN et NETLINK refusé. Aucun test tactile/clavier/375–1024 validé. Contrôle systemd ciblé en lecture seule confirme TasksMax100, MemoryMax1GiB, NoNewPrivilegesyes et AF_INET/AF_INET6/AF_UNIX ; TasksCurrent48 après échec. NETLINK exclu, création threads sous pression compatible avec confinement, pas de causalité exclusive inventée. PID de test identifiés absents après fin.
+
+Statut final ⚠ Bloqué : critère exact4.4 « Test tactile + clavier/lecteur si applicable » non satisfait. Pas de commit/push de4.4 après échec, changements attribuables laissés dans projet ; 4.5 non commencé. Aucune migration/fixture/service/permission/sandbox/limite changée ni données sensibles créées. Action minimale : recette des fichiers HTML+JS sur navigateur/tablette de test isolé, fournir résultats/proof du cycle tactile/clavier/états/résumé/cibles et largeurs. Ne pas élargir Remote ou passer au suivant sans résolution explicite. Empreintes et détails fdi-validation.md, rapport privé .browser-qa/fdi-result.json.
+
+### Point4.4 — Recette externe organisée, exception de progression
+
+Date : 2026-10-10T09:57:29.278296+02:00. Remote/UID1002/cgroup/chemin confirmés ; changements préparatoires attribuables à4.4, HEAD e9189d9. Le propriétaire a examiné prototype et rapport : conservation du blocage navigateur, interdiction de contourner Chromium, poursuite des seules conceptions indépendantes. Protocole fdi-acceptance.md et archive fdi-review.zip contenant HTML+JS+fiche+SHA256SUMS ; empreintes fdi-review.sha256. Archive contrôlée par lecture ZIP/empreintes, sans profil QA ni données réelles. CONSIGNE reçoit cette exception ciblée, aucun changement de sécurité. Statut4.4 reste ⚠ Bloqué, aucune recette navigateur réussie ni clôture prétendue. Versionnement de la préparation examinée et du suivi de dépendance, pas validation du point. Prochain point4.5 : structure du formulaire indépendante du rendu FDI ; intégration et recette interactive restent dépendantes de4.4.

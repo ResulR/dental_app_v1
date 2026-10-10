@@ -37,6 +37,9 @@ N'annonce jamais une exécution « pendant plusieurs heures » ni une activité 
 
 ## 3. Situations d'arrêt obligatoire
 
+**Exception ciblée du propriétaire — point 4.4, 10/10/2026 :** conserver la recette FDI en attente, sans diminuer aucune protection du VPS. Les conceptions suivantes réellement indépendantes peuvent avancer malgré ce blocage ; documenter leur indépendance et maintenir les preuves manquantes. Cette exception ne valide pas le navigateur, ne lève pas la porte de recette/accessibilité4.14 et ne concerne aucune opération privilégiée ou migration.
+
+
 **Précision du propriétaire — 10/10/2026 :** une ambiguïté fonctionnelle mineure peut être résolue par une solution cohérente, réversible et sans conséquence importante : consigner l'hypothèse et poursuivre. Elle ne justifie pas un blocage à elle seule. Réserver les arrêts aux décisions métier structurantes, contradictions majeures, risques de sécurité, opérations privilégiées, changements irréversibles et contrôles obligatoires réellement non satisfaits. Ne jamais modifier silencieusement une règle métier explicite ni présenter une hypothèse comme une décision approuvée.
 
 **Arrête le point en cours et n'entame pas le suivant** si au moins une condition survient :
