@@ -1,0 +1,84 @@
+{
+  "design_only": true,
+  "direction": "R16",
+  "registration": {
+    "actor": "clinic",
+    "required_business_fields": [
+      "clinic_name",
+      "reference_first_name",
+      "reference_last_name",
+      "email",
+      "password",
+      "phone",
+      "full_address"
+    ],
+    "additional_required_business_fields": [],
+    "terms": "explicit_acceptance_of_applicable_version",
+    "result": "pending_approval",
+    "official_submission_before_approval": false
+  },
+  "review": {
+    "actor": "authorized_laboratory",
+    "actions": [
+      "approve",
+      "refuse"
+    ],
+    "expected_revision": true,
+    "refusal_reason_new_requirement": false
+  },
+  "invitation": {
+    "admin_creator": "owner",
+    "employee_creator": "owner_or_delegated_admin",
+    "recipient_role_from_server": true,
+    "one_time": true,
+    "bounded_expiry_required": true,
+    "expiry_value": "undecided_security_configuration"
+  },
+  "recovery": {
+    "public_response": "generic_no_account_enumeration",
+    "one_time": true,
+    "bounded_expiry_required": true,
+    "does_not_clear_suspension": true,
+    "does_not_unlock_local_vault": true
+  },
+  "email_change": {
+    "sequence": [
+      "clinic_request",
+      "authorized_admin_decision",
+      "new_address_confirmation",
+      "old_address_security_notice"
+    ],
+    "active_address_changes_only_after_confirmation": true
+  },
+  "owner_exception": {
+    "technical_only": true,
+    "verified_authority": true,
+    "interface_transfer": false
+  },
+  "states": [
+    "idle",
+    "editing",
+    "validating",
+    "waiting_server",
+    "success_confirmed",
+    "validation_error",
+    "generic_auth_error",
+    "limited",
+    "network_error",
+    "maintenance",
+    "challenge_expired",
+    "challenge_consumed",
+    "revoked",
+    "registration_pending",
+    "registration_refused",
+    "suspended",
+    "security_locked"
+  ],
+  "ui": {
+    "language": "sq",
+    "single_column_mobile": true,
+    "min_touch_px": 44,
+    "input_height_px": 48,
+    "sensitive_fields_logged": false
+  }
+}
