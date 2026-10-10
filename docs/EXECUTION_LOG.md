@@ -424,3 +424,11 @@ Date : 2026-10-10T23:34:12.474691+02:00. État initial : HEAD7d55552 propre ; pr
 Tests réels : buildweb1.55s/pic63, TSweb5.80s/pic52, lint6.95s/pic53, frontières9sources1.76s/pic52,9tests unitaires4.40s/pic65 incluant refuscache API/fichier/query/externe/POST, format2.46s/pic52 ; exit0. Manifeste lang/display, dimensions192/512 et7assets publics vérifiés. Refus de cache privé testé comme politique, pas exécutionSW dans navigateur. Archives/prototypes préexistants inchangés.
 
 Statut final : ◐ En cours — implémentation/build validés, recette responsive/installation/offline/clavier/tactile/lecteur/contraste réelle reportée R17. Aucun faux succès ni readinessproduction. Commit des parties indépendantes après diff/guard, autorisé R17 ; hash dans Git/compte rendu. Dépendance ouverte suivie ici et docs/FRONTEND.md, ne bloque pas serveur indépendant. Suite :5.7.
+
+### Point5.7 — API Express, configuration et liveness
+
+Date : 2026-10-10T23:37:06.663402+02:00. État initial : HEADf079365 propre ; contrat3.11 et runtime indépendant2.8 relus. Fichiers : factory/config/problems/server et entry API, tests config/santé/erreurs et docs/API_FOUNDATION.md. Configuration explicite loopback/port, refus autre PGDATABASE, démarrage/arrêt contrôlés ; health uniquement liveness, pas readinessDB. Erreurs publiques albanaises expurgées, no-store, parser métadonnées borné et timeouts ; aucune connexionSQL/runtime permanent.
+
+Résultats : build6.21s puis6.26s exit0,10 unitaires4.81s/pic66,3intégration4.04s/pic65 (health200,404générique,no-store,no-XPoweredBy,500sansmarqueur/stack,JSONmalformé400, fermeture serveur finally). Premierlint échoue _next inutilisé ; cause identifiée (signature Express4paramètres), ajout void explicite sans changer arité. Lint relancé6.96s exit0,pic53 ; frontières13sources1.74s et format3.07s OK. Tests réseau ciblent leurs seuls serveurs loopback port0, aucun voisin.
+
+Statut final : ☑ Validé. Diff/guard avant commit/push ciblés, hash dans Git/compte rendu. Port/runtime/identitéSQL production toujours non créés ni approuvés ; R17 maintient5.6/4.4/4.14 recette reportée. Suite :5.8.
