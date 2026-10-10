@@ -133,3 +133,5 @@ Les ADR ci-dessous enregistrent les décisions déjà établies, sans clôturer 
 Le [modèle brouillons/synchronisation](models/drafts-sync.md) et l'[ADR R15](decisions/0003-local-vault-recovery.md) détaillent le point 3.8 : deux enveloppes indépendantes de la même clé locale, récupération privée, absence de clés serveur et validations navigateur futures.
 
 Le [modèle événements, notifications et audit](models/events-notifications-audit.md) détaille le point3.9, les matrices de canaux, reprises et lecture ; SSE/HTTP est le choix technique réversible H39-01, à éprouver aux appareils et au déploiement.
+
+Le [plan rétention, sauvegardes et reprise](models/retention-backup-recovery.md) détaille le point3.10 : archive UI distincte, politiques légales à valider, snapshot/manifeste DB-fichiers et suppressions après restauration. RPO/RTO non garantis avant exercices.
