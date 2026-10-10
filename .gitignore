@@ -9,3 +9,15 @@ __pycache__/
 *.log
 
 /docs/design/.browser-qa/
+
+# Runtime privé et caches locaux
+.npm-cache/
+.local/
+uploads/
+storage/
+backups/
+*.pem
+*.key
+*.p12
+*.pfx
+*.dump
