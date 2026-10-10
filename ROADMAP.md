@@ -589,7 +589,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 4.10 — Concevoir calendrier et livraison groupée
-- **Statut :** ☐ À faire
+- **Statut :** ☑ Validé
 - **Priorité :** Haute
 - **Catégorie / type :** Design
 - **Zone concernée :** Design UX tablette-first et validation
@@ -4389,3 +4389,9 @@ Validation réellement exécutée : revue règles/sources, HTMLParser (sq, IDs u
 Date : 2026-10-10T10:03:47.897520+02:00. État initial : arbre propre, HEAD 947aa15. Audit : CDC§§9–10 et modèle événements/lecture partagée3.9 reconsultés ; aucune interface messagerie existante. Conception indépendante de la recette FDI selon exception du propriétaire ; aucune clôture4.4 implicite. Fichiers : docs/design/messaging.md, docs/design/messaging-preview.html. Conversation générale/per-work identifiables, non-lus versus traitement, envoyé/lu, modifications traçables et lecture seule livraison ; reprise connectée sans cache médical officiel.
 
 Validation réellement exécutée : revue règles/sources, HTMLParser (sq, IDs uniques, labels, liens, contrôles inertes, aucune ressource externe), JSON si présent, tokens R16 (16px/44px/règle mobile), droits1002/mode600, diff avant commit. Cohérence de conception évaluée sur structure et scénarios ; aucun rendu navigateur ni test fonctionnel/accessibilité réel prétendu. Recette mobile/clavier/lecteur et intégration aux gates4.14/implémentation ;4.4 reste bloqué. Statut final ☑ Validé pour conception4.9 uniquement. Aucun SQL/migration/secret/runtime/service/privilège modifié. Commit/push ciblés après revue ; identifiant dans historique Git et chat. Suite 4.10.
+
+### Point4.10 — Calendrier et livraison groupée
+
+Date : 2026-10-10T10:04:55.392606+02:00. État initial : arbre propre, HEAD 4103c96. Audit : CDC§7, automate3.5/H35-03, permissions et R16 ; aucun calendrier existant. Conception indépendante de la recette FDI selon exception du propriétaire ; aucune clôture4.4 implicite. Fichiers : docs/design/delivery.md, docs/design/delivery-preview.html. Semaine/mois, planifiée versus souhaitée provisoire, alternative détail mobile au drag, lot confirmé et recontrôle atomique ; correction exceptionnelle motivée séparée.
+
+Validation réellement exécutée : revue règles/sources, HTMLParser (sq, IDs uniques, labels, liens, contrôles inertes, aucune ressource externe), JSON si présent, tokens R16 (16px/44px/règle mobile), droits1002/mode600, diff avant commit. Cohérence de conception évaluée sur structure et scénarios ; aucun rendu navigateur ni test fonctionnel/accessibilité réel prétendu. Recette mobile/clavier/lecteur et intégration aux gates4.14/implémentation ;4.4 reste bloqué. Statut final ☑ Validé pour conception4.10 uniquement. Aucun SQL/migration/secret/runtime/service/privilège modifié. Commit/push ciblés après revue ; identifiant dans historique Git et chat. Suite 4.11.
