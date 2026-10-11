@@ -11,6 +11,7 @@ import stat
 ROOT = Path(__file__).resolve().parent.parent
 GATE_SHA = "698472ebcc0ca0f8a1d74151cb7331ecfa9e113d8231f9262b3ba6f535de9ea1"
 HISTORICAL = {
+    "0001_migration_engine_probe.sql": "a40fcba1147515f7b9dd4eeceb37e876b4ec032f9d4254f5f80c3495524d1413",
     "0000_execution_probe.sql": "25e6cafc724d2b6ddd6c6be23f6fc44b4a5a21ea318cbfedac48a93bee7d1734",
     "9900_atomicity_failure_probe.sql": "f85b33d4fd07f97891b295ee8eac1dc5fa91d6638c6d4e1473c4899dedb64615",
     "9901_atomicity_success_probe.sql": "87c25620081222a9269556b22b669578fe5acd446b9764d67d155f14e132d1a8",

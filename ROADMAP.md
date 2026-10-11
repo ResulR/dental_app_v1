@@ -840,7 +840,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 6.3 — Créer schéma identité/clinique/permissions
-- **Statut :** ☐ À faire
+- **Statut :** ⚠ Bloqué
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fondations PostgreSQL et migrations
@@ -850,6 +850,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
 - **Travail attendu :** Tables et contraintes pour comptes, cliniques, invitations, grants et sessions.
 - **Validation :** Contraintes et migration aller vérifiées.
+- **Préparation 2026-10-11T21:00:17+02:00 :** audit base vide/default ACL migrateur-owner absents, modèles3.2/3.3 relus. Migration0002 préparée : neuf tables/une vue, propriétaire/clinique réciproques différés, invitations/sessions et grants avec prérequis ; aucune permission SQL ajoutée. Trois tests graphe +11moteur +18régressions réussis, catalogue/filtre rev3 OK. Recette PostgreSQL23refus/cas positifs NON exécutée ; SQL/SHA et commandes/risques dans docs/admin-proposals/POINT_6_3_ADMIN.md, approbation/réception administrateur indispensable pour migration aller/contraintes. Aucun6.4.
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.

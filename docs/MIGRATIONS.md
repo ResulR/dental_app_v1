@@ -27,7 +27,7 @@ python3 scripts/run-quality.py check:migrations
 python3 scripts/run-quality.py test:migrations
 ```
 
-scripts/migration-catalog.py lit seulement les sources privées, refuse noms/numéros dupliqués, fichiers publics/liens/répertoires/NUL/tailles invalides, contrôle le filtre exact rev3 et calcule les SHA256. Il exécute seulement les octets de validation dont l’empreinte est épinglée ; aucun appel SQL/root. Les fixtures0000/9900/9901 sont identifiées comme historiques non rejouables et leurs octets épinglés. Le catalogue est un inventaire, pas une deuxième source d’historique. Le manifeste imprimé ne signifie pas « migration installée ».
+scripts/migration-catalog.py lit seulement les sources privées, refuse noms/numéros dupliqués, fichiers publics/liens/répertoires/NUL/tailles invalides, contrôle le filtre exact rev3 et calcule les SHA256. Il exécute seulement les octets de validation dont l’empreinte est épinglée ; aucun appel SQL/root. Les fixtures0000/9900/9901 et la sonde0001 reçue en6.2 sont identifiées comme historiques non rejouables et leurs octets épinglés. Le catalogue est un inventaire, pas une deuxième source d’historique. Le manifeste imprimé ne signifie pas « migration installée ».
 
 tests/migrations/test_migration_engine.py vérifie fichiers/catalogue/rejeu/pending/archive et exclusivité flock réelle sur fichiers temporaires du projet ; UIDroot/appels administrateur sont explicitement simulés et subprocess sont doublés. Les18tests existants2.6 restent inchangés et complémentaires. Aucun test hors ligne ne valide une migration SQL réelle.
 

@@ -25,9 +25,9 @@ class CatalogTests(unittest.TestCase):
         path.chmod(0o600)
         return path
 
-    def test_real_inventory_keeps_three_historical_fixtures_out_of_execution_plan(self):
+    def test_real_inventory_keeps_registered_probes_out_of_execution_plan(self):
         rows = catalog.inventory(ROOT / "migrations", gate.validate)
-        self.assertEqual(len(rows), 4)
+        self.assertTrue(set(catalog.HISTORICAL).issubset({row["version"] for row in rows}))
         for row in rows:
             self.assertEqual(row["purpose"], "historical_fixture_do_not_run"
                              if row["version"] in catalog.HISTORICAL else "requires_admin_review")
