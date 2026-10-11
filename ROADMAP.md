@@ -822,7 +822,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 6.2 — Mettre en place moteur de migrations versionnées
-- **Statut :** ⚠ Bloqué
+- **Statut :** ☑ Validé
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fondations PostgreSQL et migrations
@@ -834,6 +834,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Validation :** Migration/rejeu testés sur base isolée.
 - **Audit/préparation11/10/2026 :** moteur installé2.6 rev3 conservé/SHA confirmé ; historique root, flock/advisoryxactlock, transactionpsql et reprisepending déjà présents. Catalogue source privé/pinsfixtures,11tests6.2 et18tests2.6 horsligne réussis ; anciennesfixtures non rejouées. Nouvelle sondeSELECT0001/SHA et réceptionrejeu/concurrence proposées dans docs/admin-proposals/POINT_6_2_ADMIN.md. Réceptionréelle complémentaire après approbation SQL/SHA requise ;6.2 nonvalidé et aucun6.3. Baseprojet dental_lab dédiée/zérotablesapp, pas d’isolationcomplète du cluster.
 - **Reprise 2026-10-11T06:00:28+00:00 :** préparation autonome revérifiée ; catalogue et29 tests hors ligne réussis, pic49/100 tâches. Audit dental_lab seul : PostgreSQL17.11, migrateur NOLOGIN, sessions0, tables applicatives0. Procédure administrateur finalisée (arrêt sur erreur, vérification SHA bloquante, environnement SQL explicite) ; lanceur/SQL/fixtures inchangés. Refus de rejeu/concurrence sur installation réelle toujours non démontrés ; approbation et réception administrateur requises, aucun6.3.
+- **Réception 2026-10-11T18:48:40+00:00 :** rapport administrateur explicitement VALIDÉ : premier passage0001/SHA approuvé, identités/verrou transactionnel conformes ; rejeu et concurrence refusés/reçu inchangé ; snapshot/reçu contrôlés, aucunpending ; NOLOGIN/sessions0/locks0/tables0 et lanceurSHA inchangé. Corroboration IA readonly dental_lab : PostgreSQL17.11, NOLOGIN/sessions0/locks0/aucune tableapp ; fichiersSHA exacts. Aucun rejeu IA. Base dédiée dans cluster partagé, limites résiduelles conservées.
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.

@@ -31,9 +31,9 @@ scripts/migration-catalog.py lit seulement les sources privées, refuse noms/num
 
 tests/migrations/test_migration_engine.py vérifie fichiers/catalogue/rejeu/pending/archive et exclusivité flock réelle sur fichiers temporaires du projet ; UIDroot/appels administrateur sont explicitement simulés et subprocess sont doublés. Les18tests existants2.6 restent inchangés et complémentaires. Aucun test hors ligne ne valide une migration SQL réelle.
 
-## Réception réelle encore requise
+## Réception réelle validée — 11/10/2026
 
-docs/admin-proposals/POINT_6_2_ADMIN.md propose une nouvelle sonde SELECT uniquement, puis refus de rejeu et concurrence sur le lanceur installé. Une approbation explicite du fichier/SHA et des tests est obligatoire avant exécution. Ne pas relancer les trois anciennes fixtures. Les preuves d’atomicité réelle2.6 déjà reçues sont réutilisées car l’empreinte installée est inchangée.
+La réception administrateur de docs/admin-proposals/POINT_6_2_ADMIN.md est validée : sonde0001/SHA approuvé réussie, identités et verrou conformes, refus de rejeu et concurrence avec reçu inchangé, snapshot/reçu vérifiés et aucunpending. Audit final NOLOGIN/sessions0/locks0/tables0 et lanceurSHA inchangé. Ces preuves sont fournies par l’administrateur ; l’IA corrobore les états SQL lisibles et les empreintes sans accès au registre protégé ni nouvelle exécution. Ne rejouer aucune des quatre versions enregistrées. Les preuves d’atomicité réelle2.6 restent valides ; chaque nouvelle migration/SHA exige sa propre approbation.
 
 La base de recette est la base dédiée dental_lab, seule destination autorisée, avec zéro table applicative constatée avant cette intervention ; il ne s’agit pas d’un cluster PostgreSQL, réseau ou VPS complètement isolé. Aucun nouveau cluster/base/rôle nécessaire à cette sonde ; aucune donnée patient. La sonde n’exige ni table ni nettoyage SQL.
 
