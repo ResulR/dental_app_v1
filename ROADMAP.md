@@ -938,7 +938,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale :**12refus SQL/ROLLBACK/audit différés ; ACL/transferts réels/stockage/antimalware/capacité/quotascumulés auxchapitres dédiés, pas prétendus fonctionnels. Suite6.8.
 
 ### 6.8 — Créer schéma messageries et reçus de lecture
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Implémenté — validation hors ligne réussie, réception PostgreSQL différée
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fondations PostgreSQL et migrations
@@ -951,6 +951,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation :** 6tables conversations/messages/versions/pièces/lectures/cycles ; destinationuploadclinique typée, unicités générale etordre, versions auteurd'origine et curseurs existants.
+- **Validation hors ligne :** Catalogue exactrev3 réussi(0.20s/pic48), propositions Bash-n/Pythoncompile sans exécution, revue CHECK NULL etFK ;17unitaires/32offline déjàpassés sansrépétition TS inchangé.
+- **Application PostgreSQL :** NON APPLIQUÉE ; migration 0007_messaging_reads.sql, SHA a0b4001b05d963cf64171f7093b2e663bae37497ce6b41304fc96da298d38c08, proposition POINT_6_8_ADMIN.md à approuver au jalon.
+- **Réception finale :** 11refus/caspositifs/ROLLBACK/audit différés ; concurrencecurseurs, lifecycleconversation/SSE/droits/rappels auxservices, aucune messagerie fonctionnelle prétendue. Suite6.9 indépendante.
 
 ### 6.9 — Créer schéma notifications, mails et audit
 - **Statut :** ☐ À faire
