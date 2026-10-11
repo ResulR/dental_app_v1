@@ -898,7 +898,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale :** 15refus SQL et cas positifs/ROLLBACK/audit/immutabilité logique future à réceptionner ; aucun résultat SQL revendiqué. Progression6.6 indépendante autorisée.
 
 ### 6.6 — Créer schéma des demandes et travaux liés
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Implémenté — validation hors ligne réussie, réception PostgreSQL différée
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fondations PostgreSQL et migrations
@@ -911,6 +911,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation :**0005, demandes pending communes et liens ; retouche active index unique sur état enfant maintenu par FK CASCADE, vue slots. H66-01 technique documentée sans changement R14.
+- **Validation hors ligne :** catalogue/filtrerev3 et syntaxe Bash/Python de proposition réussis ; non-régressions17unitaires/32migrations déjà passées.
+- **Application PostgreSQL :** NON APPLIQUÉE ; SQL/SHA/recette dans POINT_6_6_ADMIN.md, à approuver au jalon.
+- **Réception finale :**11refus/positifs/ROLLBACK et course réelle deuxsessions/atomicité R14 différés ; pas de concurrence prétendue testée. Suite6.7 indépendante.
 
 ### 6.7 — Créer schéma médias et transferts temporaires
 - **Statut :** ☐ À faire
