@@ -556,3 +556,9 @@ Suivi seul versionné après diff/guard, commit/push confirmé dans compte rendu
 - Audit maina007fd1 propre/synchronisé, modèleslinked/R14/CDC relus, aucun mécanismerequests/links présent. 0005SHAfacd59495b8c8778f0a105a7b26e9253642afe8dbe64eaa07f570de0c800b61b ;2tables/1vue, indexpending commun, indexretouchactive avecétatenfant FKcascade. H66-01 raffine slottechnique sans changer règle métier ; champs historiques distincts projection.
 - Catalogueexactrev3passé(0.20s,pic48),Bash/Pythonproposition syntaxevérifiée sans exécution ;17unitaires/32offline passés auparavant, pas de buildTS inchangé redondant. linked_constraints.sql SHA6f1aeacec743fc97c811cdd222e29d52e1e12f3b1127273256f2f35739c2d975,11refus/caspositifs préparésNONexécutés. SQLserveur/concurrence2sessions/R14atomicité/cycleservice restent requis.
 - Docs/procédure+ROADMAPquatreétats, aucuneapplicabledata/permission/service modifié. Diff/guard/commit/push préparation,suite6.7, recette regroupée finchapitre.
+
+## 2026-10-12T00:58:48+02:00 — 6.7 — Schéma préparé / réception différée
+
+- Audit main34c5350 propre, files-lifecycle/CDC/architecture relus,aucunfiles/uploadcode. 0006SHA1d0a45256b7921d6e0198991fdc1c5f38fb16446c31ed9cfe81ed433a681b65f,7tables/FKtypées ;keyshexprivées/suiviinterne/hash/200Mo/H37-01 ; chunks offsetgénéré/taillederniersegment/FKpolicy. Aucun objetbinaire ou runtime/secret/permission créé. TTL/réserve obligatoires sansdefaults fictifs ; uploadsréelsrefusés avantpolitique.
+- Cataloguefiltreexactpassé(0.20s/pic48),Bash/Pythonrecette compilés sans exécution, revuefixture/diff ;32offline/17unitaires précédemmentréussis. files_constraints.sql SHA2f605500259559f5148feb56a26d7827f1447be036bd0206ead0a842f05898eb,12refus/positifs NON exécutés. FKn'assurentpasACL/readiness/capacité/1Go/antimalware/ZIP : différé explicitement.
+- Documentation/propositionquatreétats ;commit/pushpréparation aprèsguard,suite6.8 ;aucunDDL/HBA/servicevoisin,aucune donnée médicale.

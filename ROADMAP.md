@@ -918,7 +918,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale :**11refus/positifs/ROLLBACK et course réelle deuxsessions/atomicité R14 différés ; pas de concurrence prétendue testée. Suite6.7 indépendante.
 
 ### 6.7 — Créer schéma médias et transferts temporaires
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Implémenté — validation hors ligne réussie, réception PostgreSQL différée
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fondations PostgreSQL et migrations
@@ -931,6 +931,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation :**0006,7tables médias/transferts/chunks/FKtypées fabrication/suivi/dérivés/événements ; clés opaques, suiviinterne défaut, limite200Mo H37-01.
+- **Validation hors ligne :**catalogue/filtrerev3 et syntaxe proposition réussis, diff contrôlé ; régressions précédemment passées.
+- **Application PostgreSQL :**NON APPLIQUÉE ; SQL/SHA/recettePOINT_6_7_ADMIN à approuver au jalon.
+- **Réception finale :**12refus SQL/ROLLBACK/audit différés ; ACL/transferts réels/stockage/antimalware/capacité/quotascumulés auxchapitres dédiés, pas prétendus fonctionnels. Suite6.8.
 
 ### 6.8 — Créer schéma messageries et reçus de lecture
 - **Statut :** ☐ À faire
