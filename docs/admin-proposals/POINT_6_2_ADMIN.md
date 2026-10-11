@@ -13,16 +13,21 @@ Deux SELECT : marqueur technique et identités ; assertion du verrou advisory d�
 
 Cette revue doit approuver explicitement le fichier/SHA et le premier passage, le refus de rejeu et le test flock ci-dessous. Les commandes sont destinées à l’administrateur ; l’IA ne les exécute pas. Les scripts projet sont uniquement relus, jamais exécutés comme root.
 
+Chaque bloc Bash arrête sur un code non nul ; ne pas poursuivre après un contrôle échoué. Les refus attendus sont capturés et vérifiés dans le bloc Python, sans désactiver cet arrêt. Les audits PostgreSQL utilisent un environnement vide et une identité explicite, sans variables PG héritées.
+
 ## 1. Contrôles préalables en lecture seule, administrateur
 
 ```bash
+set -euo pipefail
 test "$(id -u)" = 0
 printf '%s  %s\n' \
  698472ebcc0ca0f8a1d74151cb7331ecfa9e113d8231f9262b3ba6f535de9ea1 \
  /usr/local/sbin/dental-lab-migrate | /usr/bin/sha256sum -c -
 /usr/bin/stat -c '%U:%G %a %h %n' /usr/local/sbin/dental-lab-migrate
-/usr/sbin/runuser -u dental-ai -- /usr/bin/sha256sum \
- /srv/dental-lab/migrations/0001_migration_engine_probe.sql
+printf '%s  %s\n' \
+ a40fcba1147515f7b9dd4eeceb37e876b4ec032f9d4254f5f80c3495524d1413 \
+ /srv/dental-lab/migrations/0001_migration_engine_probe.sql | \
+ /usr/sbin/runuser -u dental-ai -- /usr/bin/sha256sum -c -
 /usr/sbin/runuser -u dental-ai -- /usr/bin/cat \
  /srv/dental-lab/migrations/0001_migration_engine_probe.sql
 /usr/bin/python3 -I - <<'PY'
@@ -33,7 +38,9 @@ for suffix in ['', '.pending', '.rollback-verified']:
     assert not (base/('0001_migration_engine_probe.sql'+suffix)).exists()
 print('No pending and new version absent')
 PY
-/usr/sbin/runuser -u postgres -- /usr/lib/postgresql/17/bin/psql -X -w \
+/usr/sbin/runuser -u postgres -- /usr/bin/env -i \
+ PATH=/usr/bin:/bin HOME=/ LANG=C.UTF-8 \
+ /usr/lib/postgresql/17/bin/psql -X -w -U postgres \
  -h /var/run/postgresql -p 5432 -d dental_lab -P pager=off -v ON_ERROR_STOP=1 <<'SQL'
 BEGIN READ ONLY;
 SELECT rolname,rolcanlogin FROM pg_roles WHERE rolname='dental-migrate';
@@ -50,6 +57,7 @@ Attendus : empreintesexactes, root:root555/un lien, no pending/versionabsente, m
 ## 2. Premier passage, seulement après approbation explicite
 
 ```bash
+set -euo pipefail
 /usr/local/sbin/dental-lab-migrate 0001_migration_engine_probe.sql \
  a40fcba1147515f7b9dd4eeceb37e876b4ec032f9d4254f5f80c3495524d1413
 ```
@@ -64,6 +72,7 @@ L’unité transitoire de migration existante est utilisée par le lanceur ; auc
 Bloc Python littéral contrôlé, pas un fichier projet exécuté root. Il vérifie le reçu et le snapshot avant tests et n’altère aucun reçu. Le même fichier est invoqué seulement pour prouver le refus AVANT SQL/LOGIN ; cette approbation n’autorise pas un deuxième passage SQL.
 
 ```bash
+set -euo pipefail
 /usr/bin/python3 -I - <<'PY'
 import fcntl,hashlib,json,os,stat,subprocess
 from pathlib import Path
@@ -115,7 +124,10 @@ Le sous-processus bénéficie des limites du lanceur existant si un défaut l’
 ## 4. Contrôles finaux administrateur, lecture seule
 
 ```bash
-/usr/sbin/runuser -u postgres -- /usr/lib/postgresql/17/bin/psql -X -w \
+set -euo pipefail
+/usr/sbin/runuser -u postgres -- /usr/bin/env -i \
+ PATH=/usr/bin:/bin HOME=/ LANG=C.UTF-8 \
+ /usr/lib/postgresql/17/bin/psql -X -w -U postgres \
  -h /var/run/postgresql -p 5432 -d dental_lab -P pager=off -v ON_ERROR_STOP=1 <<'SQL'
 BEGIN READ ONLY;
 SELECT rolname,rolcanlogin FROM pg_roles WHERE rolname='dental-migrate';
