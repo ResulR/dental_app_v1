@@ -998,7 +998,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale :** 9refusSQL/caspositifsCAS/ROLLBACK/audit, course réelledeuxappareils/reçuaprèsréponseperdue/clonefichiers etcoffre navigateur différés. Suite6.11 indépendante.
 
 ### 6.11 — Établir privilèges futurs et tests DB
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Implémenté — validation hors ligne réussie, réception PostgreSQL différée
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fondations PostgreSQL et migrations
@@ -1012,6 +1012,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
+
+- **Implémentation :**0010 proposeGRANTapp explicites/UPDATEcolonnes, historiquesappend-only, aucunélargissementIA/defaultACL/rôle/HBA ; matrice et dossierconsolidé préparés.
+- **Validation hors ligne :**36tests migrations/gate dont4politiquesprivilèges réussis ;21unitaires/6intégrations/quality précédemmentréussis, catalogue/filtre/SHA/Bash-n/Pythoncompile/diff contrôlés.
+- **Application PostgreSQL :**NON APPLIQUÉE ; SQL/SHA/procédure POINT_6_11_ADMIN etCHAPTER_6_RECEPTION àapprouver aujalon.
+- **Réception finale :**17refusSQL/CAS/cascade/IDENTITY/ROLLBACK et7refuspeer,2coursesréelles avecfixturetemporairementengagée/cleanupspécifique différés. 6.4recette finale et0004–0010restent àréceptionner ; chapitre6NON entièrementvalidé. Développementsindépendants chapitre7 permis.
 
 ## Chapitre 07 — Authentification, comptes et gouvernance
 

@@ -1,0 +1,1 @@
+INSERT INTO public.work_links(source_order_id,child_order_id,clinic_id,kind,intervention_kind,child_current_status,source_revision,source_status_at_creation,created_by) VALUES('40000000-0000-4000-8000-000000000001','40000000-0000-4000-8000-000000000004','20000000-0000-4000-8000-000000000001','retouch','retouch','pending',1,'delivered','10000000-0000-4000-8000-000000000002');
