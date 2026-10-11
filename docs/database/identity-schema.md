@@ -1,6 +1,6 @@
 # Identité, cliniques et permissions — préparation du point 6.3
 
-Statut : migration0002 appliquée une seule fois et réception administrateur VALIDÉE le11/10/2026. Références : CAHIER_DES_CHARGES §2, docs/models/accounts-clinics.md et permissions.md. Aucun compte réel créé, aucun grant PostgreSQL ajouté. Réception administrateur requise avant validation de 6.3.
+Statut : migration0002 appliquée une seule fois et réception administrateur VALIDÉE le11/10/2026. Références : CAHIER_DES_CHARGES §2, docs/models/accounts-clinics.md et permissions.md. Aucun compte réel créé, aucun grant PostgreSQL ajouté. Réception administrateur consignée ci-dessous.
 
 ## Schéma préparé
 

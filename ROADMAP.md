@@ -857,7 +857,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 6.4 — Créer schéma catalogue et snapshots
-- **Statut :** ☐ À faire
+- **Statut :** ⚠ BLOQUÉ — préparation terminée, approbation et recette administrateur requises
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fondations PostgreSQL et migrations
@@ -867,6 +867,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
 - **Travail attendu :** Matériaux, teintes, types, états interdits et snapshots historiques.
 - **Validation :** Suppression catalogue préserve historique.
+- **Préparation 2026-10-11T23:13:27+02:00 :** 3 tables et 1 vue proposées dans 0003_catalog_snapshots.sql ; identités durables, entrées courantes supprimables et snapshots historiques séparés. SHA-256 9118fd82740fb914b69fd79946bebca1ca0c1b32b679709b48217edec7df7c5c. Recette catalog_constraints.sql : 15 refus et cas positifs renommage/suppression/interdiction, NON exécutée ; SHA-256 875b13445535ef8d188659953fe27541f4dd8bff4cd6a4c5c49549ec7ab316d2. Catalogue/filtre et 32 tests hors ligne réussis ; procédure exacte dans docs/admin-proposals/POINT_6_4_ADMIN.md. Aucun DDL, privilège ou service modifié par IA. Validation PostgreSQL réelle indispensable avant clôture ; point 6.5 non commencé.
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
