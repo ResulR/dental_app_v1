@@ -1021,7 +1021,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 07 — Authentification, comptes et gouvernance
 
 ### 7.1 — Implémenter authentification email/mot de passe
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Noyau implémenté/testé hors ligne — intégration et réception différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance
@@ -1034,6 +1034,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation :**hash/vérification scryptversionné,budgetKDF1,serviceerreursneutres,repositoryemailparamétré etlimiteurcompte/réseauborné ;aucunendpoint/sessionbranché. H71-01/02 dansAUTHENTICATION.md.
+- **Validation hors ligne :**31unitaires dont10nouveaux (vraisKDF/testservicesdoublés) et6intégrationspassés,pic66/100 ;compilation/typage3workspaces/lint/format/frontières réussis aprèscorrectionlint.
+- **Application PostgreSQL :**pas de nouvellemigration7.1 ;grants0010 nonappliqués pourlookupclientréel.
+- **Réception finale :**loginHTTP/PG,ratedurable/config/réseau,charge etsessions7.2 différés. Pasd'authproductionready. Suite7.2 indépendante.
 
 ### 7.2 — Implémenter sessions multi-appareils
 - **Statut :** ☐ À faire
