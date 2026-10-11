@@ -1,6 +1,6 @@
 # Catalogue et snapshots — préparation du point 6.4
 
-Statut : migration0003 préparée, NON APPLIQUÉE. Références : CAHIER_DES_CHARGES §3, modèles orders-versions et drafts-sync, architecture modulaire. Aucun référentiel réel initialisé, aucune permission SQL ajoutée. Réception administrateur requise pour clôture6.4.
+Statut : migration0003 APPLIQUÉE selon rapport administrateur ; réception finale EN ATTENTE. Références : CAHIER_DES_CHARGES §3, modèles orders-versions et drafts-sync, architecture modulaire. Aucun référentiel réel initialisé, aucune permission SQL ajoutée. Réception administrateur requise pour clôture6.4.
 
 | Objet préparé | Responsabilité |
 |---|---|
@@ -35,8 +35,10 @@ Les snapshots sont destinés à être append-only pour les chemins applicatifs. 
 
 ## Validation préparée
 
-Le catalogue de migrations vérifie les octets/modes/SHA et le filtre rev3, sans SQL ni privilège. Les cinq migrations/sondes déjà enregistrées sont épinglées et non rejouables, selon les réceptions connues ; l’inventaire ne remplace pas le registre root.
+Le catalogue de migrations vérifie les octets/modes/SHA et le filtre rev3, sans SQL ni privilège. Les six migrations/sondes déjà enregistrées sont épinglées et non rejouables, selon les réceptions connues ; l’inventaire ne remplace pas le registre root.
 
 tests/migrations/catalog_constraints.sql prépare un test PostgreSQL sous rôle local migrateur, transaction annulée : renommage préserve libellé/révision ; DELETE de l’entrée préserve snapshot ; désactivation devient indisponible ; suppression ne masque pas l’interdiction ;15refus SQLSTATE sur états/catégories/motifs/libellés/FK/révisions/auteur. Aucune exécution ni réussite SQL réelle revendiquée par IA. Le filtre hors ligne ne prouve pas la syntaxe/contraintes du serveur.
 
-docs/admin-proposals/POINT_6_4_ADMIN.md contient les deux fichiers/SHA à approuver, la migration aller via le lanceur existant et les commandes de recette/audit/retour arrière. Risque : DDL durable après succès, correction par nouvelle migration approuvée ; aucun DROP automatique ni permissions élargies. Valider3tables/1vue/ownership/contraintes,15refus+préservation historique, ROLLBACK/zérofixture, reçus/snapshot/pending et fermeture avant6.5.
+docs/admin-proposals/POINT_6_4_ADMIN.md contient les deux fichiers/SHA à approuver, la migration aller via le lanceur existant et les commandes de recette/audit/retour arrière. Risque : DDL durable après succès, correction par nouvelle migration approuvée ; aucun DROP automatique ni permissions élargies. Valider3tables/1vue/ownership/contraintes,15refus+préservation historique, ROLLBACK/zérofixture, reçus/snapshot/pending et fermeture avant réception finale ; préparation indépendante de6.5 autorisée par stratégie du12/10/2026.
+
+Application rapportée le12/10/2026 : CREATE TABLE ×3, CREATE INDEX, CREATE VIEW et succès contrôlé. Audit IA readonly : objets/ownership conformes, 93 contraintes toutes validées, migrateur NOLOGIN et zéro session. Les 15 tests SQL, préservation historique, ROLLBACK, audit final et reçu/snapshot restent différés. Aucun rejeu effectué.

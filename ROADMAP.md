@@ -857,7 +857,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 6.4 — Créer schéma catalogue et snapshots
-- **Statut :** ⚠ BLOQUÉ — préparation terminée, approbation et recette administrateur requises
+- **Statut :** ◐ Implémenté et testé hors ligne — migration appliquée, réception finale en attente
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fondations PostgreSQL et migrations
@@ -871,6 +871,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation :** terminée, commit 84129e2.
+- **Validation hors ligne :** 32 tests réussis.
+- **Application PostgreSQL :** administrateur confirme 0003/SHA approuvé exécutée avec succès une fois ; audit IA confirme 3 tables/1 vue nouvelles, ownership migrateur et 93 contraintes validées au total.
+- **Réception finale :** EN ATTENTE : 15 refus SQL, préservation historique, ROLLBACK, audit final et reçu/snapshot. Aucun rejeu ; progression indépendante vers 6.5 autorisée par stratégie du 12/10/2026.
 
 ### 6.5 — Créer schéma commande, dents et versions
 - **Statut :** ☐ À faire

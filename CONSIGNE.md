@@ -1,6 +1,6 @@
 # CONSIGNE — Agent de développement du laboratoire dentaire
 
-**Version :** 1.4 — 10/10/2026 (décisions R17, R18 et R19)
+**Version :** 1.5 — 12/10/2026 (stratégie de développement et réceptions regroupées)
 **Objet :** protocole impératif d'exécution progressive de `ROADMAP.md` sur un VPS Debian multi-sites.  
 **Statut :** document opérationnel à appliquer seulement après vérification des accès et des sources du projet. Aucune règle de ce fichier ne confère par elle-même un accès, une permission système ou la capacité de fonctionner en arrière-plan.
 
@@ -24,7 +24,7 @@ En cas de divergence, ne tranche pas silencieusement : arrête l'intervention co
 
 Pour **chaque point**, suis obligatoirement ce cycle :
 
-1. **Sélectionner** le prochain point non validé dont les dépendances sont satisfaites. Ne saute pas les points bloqués. Contrôle les portes de passage.
+1. **Sélectionner** le prochain point non validé dont les dépendances sont satisfaites. Distingue les dépendances de développement des validations différées. Contrôle les portes de passage ; poursuis les parties indépendantes conformément à la stratégie du 12/10/2026.
 2. **Auditer** les fichiers, le code existant, les objets SQL, les services, les permissions et l'historique Git strictement pertinents. Si le point paraît déjà réalisé, vérifie ses critères au lieu de le réexécuter.
 3. **Comparer** la demande à l'état réel, aux décisions antérieures et aux restrictions de sécurité. Déterminer l'impact et les tests nécessaires. Ne pas appliquer mécaniquement une recette inadaptée.
 4. **Implémenter** exclusivement l'objectif du point, en respectant l'architecture et en limitant les effets de bord. Plusieurs fichiers sont acceptables pour un même objectif métier ; plusieurs objectifs indépendants ne le sont pas.
@@ -41,7 +41,7 @@ N'annonce jamais une exécution « pendant plusieurs heures » ni une activité 
 
 **Précision du propriétaire — 10/10/2026 :** une ambiguïté fonctionnelle mineure peut être résolue par une solution cohérente, réversible et sans conséquence importante : consigner l'hypothèse et poursuivre. Elle ne justifie pas un blocage à elle seule. Réserver les arrêts aux décisions métier structurantes, contradictions majeures, risques de sécurité, opérations privilégiées, changements irréversibles et contrôles obligatoires réellement non satisfaits. Ne jamais modifier silencieusement une règle métier explicite ni présenter une hypothèse comme une décision approuvée.
 
-**Arrête le point en cours et n'entame pas le suivant** si au moins une condition survient :
+**Arrête la partie concernée et poursuis les travaux indépendants** si au moins une condition survient :
 
 - Une exigence métier, une décision technique, un paramètre de production ou une information indispensable manque, est douteuse ou contradictoire.
 - L'état du VPS, du code ou de la base ne correspond pas aux préconditions et la résolution n'est pas démontrable sans hypothèse.
@@ -138,7 +138,7 @@ Une tâche de la roadmap n'est **pas en elle-même une approbation**. Demander a
 - traiter des données de patients réels avant validation légale et sécurité ;
 - déclarer conformité, validation clinique ou clôture définitive.
 
-Si une étape prévue nécessite naturellement une de ces opérations, **prépare et audite tout ce qui peut l'être sans risque**, puis arrête-toi exactement à l'approbation nécessaire. Après approbation, reprends la même étape ; n'interprète pas une validation ancienne comme un accord général pour les actions futures.
+Si une étape prévue nécessite naturellement une de ces opérations, **prépare et audite tout ce qui peut l'être sans risque**, puis réserve son exécution à l'approbation nécessaire ; poursuis les développements indépendants. Après approbation, reprends la même étape ; n'interprète pas une validation ancienne comme un accord général pour les actions futures.
 
 ## 9. Conditions de fin du projet
 
@@ -149,3 +149,15 @@ Le projet n'est **terminé** que lorsque : tous les points obligatoires des 21 c
 ---
 
 **Formule directrice :** *Auditer → comparer → modifier uniquement ce qui est autorisé → prouver → consigner → informer → continuer. Au premier doute matériel ou blocage : arrêter, expliquer et demander l'action minimale nécessaire.*
+
+## 10. Stratégie explicite du propriétaire — 12/10/2026
+
+Cette section remplace les anciennes formulations qui interdisaient toute progression tant qu'une réception administrateur était différée. Les autres protections restent intégralement applicables.
+
+Distinguer pour chaque point : **implémentation**, **validation hors ligne**, **application PostgreSQL** et **réception finale**. Ajouter ces quatre lignes dans ROADMAP quand pertinent. Une préparation/test hors ligne ne vaut jamais réception finale. `☑ Validé` reste réservé aux critères réellement démontrés.
+
+La réception différée n'est plus un blocage général : poursuivre les parties sans dépendance réelle, préparer les dépendances partielles et leurs tests, arrêter seulement la partie nécessitant une décision indispensable, un privilège ou une vérification impossible. Aucun échec critique connu n'est masqué par ce report.
+
+Chaque nouvelle migration conserve fichier, SHA-256, contrôles et approbation spécifique. Ne jamais exécuter les migrations privilégiées, modifier comptes/HBA/services/privilèges, contourner le lanceur ni rejouer une version enregistrée. Regrouper les propositions et recettes dans un dossier de réception au jalon de chapitre, avec ordre des dépendances et arrêt à chaque erreur ; jamais une application aveugle en lot.
+
+Après chaque préparation validée hors ligne : diff, commit/push, trace concise, passage automatique au point suivant indépendant. Au jalon : rapport consolidé des quatre états, tests restants, décisions, risques, commandes exactes et SHA approuvés/à approuver. Aucun chapitre entièrement validé avant réussite de ses recettes différées.

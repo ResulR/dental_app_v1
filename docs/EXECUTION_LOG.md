@@ -538,3 +538,9 @@ Suivi seul versionné après diff/guard, commit/push confirmé dans compte rendu
 - Proposition administrateur : docs/admin-proposals/POINT_6_4_ADMIN.md contient les deux fichiers/SHA à approuver, préconditions, commande du lanceur existant, recette sous rôle local migrateur avec ROLLBACK, audit objets/contraintes/permissions/registre/snapshot/NOLOGIN/sessions/verrous, risques et arrêt sur pending. Aucune commande privilégiée exécutée par IA.
 - Limites : DDL durable après succès ; retour arrière éventuel par nouvelle migration explicitement approuvée, aucun DROP/rejeu automatique. Immutabilité applicative des snapshots, validation des usages interdits et autorisations serveur restent à leurs étapes ; pas de certification de production ni d'isolation complète. Aucun secret ou donnée médicale réelle.
 - Git : préparation versionnée après contrôle diff/index/guard ; hash et push vérifiables dans historique. Point 6.4 BLOQUÉ tant que SQL/SHA/procédure et recette réelle ne sont pas validés. Point 6.5 non commencé.
+
+## 2026-10-12T00:48:52+02:00 — Stratégie de progression / point 6.4 appliqué, réception différée
+
+- Remote en ligne UID1002, cgroup autorisé, main propre84129e2. Instruction propriétaire du12/10/2026 intégrée dans CONSIGNE1.5 : quatre états distincts, progression indépendante et réception consolidée ; toutes protections2.6/R18/R19 conservées.
+- Rapport administrateur :0003/SHA approuvé appliquée une fois ; IA readonly confirme12tables/2vues public, ownership migrateur,93contraintes validées,NOLOGIN/sessions0 ; lanceur SHA inchangé. Aucune lecture applicative, migration ou opération privilégiée parIA.
+- Catalogue0003 épinglée comme enregistrée/nonrejouable. ROADMAP6.4 application consignée, recette15refus/préservation/ROLLBACK/auditfinal/reçu-snapshot toujours EN ATTENTE. Aucun critère final prétendu réussi. Suite immédiate6.5, tests accessibles puis procédures regroupées.
