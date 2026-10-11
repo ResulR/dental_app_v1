@@ -878,7 +878,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale :** EN ATTENTE : 15 refus SQL, préservation historique, ROLLBACK, audit final et reçu/snapshot. Aucun rejeu ; progression indépendante vers 6.5 autorisée par stratégie du 12/10/2026.
 
 ### 6.5 — Créer schéma commande, dents et versions
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Implémenté — validation hors ligne réussie, réception PostgreSQL différée
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fondations PostgreSQL et migrations
@@ -891,6 +891,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation :** migration0004, 8tables/index/FK, versions/dents/snapshots/événements/logistique/idempotence préparés.
+- **Validation hors ligne :** filtre exact/catalogue réussi ;17tests unitaires de non-régression passés,32tests moteur/gate précédemment passés ; syntaxe Bash/Python administrative et diff contrôlés.
+- **Application PostgreSQL :** NON APPLIQUÉE, SHA et proposition POINT_6_5_ADMIN.md à approuver au jalon.
+- **Réception finale :** 15refus SQL et cas positifs/ROLLBACK/audit/immutabilité logique future à réceptionner ; aucun résultat SQL revendiqué. Progression6.6 indépendante autorisée.
 
 ### 6.6 — Créer schéma des demandes et travaux liés
 - **Statut :** ☐ À faire
