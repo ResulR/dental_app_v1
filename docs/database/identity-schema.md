@@ -1,6 +1,6 @@
 # Identité, cliniques et permissions — préparation du point 6.3
 
-Statut : migration préparée, NON APPLIQUÉE. Références : CAHIER_DES_CHARGES §2, docs/models/accounts-clinics.md et permissions.md. Aucun compte réel créé, aucun grant PostgreSQL ajouté. Réception administrateur requise avant validation de 6.3.
+Statut : migration0002 appliquée une seule fois et réception administrateur VALIDÉE le11/10/2026. Références : CAHIER_DES_CHARGES §2, docs/models/accounts-clinics.md et permissions.md. Aucun compte réel créé, aucun grant PostgreSQL ajouté. Réception administrateur requise avant validation de 6.3.
 
 ## Schéma préparé
 
@@ -43,3 +43,7 @@ Les comptes peuvent conserver leurs credentials après suspension ; aucun FK de 
 Une réception réussie doit montrer les neuf tables/la vue, leurs contraintes validées et ownership attendu, puis23refus+cas positifs, aucune fixture persistante après ROLLBACK, NOLOGIN/sessions0/locks0 et aucunpending. Aucun accès applicatif à ces tables ne doit être supposé : l’audit préalable ne constate aucun default ACL propriétaire/migrateur. Les permissions minimales devront être autorisées à leur étape.
 
 Sources techniques primaires consultées : https://www.postgresql.org/docs/17/ddl-constraints.html ; https://www.postgresql.org/docs/17/ddl-generated-columns.html ; https://www.postgresql.org/docs/17/sql-createtable.html ; https://www.postgresql.org/docs/17/plpgsql-control-structures.html .
+
+## Réception administrateur — 2026-10-11T23:04:24+02:00
+
+Migration/SHA a98661428ffaea3a999d872622cd5af088ddb3c9393253ba559a453a525a9821 reçu ;9tables/1vue owner dental_lab_migrator,74contraintes validées,29définitions. Recette23refus/cas positifs passée et transaction annulée, aucune fixture persistante, snapshot/reçuSHAexact etaucunpending. Preuves de contenu/recette/registre fournies par administrateur ; audit IA confirme les métadonnées/permissions etNOLOGIN/sessions0/locks0, sans SELECT sur les tables. Aucun privilège supplémentaire. Les frontières applicatives ci-dessus restent à implémenter ; aucune readinessproduction déduite. Ne pas rejouer0002.
