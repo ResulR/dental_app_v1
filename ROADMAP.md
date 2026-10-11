@@ -958,7 +958,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale :** 11refus/caspositifs/ROLLBACK/audit différés ; concurrencecurseurs, lifecycleconversation/SSE/droits/rappels auxservices, aucune messagerie fonctionnelle prétendue. Suite6.9 indépendante.
 
 ### 6.9 — Créer schéma notifications, mails et audit
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Implémenté — validation hors ligne réussie, réception PostgreSQL différée
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fondations PostgreSQL et migrations
@@ -971,6 +971,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation :** 7tables outbox/dispatch/notifications/destinataires/envois/tentatives/audit expurgé ; portauditexistant conservé.
+- **Validation hors ligne :** Catalogueexactrev3 réussi(0.20s/pic48),Bash/Pythonproposition syntaxe contrôlée sansexécution, revueSQL/fixture/diff ; régressions déjàpassées.
+- **Application PostgreSQL :** NON APPLIQUÉE ; migration 0008_events_notifications_audit.sql, SHA 118d11a1c0608e7e1a19c26c2b1d143d3ce8fcd2e4304f7fc9597876fc28f54c, proposition POINT_6_9_ADMIN.md à approuver au jalon.
+- **Réception finale :** 11refus/caspositifs panneemail/ROLLBACK/auditSQL différés ; retries/utilité/rappels/ownerlecture/perms6.11/services nonprétendus fonctionnels. Suite6.10 indépendante.
 
 ### 6.10 — Créer schéma brouillons serveur et conflits
 - **Statut :** ☐ À faire
