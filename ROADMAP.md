@@ -978,7 +978,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale :** 11refus/caspositifs panneemail/ROLLBACK/auditSQL différés ; retries/utilité/rappels/ownerlecture/perms6.11/services nonprétendus fonctionnels. Suite6.10 indépendante.
 
 ### 6.10 — Créer schéma brouillons serveur et conflits
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Implémenté — validation hors ligne réussie, réception PostgreSQL différée
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fondations PostgreSQL et migrations
@@ -991,6 +991,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation :** 5tables révisions/tombstones/reçus/conflits/fichiers etFKpropriétaire ; repositoryCAS paramétré une requête atomique version/reçu, aucunendpointbranché.
+- **Validation hors ligne :** Catalogueexactrev3passé,pic49 ;quality compilation/typage3workspaces/lint/format/frontières/workspace tous0,pic55 ;21unitaires dont4nouveauxCAS et6intégrations horsDBréelle passés,pic65. Verrou a refusé lancement prématuré avant finquality, aucunoutilheavyconcurrent ; reprise séquentielle réussie. Bash/Pythonproposition etdiff contrôlés.
+- **Application PostgreSQL :** NON APPLIQUÉE ; migration 0009_drafts_conflicts.sql, SHA ddec9bd1d7b27a625d6fbab87580d97fc1ffae888225caa6103fa51508588d21, proposition POINT_6_10_ADMIN.md à approuver au jalon.
+- **Réception finale :** 9refusSQL/caspositifsCAS/ROLLBACK/audit, course réelledeuxappareils/reçuaprèsréponseperdue/clonefichiers etcoffre navigateur différés. Suite6.11 indépendante.
 
 ### 6.11 — Établir privilèges futurs et tests DB
 - **Statut :** ☐ À faire
