@@ -1117,7 +1117,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 7.6 — Implémenter demande de changement d’email
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Noyau de workflow préparé — validation hors ligne ; intégration et réception différées
+- **Avancement :** Demande propre clinique, décision owner/admin habilité, challenge privé après accord, confirmation canonique/expirante/unique et admission réseau préparés. Réutilise emailKey sans fusion des alias. Aucun changement avant accord et confirmation. Ports transactionnels, schéma versionné, outbox privée chiffrée, provider et routes à implémenter ; aucune activation ou livraison réelle. Voir docs/CLINIC_EMAIL_CHANGE.md.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance
