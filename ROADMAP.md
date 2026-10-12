@@ -1133,7 +1133,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 7.7 — Implémenter récupération de mot de passe
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Noyau récupération préparé — validation hors ligne ; intégration et réception différées
+- **Avancement :** Réutilise scrypt et emailKey ; demandes génériques, admission compte/réseau, jetons aléatoires à digest séparé, expiration avant/après KDF, rejeu/epoch/suspension/verrou refusés. Contrat reset atomique avec révocation de toutes sessions à compléter. Schéma, outbox chiffrée, adaptateurs, routes/UI et tests PostgreSQL/énumération/navigateur non réalisés. Aucun coffre R15 ou compte réel modifié. Voir docs/PASSWORD_RECOVERY.md.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance

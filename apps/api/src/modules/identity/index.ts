@@ -20,3 +20,5 @@ export {
   sessionCookieName,
 } from "./sessions.js";
 export type { SessionRecord, SessionWrite, SessionStore } from "./sessions.js";
+export { createPasswordRecoveryService } from "./recovery.service.js";
+export type { RecoveryRecord } from "./recovery.service.js";
