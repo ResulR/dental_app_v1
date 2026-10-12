@@ -1269,7 +1269,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception :** identité opérateur/vérificateur et méthode d'autorité, artefact ponctuel approuvé, adapters/challenges/outbox/audit et simulation PostgreSQL/API/SSE/navigateur requis. Suite indépendante7.15 ; ne pas exécuter la procédure sur cette seule préparation.
 
 ### 7.15 — Documenter transfert exceptionnel de propriété
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Procédure documentée — prérequis de schéma et réception différés
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance
@@ -1283,6 +1283,12 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
+
+- **Implémentation :** docs/OWNER_TRANSFER.md décrit autorité/succession vérifiées, disposition explicite de l'ancien compte, transaction/slot unique, révocations, audit et reprise sans rejeu. Aucun transfert UI ou script privilégié installé. Bilan consolidé docs/admin-proposals/CHAPTER_7_RECEPTION.md.
+- **Testé hors ligne / audité :** catalogue/SHA et36tests migration/garde passent ; métadonnées READ ONLY confirment index unique, FKowner différées et invitations_profile_fk non différable. Revue de12scénarios ; aucune simulation de transfert exécutée.
+- **Appliqué :** documentation seulement, migration0002 et schéma existant inchangés. 0011/0012/audit_events absents au contrôle de reprise.
+- **Réception :** corriger par évolution versionnée le lien historique invitations/profil avant promotion d'un compte invité ; préserver l'historique, jamais supprimer les invitations/contraintes pour contourner. Autorité, devenir de l'ancien compte, artefact ponctuel, audit/adapters et simulation réelle à recevoir.
+- **Suite de développement au jalon7 :** intégrer les parties encore incomplètes7.1–7.2, d'abord support transactionnel du client et SessionStore PG, puis auth/API. Ces préparations sont indépendantes de l'application administrateur différée. Ne pas présenter les callbacks et gardes hors ligne comme des parcours connectés.
 
 ## Chapitre 08 — Catalogue et paramètres
 
