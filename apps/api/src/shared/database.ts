@@ -1,5 +1,12 @@
 import { Pool } from "pg";
-import type { PoolConfig, QueryResultRow } from "pg";
+import type { PoolConfig, QueryResult, QueryResultRow } from "pg";
+
+export type DatabaseExecutor = {
+  query<Row extends QueryResultRow>(
+    text: string,
+    values?: unknown[],
+  ): Promise<QueryResult<Row>>;
+};
 
 export function applicationPoolConfig(env: NodeJS.ProcessEnv): PoolConfig {
   const expected: Record<string, string> = {
@@ -114,6 +121,82 @@ export function createApplicationDatabase(
         discard = true;
         throw error;
       } finally {
+        client.release(discard);
+      }
+    },
+    // One verified connection, one commit. Callbacks must await every query and
+    // perform database work only; no network/KDF work while holding row locks.
+    async transaction<T>(
+      work: (transaction: DatabaseExecutor) => Promise<T>,
+    ): Promise<T> {
+      const client = await pool.connect();
+      let active = false;
+      let pending = false;
+      let failed = false;
+      let begun = false;
+      let committing = false;
+      let discard = false;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const transaction: DatabaseExecutor = {
+        async query<Row extends QueryResultRow>(
+          text: string,
+          values: unknown[] = [],
+        ) {
+          if (!active || pending || failed) {
+            failed = true;
+            throw new Error("DATABASE_TRANSACTION_NOT_AVAILABLE");
+          }
+          pending = true;
+          try {
+            return await client.query<Row>(text, values);
+          } catch (error) {
+            failed = true;
+            throw error;
+          } finally {
+            pending = false;
+          }
+        },
+      };
+      try {
+        const session = await client.query(sessionCheckSql);
+        assertApplicationSession(
+          session.rows[0] as Record<string, unknown> | undefined,
+        );
+        await client.query("BEGIN");
+        begun = true;
+        await client.query("SET LOCAL transaction_timeout = '10s'");
+        active = true;
+        const deadline = new Promise<never>((_, reject) => {
+          timer = setTimeout(() => {
+            active = false;
+            discard = true;
+            reject(new Error("DATABASE_TRANSACTION_TIMEOUT"));
+          }, 10000);
+          timer.unref();
+        });
+        const result = await Promise.race([work(transaction), deadline]);
+        active = false;
+        if (pending || failed)
+          throw new Error("DATABASE_TRANSACTION_INCOMPLETE");
+        committing = true;
+        await Promise.race([client.query("COMMIT"), deadline]);
+        return result;
+      } catch (error) {
+        active = false;
+        // An uncertain COMMIT is never retried. Destroy busy/timed-out clients
+        // rather than returning a connection with an unfinished operation.
+        discard = discard || pending || committing || !begun;
+        if (!discard) {
+          try {
+            await client.query("ROLLBACK");
+          } catch {
+            discard = true;
+          }
+        }
+        throw error;
+      } finally {
+        active = false;
+        if (timer) clearTimeout(timer);
         client.release(discard);
       }
     },

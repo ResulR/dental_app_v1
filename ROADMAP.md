@@ -1057,6 +1057,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Implémentation :**servicetokens/digests/cookies/rotation/revocation/epoch/Origin ;portSessionStore PG/transactionaudit/API à compléter, pasderoutebranchée.0011bornepersistée préparée.
 - **Validation hors ligne :**38unitaires dont7sessionsportsmémoire passent ;catalogue/filtre/SHA/lint/buildAPI/frontières/format passent aprèscorrectionformat.
+- **Intégration 12/10/2026, checkpoint transactions :** client PostgreSQL expose désormais un callback sur une seule connexion vérifiée, commit/rollback, délai SQL/local 10s, refus des requêtes concurrentes/oubliées et aucun rejeu de commit ambigu. 117 tests unitaires passent dont6 nouveaux cas transactionnels avec transport doublé ; tests PostgreSQL réels non exécutés. SessionStore/API encore en cours.
 - **Application PostgreSQL :**0011 NONAPPLIQUÉE,SQL/SHA/POINT_7_2_ADMIN préparés,jalon7distinctdelot6 ;exigesessionsvides sinonarrêtétapeSQL.
 - **Réception finale :**5refusSQL,SessionStorePG/API/two-devices/rotationrace/cookiesTLS-browser/revocationSSE différés ;pas desessionsréelles annoncéesvalidées. Suite7.3indépendante.
 

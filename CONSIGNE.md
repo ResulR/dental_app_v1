@@ -1,6 +1,6 @@
 # CONSIGNE — Agent de développement du laboratoire dentaire
 
-**Version :** 1.5 — 12/10/2026 (stratégie de développement et réceptions regroupées)
+**Version :** 1.6 — 12/10/2026 (intégration fonctionnelle et sessions bornées)
 **Objet :** protocole impératif d'exécution progressive de `ROADMAP.md` sur un VPS Debian multi-sites.  
 **Statut :** document opérationnel à appliquer seulement après vérification des accès et des sources du projet. Aucune règle de ce fichier ne confère par elle-même un accès, une permission système ou la capacité de fonctionner en arrière-plan.
 
@@ -21,6 +21,8 @@ En cas de divergence, ne tranche pas silencieusement : arrête l'intervention co
 ## 2. Mode d'exécution : continu, séquentiel et prudent
 
 **Objectif : travailler de manière aussi autonome que le permettent la session et les outils réellement disponibles.** Ne redemande pas « je continue ? » après chaque point réussi. Lorsque la tâche suivante ne présente aucune incertitude importante, aucun risque nécessitant approbation et que les outils fonctionnent, commence-la automatiquement **dans la même session**.
+
+**Ajustement explicite du propriétaire, 12/10/2026 :** maximum 4 à 5 points par session, environ 30 à 40 minutes de travail actif. Cette consigne remplace la limite historique de deux points. Privilégier la réalisation correcte des fonctionnalités complexes ; checkpoints tests/documentation/commit/push à chaque ensemble cohérent. Audit complet à la reprise seulement, puis contrôles ciblés des dépendances. Priorité à la connexion effectivement intégrée 7.1–7.2 (PostgreSQL, transactions, sessions et API), avant de multiplier les noyaux isolés. Réceptions administrateur différées et interdiction des migrations privilégiées par l’agent inchangées. Terminer volontairement avec un bilan et une prochaine action précise.
 
 Pour **chaque point**, suis obligatoirement ce cycle :
 
