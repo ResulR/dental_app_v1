@@ -1,0 +1,11 @@
+# Inscription clinique — noyau7.3 testé, persistance/API différées
+
+CDC2.2/11/17 et modèleaccounts-clinics audités ; aucunclinic/compliance/registrationmodule préexistant. Champsclinic/dentistfirstname/lastname/email/password/phone/address obligatoires, accepted_terms=true/versionIDactuelle, profilclinic etreviewpending imposés serveur. Aucunprofile/review_state libre, aucuneapprovalautomatique, aucuncompte dentiste individuel. Credentialsstockagehashseulement, trimcontactsans toucherpassword, emailKeyidentique7.1.
+
+PortregisterAtomic doitcréercompte/credential/clinique/acceptationversionconditions/conversationgénérale et audit/outboxdansmêmetransaction, recontrôlercurrentterms sousverrouavantcommit. Dupeemail etchangementterms ne sontpasdéclaréscréationsréussies. Ceportn'estpasadaptateurdurable existant ; pas de routeHTTPbranchée, ni modèle juridique publié. New_inscription déclenchel'événementlaboCDC10.1àrecevoir, aucunmailréel envoyé.
+
+Le service refuse sanshash/storage si currentTermsVersion ouownerInitialized manque. Cesports retournentseulementuneversionapplicable/approuvéepourusage etexistenceownerinitialcohérent ; aucuneversionfictivepardéfaut/initialisationownerpublique. Initialisationtechniqueowner etdocumentsAL/proofacceptance restentàpréparer/recevoir àleursjalons ; nepasinventer identité/textelegal ou exécuterbootstrapprivilegié. Lesdocumentsdev peuventavancer,conformité réelleavantproduction et donnéesmédicalesjamaisdev.
+
+clinicCanSubmit reçoitcontexteactuel serveur :compteclinicactive/reviewapproved/non suspendu/non securitylocked/nonreset. Pending/refused necommandepas mêmeavec credentials valides. Helperseulneprotègepasendpointabsent : middlewarepermissions/ressources ettestAPIréel sont nécessaires avantrecette. Aucunclientcontext/boolen'autoriseunecommande.
+
+7nouveauxunitaires avecportstoreexplicitementdoublé passent(45unitaires total), paramètresfield/refus/termsrace/rate/storagefail/scopestate ;lint/buildAPI/frontières/format passent. Pasd'inscriptionDB/persistenceTerms/sessionHTTP oucommandePGprétenduevalide. LesparcoursPG complets dépendentgrants0010 etbootstrap/registry/persistance,indépendantsducorenécessaireà7.4.

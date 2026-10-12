@@ -1061,7 +1061,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale :**5refusSQL,SessionStorePG/API/two-devices/rotationrace/cookiesTLS-browser/revocationSSE différés ;pas desessionsréelles annoncéesvalidées. Suite7.3indépendante.
 
 ### 7.3 — Implémenter inscription clinique
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Noyau implémenté/testé hors ligne — persistance/API/recette différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance
@@ -1074,6 +1074,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation 7.3 :** service champs/signup toujoursclinicpending/hashonly/termsactuels/ownerinit/guardéligibilité ; registerAtomic etregistrydurables/API àcompléter,aucunbootstrappublic.
+- **Validation hors ligne 7.3 :** 45unitaires dont7signupportsdoublés,lint/buildAPI/frontières/format passés,pic66/100.
+- **Application PostgreSQL 7.3 :** aucunnouvelSQL7.3appliqué ;stockageacceptations/docversions/bootstrapowner etgrants0010 requis avantintégration.
+- **Réception finale 7.3 :** signupPG/API/commandeinterditepending,acceptances/audit/outbox/conversation etraceTermsdifférés ;aucuntextejuridique/identitéownerinventé. Suite7.4indépendante.
 
 ### 7.4 — Implémenter approbation et refus de clinique
 - **Statut :** ☐ À faire
