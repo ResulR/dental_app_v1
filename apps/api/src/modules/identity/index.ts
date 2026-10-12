@@ -23,5 +23,9 @@ export type { SessionRecord, SessionWrite, SessionStore } from "./sessions.js";
 export { createPasswordRecoveryService } from "./recovery.service.js";
 export type { RecoveryRecord } from "./recovery.service.js";
 export { createActionToken, actionTokenDigest } from "./action-tokens.js";
-export { createEmployeeInvitationService } from "./invitations.service.js";
+export {
+  createEmployeeInvitationService,
+  createAdminInvitationService,
+} from "./invitations.service.js";
 export type { EmployeeInvitationRecord } from "./invitations.service.js";
+export { createAdminManagementService } from "./admin-management.service.js";

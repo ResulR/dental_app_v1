@@ -1165,7 +1165,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 7.9 — Implémenter gestion des administrateurs secondaires
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Noyaux invitation/gouvernance préparés — validation hors ligne ; intégration et réception différées
+- **Avancement :** Owner actuel seul, aucune gestion par admin/employee/clinic ; moteur invitation 7.8 réutilisé avec profil et domaine admin fixes, cible admin exacte et révision, validation registry/dependencies avant permissions. Ports atomiques, matrice 7.10 et routes/UI/outbox à compléter. Aucune gestion réelle ou délégation SQL effectuée. Voir docs/ADMIN_GOVERNANCE.md.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance

@@ -20,10 +20,9 @@ export type EmployeeInvitationRecord = {
   consumed: boolean;
   revoked: boolean;
 };
-type Ports = {
+type StoragePorts = {
   admit: (purpose: "issue" | "consume", trustedNetworkKey: string) => boolean;
-  authorize: (actor: Actor, action: "employees.create") => Promise<boolean>;
-  // Recheck active actor/current delegation; force employee/invited account with
+  // Recheck active actor/current authority; force the factory target/invited account with
   // no grants. Create invitation, digest, audit and protected encrypted email intent
   // in one transaction. Existing active/suspended account is never overwritten.
   issueAtomic: (
@@ -31,14 +30,14 @@ type Ports = {
     input: {
       emailOriginal: string;
       emailKey: string;
-      profile: "employee";
+      profile: "employee" | "admin";
       token: string;
       digest: Buffer;
       expiresAt: number;
     },
   ) => Promise<"invited" | "conflict" | "denied">;
   findByDigest: (digest: Buffer) => Promise<EmployeeInvitationRecord | null>;
-  // Lock/recheck employee+invited/account revision/email/digest/expiry at SQL time,
+  // Lock/recheck the fixed target+invited/account revision/email/digest/expiry at SQL time,
   // consume once, insert hash credential, activate account, increment epoch/revision,
   // append audit atomically; never grant rights/change profile/unlock/issue session.
   activateAtomic: (input: {
@@ -54,10 +53,12 @@ type Ports = {
 type Result = {
   kind: "invited" | "activated" | "conflict" | "denied" | "invalid" | "limited";
 };
-export function createEmployeeInvitationService(
-  ports: Ports,
+function createInvitationService(
+  ports: StoragePorts,
   policy: { invitationLifetimeMs: number },
-  clock: () => number = Date.now,
+  clock: () => number,
+  target: "employee" | "admin",
+  authorizeIssuance: (actor: Actor) => Promise<boolean>,
 ) {
   const lifetime = policy.invitationLifetimeMs;
   if (!Number.isSafeInteger(lifetime) || lifetime < 1000)
@@ -82,8 +83,8 @@ export function createEmployeeInvitationService(
   ): record is EmployeeInvitationRecord {
     return (
       !!record &&
-      record.purpose === "employee" &&
-      record.profile === "employee" &&
+      record.purpose === target &&
+      record.profile === target &&
       record.lifecycle === "invited" &&
       !record.securityLocked &&
       !record.consumed &&
@@ -103,14 +104,16 @@ export function createEmployeeInvitationService(
       email: unknown,
       trustedNetworkKey: string,
     ): Promise<Result> {
-      if (actor.profile !== "owner" && actor.profile !== "admin")
+      if (
+        actor.profile !== "owner" &&
+        (target === "admin" || actor.profile !== "admin")
+      )
         return { kind: "denied" };
       network(trustedNetworkKey);
       if (!ports.admit("issue", trustedNetworkKey)) return { kind: "limited" };
       const key = emailKey(email);
       if (!key) return { kind: "invalid" };
-      if (!(await ports.authorize(actor, "employees.create")))
-        return { kind: "denied" };
+      if (!(await authorizeIssuance(actor))) return { kind: "denied" };
       const expiresAt = now() + lifetime;
       if (
         !Number.isSafeInteger(expiresAt) ||
@@ -121,8 +124,10 @@ export function createEmployeeInvitationService(
         kind: await ports.issueAtomic(actor, {
           emailOriginal: (email as string).trim(),
           emailKey: key,
-          profile: "employee",
-          ...createActionToken("employee-invitation"),
+          profile: target,
+          ...createActionToken(
+            target === "employee" ? "employee-invitation" : "admin-invitation",
+          ),
           expiresAt,
         }),
       };
@@ -135,7 +140,10 @@ export function createEmployeeInvitationService(
       network(trustedNetworkKey);
       if (!ports.admit("consume", trustedNetworkKey))
         return { kind: "limited" };
-      const digest = actionTokenDigest("employee-invitation", token);
+      const digest = actionTokenDigest(
+        target === "employee" ? "employee-invitation" : "admin-invitation",
+        token,
+      );
       if (!digest) return { kind: "denied" };
       const record = await ports.findByDigest(digest);
       if (!usable(record, digest, now())) return { kind: "denied" };
@@ -163,4 +171,26 @@ export function createEmployeeInvitationService(
       };
     },
   };
+}
+
+export function createEmployeeInvitationService(
+  ports: StoragePorts & {
+    authorize: (actor: Actor, action: "employees.create") => Promise<boolean>;
+  },
+  policy: { invitationLifetimeMs: number },
+  clock: () => number = Date.now,
+) {
+  return createInvitationService(ports, policy, clock, "employee", (actor) =>
+    ports.authorize(actor, "employees.create"),
+  );
+}
+export function createAdminInvitationService(
+  ports: StoragePorts & { authorizeOwner: (actor: Actor) => Promise<boolean> },
+  policy: { invitationLifetimeMs: number },
+  clock: () => number = Date.now,
+) {
+  // authorizeOwner MUST check current active account against owner_slot, not a grant.
+  return createInvitationService(ports, policy, clock, "admin", (actor) =>
+    ports.authorizeOwner(actor),
+  );
 }
