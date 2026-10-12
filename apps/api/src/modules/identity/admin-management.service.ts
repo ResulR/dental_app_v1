@@ -1,3 +1,4 @@
+import { validateGrantSet } from "../permissions/index.js";
 type Actor = {
   accountId: string;
   profile: "owner" | "admin" | "employee" | "clinic";
@@ -76,6 +77,7 @@ export function createAdminManagementService(ports: Ports) {
           codes.length > 29 ||
           codes.some((code) => typeof code !== "string" || code.length > 64) ||
           new Set(codes).size !== codes.length ||
+          !validateGrantSet(codes, "admin") ||
           !(await ports.validatePermissions(codes))
         )
           return { kind: "invalid" };
