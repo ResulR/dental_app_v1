@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { actionTokenDigest, createActionToken } from "./action-tokens.js";
 import { emailKey } from "./authentication.service.js";
 import { AuthenticationBusy, hashPassword } from "./passwords.js";
 export type RecoveryRecord = {
@@ -44,16 +44,6 @@ type Ports = {
   hash?: typeof hashPassword;
 };
 type Result = { kind: "accepted" | "reset" | "denied" | "invalid" | "limited" };
-function digestToken(token: unknown) {
-  if (typeof token !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(token))
-    return null;
-  const bytes = Buffer.from(token, "base64url");
-  if (bytes.length !== 32 || bytes.toString("base64url") !== token) return null;
-  return createHash("sha256")
-    .update("dental-lab:password-recovery:v1:")
-    .update(bytes)
-    .digest();
-}
 export function createPasswordRecoveryService(
   ports: Ports,
   policy: { tokenLifetimeMs: number },
@@ -107,11 +97,10 @@ export function createPasswordRecoveryService(
         !Number.isFinite(new Date(expiresAt).getTime())
       )
         throw new Error("INVALID_RECOVERY_POLICY");
-      const token = randomBytes(32).toString("base64url");
+      const challenge = createActionToken("password-recovery");
       await ports.enqueueAtomic({
         emailKey: key,
-        token,
-        digest: digestToken(token) as Buffer,
+        ...challenge,
         expiresAt,
       });
       return { kind: "accepted" };
@@ -122,7 +111,7 @@ export function createPasswordRecoveryService(
       trustedNetworkKey: string,
     ): Promise<Result> {
       network(trustedNetworkKey);
-      const digest = digestToken(token);
+      const digest = actionTokenDigest("password-recovery", token);
       if (
         !ports.admit(
           "consume",

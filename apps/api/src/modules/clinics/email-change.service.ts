@@ -1,5 +1,8 @@
-import { createHash, randomBytes } from "node:crypto";
-import { emailKey } from "../identity/index.js";
+import {
+  emailKey,
+  actionTokenDigest,
+  createActionToken,
+} from "../identity/index.js";
 type Actor = {
   accountId: string;
   profile: "owner" | "admin" | "employee" | "clinic";
@@ -72,17 +75,6 @@ type Ports = {
 function revision(value: number) {
   return Number.isSafeInteger(value) && value > 0;
 }
-function digestToken(token: unknown): Buffer | null {
-  if (typeof token !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(token))
-    return null;
-  const bytes = Buffer.from(token, "base64url");
-  if (bytes.length !== 32 || bytes.toString("base64url") !== token) return null;
-  // Domain separation: email-confirmation tokens cannot be session/reset digests.
-  return createHash("sha256")
-    .update("dental-lab:email-change:v1:")
-    .update(bytes)
-    .digest();
-}
 export function createClinicEmailChangeService(
   ports: Ports,
   policy: { challengeLifetimeMs: number },
@@ -148,8 +140,7 @@ export function createClinicEmailChangeService(
           !Number.isFinite(new Date(expiresAt).getTime())
         )
           throw new Error("INVALID_EMAIL_CHANGE_POLICY");
-        const token = randomBytes(32).toString("base64url");
-        challenge = { token, digest: digestToken(token) as Buffer, expiresAt };
+        challenge = { ...createActionToken("email-change"), expiresAt };
       }
       return {
         kind: await ports.decideAtomic(actor, requestId, {
@@ -164,7 +155,7 @@ export function createClinicEmailChangeService(
         throw new Error("INVALID_EMAIL_CHANGE_CONTEXT");
       if (!ports.admitConfirmation(trustedNetworkKey))
         return { kind: "limited" };
-      const digest = digestToken(token);
+      const digest = actionTokenDigest("email-change", token);
       if (!digest) return { kind: "denied" };
       const record = await ports.findByDigest(digest);
       const timestamp = now();

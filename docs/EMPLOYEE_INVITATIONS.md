@@ -1,0 +1,11 @@
+# Invitations employés — point 7.8
+
+État : noyau préparé hors ligne, pas d'invitation réelle envoyée ou de compte activé. Le schéma public.invitations existe dans 0002 déjà réceptionnée : ne pas le recréer. Son FK account_id/purpose, son digest32, son expiration et son index unique d'invitation non terminale sont réutilisables. Une invitation expirée reste non terminale pour cet index tant qu'elle n'est pas révoquée ; une réémission future devra révoquer l'ancienne dans sa transaction, sans rejouer de migration.
+
+Propriétaire ou administrateur actuel avec employees.create peut inviter un employé, jamais un administrateur par ce service. Le compte créé doit être employee/invited, individuel, sans permissions initiales inventées. Un compte actif/suspendu existant ne peut être écrasé. La création du compte, de l'invitation, de l'audit et d'une intention d'e-mail privée chiffrée doit être atomique ; le token transitoire reste réservé à cette livraison, sans retour au créateur.
+
+La consommation vérifie profil/purpose employee, lifecycle invited, absence de verrou/consommation/révocation, adresse cible correspondant à l'adresse actuelle, digest et expiration avant/après KDF. Le destinataire choisit son propre mot de passe, avec scrypt 7.1 réutilisé. activateAtomic doit recontrôler ces conditions et la révision sous verrou à l'instant SQL, créer le credential hash, consommer et activer/historiser dans une même transaction. Aucun droit attribué, changement de profil, levée de verrou ou connexion automatique.
+
+Le helper action-tokens mutualise le format canonique random32/digest SHA-256 séparé pour confirmation e-mail, récupération et invitations. Les chaînes de domaines des noyaux 7.6/7.7 restent identiques ; les sessions opaques 7.2 ne sont pas modifiées. Une durée positive est obligatoire sans durée de production inventée. Admission réseau avant lookup/KDF/émission ; configuration durable/anti-abus à recevoir.
+
+Restent : repositories atomiques et projection exacte du schéma, outbox chiffrée/provider, routes/formulaires/liens sûrs, permission/délégation actuelle, politique de durée et réémission, tests PostgreSQL révision/races/ROLLBACK/historique et navigateur. Tests ports doubles ne constituent pas réception. Les invitations administrateurs et leur gestion restent exclusivement owner et seront traitées en 7.9.

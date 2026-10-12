@@ -1149,7 +1149,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 7.8 — Implémenter invitation employés
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Noyau invitations préparé — validation hors ligne ; intégration et réception différées
+- **Avancement :** Schéma invitations 0002 réutilisé sans nouvelle migration ; autorisation employees.create owner/admin, profil employee forcé, preuve unique expirante/périmètre e-mail, KDF scrypt existante et contrat activation atomique préparés. Helper de jetons mutualisé sans changer les domaines de 7.6/7.7. Aucun compte activé, droit attribué ou e-mail envoyé. Repositories, outbox chiffrée, routes et recettes PG/navigateur restent à implémenter. Voir docs/EMPLOYEE_INVITATIONS.md.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance
