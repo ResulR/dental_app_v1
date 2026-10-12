@@ -11,3 +11,12 @@ export {
 } from "./authentication.service.js";
 export type { AuthenticationResult } from "./authentication.service.js";
 export { createIdentityRepository } from "./identity.repository.js";
+
+export {
+  createSessionService,
+  readSessionCookie,
+  clearSessionCookie,
+  mutationOriginAllowed,
+  sessionCookieName,
+} from "./sessions.js";
+export type { SessionRecord, SessionWrite, SessionStore } from "./sessions.js";

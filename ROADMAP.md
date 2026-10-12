@@ -1041,7 +1041,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale :**loginHTTP/PG,ratedurable/config/réseau,charge etsessions7.2 différés. Pasd'authproductionready. Suite7.2 indépendante.
 
 ### 7.2 — Implémenter sessions multi-appareils
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Noyau implémenté/testé hors ligne — persistance/API/recette différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance
@@ -1054,6 +1054,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation :**servicetokens/digests/cookies/rotation/revocation/epoch/Origin ;portSessionStore PG/transactionaudit/API à compléter, pasderoutebranchée.0011bornepersistée préparée.
+- **Validation hors ligne :**38unitaires dont7sessionsportsmémoire passent ;catalogue/filtre/SHA/lint/buildAPI/frontières/format passent aprèscorrectionformat.
+- **Application PostgreSQL :**0011 NONAPPLIQUÉE,SQL/SHA/POINT_7_2_ADMIN préparés,jalon7distinctdelot6 ;exigesessionsvides sinonarrêtétapeSQL.
+- **Réception finale :**5refusSQL,SessionStorePG/API/two-devices/rotationrace/cookiesTLS-browser/revocationSSE différés ;pas desessionsréelles annoncéesvalidées. Suite7.3indépendante.
 
 ### 7.3 — Implémenter inscription clinique
 - **Statut :** ☐ À faire
