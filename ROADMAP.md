@@ -1249,7 +1249,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception :** raccordement middleware/SessionStore et ports 7.9, recontrôle transactionnel mutations/lecture audit 17.1, tests SQL/API/concurrence/SSE/navigateur et alertes propriétaire encore différés. Pas de validation globale du chapitre.
 
 ### 7.14 — Documenter récupération exceptionnelle propriétaire
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Procédure documentée — simulation encadrée et réception différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance
@@ -1262,6 +1262,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation :** procédure hors UI dans docs/OWNER_RECOVERY.md : même propriétaire/slot, contrôle indépendant identité/autorité, approbation ponctuelle, révocation/challenge/reset/audit atomiques, preuve expurgée et reprise sans rejeu. Aucun mécanisme privilégié, secret maître ou route de secours installé.
+- **Testé hors ligne :** revue documentaire contre CDC, modèle, récupération7.7, audit0008 et protections7.13 ; matrice de 11 scénarios préparée. Test existant7.13 de refus owner.recover_exceptional réussi dans le lot111 ; aucune simulation d'intervention réelle annoncée.
+- **Appliqué :** documentation seulement, aucun compte/session/SQL/service modifié.
+- **Réception :** identité opérateur/vérificateur et méthode d'autorité, artefact ponctuel approuvé, adapters/challenges/outbox/audit et simulation PostgreSQL/API/SSE/navigateur requis. Suite indépendante7.15 ; ne pas exécuter la procédure sur cette seule préparation.
 
 ### 7.15 — Documenter transfert exceptionnel de propriété
 - **Statut :** ☐ À faire
