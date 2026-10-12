@@ -1213,7 +1213,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 7.12 — Implémenter suspension, réactivation et sécuriser compte
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Noyau états/sécurisation préparé — validation hors ligne ; intégration et réception différées
+- **Avancement :** Cible clinic/employee, permissions actuelles/révision/commande stricte, suspension compte+clinique et epoch/révocations, réactivation sans lever flags, sécurisation clinique owner seul. Réutilise 7.9/7.10, aucun compte réel modifié. Adaptateurs SQL/API/SSE/UI, audit champs sécurité et procédure vérification du demandeur/récupération compromise restent à implémenter ; aucune révocation API/événements réelle déclarée. Voir docs/ACCOUNT_STATE.md.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance

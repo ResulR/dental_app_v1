@@ -1,0 +1,13 @@
+# Suspension, réactivation et sécurisation — noyau 7.12
+
+État : noyau préparé et tests hors ligne ; aucune session ou compte réel modifié. Le service réutilise les contrôles 7.10 et délègue la gestion admin au parcours owner-only 7.9 ; toute opération ordinaire sur le propriétaire est refusée.
+
+La cible est exclusivement clinic/employee, identifiée côté serveur. Owner actuel ou grant clinics.manage pour clinique / employees.suspend pour employé, avec session/epoch/grant actuel obligatoire. Une commande ne contient que cible, révision et opération ; aucun flag/profil/rôle client n'est accepté. secure_clinic exige owner actuel et cible clinique, jamais un grant délégué.
+
+Suspension : compte suspended et flag clinique suspended si applicable, révocation sessions/invitations non terminales, auth_epoch incrémenté, audit/événement atomiques. Réactivation : clinic flag false et compte active si credential existe ; pour employee sans credential, rester invited avec nouvelle invitation nécessaire (H712-01, évite activation sans mot de passe). Ne jamais ressusciter les anciens tokens/sessions. La réactivation ne supprime pas reset_required et exige encore une récupération si nécessaire ; security_locked interdit la réactivation ordinaire.
+
+Sécurisation clinique : security_locked et credential_reset_required à true, sessions et challenges/invitations actifs révoqués via epoch/registre, données et statuts métier conservés. Pas de retrait d'approbation, suppression de travaux, effacement d'historique ou récupération serveur du coffre R15. Un compte sécurisé reste bloqué : vérification du demandeur et reset sécurisé sont un parcours distinct à préparer, aucun déverrouillage automatique par la récupération ordinaire7.7.
+
+applyAtomic doit recontrôler tous états/permissions/cibles/révisions sous verrous et appliquer compte+clinique+epoch+révocations+audit/outbox ensemble. Les streams/jobs/downloads doivent recontrôler session/état au moment de chaque action/diffusion ; fermer les flux après commit. Le noyau n'implémente pas encore ce raccordement, et ne prouve pas une révocation API/SSE réelle. Un appareil hors ligne ne peut être purgé immédiatement ; appliquer les règles coffre lors du retour réseau.
+
+Restent : adaptateurs SQL/middleware/SSE, UI et preuve réelle de suspension/révocation/rejeu/concurrence/rollback, migration ciblée des champs d'audit pour security_locked/reset_required/clinic suspension (liste0008 actuellement fermée), procédure de vérification d'identité/récupération clinique compromise et navigateur. Aucun nouveau rôle, service, secret ou privilège installé.
