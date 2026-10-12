@@ -1101,7 +1101,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale 7.4 :** 4refusSQL/ROLLBACK etpermissions/race/transaction/audit/notificationsPG-API différés ; pas de décision réelle ni étatproductionvalidé. Suite7.5indépendante.
 
 ### 7.5 — Implémenter profil clinique et modifications autorisées
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Service et formulaire préparés — validation hors ligne ; intégration et réception différées
+- **Avancement :** Contrats stricts partagés, périmètre clinique serveur, habilitation clinics.manage, révision attendue et formulaire albanais préparés. Aucun changement e-mail/statut/sécurité/suppression permis. Voir docs/CLINIC_PROFILE.md. Adaptateur transactionnel, routes/session/CSRF, historique durable consultable et branchement du formulaire restent à implémenter ; recette PostgreSQL et navigateur non exécutée. Schémas ajoutés au snapshot après contrôle de préservation intégrale des contrats précédents.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance

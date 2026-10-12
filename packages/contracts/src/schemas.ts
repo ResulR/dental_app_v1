@@ -165,24 +165,3 @@ export function submissionWarnings(input: ClinicSubmission): readonly string[] {
     ? ["NO_TEETH_OR_DESCRIPTION"]
     : [];
 }
-export function exportJsonSchemas() {
-  const schemas = {
-    ObjectId: ObjectIdSchema,
-    Revision: RevisionSchema,
-    Status: StatusSchema,
-    Patient: PatientSchema,
-    Tooth: ToothSchema,
-    ClinicSubmission: ClinicSubmissionSchema,
-    MutationPrecondition: MutationPreconditionSchema,
-    Problem: ProblemSchema,
-    LogisticsProjection: LogisticsProjectionSchema,
-    SubmissionReceipt: SubmissionReceiptSchema,
-    Health: HealthSchema,
-  };
-  return Object.fromEntries(
-    Object.entries(schemas).map(([name, schema]) => [
-      name,
-      z.toJSONSchema(schema, { target: "draft-2020-12", io: "input" }),
-    ]),
-  );
-}

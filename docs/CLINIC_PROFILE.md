@@ -1,0 +1,11 @@
+# Profil clinique — point 7.5
+
+État : service et formulaire préparés ; tests hors ligne à consigner dans le journal. Le formulaire n'est pas encore branché dans App : l'identité/session HTTP et les adaptateurs PostgreSQL des points 7.1–7.4 restent à intégrer. Aucun accès réel ou test navigateur n'est annoncé.
+
+Le contrat partagé autorise uniquement nom de clinique, prénom/nom du dentiste, téléphone, adresse et révision attendue. Tous les champs sont obligatoires, trimés ; H75-01 : limite technique réversible de 2000 caractères par champ, sans imposer un format téléphonique national inventé. E-mail, statut d'approbation, suspension, sécurité, permissions, identifiants de compte et suppression sont refusés. Le changement d'e-mail suit 7.6.
+
+L'acteur provient exclusivement de la session serveur actuelle. La clinique ne peut lire/éditer que son clinicId vérifié ; le laboratoire doit posséder clinics.manage. L'adaptateur authorize doit aussi vérifier compte/session actifs et droit actuel. readAuthorized recontrôle l'accès au moment de la lecture ; un DTO d'une autre clinique est refusé. updateAtomic doit recontrôler identité, appartenance ou permission et révision dans la même transaction que la modification et l'audit append-only. Aucun adaptateur de stockage n'est simulé comme prêt.
+
+Le formulaire React utilise les composants partagés, labels explicites, cibles 44 px, messages albanais, lecture seule et blocage hors connexion. Une réponse perdue, un conflit ou un refus impose une relecture avant nouvel essai ; aucune sauvegarde automatique ou stockage local des coordonnées. Le parent doit remonter le formulaire avec une clé clinicId/révision après chargement autorisé. canEdit protège l'ergonomie ; le serveur reste seul autoritaire.
+
+Restent : adaptateur transactionnel, routes sous session/CSRF, audit durable et historique consultable selon permissions (sans valeurs sensibles dans les logs), branchement du formulaire et rechargement autorisé, tests PostgreSQL de concurrence/révocation/cloisonnement, tests navigateur clavier/tactile/mobile/lecteur selon R17. Aucun endpoint, table d'historique, déploiement ou migration nouvelle n'est prétendu réalisé. Le point reste partiellement implémenté jusqu'à ces preuves.

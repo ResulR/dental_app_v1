@@ -454,6 +454,141 @@
         "status"
       ],
       "additionalProperties": false
+    },
+    "ClinicContactFields": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "dentist_first_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "dentist_last_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "phone": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "address": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      },
+      "required": [
+        "name",
+        "dentist_first_name",
+        "dentist_last_name",
+        "phone",
+        "address"
+      ],
+      "additionalProperties": false
+    },
+    "ClinicContactUpdate": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "expected_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "dentist_first_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "dentist_last_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "phone": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "address": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      },
+      "required": [
+        "expected_revision",
+        "name",
+        "dentist_first_name",
+        "dentist_last_name",
+        "phone",
+        "address"
+      ],
+      "additionalProperties": false
+    },
+    "ClinicProfile": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "dentist_first_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "dentist_last_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "phone": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "address": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "name",
+        "dentist_first_name",
+        "dentist_last_name",
+        "phone",
+        "address"
+      ],
+      "additionalProperties": false
     }
   }
 }

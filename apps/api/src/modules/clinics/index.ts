@@ -9,3 +9,4 @@ export type {
 
 export { createClinicReviewService } from "./review.service.js";
 export type { ClinicDecision } from "./review.service.js";
+export { createClinicProfileService } from "./profile.service.js";
