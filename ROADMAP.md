@@ -1229,7 +1229,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 7.13 — Implémenter protections de compte propriétaire
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Protections et adaptateur de lecture préparés — tests hors ligne ; intégration/réception différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance
@@ -1242,6 +1242,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation :** unicité 0002 conservée ; opérations owner-only fermées/non délégables, service de relecture et repository paramétré compte/session/epoch/owner_slot/limites. Sécurisation clinique réutilise le prédicat commun. Aucun transfert/suspension propriétaire ou mutation audit exposé. Voir docs/OWNER_PROTECTION.md.
+- **Testé hors ligne :** qualité complète (build contrats/API, trois typechecks, lint, format, frontières, résolution), 111 tests unitaires dont 7 nouveaux, 6 intégrations hors PostgreSQL et build web réussis. Le transport SQL est doublé, pas une preuve des prédicats PostgreSQL.
+- **Appliqué :** aucune nouvelle migration ni opération sur comptes réels ; audit readonly confirme 12 tables/2 vues, session_limits absente, migrateurs NOLOGIN et zéro session de migration. 0002 déjà réceptionnée ; 0010/0011 restent prérequis.
+- **Réception :** raccordement middleware/SessionStore et ports 7.9, recontrôle transactionnel mutations/lecture audit 17.1, tests SQL/API/concurrence/SSE/navigateur et alertes propriétaire encore différés. Pas de validation globale du chapitre.
 
 ### 7.14 — Documenter récupération exceptionnelle propriétaire
 - **Statut :** ☐ À faire

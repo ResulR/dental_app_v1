@@ -1,6 +1,7 @@
 import {
   hasEffectivePermission,
   isCurrentOwner,
+  hasOwnerPermission,
 } from "../permissions/index.js";
 import type { PermissionContext } from "../permissions/index.js";
 type ActorRef = { accountId: string; sessionId: string };
@@ -81,7 +82,11 @@ export function createAccountStateService(ports: Ports) {
       const target = current.target;
       const owner = isCurrentOwner(current.actor);
       if (command.operation === "secure_clinic") {
-        if (!owner || target.profile !== "clinic") return { kind: "denied" };
+        if (
+          !hasOwnerPermission(current.actor, "clinics.secure") ||
+          target.profile !== "clinic"
+        )
+          return { kind: "denied" };
       } else if (
         !owner &&
         !hasEffectivePermission(

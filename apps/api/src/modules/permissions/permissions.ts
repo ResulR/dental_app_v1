@@ -69,6 +69,20 @@ export function isCurrentOwner(context: PermissionContext): boolean {
     context.ownerCurrent === true
   );
 }
+// Intrinsic owner operations, deliberately absent from the delegable registry.
+// No transfer, owner suspension/deletion, audit mutation or recovery bypass.
+export function isOwnerPermission(action: unknown): boolean {
+  return (
+    typeof action === "string" &&
+    ["audit.read_global", "admins.manage", "clinics.secure"].includes(action)
+  );
+}
+export function hasOwnerPermission(
+  context: PermissionContext,
+  action: unknown,
+): boolean {
+  return isOwnerPermission(action) && isCurrentOwner(context);
+}
 export function grantableCode(
   targetProfile: "admin" | "employee",
   code: unknown,

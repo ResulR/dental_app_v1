@@ -30,3 +30,6 @@ export {
 export type { EmployeeInvitationRecord } from "./invitations.service.js";
 export { createAdminManagementService } from "./admin-management.service.js";
 export { createAccountStateService } from "./account-state.service.js";
+export { createOwnerAccessService } from "./owner-access.service.js";
+export type { OwnerActorRef } from "./owner-access.service.js";
+export { createOwnerAccessRepository } from "./owner-access.repository.js";
