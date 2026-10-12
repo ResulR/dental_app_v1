@@ -1081,7 +1081,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale 7.3 :** signupPG/API/commandeinterditepending,acceptances/audit/outbox/conversation etraceTermsdifférés ;aucuntextejuridique/identitéownerinventé. Suite7.4indépendante.
 
 ### 7.4 — Implémenter approbation et refus de clinique
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Noyau implémenté/testé hors ligne — persistance/API/recette différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance
@@ -1094,6 +1094,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation 7.4 :** serviceautorisationclinics.manage/casrévision/décision/raisonfacultative ; decideAtomic/PGetauditnotifications àcompléter, 0012historiqueappend préparé.
+- **Validation hors ligne 7.4 :** 50unitaires dont5décisionportsdoublés,catalogue/filtre/lint/buildAPI/frontières/format passent,pic66/100.
+- **Application PostgreSQL 7.4 :** 0012 NONAPPLIQUÉE,SHA/procédurePOINT_7_4_ADMIN,jalon7 àpréparer.
+- **Réception finale 7.4 :** 4refusSQL/ROLLBACK etpermissions/race/transaction/audit/notificationsPG-API différés ; pas de décision réelle ni étatproductionvalidé. Suite7.5indépendante.
 
 ### 7.5 — Implémenter profil clinique et modifications autorisées
 - **Statut :** ☐ À faire
