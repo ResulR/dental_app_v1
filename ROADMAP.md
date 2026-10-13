@@ -1068,6 +1068,9 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Recette protégée13/10/2026 :** archiveAPI/web/deps et probePGrollback prêts à approbation, jamais exécutés ;contrôle ACLauth avantdémarrage. FIRST_LOGIN_RECEPTION précisechaquemigration/SHA/commande etpermissions. RecetteHTTPprivée/HTTPSPlaywright opt-inpréparée,NONréceptionnée. Bootstrapprivé et harnesscommit/courses restentcodeàécrire.
 
 ### 7.3 — Implémenter inscription clinique
+
+> Complément intégration première connexion13/10 : bootstrap privé du propriétaire implémenté (hors inscription publique), autorisation privée/empreintes/transaction verrouillée/refus réutilisation/audit et marqueur durable ; harness PostgreSQL isolé commit/rollback/concurrence préparé. Contrôles hors ligne réussis, aucune création réelle ni réception SQL/HTTPS. Dossiers FIRST_OWNER_BOOTSTRAP_ADMIN et FIRST_LOGIN_RUNTIME ; validation réelle groupée possible après accords particuliers. L'inscription clinique de ce point reste partielle. Email critique livré et déploiement complet restent ouverts.
+
 - **Statut :** ◐ Noyau implémenté/testé hors ligne — persistance/API/recette différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test

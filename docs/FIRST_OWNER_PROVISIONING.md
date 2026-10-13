@@ -18,10 +18,12 @@ Un owner actif/slot conforme/credential valide, flags de sécurité cohérents, 
 
 Ensuite, recette protégée SQL/ACL en rollback avec employee synthétique ; elle refuse si runtime actif ou limiteur déjà utilisé. Puis runtime approuvé/TLS et connexion personnelle. Le propriétaire saisit ses credentials via HTTPS et vérifie la déconnexion/révocation. Les secrets et preuves humaines ne sont jamais requis par l'agent pour développer.
 
-## Prêt et restant à développer
+## État au13/10/2026 — outil privé implémenté
 
-Prêts : contraintes SQL0002, canonicalisation/KDF7.1, garde runtime, lecture owner_slot, recettes auth et contrôles négatifs hors ligne. Le propriétaire peut approuver l'architecture et le périmètre de ce bootstrap sans fournir ses secrets.
+Outil réel préparé : scripts/owner-bootstrap-admin.py (supervision humaine protégée), owner-bootstrap-worker.mjs (hachage runtime / écriture administrative), owner-bootstrap-core.mjs (transaction fermée). Aucun endpoint ni droit runtime nouveau. Autorisation privée à durée limitée, marqueur de consommation durable, verrou SQL, refus de réutilisation et résultat incertain sans rejeu. Les preuves d'identité restent humaines ; un UUID seul n'est pas une preuve d'autorité.
 
-**Non prêt à exécuter :** outil administratif ponctuel de bootstrap avec canal d'entrée privée, preuve d'autorité, transaction paramétrée, audit, secret handling de bout en bout et artefact protégé. Aucune commande INSERT avec placeholders de secrets n'est fournie comme opération sûre. Son absence reste un vrai obstacle logiciel à un bootstrap guidé ; l'administrateur n'est donc pas encore le seul dernier obstacle à une première connexion. Prochaine préparation dédiée7.3, sans créer un endpoint bootstrap ni élargir0010.
+Dossier exécutable après approbation : [FIRST_OWNER_BOOTSTRAP_ADMIN](admin-proposals/FIRST_OWNER_BOOTSTRAP_ADMIN.md), [copie/SHA](admin-proposals/OWNER_BOOTSTRAP_COPY.md), [runtime](admin-proposals/FIRST_LOGIN_RUNTIME.md). Harness réel commit/atomicité/rollback/perte de connexion/concurrence préparé pour cluster isolé neuf, jamais une fixture owner engagée sur le VPS.
 
-Alertes7.13 : login propriétaire prépare maintenant outbox/notification interne/livraison email dans la transaction ; worker/fournisseur/template et preuve de réception du mail restent à développer/configurer/recevoir. Ne pas présenter une ligne pending comme un email livré.
+**Implémenté et testé hors ligne ; NON appliqué, NON réceptionné.** Aucun compte réel créé. Nous pouvons passer à la validation réelle groupée du bootstrap et du premier parcours de connexion. Elle commence par la recette PostgreSQL isolée puis les migrations/ACL et le compte expressément approuvé. Domaine/port/certificat/politiques restent des paramètres administrateur à confirmer ; la configuration exacte TLS dépend de ces valeurs.
+
+Alertes7.13 : file durable et atomique prête, mais worker/fournisseur/template et preuve de réception du mail restent à développer/configurer/recevoir. Ce manque empêche de déclarer la production complètement conforme ; il ne doit pas être masqué par une première session HTTPS réussie.

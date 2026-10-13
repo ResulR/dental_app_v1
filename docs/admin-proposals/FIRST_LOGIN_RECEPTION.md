@@ -121,12 +121,12 @@ Le contrôle auth-readiness teste ces droits avant écoute, en plus de la garde 
 ## Suite ordonnée et état de disponibilité
 
 1. Recevoir migrations/ACL ci-dessus ; arrêter si.pending, opincertaine ou divergent.
-2. Préparer/approuver le bootstrap suivant FIRST_OWNER_PROVISIONING.md :l’outil administratif sécurisé reste à développer. Ne pas utiliser une invitation/récupération ou une route publique pour le contourner.
+2. Recevoir le harness commit/rollback/concurrence sur cluster isolé, puis approuver le bootstrap privé suivant FIRST_OWNER_BOOTSTRAP_ADMIN.md et OWNER_BOOTSTRAP_COPY.md. Outil implémenté/testé hors ligne, aucune exécution privilégiée ; pas de route publique.
 3. Copier et vérifier le bundle protégé selon AUTH_RUNTIME_ADMIN.md ; exécuter le probe sousruntime994 avec API arrêtée/limiteur inutilisé. Ce probe annule employee/sessions/audit/compteurs et valide SQL/ACL/FK séquentiels, PAS commitdurable/course/two-conn.
 4. Paramètres publics à approuver :domaine HTTPS, port loopback, durées sessions/borne et seuils limiteur, origine/proxy fiable. Aucun port ou domaine n’est inventé. Pas de fallback aux headers réseau client.
-5. Déploiement/TLS/routage dédié selon19.3/19.4, sans toucher d’autres services ; aucune commande de mise en service complète tant que ces valeurs/implémentation système ne sont pas validées.
+5. FIRST_LOGIN_RUNTIME.md fournit validation des paramètres par le code réel et lancement transitoire de réception proposé. Domaine/port/certificat/politiques à approuver, vhost TLS exact à finaliser avec ces valeurs ; aucune modification de service voisin autorisée.
 6. Recette HTTP réelle et navigateur HTTPS selon AUTH_HTTPS_RECIPE.md et POINT_7_1_2_INTEGRATION_ADMIN.md ; worker/fournisseur d’alertes à recevoir.
 
 **Prêt pour revue/exécution après approbation :** fichiers migrations/recettes déjà préparés, commandes individuelles, bundle figé et probe PostgreSQL rollback sousruntime, recette HTTPS automatique opt-in.
 
-**Reste à développer :** bootstrapadministratif privé, harness commit/concurrence/pannesHTTP sur vraiebase, livraison du worker/template d’alertes et partie déploiement contrôlée. RéceptionsSQL et navigateur NON exécutées. L’administrateur n’est pas encore le seul obstacle :ne pas demander une validation qui prétendrait combler ces manques de code.
+**Mise à jour13/10 :** bootstrap privé et harness PostgreSQL réel commit/rollback/concurrence implémentés, contrôles hors ligne exécutés. Bundle distinct SHA961ac181518d132a6d25c43c4a7d989d31024bcf58606834c31205a8912a8a00. Nous pouvons passer à la validation réelle groupée du premier compte/login après approbations particulières. SQL, navigateur et commandes administrateur NON exécutés. Restent hors de cette préparation : automatisation HTTP avec pannes sur vraiebase, worker/template/fournisseur email et déploiement persistant complet. La recette manuelle HTTP/HTTPS est prête ; vhost exact attend domaine/port/certificat. Ne pas déclarer production entièrement conforme tant que les alertes ne sont pas livrées et les réceptions réussies.
