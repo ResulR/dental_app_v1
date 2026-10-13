@@ -13,3 +13,7 @@ Limiteurprélookup/hash synchronedeuxclés compte/origineréseau, clésSHAenmém
 Tests réels 7.1 :10nouveauxunitaires incluant vraiNode scrypt/sels/mauvaispassword/coûtinvalide/busy, limitercompte/IP/capacité/horloge/policy etservicevalid-invalide viaportsdoublés. 31unitaires au total et6intégrations horsDBréelle passent ;build/TStypage/lint/format/frontières passés. Linterregexcontrôles échoueinitialement, corrigé sansretirervalidation puisretestpassé. AucuntestloginHTTP/cookie/DBréelle prétendu effectué. Integrationcredentials/ratepersistent/sessions/routes àpréparer7.2+ avecgrants0010réceptionnés ;leursabsencesne bloquentpas codeindépendant.
 
 Sourcesprimaires consultées12/10/2026 : https://nodejs.org/docs/latest-v22.x/api/crypto.html ; https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html ; https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html . Pas d'installationdépendances ni modificationNodeglobal.
+
+## Mise à jour intégration13/10/2026
+
+Les mentions « aucun endpoint/store branché » ci-dessus décrivent la préparation historique. Repositories PostgreSQL, limiteur persistant0013, transactions, routes et composition au point d’entrée sont désormais implémentés. Détails et statuts actuels :[AUTH_API](AUTH_API.md). Les tests avec pg doublé ne réceptionnent pas la vraie base ; aucune migration/runtime auth activé par l’agent.

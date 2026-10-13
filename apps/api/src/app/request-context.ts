@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { withRequestCorrelation } from "../shared/request-correlation.js";
 import type { RequestHandler } from "express";
 import type { TechnicalLogger } from "../shared/logging.js";
 export function requestContext(log: TechnicalLogger): RequestHandler {
@@ -28,6 +29,6 @@ export function requestContext(log: TechnicalLogger): RequestHandler {
     res.once("close", () => {
       record(res.writableFinished);
     });
-    next();
+    withRequestCorrelation(id, next);
   };
 }

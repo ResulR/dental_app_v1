@@ -17,8 +17,16 @@ import {
   ClinicContactUpdateSchema,
   ClinicProfileSchema,
 } from "./clinic-profile.js";
+import {
+  LoginRequestSchema,
+  EmptyAuthMutationSchema,
+  SessionIdentitySchema,
+} from "./authentication.js";
 export function exportJsonSchemas() {
   const schemas = {
+    LoginRequest: LoginRequestSchema,
+    EmptyAuthMutation: EmptyAuthMutationSchema,
+    SessionIdentity: SessionIdentitySchema,
     ObjectId: ObjectIdSchema,
     Revision: RevisionSchema,
     Status: StatusSchema,

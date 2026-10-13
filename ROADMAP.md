@@ -1021,7 +1021,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 07 — Authentification, comptes et gouvernance
 
 ### 7.1 — Implémenter authentification email/mot de passe
-- **Statut :** ◐ Noyau implémenté/testé hors ligne — intégration et réception différées
+- **Statut :** ◐ Authentification/API/limiteur PostgreSQL implémentés et testés hors ligne — application et réception différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance
@@ -1035,13 +1035,15 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
-- **Implémentation :**hash/vérification scryptversionné,budgetKDF1,serviceerreursneutres,repositoryemailparamétré etlimiteurcompte/réseauborné ;aucunendpoint/sessionbranché. H71-01/02 dansAUTHENTICATION.md.
+- **Implémentation :**hash/vérification scryptversionné,budgetKDF1,serviceerreursneutres,repositoryemailparamétré, limiteur PostgreSQL et login/API composés au démarrage explicite. H71-01/02 dansAUTHENTICATION.md.
 - **Validation hors ligne :**31unitaires dont10nouveaux (vraisKDF/testservicesdoublés) et6intégrationspassés,pic66/100 ;compilation/typage3workspaces/lint/format/frontières réussis aprèscorrectionlint.
-- **Application PostgreSQL :**pas de nouvellemigration7.1 ;grants0010 nonappliqués pourlookupclientréel.
-- **Réception finale :**loginHTTP/PG,ratedurable/config/réseau,charge etsessions7.2 différés. Pasd'authproductionready. Suite7.2 indépendante.
+- **Application PostgreSQL :**0013_login_attempt_limits préparée NON appliquée ; audit0008/grants0010 requis, objets confirmés absents13/10.
+- **Réception finale :**HTTP testé avec services réels et pg doublé ; PostgreSQL/ACL/concurrence/runtimeconfig/proxy/charge/UI/alertes owner différés. Pasd'authproductionready. Suite7.2 indépendante.
+
+- **Intégration13/10/2026 :** runtime compose lookup/scrypt/admission durable puis création de session,5routes auth strictes, cookies/Origin ;3contrats ajoutés après preuve de préservation intégrale des anciens.134unitaires/11intégrations passent, dont composition réelle HTTP/KDF/repositories avec pg doublé ; filtres/36tests migrations hors SQL passent. Voir AUTH_API.md et propositions administrateur.
 
 ### 7.2 — Implémenter sessions multi-appareils
-- **Statut :** ◐ Noyau implémenté/testé hors ligne — persistance/API/recette différées
+- **Statut :** ◐ SessionStore PostgreSQL et API implémentés/testés hors ligne — application et recette différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance
@@ -1055,11 +1057,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
-- **Implémentation :**servicetokens/digests/cookies/rotation/revocation/epoch/Origin ;portSessionStore PG/transactionaudit/API à compléter, pasderoutebranchée.0011bornepersistée préparée.
+- **Implémentation :**servicetokens/digests/cookies/rotation/revocation/epoch/Origin ;SessionStore PostgreSQL transactionnel et API composés, audit corrélé au request_id serveur.0011bornepersistée préparée.
 - **Validation hors ligne :**38unitaires dont7sessionsportsmémoire passent ;catalogue/filtre/SHA/lint/buildAPI/frontières/format passent aprèscorrectionformat.
-- **Intégration 12/10/2026, checkpoint transactions :** client PostgreSQL expose désormais un callback sur une seule connexion vérifiée, commit/rollback, délai SQL/local 10s, refus des requêtes concurrentes/oubliées et aucun rejeu de commit ambigu. 117 tests unitaires passent dont6 nouveaux cas transactionnels avec transport doublé ; tests PostgreSQL réels non exécutés. SessionStore/API encore en cours.
+- **Intégration 12/10/2026, checkpoint transactions :** client PostgreSQL expose désormais un callback sur une seule connexion vérifiée, commit/rollback, délai SQL/local 10s, refus des requêtes concurrentes/oubliées et aucun rejeu de commit ambigu. 117 tests unitaires passent dont6 nouveaux cas transactionnels avec transport doublé ; tests PostgreSQL réels non exécutés. SessionStore/API finalisés au checkpoint13/10, réception PG différée.
 - **Application PostgreSQL :**0011 NONAPPLIQUÉE,SQL/SHA/POINT_7_2_ADMIN préparés,jalon7distinctdelot6 ;exigesessionsvides sinonarrêtétapeSQL.
-- **Réception finale :**5refusSQL,SessionStorePG/API/two-devices/rotationrace/cookiesTLS-browser/revocationSSE différés ;pas desessionsréelles annoncéesvalidées. Suite7.3indépendante.
+- **Réception finale :**5refusSQL/ACL/coursesPG/cookiesTLS-browser/revocationSSE différés ; two-devices/rotation/logout HTTP testés avec store doublé ;pas desessionsréelles annoncéesvalidées. Suite7.3indépendante.
 
 ### 7.3 — Implémenter inscription clinique
 - **Statut :** ◐ Noyau implémenté/testé hors ligne — persistance/API/recette différées

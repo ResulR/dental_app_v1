@@ -1,8 +1,11 @@
 import type { Server } from "node:http";
 import type { AppConfig } from "./config.js";
 import { createApp } from "./create-app.js";
-export async function startServer(config: AppConfig): Promise<Server> {
-  const server = createApp().listen(config.port, config.host);
+export async function startServer(
+  config: AppConfig,
+  registerRoutes?: Parameters<typeof createApp>[0],
+): Promise<Server> {
+  const server = createApp(registerRoutes).listen(config.port, config.host);
   server.requestTimeout = 30000;
   server.headersTimeout = 10000;
   server.keepAliveTimeout = 5000;

@@ -14,7 +14,10 @@ export type CredentialAccount = {
 };
 type Ports = {
   findCredential: (emailKey: string) => Promise<CredentialAccount | undefined>;
-  admit: (emailKey: string, trustedNetworkKey: string) => LoginAdmission;
+  admit: (
+    emailKey: string,
+    trustedNetworkKey: string,
+  ) => LoginAdmission | Promise<LoginAdmission>;
   verify?: (password: unknown, hash: unknown) => Promise<boolean>;
 };
 export type AuthenticationResult =
@@ -64,7 +67,10 @@ export function createAuthenticationService(ports: Ports) {
       if (!trustedNetworkKey || trustedNetworkKey.length > 256)
         throw new Error("INVALID_LOGIN_CONTEXT");
       const key = emailKey(email);
-      const admitted = ports.admit(key ?? "<invalid-email>", trustedNetworkKey);
+      const admitted = await ports.admit(
+        key ?? "<invalid-email>",
+        trustedNetworkKey,
+      );
       if (!admitted.allowed)
         return {
           kind: "limited",

@@ -1,8 +1,8 @@
 # Chapitre 7 — Bilan de préparation et réceptions différées
 
-**Jalon documentaire du 12/10/2026, pas une réception du chapitre.** Les noyaux sont partiellement implémentés et testés hors ligne. Il reste du code de persistance, de composition API et d'interface à écrire ; appliquer les seules migrations préparées ne rendra pas l'authentification opérationnelle.
+**Jalon actualisé le 13/10/2026, pas une réception du chapitre.** La persistance PostgreSQL et la composition API de connexion/sessions sont implémentées et testées avec transport doublé. Leur fonctionnement sur la vraie base exige encore migrations/ACL/configuration/fixture et réception. Les autres noyaux restent partiels.
 
-Sources : ROADMAP.md, EXECUTION_LOG.md, documentation par module, migrations/catalogue, code actuellement poussé. Vérification directe : startServer appelle createApp sans routes métier ; seule route applicative enregistrée /health. App.tsx indique que la connexion n'est pas disponible. Aucun endpoint login/session/signup opérationnel ne doit être annoncé.
+Sources : ROADMAP.md, EXECUTION_LOG.md et docs/AUTH_API.md. Le point d’entrée compose désormais login/session/renew/logout/logout-all si activation explicite et prérequis présents. Aucun runtime auth activé sur le VPS. App.tsx reste à raccorder ; signup reste absent.
 
 ## État des points
 
@@ -10,8 +10,8 @@ Sources : ROADMAP.md, EXECUTION_LOG.md, documentation par module, migrations/cat
 
 | Point | Implémenté / préparé | Testé HL | Application pertinente | Développement / réception encore nécessaires |
 |---|---|---|---|---|
-| 7.1 | scrypt, limiteur mémoire, service auth, lookup paramétré | Oui | Pas de nouvelle migration ; 0010 attendu | Limitation durable/configuration, transport et login HTTP/PG |
-| 7.2 | Cookies, rotation, révocations, port SessionStore | Oui | 0011 préparée, absente en base | SessionStore PG transactionnel, composition auth/API, courses, TLS/navigateur/SSE |
+| 7.1 | scrypt, limiteur PostgreSQL, lookup, contrat/login HTTP et composition | Oui, vraisHTTP/KDF ; pg doublé |0013 préparée,0008/0010 attendues | Recette PostgreSQL/charge/réseau, paramètres runtime, UI |
+| 7.2 | Cookies, SessionStore PostgreSQL transactionnel, rotation/révocations/audit/API | Oui ; pg doublé |0011 préparée, réception attendue | Courses/ACL/SQL réels, TLS/navigateur/SSE et interface |
 | 7.3 | Inscription et contrôle clinique pending | Oui | 0002 reçue ; schémas complémentaires absents | Bootstrap owner contrôlé, versions/acceptations légales, registerAtomic, conversation/audit/outbox/API/UI |
 | 7.4 | Décision approbation/refus | Oui | 0012 préparée, absente en base | decideAtomic, audit/notifications, routes/UI et recette4refus |
 | 7.5 | Contrats, service profil, formulaire AL | Oui | Schéma contacts existant, audit complémentaire absent | Adaptateur CAS/historique et raccordement formulaire/API |
@@ -38,11 +38,14 @@ D'abord terminer le [dossier chapitre6](CHAPTER_6_RECEPTION.md) dans son ordre :
 |---|---|---|---|
 | 7.2 | migrations/0011_session_absolute_limits.sql | 5485995b2f9ad6b2cc42603ffee29d3f97fb2dd826b1384a4aa56cf1d141d7e3 | tests/migrations/sessions_constraints.sql |
 | 7.4 | migrations/0012_clinic_review_history.sql | b1816885cce02cf518823ff59746308976c60e102051b889b2c8582b6e791ed5 | tests/migrations/clinic_review_constraints.sql |
+| 7.1 | migrations/0013_login_attempt_limits.sql |5934c8f803168fad85efb63a19bbc2d50ee487c02f254d0caf523db01c7821d3 |tests/migrations/login_limits_constraints.sql |
 
 Empreintes des recettes, contrôlées sans exécution :
 
 - sessions_constraints.sql : e400676cc60a1340ded1c607ab704bd09f8b421c7907f0f9dcc80b0a917ff793.
 - clinic_review_constraints.sql : ae0716f9502f7fe0a3d4cadcf6ee927aedcddeb67f03bf81389fc45c2c4dbf51.
+
+Recette0013 SHA :74d9bd664fad932ac20cca336d5aef250c2a67da26db9da68edc2ab8c48cd013 ;8refus NON exécutés. Voir [POINT_7_1_LIMITER_ADMIN](POINT_7_1_LIMITER_ADMIN.md) et [recette intégration](POINT_7_1_2_INTEGRATION_ADMIN.md).
 
 Les commandes littérales, droits, risques et recettes ROLLBACK se trouvent dans [POINT_7_2_ADMIN](POINT_7_2_ADMIN.md) et [POINT_7_4_ADMIN](POINT_7_4_ADMIN.md). Aucun nouveau lanceur/batch et aucune exécution par dental-ai. L'approbation du développement n'autorise pas leur exécution ni les GRANT qu'elles contiennent.
 
@@ -59,8 +62,8 @@ Ces vérifications ne valident pas les adapters/API absents. Les contraintes de 
 
 ## Travaux de schéma et de code encore à préparer
 
-- Transactions applicatives : createApplicationDatabase expose actuellement query/close ; un callback transactionnel sur une seule connexion vérifiée est nécessaire pour réaliser les ports atomiques. Ne pas simuler une transaction par plusieurs appels query susceptibles d'emprunter des connexions différentes.
-- Sessions7.2 : préparer le repository durable sur0002/0011, issue/rotate/revoke atomiques, revalidation du compte/epoch, audit et contrats de composition avec7.1. Les tests de code indépendants sont possibles avant réception PG.
+- Transactions applicatives : callback sur une connexion vérifiée désormais implémenté, borné et testé hors ligne ; réception SQL requise. Les ports ultérieurs doivent le réutiliser.
+- Sessions7.2 : repository durable et composition auth/API implémentés ; recevoir contraintes/ACL/atomicité/courses sur vraie base. Interface à raccorder.
 - Acceptations/versions légales et bootstrap propriétaire : préparation technique possible, identité et textes réellement approuvés requis pour leur usage ; aucun bootstrap public.
 - Schémas changement d'e-mail et récupération, outbox privée chiffrée et champs d'audit complémentaires : migrations/tests/propositions à écrire, pas seulement à appliquer.
 - Transfert7.15 : invitations_profile_fk constatée non différable et liée au profil courant pour toutes les invitations. Une promotion de compte invité nécessite une correction versionnée conservant l'historique et la concordance des invitations utilisables. Pas de suppression d'invitation ou désactivation de contrainte.
@@ -68,6 +71,6 @@ Ces vérifications ne valident pas les adapters/API absents. Les contraintes de 
 
 ## Reprise recommandée à ce jalon
 
-Reprendre **l'intégration 7.1–7.2**, en commençant par l'audit/préparation du support transactionnel utilisé par SessionStore, puis persistance des sessions et composition auth/API testable. Ces travaux ne nécessitent pas d'exécuter soi-même une migration ni d'élargir les droits de dental-ai. Documenter les tests PostgreSQL bloqués tout en écrivant les adapters indépendants.
+Reprendre **le raccordement interface7.1–7.2**, préparer les alertes propriétaire et le harness runtime réel. Transactions/SessionStore/limiteur/API existent désormais ; ne pas les réimplémenter. Réceptions administrateur selon propositions précises, sans élargir les droits de dental-ai.
 
-Les modules ultérieurs indépendants peuvent avancer selon CONSIGNE§10, mais ne pas laisser croire que le chapitre7 n'attend que l'administrateur. Aucun point entièrement réceptionné ici et aucune mise en production autorisée par ce bilan. Deux points maximum par session et arrêt volontaire en fin de lot.
+Les modules ultérieurs indépendants peuvent avancer selon CONSIGNE§10, mais ne pas laisser croire que le chapitre7 n'attend que l'administrateur. Aucun point entièrement réceptionné ici et aucune mise en production autorisée par ce bilan. Maximum4–5points/30–40min selon CONSIGNE1.6, checkpoints et arrêt volontaire en fin de lot.

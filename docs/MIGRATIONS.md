@@ -49,3 +49,7 @@ La base de recette est la base dédiée dental_lab, seule destination autorisée
 Pour la nouvelle sonde readonly uniquement : un résultat incertain peut ajouter un snapshot/état de registre mais ne modifie aucun objet métier ; la fermeture et l’archivage restent administrateur. Les effets externes/non transactionnels, séquences, extensions, fonctions privilégiées et SQL administratif ne sont pas garantis annulables par le moteur ; revue obligatoire. Rétention snapshots/receipts, capacité disque et sauvegarde du registre avec les données restent à valider avant production. Les limites systemd concernent le client, pas les ressources SQL du serveur partagé.
 
 Sources primaires : https://www.postgresql.org/docs/17/app-psql.html ; https://www.postgresql.org/docs/17/functions-admin.html ; https://www.postgresql.org/docs/17/view-pg-locks.html .
+
+## Limitation des tentatives7.1 — 0013 préparée
+
+0013_login_attempt_limits.sql et sa recette8refus sont préparés, NON appliqués/NON réceptionnés. Deux tables dédiées/un index, garde singleton et compteurs pseudonymes. SHA/droits/risques/commandes sûres :docs/admin-proposals/POINT_7_1_LIMITER_ADMIN.md. Aucun fichier passé ni lanceur modifié ; voir AUTH_API.md et POINT_7_1_2_INTEGRATION_ADMIN.md pour les vraies dépendances de connexion.

@@ -33,3 +33,9 @@ export { createAccountStateService } from "./account-state.service.js";
 export { createOwnerAccessService } from "./owner-access.service.js";
 export type { OwnerActorRef } from "./owner-access.service.js";
 export { createOwnerAccessRepository } from "./owner-access.repository.js";
+
+export { createSessionRepository } from "./session.repository.js";
+
+export { createPersistentLoginLimiter } from "./login-limit.repository.js";
+
+export { registerAuthenticationRoutes } from "./authentication.routes.js";

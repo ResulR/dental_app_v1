@@ -11,3 +11,7 @@ SessionStore estport : implémentationPGdoitrecontrôlercompte/epoch etatomiquem
 7testsunitaires de service/cookie avecstoreexplicitementmémoire passent (38unitaires total),lint/buildAPI/frontières/format passentaprèsreformatageciblé.5refusSQL NON exécutés ; cookieHTTPS/browser/SessionStorePG/réponseperdue/concurrence/revocationSSE/horsligne encore àrecevoir. LogoutvolontairecoffreR15 localdistinct etinchangé ; pasdepromesse révocationdonnéesofflineinstantanée.
 
 Sourcesprimaires12/10/2026 : https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie ; https://developer.mozilla.org/en-US/docs/Web/Security/Practical_implementation_guides/Cookies . AucunChrome/VPSguard modifié,testsR17 toujoursdifférés.
+
+## Mise à jour intégration13/10/2026
+
+Les mentions « aucun endpoint/store branché » ci-dessus décrivent la préparation historique. Repositories PostgreSQL, limiteur persistant0013, transactions, routes et composition au point d’entrée sont désormais implémentés. Détails et statuts actuels :[AUTH_API](AUTH_API.md). Les tests avec pg doublé ne réceptionnent pas la vraie base ; aucune migration/runtime auth activé par l’agent.
