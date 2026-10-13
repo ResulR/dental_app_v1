@@ -1042,6 +1042,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Intégration13/10/2026 :** runtime compose lookup/scrypt/admission durable puis création de session,5routes auth strictes, cookies/Origin ;3contrats ajoutés après preuve de préservation intégrale des anciens.134unitaires/11intégrations passent, dont composition réelle HTTP/KDF/repositories avec pg doublé ; filtres/36tests migrations hors SQL passent. Voir AUTH_API.md et propositions administrateur.
 
+- **Interface13/10/2026 :** App/authpanel albanais raccordés aux5endpoints, restauration identité validée, formulaire/password éphémère, déconnexions, gestion refus/pannes/429 et relecture avant renouvellement.139unitaires/12intégrations horsPG réel etbuildweb passent. Client testé, interactionsReact/TLS/navigateur reportéesR17 ; aucune activationruntime.
+
 ### 7.2 — Implémenter sessions multi-appareils
 - **Statut :** ◐ SessionStore PostgreSQL et API implémentés/testés hors ligne — application et recette différées
 - **Priorité :** Critique

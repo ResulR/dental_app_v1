@@ -1,5 +1,5 @@
 import { AppShell } from "../shared/AppShell.js";
-import { Card } from "../shared/Card.js";
+import { AuthenticationPanel } from "../features/authentication/index.js";
 export function App() {
   return (
     <AppShell navigation={[]}>
@@ -9,13 +9,7 @@ export function App() {
         <p className="lead">
           Porositë, dorëzimet dhe bisedat në një vend të vetëm.
         </p>
-        <Card>
-          <h2>Mirë se vini</h2>
-          <p>Hapësirë private për laboratorin dhe klinikat partnere.</p>
-          <p className="muted">
-            Hyrja në llogari nuk është ende e disponueshme.
-          </p>
-        </Card>
+        <AuthenticationPanel />
       </div>
     </AppShell>
   );

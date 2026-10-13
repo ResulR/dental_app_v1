@@ -2,7 +2,7 @@
 
 **Jalon actualisé le 13/10/2026, pas une réception du chapitre.** La persistance PostgreSQL et la composition API de connexion/sessions sont implémentées et testées avec transport doublé. Leur fonctionnement sur la vraie base exige encore migrations/ACL/configuration/fixture et réception. Les autres noyaux restent partiels.
 
-Sources : ROADMAP.md, EXECUTION_LOG.md et docs/AUTH_API.md. Le point d’entrée compose désormais login/session/renew/logout/logout-all si activation explicite et prérequis présents. Aucun runtime auth activé sur le VPS. App.tsx reste à raccorder ; signup reste absent.
+Sources : ROADMAP.md, EXECUTION_LOG.md et docs/AUTH_API.md. Le point d’entrée compose désormais login/session/renew/logout/logout-all si activation explicite et prérequis présents. Aucun runtime auth activé sur le VPS. App.tsx est désormais raccordée au client/authpanel ; recette React/navigateur/HTTPS différée, signup reste absent.
 
 ## État des points
 
@@ -10,8 +10,8 @@ Sources : ROADMAP.md, EXECUTION_LOG.md et docs/AUTH_API.md. Le point d’entrée
 
 | Point | Implémenté / préparé | Testé HL | Application pertinente | Développement / réception encore nécessaires |
 |---|---|---|---|---|
-| 7.1 | scrypt, limiteur PostgreSQL, lookup, contrat/login HTTP et composition | Oui, vraisHTTP/KDF ; pg doublé |0013 préparée,0008/0010 attendues | Recette PostgreSQL/charge/réseau, paramètres runtime, UI |
-| 7.2 | Cookies, SessionStore PostgreSQL transactionnel, rotation/révocations/audit/API | Oui ; pg doublé |0011 préparée, réception attendue | Courses/ACL/SQL réels, TLS/navigateur/SSE et interface |
+| 7.1 | scrypt, limiteur PostgreSQL, lookup, contrat/login HTTP et composition | Oui, vraisHTTP/KDF ; pg doublé |0013 préparée,0008/0010 attendues | Recette PostgreSQL/charge/réseau, paramètres runtime, recetteUI |
+| 7.2 | Cookies, SessionStore PostgreSQL transactionnel, rotation/révocations/audit/API | Oui ; pg doublé |0011 préparée, réception attendue | Courses/ACL/SQL réels, TLS/navigateur/SSE et recetteinterface |
 | 7.3 | Inscription et contrôle clinique pending | Oui | 0002 reçue ; schémas complémentaires absents | Bootstrap owner contrôlé, versions/acceptations légales, registerAtomic, conversation/audit/outbox/API/UI |
 | 7.4 | Décision approbation/refus | Oui | 0012 préparée, absente en base | decideAtomic, audit/notifications, routes/UI et recette4refus |
 | 7.5 | Contrats, service profil, formulaire AL | Oui | Schéma contacts existant, audit complémentaire absent | Adaptateur CAS/historique et raccordement formulaire/API |
@@ -71,6 +71,6 @@ Ces vérifications ne valident pas les adapters/API absents. Les contraintes de 
 
 ## Reprise recommandée à ce jalon
 
-Reprendre **le raccordement interface7.1–7.2**, préparer les alertes propriétaire et le harness runtime réel. Transactions/SessionStore/limiteur/API existent désormais ; ne pas les réimplémenter. Réceptions administrateur selon propositions précises, sans élargir les droits de dental-ai.
+Reprendre **les alertes propriétaire7.13 et le harness runtime réel7.1–7.2** ; interface déjà raccordée mais recette React/navigateur requise. Transactions/SessionStore/limiteur/API existent désormais ; ne pas les réimplémenter. Réceptions administrateur selon propositions précises, sans élargir les droits de dental-ai.
 
 Les modules ultérieurs indépendants peuvent avancer selon CONSIGNE§10, mais ne pas laisser croire que le chapitre7 n'attend que l'administrateur. Aucun point entièrement réceptionné ici et aucune mise en production autorisée par ce bilan. Maximum4–5points/30–40min selon CONSIGNE1.6, checkpoints et arrêt volontaire en fin de lot.
