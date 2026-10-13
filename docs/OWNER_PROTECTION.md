@@ -32,3 +32,11 @@ Les tests hors ligne couvrent la matrice profils/grants/états, actions interdit
 Sous le runtime autorisé, après migrations reçues : cas propriétaire actuel accepté ; ancien propriétaire/slot différent, admin tous droits, session d'un autre compte, epoch obsolète, session révoquée/expirée/future, limite absente/expirée et flags de sécurité refusés. Tester un changement d'autorité concurrent à une lecture/mutation ; vérifier rollback, audit et refus aux routes/API/export/SSE. Conserver les preuves expurgées et aucune fixture persistante. Tests d'unicité 0002 déjà reçus : ne pas les rejouer sans besoin identifié et autorisation.
 
 Statut final à maintenir : implémentation préparée ; tests hors ligne selon journal ; aucune nouvelle application SQL ; intégration/réception différées. Le point ne devient pas entièrement validé sur le seul build.
+
+## Alertes de connexion — intégration13/10/2026
+
+SessionStore crée maintenant, uniquement pour l'émission initiale d'une session propriétaire courante, outbox security_alert +dispatchpending +notificationinterne au propriétaire +deliveryemail/securitypending. Même transaction que session/borne/audit, même corrélation que SESSION_ISSUED ; aucun secret/IP/adresseemail dans l'événement. Échec de l'une de ces étapes annule la connexion et aucun cookie n'est émis. Aucun événement de login lors d'un renouvellement ou pour admin/employee/clinic.
+
+H713-ALERT01 :incrément de accounts.revision sous le verrou déjà acquis pour rendre chaque événement security_alert unique ;auth_epoch inchangé et autresappareils conservés. Peut invalider une édition administrative à ancienne révision :conflit explicite attendu, jamais écrasement. Migration/grants0008/0010 réutilisés, aucune nouvellepermission. Le futur worker doit reconnaître cet événement par aggregateaccount/corrélation/auditactionSESSION_ISSUED et produire le templatealbanais approuvé ;ne pas interpréter toutes les security_alert comme login.
+
+Tests doubles :destination propriétaire/corrélation/durabilitéatomique simulée, échecs de chaque queue et absence pour employés. Worker/provider/template/lecture des notifications internes et preuve de livraison encore NON implémentés/réceptionnés :pending n'est pas email livré. Voir FIRST_LOGIN_RECEPTION/AUTH_RUNTIME_ADMIN pour la recette réelle.

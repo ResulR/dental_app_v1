@@ -1065,6 +1065,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Application PostgreSQL :**0011 NONAPPLIQUÉE,SQL/SHA/POINT_7_2_ADMIN préparés,jalon7distinctdelot6 ;exigesessionsvides sinonarrêtétapeSQL.
 - **Réception finale :**5refusSQL/ACL/coursesPG/cookiesTLS-browser/revocationSSE différés ; two-devices/rotation/logout HTTP testés avec store doublé ;pas desessionsréelles annoncéesvalidées. Suite7.3indépendante.
 
+- **Recette protégée13/10/2026 :** archiveAPI/web/deps et probePGrollback prêts à approbation, jamais exécutés ;contrôle ACLauth avantdémarrage. FIRST_LOGIN_RECEPTION précisechaquemigration/SHA/commande etpermissions. RecetteHTTPprivée/HTTPSPlaywright opt-inpréparée,NONréceptionnée. Bootstrapprivé et harnesscommit/courses restentcodeàécrire.
+
 ### 7.3 — Implémenter inscription clinique
 - **Statut :** ◐ Noyau implémenté/testé hors ligne — persistance/API/recette différées
 - **Priorité :** Critique
@@ -1252,6 +1254,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Testé hors ligne :** qualité complète (build contrats/API, trois typechecks, lint, format, frontières, résolution), 111 tests unitaires dont 7 nouveaux, 6 intégrations hors PostgreSQL et build web réussis. Le transport SQL est doublé, pas une preuve des prédicats PostgreSQL.
 - **Appliqué :** aucune nouvelle migration ni opération sur comptes réels ; audit readonly confirme 12 tables/2 vues, session_limits absente, migrateurs NOLOGIN et zéro session de migration. 0002 déjà réceptionnée ; 0010/0011 restent prérequis.
 - **Réception :** raccordement middleware/SessionStore et ports 7.9, recontrôle transactionnel mutations/lecture audit 17.1, tests SQL/API/concurrence/SSE/navigateur et alertes propriétaire encore différés. Pas de validation globale du chapitre.
+
+- **Alertesconnexion13/10/2026 :** SessionStoreowner revalidé prépare security_alert/outbox/notificationinterne/livraisonsecuritypending atomiquement avecsession/audit/corrélation ;échecsannulentlogin. Grants0008/0010réutilisés ;worker/provider/template etpreuvesdelivrance restentdifférés.
 
 ### 7.14 — Documenter récupération exceptionnelle propriétaire
 - **Statut :** ◐ Procédure documentée — simulation encadrée et réception différées

@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createApplicationDatabase } from "../shared/database.js";
 import { readAuthConfig } from "./auth-config.js";
 import {
+  assertAuthStorageReady,
   createAuthenticationService,
   createIdentityRepository,
   createPersistentLoginLimiter,
@@ -17,11 +18,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
   try {
     // Fail startup, without creating/migrating anything, if required objects or
     // read privileges are absent. Every checkout also enforces runtime identity.
-    await database.query(`SELECT a.id,c.password_hash,s.secret_digest,l.absolute_expires_at,
-      e.action,g.policy_digest,b.attempts
-      FROM public.accounts a,public.credentials c,public.sessions s,
-        public.session_limits l,public.audit_events e,
-        public.login_limit_guard g,public.login_attempt_limits b LIMIT 0`);
+    await assertAuthStorageReady(database);
     const repository = createIdentityRepository(database);
     const limiter = createPersistentLoginLimiter(database, config.loginLimit);
     const authentication = createAuthenticationService({

@@ -102,11 +102,43 @@ async function audit(
   tx: DatabaseExecutor,
   accountId: string,
   action: string,
-): Promise<void> {
+): Promise<string> {
+  const correlationId = currentRequestCorrelation();
   await tx.query(
     `INSERT INTO public.audit_events(actor_id,action,object_type,object_id,request_id)
     VALUES ($1,$2,'account',$1,$3)`,
-    [accountId, action, currentRequestCorrelation()],
+    [accountId, action, correlationId],
+  );
+  return correlationId;
+}
+async function queueOwnerLoginAlert(
+  tx: DatabaseExecutor,
+  accountId: string,
+  correlationId: string,
+): Promise<void> {
+  const revision = await tx.query<{ revision: string }>(
+    "UPDATE public.accounts SET revision=revision+1 WHERE id=$1 RETURNING revision::text",
+    [accountId],
+  );
+  if (!revision.rows[0]) throw new Error("OWNER_ALERT_REVISION_MISSING");
+  const eventId = randomUUID();
+  await tx.query(
+    `INSERT INTO public.outbox_events
+    (id,type,aggregate_type,aggregate_id,aggregate_revision,actor_id,correlation_id)
+    VALUES ($1,'security_alert','account',$2,$3,$2,$4)`,
+    [eventId, accountId, revision.rows[0].revision, correlationId],
+  );
+  await tx.query("INSERT INTO public.outbox_dispatches(event_id) VALUES ($1)", [
+    eventId,
+  ]);
+  await tx.query(
+    "INSERT INTO public.internal_notifications(event_id,target_account_id) VALUES ($1,$2)",
+    [eventId, accountId],
+  );
+  await tx.query(
+    `INSERT INTO public.notification_deliveries(event_id,target_account_id,channel,purpose)
+    VALUES ($1,$2,'email','security')`,
+    [eventId, accountId],
   );
 }
 async function insert(
@@ -179,7 +211,13 @@ export function createSessionRepository(database: Database): SessionStore {
       return database.transaction(async (tx) => {
         if (!(await eligible(tx, input))) return false;
         await insert(tx, input, null);
-        await audit(tx, input.fact.accountId, "SESSION_ISSUED");
+        const correlationId = await audit(
+          tx,
+          input.fact.accountId,
+          "SESSION_ISSUED",
+        );
+        if (input.fact.profile === "owner")
+          await queueOwnerLoginAlert(tx, input.fact.accountId, correlationId);
         return true;
       });
     },

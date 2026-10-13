@@ -49,3 +49,9 @@ Un login ne devient visible comme succès qu'après lecture serveur de la sessio
 État connecté : contrôle de connexion, déconnexion de cet appareil ou de tous les appareils. À focus/visibilité et toutes30s tant que la page est visible et le navigateur online (hypothèse technique réversible H712-UI01), GET courant précède renouvellement puis relecture ; pas de nouvelle tentative de mutation sur un état non confirmé. La borne absolue du serveur n'est pas prolongée. Les changements de compte/permissions/droits continuent d'être validés par l'API : un profil dans le navigateur n'est jamais une permission. Les fonctions métier ultérieures ne sont pas ouvertes par ce shell.
 
 Client et transport web→vraiesroutes HTTP testés sousNode, avec cookiejar synthétique et ports0, sessions doublées ; build/typecheck/lint/frontières réussis. Rendu, interactions React, tactile/accessibilité, vraiHTTPS/cookies, inter-onglets, réseau navigateur et PWA restent NON réceptionnés conformémentR17. Aucun service ou domaine activé pour tester.
+
+## Complément13/10/2026 — prérequis et recette protégée
+
+Le démarrage exige maintenant ACL SELECT/INSERT/UPDATEcolonnes/DELETElimiteur via auth-readiness, pas seulement lecture des tables. Loginowner prépare outbox/notice/livraisonpending atomiquement ;worker non livré. Prérequis/revue groupée :[FIRST_LOGIN_RECEPTION](admin-proposals/FIRST_LOGIN_RECEPTION.md), bundle/empreintes/commandes :[AUTH_RUNTIME_ADMIN](admin-proposals/AUTH_RUNTIME_ADMIN.md), entrée privée du premiercompte :[FIRST_OWNER_PROVISIONING](FIRST_OWNER_PROVISIONING.md), recette :[AUTH_HTTPS_RECIPE](AUTH_HTTPS_RECIPE.md).
+
+Probe réel prêt à approuver, non exécuté :sousruntime994/APIarrêtée/ownerpréexistant/limiteurinutilisé, fixturesemployees et tousleursobjets annulés. Ne valide pasdurabilitéCOMMIT ni course réelle. L'outilprivé debootstrap et harnesscommit/concurrence restent à développer ;administrateur pasencoreseul dernierobstacle.

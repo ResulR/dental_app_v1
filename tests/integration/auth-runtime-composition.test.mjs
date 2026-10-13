@@ -42,7 +42,13 @@ test("configured entry-point runtime connects HTTP login to credential, limiter,
     statements.push({ sql, values });
     if (sql.includes("current_database()"))
       return { rows: [identity], rowCount: 1 };
-    if (sql.includes("LIMIT 0")) return { rows: [], rowCount: 0 };
+    if (sql.includes("auth_readiness"))
+      return {
+        rows: [
+          { readable: true, insertable: true, updatable: true, cleanup: true },
+        ],
+        rowCount: 1,
+      };
     if (
       ["BEGIN", "COMMIT", "ROLLBACK"].includes(sql) ||
       sql.startsWith("SET LOCAL")

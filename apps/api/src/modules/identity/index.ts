@@ -39,3 +39,5 @@ export { createSessionRepository } from "./session.repository.js";
 export { createPersistentLoginLimiter } from "./login-limit.repository.js";
 
 export { registerAuthenticationRoutes } from "./authentication.routes.js";
+
+export { assertAuthStorageReady } from "./auth-readiness.js";

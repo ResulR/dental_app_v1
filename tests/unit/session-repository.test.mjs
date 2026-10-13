@@ -40,6 +40,8 @@ function fixture(options = {}) {
           : [{ suspended: options.suspended ?? false }],
         rowCount: 1,
       };
+    if (sql.startsWith("UPDATE public.accounts SET revision"))
+      return { rows: [{ revision: "5" }], rowCount: 1 };
     if (sql.startsWith("SELECT account_id"))
       return { rows: [], rowCount: options.ownerMissing ? 0 : 1 };
     if (sql.includes("UPDATE public.sessions s"))
@@ -239,4 +241,47 @@ test("write buffers and facts are copied before await and malformed durations fa
     );
     expect(f.database.transaction).not.toHaveBeenCalled();
   }
+});
+
+test("owner login queues its own correlated alert, internal notice and security email in the same transaction", async () => {
+  const f = fixture({ account: { profile: "owner" } });
+  const input = write();
+  input.fact.profile = "owner";
+  expect(await f.repository.issue(input)).toBe(true);
+  const audit = f.events.find((e) =>
+    e.sql.includes("INSERT INTO public.audit_events"),
+  );
+  const event = f.events.find((e) =>
+    e.sql.includes("INSERT INTO public.outbox_events"),
+  );
+  expect(event.values.slice(1)).toEqual([accountId, "5", audit.values[2]]);
+  expect(
+    f.events.find((e) =>
+      e.sql.includes("INSERT INTO public.internal_notifications"),
+    ).values,
+  ).toEqual([event.values[0], accountId]);
+  expect(
+    f.events.find((e) =>
+      e.sql.includes("INSERT INTO public.notification_deliveries"),
+    ).sql,
+  ).toContain("'security'");
+  expect(f.committed).toHaveLength(f.events.length);
+  expect(JSON.stringify(f.events)).not.toContain("password");
+});
+test("owner alert failure rolls back login; employees do not enqueue owner alerts", async () => {
+  for (const fail of [
+    "INSERT INTO public.outbox_events",
+    "INSERT INTO public.outbox_dispatches",
+    "INSERT INTO public.internal_notifications",
+    "INSERT INTO public.notification_deliveries",
+  ]) {
+    const f = fixture({ account: { profile: "owner" }, fail });
+    const input = write();
+    input.fact.profile = "owner";
+    await expect(f.repository.issue(input)).rejects.toThrow("injected failure");
+    expect(f.committed).toEqual([]);
+  }
+  const f = fixture();
+  await f.repository.issue(write());
+  expect(f.events.some((e) => e.sql.includes("public.outbox"))).toBe(false);
 });

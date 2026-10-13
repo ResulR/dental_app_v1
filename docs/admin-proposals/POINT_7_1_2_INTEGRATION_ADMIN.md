@@ -40,3 +40,7 @@ Les scénarios de concurrence, injection de panne et bootstrap nécessitent un h
 Conserver rapport de chaque scénario, artefact/SHA et reçus. Ne journaliser ni password/hash/digest/cookie ni e-mail/adresse réseau réelle. Vérifier zéro processus et verrou du test, NOLOGIN des identités migratrices, reçus inchangés, absence de nouvelles opérations incertaines. Toute panne arrête le scénario concerné ; diagnostic avant reprise et aucune purge des autres projets.
 
 Implémenté : transactions, SessionStore PostgreSQL, limiteur durable, routes et composition/configuration. Testé hors ligne : service/repos avec doubles + HTTP + vraiKDF du test composition. Appliqué : aucun schéma ou runtime activé par l'agent. Réceptionné : aucune recette réelle de ce document. Interface, alertes propriétaire, récupération/SSE et navigateur restent séparés.
+
+## Précisions13/10/2026
+
+AUTH_RUNTIME_ADMIN.md fournit maintenant un bundlefigé et le probePGrollback à exécuter uniquementaprès accord/provisionowner/migrationsreçues. Les préconditions refusent APIactive/policydéjàfixée ;pas de purge. Les scénariosCOMMIT/courses/pannesHTTP restent à finaliser. AUTH_HTTPS_RECIPE.md et playwright.https.config.mjs fournissent la recetteHTTPS opt-in ;NON exécutée. FIRST_LOGIN_RECEPTION.md regroupeSHA/commandes/dependances, FIRST_OWNER_PROVISIONING.md distingue les conditionsdubootstrap et l'outilprivéencoreàécrire.
