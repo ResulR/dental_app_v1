@@ -8,6 +8,10 @@
 
 > Cette roadmap n'ajoute pas de fonction métier non validée. Les sujets juridiques et techniques encore ouverts sont des **portes de validation** : l'IA doit les instruire, pas inventer leur résolution. Elle ne doit jamais considérer « tous les points cochés » comme équivalent à un site exploitable si les tests terrain ou obligations avant production échouent.
 
+## Suivi réception bootstrap — 13/10/2026
+
+Proposition uniquement : alternative sans deuxième VPS préparée dans `docs/admin-proposals/SHARED_VPS_POSTGRES_RECEPTION.md`. Audit en lecture seule au commit164ab82 ; enveloppe systemd/compte dédié/disque plafonné préparés, syntaxe contrôlée. Aucune instance, aucun compte Linux, montage, service ou objet SQL créé. Phase A (preuve d’isolation sans PostgreSQL) exige accord administrateur ; Phase B (recette réelle) exige preuves A et accord distinct. Interdiction originale hors-VPS conservée, aucune garde du harness supprimée. Recettes PG/bootstrap/HTTPS et production toujours différées. Prochaine action : revue et accord Phase A, sinon VM Linux locale.
+
 ## Progression et règles d'exécution
 
 - Statuts permis : `☐ À faire`, `◐ En cours`, `☑ Validé`, `⚠ Bloqué`, `↷ Sans objet justifié`.

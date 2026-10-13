@@ -16,6 +16,8 @@ Archive privée : `.local/owner-bootstrap-review-v1.tar.gz`. SHA et inventaire d
 
 ## 1. Recette PostgreSQL réelle sur machine isolée
 
+**Alternative proposée le 13/10/2026, NON approuvée et NON exécutée :** voir [SHARED_VPS_POSTGRES_RECEPTION.md](SHARED_VPS_POSTGRES_RECEPTION.md). Elle exige une enveloppe indépendante et une preuve d’isolation avant tout initdb, puis un accord distinct pour les tests. L’interdiction et le contrôle hostname du bloc original ci-dessous restent inchangés ; ne pas les retirer pour exécuter ce bloc sur le VPS.
+
 À faire AVANT tout premier compte réel. PostgreSQL17 et Node22 déjà disponibles sur une machine de recette approuvée, **pas le VPS partagé**, aucun autre service de cette machine dans ce cluster. Copie du bundle vérifiée et figée au même chemin protégé. Les commandes suivantes sont à approuver et exécuter par l'opérateur ; rien n'a été exécuté par l'agent.
 
 ```bash
