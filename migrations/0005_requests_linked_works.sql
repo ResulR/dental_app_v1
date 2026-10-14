@@ -25,7 +25,8 @@ CREATE TABLE public.order_requests (
 );
 CREATE UNIQUE INDEX order_requests_one_pending_idx ON public.order_requests(order_id) WHERE state='pending';
 
-ALTER TABLE public.orders ADD CONSTRAINT orders_id_clinic_kind_status_unique UNIQUE(id,clinic_id,kind,status);
+ALTER TABLE public.orders ADD CONSTRAINT orders_id_clinic_kind_unique UNIQUE(id,clinic_id,kind);
+ALTER TABLE public.orders ADD CONSTRAINT orders_id_clinic_status_unique UNIQUE(id,clinic_id,status);
 CREATE TABLE public.work_links (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     source_order_id uuid NOT NULL,
@@ -42,8 +43,10 @@ CREATE TABLE public.work_links (
     reason text CHECK(reason IS NULL OR btrim(reason)<>''),
     idempotency_receipt_id uuid UNIQUE REFERENCES public.submission_receipts(id),
     FOREIGN KEY(source_order_id,clinic_id) REFERENCES public.orders(id,clinic_id),
-    FOREIGN KEY(child_order_id,clinic_id,child_kind,child_current_status)
-        REFERENCES public.orders(id,clinic_id,kind,status) ON UPDATE CASCADE,
+    CONSTRAINT work_links_child_kind_fk FOREIGN KEY(child_order_id,clinic_id,child_kind)
+        REFERENCES public.orders(id,clinic_id,kind) ON UPDATE NO ACTION,
+    CONSTRAINT work_links_child_status_fk FOREIGN KEY(child_order_id,clinic_id,child_current_status)
+        REFERENCES public.orders(id,clinic_id,status) ON UPDATE CASCADE,
     CHECK(source_order_id<>child_order_id),
     CHECK((kind='retouch' AND intervention_kind IS NOT NULL) OR (kind<>'retouch' AND intervention_kind IS NULL)),
     CHECK((kind='resubmission' AND source_status_at_creation IN ('rejected','cancelled'))

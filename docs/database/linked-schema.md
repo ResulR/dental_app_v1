@@ -11,3 +11,7 @@ FK composées mêmeclinique, enfant unique, catégorie enfant retouch/normal gé
 Les services doivent créer un enfant neuf et lien dans la même transaction, refuser cycles/rattachement d'ancien travail, assurer une filiation à chaque retouche et revalider permissions/catégories ; ces invariants ne sont pas prétendus intégralement assurés par FK seule. Chaque action gardeaudit/outbox/idempotence. Pas de restriction inventée sur nombre de suppléments/remplacementsexceptionnels.
 
 linked_constraints.sql prépare11refus et cas positifs : demandes uniques, lienscrossclinique/self,projectionforgée, deuxième active refusée, statutterminal libère et nouvelle active possible sans perdreliens. NON exécuté. La course réelle à deuxsessions et opérations multiagrégats restent différées et requises avant réception complète6.6. POINT_6_6_ADMIN.md/procédure consolidée ne dispensent pas de ces preuves.
+
+## Correction de réception v2 — 14/10/2026, non appliquée en production
+
+La FK unique combinant type généré et statut avec ON UPDATE CASCADE est incompatible PG17. La source0005 v2 sépare work_links_child_kind_fk (NO ACTION) et work_links_child_status_fk (CASCADE), avec deux UNIQUE cibles. Index actif/vue/ACL et filiation inchangés. Seule la création sur base neuve de recette est visée ; reçus production inaccessibles à dental-ai, aucune décision de rejeu. Voir ../admin-proposals/SHARED_VPS_POSTGRES_RECEPTION_V2.md. Tests statiques réussis ; tests PostgreSQL v2 non exécutés.
