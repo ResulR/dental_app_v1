@@ -18,6 +18,7 @@ import {
 } from "./schemas.js";
 import {
   ClinicContactFieldsSchema,
+  ClinicContactHistorySchema,
   ClinicContactUpdateSchema,
   ClinicProfileSchema,
 } from "./clinic-profile.js";
@@ -53,6 +54,7 @@ export function exportJsonSchemas() {
     SubmissionReceipt: SubmissionReceiptSchema,
     Health: HealthSchema,
     ClinicContactFields: ClinicContactFieldsSchema,
+    ClinicContactHistory: ClinicContactHistorySchema,
     ClinicContactUpdate: ClinicContactUpdateSchema,
     ClinicProfile: ClinicProfileSchema,
   };

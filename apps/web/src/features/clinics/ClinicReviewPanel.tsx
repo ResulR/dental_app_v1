@@ -1,3 +1,4 @@
+import { ClinicProfilePanel } from "./ClinicProfilePanel.js";
 import { useEffect, useRef, useState } from "react";
 import type { ClinicReviewQueue } from "@dental-lab/contracts";
 import { Button } from "../../shared/Button.js";
@@ -123,6 +124,9 @@ export function ClinicReviewPanel() {
             </Button>
           )}
         </>
+      )}
+      {selected && (
+        <ClinicProfilePanel key={selected.id} clinicId={selected.id} />
       )}
       {selected && (
         <fieldset disabled={busy}>

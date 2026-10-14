@@ -126,6 +126,7 @@ def plan(name):
         return [(node("node_modules/prettier/bin/prettier.cjs", "--write", *selected), "format changed application files")]
     commands["test:shared-v4-preparation"] = [(["/usr/bin/python3", "tests/migrations/test_shared_v4_preparation.py"], "shared v4 static tests only")]
     commands["prepare:shared-v4"] = [(["/usr/bin/python3", "scripts/prepare-shared-v4.py"], "prepare shared v4 proposals only")]
+    commands["test:clinic-profile"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/clinic-profile-persistence.test.mjs", "tests/unit/clinic-management.test.mjs", "tests/integration/clinic-management-http.test.mjs", "tests/integration/clinic-profile-http.test.mjs"), "targeted profile persistence and HTTP")]
     commands["test:clinic-management"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/clinic-management.test.mjs", "tests/integration/clinic-management-http.test.mjs", "tests/unit/registration-runtime.test.mjs", "tests/integration/registration-runtime-http.test.mjs"), "targeted clinic tests")]
     commands["prepare:registration-v4"] = [(["/usr/bin/python3", "scripts/prepare-registration-v4.py"], "prepare registration v4 bundle only")]
     commands["check:registration-recipe"] = [(["/bin/bash", "-n", "tests/postgres/run-registration-v4.sh"], "v4 shell syntax"), (node("--check", "tests/postgres/catalog-registration-v4.mjs"), "v4 JavaScript syntax")]

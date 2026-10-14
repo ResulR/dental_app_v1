@@ -6,6 +6,8 @@ import type {
 import { currentRequestCorrelation } from "../../shared/request-correlation.js";
 import {
   ClinicProfileSchema,
+  ClinicContactUpdateSchema,
+  ClinicContactHistorySchema,
   ClinicReviewQueueSchema,
 } from "@dental-lab/contracts";
 import type { ClinicDecision } from "./review.service.js";
@@ -124,6 +126,120 @@ export function createClinicManagementRepository(
         return "applied";
       });
     },
+    async updateProfile(
+      clinicId: string,
+      input: unknown,
+    ): Promise<"applied" | "stale" | "denied"> {
+      const parsed = ClinicContactUpdateSchema.parse(input);
+      return database.transaction(async (tx) => {
+        const permission = await access(tx);
+        if (
+          !permission ||
+          (permission.profile !== "clinic" && !manager(permission))
+        )
+          return "denied";
+        const found = await tx.query<{
+          revision: string;
+          account_id: string;
+          suspended: boolean;
+          name: string;
+          dentist_first_name: string;
+          dentist_last_name: string;
+          phone: string;
+          address: string;
+        }>(
+          "SELECT revision::text,account_id,suspended,name,dentist_first_name,dentist_last_name,phone,address FROM public.clinics WHERE id=$1 FOR UPDATE",
+          [clinicId],
+        );
+        const row = found.rows[0];
+        if (
+          !row ||
+          (permission.profile === "clinic" &&
+            (row.account_id !== identity.accountId || row.suspended))
+        )
+          return "denied";
+        if (row.revision !== String(parsed.expected_revision)) return "stale";
+        const fields = [
+          "name",
+          "dentist_first_name",
+          "dentist_last_name",
+          "phone",
+          "address",
+        ] as const;
+        if (fields.every((f) => row[f] === parsed[f])) return "applied";
+        const revision = parsed.expected_revision + 1;
+        if (!Number.isSafeInteger(revision))
+          throw new Error("CLINIC_REVISION_EXHAUSTED");
+        await tx.query(
+          "UPDATE public.clinics SET name=$2,dentist_first_name=$3,dentist_last_name=$4,phone=$5,address=$6,revision=revision+1 WHERE id=$1",
+          [clinicId, ...fields.map((f) => parsed[f])],
+        );
+        await tx.query(
+          "INSERT INTO public.clinic_contact_events(clinic_id,actor_id,previous_revision,aggregate_revision,request_id,previous_name,previous_dentist_first_name,previous_dentist_last_name,previous_phone,previous_address,next_name,next_dentist_first_name,next_dentist_last_name,next_phone,next_address) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)",
+          [
+            clinicId,
+            identity.accountId,
+            parsed.expected_revision,
+            revision,
+            currentRequestCorrelation(),
+            ...fields.map((f) => row[f]),
+            ...fields.map((f) => parsed[f]),
+          ],
+        );
+        await emit(tx, clinicId, revision, "CLINIC_CONTACT_UPDATED");
+        return "applied";
+      });
+    },
+    async contactHistory(clinicId: string, before?: number) {
+      return database.transaction(async (tx) => {
+        const permission = await access(tx);
+        if (
+          !permission ||
+          (permission.profile !== "clinic" && !manager(permission))
+        )
+          return null;
+        const found = await tx.query<{
+          account_id: string;
+          suspended: boolean;
+        }>(
+          "SELECT account_id,suspended FROM public.clinics WHERE id=$1 FOR SHARE",
+          [clinicId],
+        );
+        const row = found.rows[0];
+        if (
+          !row ||
+          (permission.profile === "clinic" &&
+            (row.account_id !== identity.accountId || row.suspended))
+        )
+          return null;
+        const result = await tx.query<{
+          id: string;
+          actor_id: string;
+          previous_revision: string;
+          revision: string;
+          occurred_at: Date;
+          previous: unknown;
+          next: unknown;
+        }>(
+          `SELECT id,actor_id,previous_revision::text,aggregate_revision::text AS revision,occurred_at,
+          json_build_object('name',previous_name,'dentist_first_name',previous_dentist_first_name,'dentist_last_name',previous_dentist_last_name,'phone',previous_phone,'address',previous_address) AS previous,
+          json_build_object('name',next_name,'dentist_first_name',next_dentist_first_name,'dentist_last_name',next_dentist_last_name,'phone',next_phone,'address',next_address) AS next
+          FROM public.clinic_contact_events WHERE clinic_id=$1 AND ($2::bigint IS NULL OR aggregate_revision<$2)
+          ORDER BY aggregate_revision DESC LIMIT 51`,
+          [clinicId, before ?? null],
+        );
+        const items = result.rows.slice(0, 50).map((r) => ({
+          ...r,
+          previous_revision: Number(r.previous_revision),
+          revision: Number(r.revision),
+          occurred_at: r.occurred_at.toISOString(),
+        }));
+        return ClinicContactHistorySchema.parse({
+          items,
+          next_before: result.rows.length > 50 ? items[49]?.revision : null,
+        });
+      });
+    },
     async pending(after?: string) {
       return database.transaction(async (tx) => {
         if (!manager(await access(tx))) return null;
@@ -193,7 +309,10 @@ export async function assertClinicManagementStorageReady(
   const result = await database.query<{
     ready: boolean;
   }>(`/* clinic_management_readiness */ SELECT
- has_table_privilege(current_user,'public.clinic_review_events','INSERT')
+ has_table_privilege(current_user,'public.clinic_contact_events','SELECT')
+ AND has_table_privilege(current_user,'public.clinic_contact_events','INSERT')
+ AND NOT has_table_privilege(current_user,'public.clinic_contact_events','UPDATE,DELETE,TRUNCATE')
+ AND has_table_privilege(current_user,'public.clinic_review_events','INSERT')
  AND has_table_privilege(current_user,'public.clinic_review_events','SELECT')
  AND has_column_privilege(current_user,'public.clinics','review_state','UPDATE')
  AND has_column_privilege(current_user,'public.clinics','revision','UPDATE')

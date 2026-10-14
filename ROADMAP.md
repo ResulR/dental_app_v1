@@ -1126,7 +1126,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 ### 7.5 — Implémenter profil clinique et modifications autorisées
 
-> Lot depuis 98d1261 : GET profil propre/autorisé et panneau de lecture dans la session clinique intégrés. Requêtes sans cache, annulation au démontage, aucun stockage navigateur. Édition toujours différée : évolution versionnée de l’historique nécessaire (0008 interdit actuellement les noms de champs de contact). Aucun contournement de cette contrainte.
+> Lot depuis 8172039 : édition transactionnelle du profil et historique paginé avant/après intégrés API/UI albanaise, permissions courantes/révision/audit, sans stockage local. Migration0015 dédiée préparée, non appliquée ; 0008 intacte. 17 tests ciblés réussis ; réception PostgreSQL/navigateur et activation toujours différées. Voir CLINIC_PROFILE.md.
 
 - **Statut :** ◐ Service et formulaire préparés — validation hors ligne ; intégration et réception différées
 - **Avancement :** Contrats stricts partagés, périmètre clinique serveur, habilitation clinics.manage, révision attendue et formulaire albanais préparés. Aucun changement e-mail/statut/sécurité/suppression permis. Voir docs/CLINIC_PROFILE.md. Adaptateur transactionnel, routes/session/CSRF, historique durable consultable et branchement du formulaire restent à implémenter ; recette PostgreSQL et navigateur non exécutée. Schémas ajoutés au snapshot après contrôle de préservation intégrale des contrats précédents.
@@ -4644,3 +4644,7 @@ Suivi seul versionné après diff/guard, commit/push confirmé dans compte rendu
 Enveloppe v4 pour VPS existant préparée seulement dans le dépôt : image future/compte/unité/chemins distincts, contrôles d’isolation avant initdb, empreintes figées. Aucun compte/image/montage/unité réellement créé. Voir SHARED_VPS_POSTGRES_V4_PREPARATION.md ; ce bundle reçoit le code 98d1261, pas les nouveaux adaptateurs de décision/profil. Tests limités aux changements ; aucune ancienne recette PostgreSQL rejouée.
 
 La liste paginée et l’interface de décision 7.4 sont maintenant intégrées. Prochaine partie applicative indépendante : évolution versionnée de l’historique contact et raccordement de l’édition 7.5. Réceptions SQL, activation, publication des conditions et fournisseur e-mail nécessitent les accords distincts déjà définis. Les blocages privilégiés ne ferment pas ces tâches applicatives.
+
+### Reprise 14/10/2026 — suite de 8172039
+
+7.5 : édition et historique fonctionnels dans le code intégré, migration0015 proposée et non exécutée. Tests17 ciblés et contrôles de compilation réussis ; aucune validation de production déclarée. Relecture des points7.6–7.9 : livraison des challenges/invitations exige outbox privée chiffrée, clé hors IA, fournisseur et durées explicitement configurées ; aucun contournement par secret en clair ou token retourné au client. Les tâches indépendantes de permissions courantes7.10 peuvent progresser sans ces prérequis.

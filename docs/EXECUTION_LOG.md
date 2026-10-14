@@ -798,3 +798,11 @@ Suivi seul versionné après diff/guard, commit/push confirmé dans compte rendu
 - Git diff/empreintes : migrations et scripts historiques v2/v3 intacts, deux nouveaux contrats uniquement, aucune modification de voisins. PG246009/dental-site619021/Remote1892718 actifs et PID identiques après travail ; pg_isready accepte. Fin de lot cohérent, commit/push après vérifications. Prochaine tâche indépendante : évolution versionnée de l’historique et édition7.5. Autorisation nécessaire uniquement pour installation/réceptionv4, migrations/activation/fournisseur ; les points7.3–7.5 ne sont pas déclarés entièrement reçus.
 
 - Vérification finale : lint et snapshot exit0 ; format global exit1 uniquement pour scripts/linked-works-postgres-v2.mjs et scripts/linked-works-postgres-v3.mjs, octets historiques inchangés. Aucun filtre/exemption ajouté. Tous les processus de vérification terminés.
+
+## 14/10/2026 18:57 Europe/Brussels — profil7.5 depuis8172039
+
+Audit UID1002/main8172039 propre, origine identique aprèsfetch, aucun ancien test. Migration0015 préparée seulement, SHA2db5a810bb7d748ba00ec14e93f273e02d7cb7f391eea84ff96bf8f9f8da9511 ; historique dédié avant/après, rôleapp SELECT/INSERT uniquement. Repositories/services/routes et UI réels reliés sousflag existant désactivé ; compte/session/grants/scope/revision recontrôlés atomiquement avec historique/audit/outbox. Aucun changement email/approbation/suspension/sécurité. Historique paginé, pas de version sur no-op ; coordonnées jamais dans audit générique/logs.
+
+17 tests ciblés passent (doubles SQL), buildscontrats/API/web, typeweb, lint, frontières79sources, catalogue/filtre migration et contrat additif passent. Recettes PostgreSQL/navigateur non exécutées. Aucun replay/édition v4 ou v1/v2/v3. Snapshot ajouté après égalité de tous les contrats antérieurs ; aucun écrasement global. Prochainepartie indépendante7.10 après audit des dépendances de livraison7.6–7.9. Diff et garde-index avantcommit/push ; hash dansGit et bilan.
+
+Contrôle final du lot profil : `format:changed` réussi ; `format:check` signale uniquement les deux scripts historiques figés `linked-works-postgres-v2.mjs` et `linked-works-postgres-v3.mjs`, laissés intacts conformément à la consigne. Aucun autre écart signalé. `git diff --check` réussi.
