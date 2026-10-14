@@ -28,3 +28,8 @@ Node documente que libuv lit la taille au démarrage du pool ; l'environnement d
 Les régressions couvrent les refus d'admission, l'environnement local sans changement du parent, un timeout avec enfant résistant à TERM et les refus d'import/entrée publique. Aucun test ne provoque volontairement la saturation de 100 tâches.
 
 Recette navigateur reportée R17 ; aucun succès tactile, clavier, lecteur d'écran, responsive ou aptitude production n'est déclaré. Aucune migration SQL, modification privilégiée ou opération sur un service voisin.
+
+
+### Formatage ciblé et recettes figées (14/10/2026)
+
+`python3 scripts/run-quality.py format:changed` applique le formateur uniquement aux fichiers applicatifs/tests modifiés ou nouveaux (apps, packages, tests ; TS/TSX/MJS/JSON), sous le même verrou et les mêmes limites. Le contrôle global reste inchangé. Les avertissements préexistants sur les harness linked-works v2/v3 figés doivent être rapportés, pas corrigés silencieusement ni exclus automatiquement. Cette commande ciblée n'est pas une preuve de réussite globale de quality.

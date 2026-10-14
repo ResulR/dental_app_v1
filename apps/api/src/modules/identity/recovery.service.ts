@@ -18,7 +18,7 @@ type Ports = {
     purpose: "request" | "consume",
     key: string,
     trustedNetworkKey: string,
-  ) => boolean;
+  ) => boolean | Promise<boolean>;
   // Atomically condition on current eligible account/address; enqueue private encrypted
   // email challenge + store digest/epoch/expiry, or no-op. No account existence result.
   // Do NOT send before commit or persist plaintext token. Do NOT clear security flags.
@@ -88,7 +88,13 @@ export function createPasswordRecoveryService(
     async request(email: unknown, trustedNetworkKey: string): Promise<Result> {
       network(trustedNetworkKey);
       const key = emailKey(email);
-      if (!ports.admit("request", key ?? "<invalid-email>", trustedNetworkKey))
+      if (
+        !(await ports.admit(
+          "request",
+          key ?? "<invalid-email>",
+          trustedNetworkKey,
+        ))
+      )
         return { kind: "limited" };
       if (!key) return { kind: "accepted" };
       const expiresAt = now() + lifetime;
@@ -113,11 +119,11 @@ export function createPasswordRecoveryService(
       network(trustedNetworkKey);
       const digest = actionTokenDigest("password-recovery", token);
       if (
-        !ports.admit(
+        !(await ports.admit(
           "consume",
           digest?.toString("hex") ?? "<invalid-token>",
           trustedNetworkKey,
-        )
+        ))
       )
         return { kind: "limited" };
       if (!digest) return { kind: "denied" };

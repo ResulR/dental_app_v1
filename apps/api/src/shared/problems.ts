@@ -6,10 +6,14 @@ type ProblemCode =
   | "INTERNAL_ERROR"
   | "AUTHENTICATION_REQUIRED"
   | "FORBIDDEN"
-  | "RATE_LIMITED";
+  | "RATE_LIMITED"
+  | "DEPENDENCY_UNAVAILABLE"
+  | "STATE_CONFLICT";
 import { ProblemSchema } from "@dental-lab/contracts";
 import type { FieldIssue } from "@dental-lab/contracts";
 const titles: Record<ProblemCode, string> = {
+  DEPENDENCY_UNAVAILABLE: "Regjistrimi nuk është i disponueshëm për momentin.",
+  STATE_CONFLICT: "Regjistrimi nuk mund të përfundohet me këto të dhëna.",
   AUTHENTICATION_REQUIRED: "Identifikimi nuk u pranua.",
   FORBIDDEN: "Kjo kërkesë nuk lejohet.",
   RATE_LIMITED: "Shumë përpjekje. Ju lutemi provoni më vonë.",

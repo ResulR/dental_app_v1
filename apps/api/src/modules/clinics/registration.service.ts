@@ -5,18 +5,10 @@ import {
 } from "../identity/index.js";
 import type { LoginAdmission } from "../identity/index.js";
 
-export type ClinicRegistration = {
-  name: string;
-  dentist_first_name: string;
-  dentist_last_name: string;
-  email: string;
-  password: string;
-  phone: string;
-  address: string;
-  accepted_terms: true;
-  terms_version_id: string;
-};
-type StoredRegistration = Omit<
+import { ClinicRegistrationRequestSchema } from "@dental-lab/contracts";
+import type { ClinicRegistration } from "@dental-lab/contracts";
+export type { ClinicRegistration } from "@dental-lab/contracts";
+export type StoredRegistration = Omit<
   ClinicRegistration,
   "password" | "accepted_terms"
 > & {
@@ -28,14 +20,17 @@ type StoredRegistration = Omit<
 type Ports = {
   currentTermsVersion: () => Promise<string | undefined>;
   ownerInitialized: () => Promise<boolean>;
-  admit: (emailKey: string, trustedNetworkKey: string) => LoginAdmission;
+  admit: (
+    emailKey: string,
+    trustedNetworkKey: string,
+  ) => LoginAdmission | Promise<LoginAdmission>;
   hash?: (password: string) => Promise<string>;
   // Account, credential, pending clinic, legal acceptance, conversation and
   // audit/outbox must be committed together; recheck current approved terms
   // inside that transaction. No raw password reaches storage.
   registerAtomic: (
     data: StoredRegistration,
-  ) => Promise<"created" | "duplicate" | "terms_changed">;
+  ) => Promise<"created" | "duplicate" | "terms_changed" | "unavailable">;
 };
 export type RegistrationResult =
   | { kind: "pending" }
@@ -44,49 +39,24 @@ export type RegistrationResult =
   | { kind: "conflict" }
   | { kind: "limited"; retryAfterSeconds: number };
 
-const textFields = [
-  "name",
-  "dentist_first_name",
-  "dentist_last_name",
-  "email",
-  "phone",
-  "address",
-] as const;
-const allowed = new Set([
-  ...textFields,
-  "password",
-  "accepted_terms",
-  "terms_version_id",
-]);
 function parse(input: unknown): ClinicRegistration | string[] {
-  if (!input || typeof input !== "object" || Array.isArray(input)) return ["/"];
-  const body = input as Record<string, unknown>;
-  const fields = Object.keys(body)
-    .filter((key) => !allowed.has(key))
-    .map(() => "/");
-  for (const key of textFields)
-    if (
-      typeof body[key] !== "string" ||
-      (body[key] as string).trim().length === 0
-    )
-      fields.push("/" + key);
-  if (!emailKey(body.email)) fields.push("/email");
+  const parsed = ClinicRegistrationRequestSchema.safeParse(input);
+  if (!parsed.success)
+    return [
+      ...new Set(
+        parsed.error.issues.map((issue) =>
+          issue.path.length === 1 ? "/" + String(issue.path[0]) : "/",
+        ),
+      ),
+    ];
+  const fields: string[] = [];
+  if (!emailKey(parsed.data.email)) fields.push("/email");
   if (
-    typeof body.password !== "string" ||
-    Array.from(body.password).length < 15 ||
-    Buffer.byteLength(body.password) > 1024
+    Array.from(parsed.data.password).length < 15 ||
+    Buffer.byteLength(parsed.data.password) > 1024
   )
     fields.push("/password");
-  if (body.accepted_terms !== true) fields.push("/accepted_terms");
-  if (
-    typeof body.terms_version_id !== "string" ||
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu.test(
-      body.terms_version_id,
-    )
-  )
-    fields.push("/terms_version_id");
-  if (fields.length) return [...new Set(fields)];
-  return body as ClinicRegistration;
+  return fields.length ? fields : parsed.data;
 }
 export function createClinicRegistrationService(ports: Ports) {
   const hash = ports.hash ?? hashPassword;
@@ -101,7 +71,7 @@ export function createClinicRegistrationService(ports: Ports) {
       const key = !Array.isArray(parsed)
         ? (emailKey(parsed.email) as string)
         : "<invalid-registration>";
-      const admitted = ports.admit(key, trustedNetworkKey);
+      const admitted = await ports.admit(key, trustedNetworkKey);
       if (!admitted.allowed)
         return {
           kind: "limited",
@@ -136,6 +106,7 @@ export function createClinicRegistrationService(ports: Ports) {
         profile: "clinic",
         review_state: "pending",
       });
+      if (result === "unavailable") return { kind: "unavailable" };
       if (result === "terms_changed")
         return { kind: "invalid", fields: ["/terms_version_id"] };
       return { kind: result === "created" ? "pending" : "conflict" };

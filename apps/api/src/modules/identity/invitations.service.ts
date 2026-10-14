@@ -21,7 +21,10 @@ export type EmployeeInvitationRecord = {
   revoked: boolean;
 };
 type StoragePorts = {
-  admit: (purpose: "issue" | "consume", trustedNetworkKey: string) => boolean;
+  admit: (
+    purpose: "issue" | "consume",
+    trustedNetworkKey: string,
+  ) => boolean | Promise<boolean>;
   // Recheck active actor/current authority; force the factory target/invited account with
   // no grants. Create invitation, digest, audit and protected encrypted email intent
   // in one transaction. Existing active/suspended account is never overwritten.
@@ -110,7 +113,8 @@ function createInvitationService(
       )
         return { kind: "denied" };
       network(trustedNetworkKey);
-      if (!ports.admit("issue", trustedNetworkKey)) return { kind: "limited" };
+      if (!(await ports.admit("issue", trustedNetworkKey)))
+        return { kind: "limited" };
       const key = emailKey(email);
       if (!key) return { kind: "invalid" };
       if (!(await authorizeIssuance(actor))) return { kind: "denied" };
@@ -138,7 +142,7 @@ function createInvitationService(
       trustedNetworkKey: string,
     ): Promise<Result> {
       network(trustedNetworkKey);
-      if (!ports.admit("consume", trustedNetworkKey))
+      if (!(await ports.admit("consume", trustedNetworkKey)))
         return { kind: "limited" };
       const digest = actionTokenDigest(
         target === "employee" ? "employee-invitation" : "admin-invitation",

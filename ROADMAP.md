@@ -8,6 +8,10 @@
 
 > Cette roadmap n'ajoute pas de fonction métier non validée. Les sujets juridiques et techniques encore ouverts sont des **portes de validation** : l'IA doit les instruire, pas inventer leur résolution. Elle ne doit jamais considérer « tous les points cochés » comme équivalent à un site exploitable si les tests terrain ou obligations avant production échouent.
 
+## Réception PostgreSQL v3 — 14/10/2026
+
+Phases A/B v3 réussies selon les preuves administrateur communiquées ; hashes du dépôt et de l'archive, Git et unités arrêtées contrôlés directement. Voir [réception détaillée](docs/POSTGRES_V3_RECEPTION_2026-10-14.md). Bootstrap et travaux liés éprouvés sur PostgreSQL réel dans les scénarios du bundle v3 ; aucune application de production ni validation globale des chapitres 6/7 déduite. Les suivis antérieurs ci-dessous sont historiques.
+
 ## Suivi réception bootstrap — 13/10/2026
 
 Proposition uniquement : alternative sans deuxième VPS préparée dans `docs/admin-proposals/SHARED_VPS_POSTGRES_RECEPTION.md`. Audit en lecture seule au commit164ab82 ; enveloppe systemd/compte dédié/disque plafonné préparés, syntaxe contrôlée. Aucune instance, aucun compte Linux, montage, service ou objet SQL créé. Phase A (preuve d’isolation sans PostgreSQL) exige accord administrateur ; Phase B (recette réelle) exige preuves A et accord distinct. Interdiction originale hors-VPS conservée, aucune garde du harness supprimée. Recettes PG/bootstrap/HTTPS et production toujours différées. Prochaine action : revue et accord Phase A, sinon VM Linux locale.
@@ -1072,6 +1076,9 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Recette protégée13/10/2026 :** archiveAPI/web/deps et probePGrollback prêts à approbation, jamais exécutés ;contrôle ACLauth avantdémarrage. FIRST_LOGIN_RECEPTION précisechaquemigration/SHA/commande etpermissions. RecetteHTTPprivée/HTTPSPlaywright opt-inpréparée,NONréceptionnée. Bootstrapprivé et harnesscommit/courses restentcodeàécrire.
 
 ### 7.3 — Implémenter inscription clinique
+
+> Reprise 14/10 : contrats partagés, route HTTP composable et adaptateur transactionnel préparés/testés hors ligne ; admission asynchrone corrigée. Migration 0014 des conditions/acceptations préparée et non appliquée. Route non activée au runtime ; recette PostgreSQL du nouvel adaptateur/ACL, conditions publiées, branchement UI et livraison email restent incomplets. Voir docs/CLINIC_REGISTRATION.md. Réception v3 séparée : docs/POSTGRES_V3_RECEPTION_2026-10-14.md. Aucun point déclaré entièrement validé par ce seul lot.
+
 
 > Complément intégration première connexion13/10 : bootstrap privé du propriétaire implémenté (hors inscription publique), autorisation privée/empreintes/transaction verrouillée/refus réutilisation/audit et marqueur durable ; harness PostgreSQL isolé commit/rollback/concurrence préparé. Contrôles hors ligne réussis, aucune création réelle ni réception SQL/HTTPS. Dossiers FIRST_OWNER_BOOTSTRAP_ADMIN et FIRST_LOGIN_RUNTIME ; validation réelle groupée possible après accords particuliers. L'inscription clinique de ce point reste partielle. Email critique livré et déploiement complet restent ouverts.
 

@@ -22,8 +22,14 @@ import {
   EmptyAuthMutationSchema,
   SessionIdentitySchema,
 } from "./authentication.js";
+import {
+  ClinicRegistrationRequestSchema,
+  ClinicRegistrationReceiptSchema,
+} from "./clinic-registration.js";
 export function exportJsonSchemas() {
   const schemas = {
+    ClinicRegistrationRequest: ClinicRegistrationRequestSchema,
+    ClinicRegistrationReceipt: ClinicRegistrationReceiptSchema,
     LoginRequest: LoginRequestSchema,
     EmptyAuthMutation: EmptyAuthMutationSchema,
     SessionIdentity: SessionIdentitySchema,

@@ -31,7 +31,10 @@ type Result = {
 type Ports = {
   // Current active clinic/account + ownership must be rechecked inside createAtomic.
   authorizeRequest: (actor: Actor, clinicId: string) => Promise<boolean>;
-  admit: (actor: Actor, trustedNetworkKey: string) => boolean;
+  admit: (
+    actor: Actor,
+    trustedNetworkKey: string,
+  ) => boolean | Promise<boolean>;
   createAtomic: (
     actor: Actor,
     input: {
@@ -59,7 +62,7 @@ type Ports = {
       challenge?: { token: string; digest: Buffer; expiresAt: number };
     },
   ) => Promise<"approved" | "refused" | "conflict" | "denied">;
-  admitConfirmation: (trustedNetworkKey: string) => boolean;
+  admitConfirmation: (trustedNetworkKey: string) => boolean | Promise<boolean>;
   findByDigest: (digest: Buffer) => Promise<EmailChangeRecord | null>;
   // Recheck digest/approval/expiry/unconsumed/unrevoked under row locks and now at commit.
   // CAS request/account; ensure old address unchanged and unique new canonical key.
@@ -101,7 +104,8 @@ export function createClinicEmailChangeService(
         return { kind: "denied" };
       if (!trustedNetworkKey || trustedNetworkKey.length > 256)
         throw new Error("INVALID_EMAIL_CHANGE_CONTEXT");
-      if (!ports.admit(actor, trustedNetworkKey)) return { kind: "limited" };
+      if (!(await ports.admit(actor, trustedNetworkKey)))
+        return { kind: "limited" };
       const key = emailKey(input.newEmail);
       if (!input.clinicId || !key || !revision(input.expectedRevision))
         return { kind: "invalid" };
@@ -153,7 +157,7 @@ export function createClinicEmailChangeService(
     async confirm(token: unknown, trustedNetworkKey: string): Promise<Result> {
       if (!trustedNetworkKey || trustedNetworkKey.length > 256)
         throw new Error("INVALID_EMAIL_CHANGE_CONTEXT");
-      if (!ports.admitConfirmation(trustedNetworkKey))
+      if (!(await ports.admitConfirmation(trustedNetworkKey)))
         return { kind: "limited" };
       const digest = actionTokenDigest("email-change", token);
       if (!digest) return { kind: "denied" };

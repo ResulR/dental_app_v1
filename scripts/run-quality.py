@@ -114,6 +114,16 @@ def plan(name):
         "check:boundaries": [(node("scripts/check-boundaries.mjs"), "boundaries")],
         "check:workspace": [(node("scripts/check-workspace.mjs"), "workspace")],
     }
+    if name == "format:changed":
+        paths = subprocess.check_output(["git", "diff", "--name-only", "HEAD", "-z"], cwd=ROOT).split(b"\0")
+        paths += subprocess.check_output(["git", "ls-files", "--others", "--exclude-standard", "-z"], cwd=ROOT).split(b"\0")
+        selected = sorted({p.decode() for p in paths if p and
+                           p.decode().startswith(("apps/", "packages/", "tests/")) and
+                           Path(p.decode()).suffix in (".ts", ".tsx", ".mjs", ".json") and
+                           Path(p.decode()).is_file()})
+        if not selected:
+            raise RuntimeError("No changed application/test files to format")
+        return [(node("node_modules/prettier/bin/prettier.cjs", "--write", *selected), "format changed application files")]
     commands["check:migrations"] = [(["/usr/bin/python3", "scripts/migration-catalog.py"], "migration source inventory")]
     commands["test:migrations"] = [
         (["/usr/bin/python3", "-m", "unittest", "discover", "-s", "tests/migrations", "-p", "test_*.py", "-v"], "migration engine offline tests"),
