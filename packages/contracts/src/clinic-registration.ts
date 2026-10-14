@@ -18,3 +18,10 @@ export const ClinicRegistrationReceiptSchema = z.strictObject({
 export type ClinicRegistration = z.infer<
   typeof ClinicRegistrationRequestSchema
 >;
+
+export const RegistrationTermsSchema = z.strictObject({
+  version_id: z.uuid(),
+  body: z.string().min(1).max(1048576),
+  body_sha256: z.string().regex(/^[0-9a-f]{64}$/),
+});
+export type RegistrationTerms = z.infer<typeof RegistrationTermsSchema>;

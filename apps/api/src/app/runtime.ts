@@ -1,3 +1,11 @@
+import { registrationEnabled } from "./registration-config.js";
+import {
+  assertRegistrationStorageReady,
+  createRegistrationTermsRepository,
+  createClinicRegistrationRepository,
+  createClinicRegistrationService,
+  registerClinicRegistrationRoutes,
+} from "../modules/clinics/index.js";
 import type { Express } from "express";
 import { createApplicationDatabase } from "../shared/database.js";
 import { readAuthConfig } from "./auth-config.js";
@@ -12,6 +20,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableRegistration = registrationEnabled(env);
   const config = readAuthConfig(env);
   if (!config) return { registerRoutes: undefined, close: async () => {} };
   const database = createApplicationDatabase(env);
@@ -29,13 +38,35 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
       createSessionRepository(database),
       config.session,
     );
+    let registration:
+      ReturnType<typeof createClinicRegistrationService> | undefined;
+    const terms = createRegistrationTermsRepository(database);
+    if (enableRegistration) {
+      await assertRegistrationStorageReady(database);
+      const store = createClinicRegistrationRepository(database);
+      registration = createClinicRegistrationService({
+        currentTermsVersion: async () => (await terms.current())?.version_id,
+        ownerInitialized: store.ownerInitialized,
+        registerAtomic: store.registerAtomic,
+        // Explicitly shares the existing account/network budget with login.
+        // A second endpoint must not create a way around the persistent limiter.
+        admit: limiter.consume,
+      });
+    }
     return {
-      registerRoutes: (app: Express) =>
+      registerRoutes: (app: Express) => {
         registerAuthenticationRoutes(app, {
           authentication,
           sessions,
           origin: config.origin,
-        }),
+        });
+        if (registration)
+          registerClinicRegistrationRoutes(app, {
+            registration,
+            terms: terms.current,
+            origin: config.origin,
+          });
+      },
       close: () => database.close(),
     };
   } catch (error) {

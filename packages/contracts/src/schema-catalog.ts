@@ -23,11 +23,13 @@ import {
   SessionIdentitySchema,
 } from "./authentication.js";
 import {
+  RegistrationTermsSchema,
   ClinicRegistrationRequestSchema,
   ClinicRegistrationReceiptSchema,
 } from "./clinic-registration.js";
 export function exportJsonSchemas() {
   const schemas = {
+    RegistrationTerms: RegistrationTermsSchema,
     ClinicRegistrationRequest: ClinicRegistrationRequestSchema,
     ClinicRegistrationReceipt: ClinicRegistrationReceiptSchema,
     LoginRequest: LoginRequestSchema,

@@ -124,6 +124,8 @@ def plan(name):
         if not selected:
             raise RuntimeError("No changed application/test files to format")
         return [(node("node_modules/prettier/bin/prettier.cjs", "--write", *selected), "format changed application files")]
+    commands["prepare:registration-v4"] = [(["/usr/bin/python3", "scripts/prepare-registration-v4.py"], "prepare registration v4 bundle only")]
+    commands["check:registration-recipe"] = [(["/bin/bash", "-n", "tests/postgres/run-registration-v4.sh"], "v4 shell syntax"), (node("--check", "tests/postgres/catalog-registration-v4.mjs"), "v4 JavaScript syntax")]
     commands["check:migrations"] = [(["/usr/bin/python3", "scripts/migration-catalog.py"], "migration source inventory")]
     commands["test:migrations"] = [
         (["/usr/bin/python3", "-m", "unittest", "discover", "-s", "tests/migrations", "-p", "test_*.py", "-v"], "migration engine offline tests"),

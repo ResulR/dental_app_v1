@@ -16,3 +16,6 @@ export type { EmailChangeRecord } from "./email-change.service.js";
 export { registerClinicRegistrationRoutes } from "./registration.routes.js";
 
 export { createClinicRegistrationRepository } from "./registration.repository.js";
+
+export { createRegistrationTermsRepository } from "./registration-terms.repository.js";
+export { assertRegistrationStorageReady } from "./registration-readiness.js";

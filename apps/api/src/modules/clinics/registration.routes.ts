@@ -1,5 +1,8 @@
 import type { Express } from "express";
-import { ClinicRegistrationReceiptSchema } from "@dental-lab/contracts";
+import {
+  ClinicRegistrationReceiptSchema,
+  RegistrationTermsSchema,
+} from "@dental-lab/contracts";
 import { mutationOriginAllowed } from "../identity/index.js";
 import { sendProblem } from "../../shared/problems.js";
 import type { createClinicRegistrationService } from "./registration.service.js";
@@ -11,10 +14,25 @@ export function registerClinicRegistrationRoutes(
   services: {
     registration: ReturnType<typeof createClinicRegistrationService>;
     origin: string;
+    terms?: () => Promise<
+      ReturnType<typeof RegistrationTermsSchema.parse> | undefined
+    >;
   },
 ): void {
   if (!mutationOriginAllowed(services.origin, services.origin))
     throw new Error("INVALID_REGISTRATION_ORIGIN");
+  app.get("/api/v1/clinics/registration/terms", async (req, res) => {
+    if (Object.keys(req.query).length !== 0) {
+      sendProblem(res, "VALIDATION_FAILED", 400);
+      return;
+    }
+    const terms = await services.terms?.();
+    if (!terms) {
+      sendProblem(res, "DEPENDENCY_UNAVAILABLE", 503);
+      return;
+    }
+    res.json(RegistrationTermsSchema.parse(terms));
+  });
   app.post("/api/v1/clinics/registration", async (req, res) => {
     if (!mutationOriginAllowed(req.headers.origin, services.origin)) {
       sendProblem(res, "FORBIDDEN", 403);

@@ -30,7 +30,7 @@ Publication future : conserver chaque version immuable, vérifier le SHA-256 du 
 
 Avant toute décision sur les migrations de production, vérifier les reçus administrateur existants, y compris l'absence de collision de version 0014 ; ne jamais déduire leur état du seul dépôt. Préparer une recette indépendante des images v1/v2/v3, puis obtenir un accord explicite avant son exécution PostgreSQL. Elle devra tester avec dental_lab_app : insertion complète et limites ACL ; refus de publication/réécriture ; rollback à chaque écriture ; deux inscriptions du même email (une réussite, un conflit, aucune ligne orpheline) ; publication concurrente des conditions bloquée jusqu'à fin de la transaction ; conditions devenues obsolètes avant verrou refusées ; perte de connexion/commit incertain sans retry. Vérifier ensuite les preuves de non-interférence et conservation des anciennes images.
 
-La composition runtime reste non modifiée tant que cette réception, les préconditions de stockage, la politique du limiteur d'inscription et les conditions publiées ne sont pas réunies. Le branchement UI et le worker e-mail restent des travaux applicatifs ultérieurs ; ce lot ne clôt pas toute la roadmap.
+La composition runtime est maintenant préparée derrière DENTAL_LAB_REGISTRATION_ENABLED, false par défaut et exigeant AUTH_ENABLED=true. Aucune configuration d'exploitation modifiée. Le démarrage activé vérifie les ACL ; le lecteur vérifie locale, référence/date d'approbation et SHA exact du texte. L'activation reste interdite avant réception SQL, validation humaine des conditions et validation du partage du budget anti-abus avec login. Le branchement UI est préparé ; le worker e-mail réel reste ultérieur.
 
 Les textes albanais et leur validation ne sont pas inventés. La livraison réelle de l'e-mail d'inscription et la sélection des destinataires restent à intégrer au worker ; un événement durable seul ne prouvera pas un e-mail livré.
 
@@ -41,3 +41,11 @@ Les textes albanais et leur validation ne sont pas inventés. La livraison réel
 Build contracts/API, types des trois workspaces, lint, snapshot des contrats et frontières passent. Le contrôle global de formatage échoue sur deux scripts historiques inchangés : scripts/linked-works-postgres-v2.mjs et scripts/linked-works-postgres-v3.mjs. Ils restent figés ; aucune exclusion ou réécriture automatique n'a été ajoutée. La commande format:changed du runner borne l'écriture aux fichiers applicatifs/tests modifiés, sous les mêmes limites de ressources ; elle ne remplace pas le contrôle global.
 
 Le point 7.3 reste partiel. La réception v3 concerne son propre bundle, pas ces nouveaux changements.
+
+## Complément du lot depuis 39ac3de
+
+GET terms strict et sans cache, UI albanaise avec acceptation explicite et affichage texte, aucun brouillon ni retry automatique. Un résultat incertain bloque la resoumission locale. Validation navigateur/accessibilité encore reportée R17 ; build web seul ne la remplace pas.
+
+Préparation des intentions email idempotentes et transactionnelles : propriétaire éligible et administrateurs sélectionnés avec clinics.manage, sans copie d'adresse ni acquittement global de l'outbox. Aucun worker, fournisseur ou envoi. Réexamen des destinataires nécessaire à l'envoi ; permissions/concurrence de ce planificateur restent à recevoir sur SQL réel.
+
+165 tests unitaires, 17 tests HTTP et 76 tests hors ligne migrations/garde-fous réussis. Build API/contrats/web, typechecks, lint, snapshot, frontières et résolution réussis. Les deux erreurs de formatage historiques v2/v3 restent visibles, fichiers intacts. Recette indépendante et commandes : docs/admin-proposals/CATALOG_REGISTRATION_V4_RECEPTION.md ; empreintes : REGISTRATION_V4_ARTIFACTS.json. Bundle préparé, jamais exécuté. La recette v4 couvre catalogue, huit rollbacks, email concurrent, verrou des conditions et ACL ; elle ne prouve pas la perte de connexion/ambiguïté COMMIT réelle, ni l'envoi email ou la réception navigateur.

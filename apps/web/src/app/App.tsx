@@ -1,3 +1,4 @@
+import { ClinicRegistrationPanel } from "../features/clinics/index.js";
 import { AppShell } from "../shared/AppShell.js";
 import { AuthenticationPanel } from "../features/authentication/index.js";
 export function App() {
@@ -10,6 +11,7 @@ export function App() {
           Porositë, dorëzimet dhe bisedat në një vend të vetëm.
         </p>
         <AuthenticationPanel />
+        <ClinicRegistrationPanel />
       </div>
     </AppShell>
   );
