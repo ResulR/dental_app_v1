@@ -1,3 +1,7 @@
+import {
+  ClinicReviewRequestSchema,
+  ClinicReviewQueueSchema,
+} from "./clinic-review.js";
 import { z } from "zod";
 import {
   ObjectIdSchema,
@@ -29,6 +33,8 @@ import {
 } from "./clinic-registration.js";
 export function exportJsonSchemas() {
   const schemas = {
+    ClinicReviewRequest: ClinicReviewRequestSchema,
+    ClinicReviewQueue: ClinicReviewQueueSchema,
     RegistrationTerms: RegistrationTermsSchema,
     ClinicRegistrationRequest: ClinicRegistrationRequestSchema,
     ClinicRegistrationReceipt: ClinicRegistrationReceiptSchema,

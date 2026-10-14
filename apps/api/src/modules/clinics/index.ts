@@ -19,3 +19,9 @@ export { createClinicRegistrationRepository } from "./registration.repository.js
 
 export { createRegistrationTermsRepository } from "./registration-terms.repository.js";
 export { assertRegistrationStorageReady } from "./registration-readiness.js";
+
+export { registerClinicManagementRoutes } from "./management.routes.js";
+export {
+  createClinicManagementRepository,
+  assertClinicManagementStorageReady,
+} from "./management.repository.js";

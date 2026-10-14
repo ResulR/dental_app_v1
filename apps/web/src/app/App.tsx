@@ -1,4 +1,8 @@
-import { ClinicRegistrationPanel } from "../features/clinics/index.js";
+import {
+  ClinicRegistrationPanel,
+  ClinicProfilePanel,
+  ClinicReviewPanel,
+} from "../features/clinics/index.js";
 import { AppShell } from "../shared/AppShell.js";
 import { AuthenticationPanel } from "../features/authentication/index.js";
 export function App() {
@@ -10,7 +14,15 @@ export function App() {
         <p className="lead">
           Porositë, dorëzimet dhe bisedat në një vend të vetëm.
         </p>
-        <AuthenticationPanel />
+        <AuthenticationPanel
+          renderAuthenticated={(identity) =>
+            identity.profile === "clinic" ? (
+              <ClinicProfilePanel key={identity.account_id} />
+            ) : (
+              <ClinicReviewPanel key={identity.account_id} />
+            )
+          }
+        />
         <ClinicRegistrationPanel />
       </div>
     </AppShell>

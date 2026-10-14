@@ -1,3 +1,8 @@
+import { clinicManagementEnabled } from "./clinic-management-config.js";
+import {
+  registerClinicManagementRoutes,
+  assertClinicManagementStorageReady,
+} from "../modules/clinics/index.js";
 import { registrationEnabled } from "./registration-config.js";
 import {
   assertRegistrationStorageReady,
@@ -20,6 +25,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableClinicManagement = clinicManagementEnabled(env);
   const enableRegistration = registrationEnabled(env);
   const config = readAuthConfig(env);
   if (!config) return { registerRoutes: undefined, close: async () => {} };
@@ -28,6 +34,8 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     // Fail startup, without creating/migrating anything, if required objects or
     // read privileges are absent. Every checkout also enforces runtime identity.
     await assertAuthStorageReady(database);
+    if (enableClinicManagement)
+      await assertClinicManagementStorageReady(database);
     const repository = createIdentityRepository(database);
     const limiter = createPersistentLoginLimiter(database, config.loginLimit);
     const authentication = createAuthenticationService({
@@ -60,6 +68,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
           sessions,
           origin: config.origin,
         });
+        if (enableClinicManagement)
+          registerClinicManagementRoutes(app, {
+            sessions,
+            database,
+            origin: config.origin,
+          });
         if (registration)
           registerClinicRegistrationRoutes(app, {
             registration,

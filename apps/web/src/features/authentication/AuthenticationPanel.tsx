@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useEffect, useId, useRef, useState } from "react";
 import { Button } from "../../shared/Button.js";
 import { Card } from "../../shared/Card.js";
@@ -15,7 +16,13 @@ type View =
   | { kind: "anonymous" }
   | { kind: "unavailable" }
   | { kind: "authenticated"; identity: SessionIdentity };
-export function AuthenticationPanel({ client = api }: { client?: AuthClient }) {
+export function AuthenticationPanel({
+  client = api,
+  renderAuthenticated,
+}: {
+  client?: AuthClient;
+  renderAuthenticated?: (identity: SessionIdentity) => ReactNode;
+}) {
   const [view, setView] = useState<View>({ kind: "checking" });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -158,6 +165,7 @@ export function AuthenticationPanel({ client = api }: { client?: AuthClient }) {
       <Card>
         <h2>Jeni të identifikuar</h2>
         <p>{profiles[view.identity.profile]}</p>
+        {renderAuthenticated?.(view.identity)}
         <p className="muted">
           Funksionet e punës do të shfaqen këtu kur të jenë të disponueshme.
         </p>

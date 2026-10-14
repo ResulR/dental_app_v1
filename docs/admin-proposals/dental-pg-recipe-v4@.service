@@ -1,0 +1,50 @@
+# PROPOSAL ONLY. Install temporarily under /run/systemd/system after approval.
+[Unit]
+Description=Dental Lab isolated PostgreSQL reception (%i)
+[Service]
+Type=exec
+User=dental-pg-test-v4
+Group=dental-pg-test-v4
+RootImage=/var/lib/dental-lab-pg-recipe-v4/sandbox.raw
+MountAPIVFS=yes
+BindReadOnlyPaths=/usr/bin /usr/lib /usr/lib64 /usr/share
+WorkingDirectory=/var/lib/dental-lab-reception-v4
+ExecStart=/usr/bin/bash /recipe/runner.sh %i
+Environment=PATH=/usr/bin:/bin LANG=C.UTF-8 LC_ALL=C.UTF-8 UV_THREADPOOL_SIZE=1
+UMask=0077
+PrivateNetwork=yes
+RestrictAddressFamilies=AF_UNIX
+PrivateDevices=yes
+PrivateIPC=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/dental-lab-reception-v4
+TemporaryFileSystem=/tmp:rw,nosuid,nodev,noexec,size=32M,mode=1777
+ProtectHome=yes
+ProtectProc=invisible
+ProtectControlGroups=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectClock=yes
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryMax=768M
+MemorySwapMax=0
+CPUQuota=50%
+TasksMax=48
+IOWeight=10
+LimitCORE=0
+LimitNOFILE=128
+RuntimeMaxSec=5min
+TimeoutStopSec=30s
+KillMode=control-group
+Restart=no
+StandardInput=null
+StandardOutput=journal
+StandardError=journal
+LogRateLimitIntervalSec=30s
+LogRateLimitBurst=30

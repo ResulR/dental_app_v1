@@ -11,3 +11,9 @@ Le formulaire React utilise les composants partagés, labels explicites, cibles 
 Restent : adaptateur transactionnel, routes sous session/CSRF, audit durable et historique consultable selon permissions (sans valeurs sensibles dans les logs), branchement du formulaire et rechargement autorisé, tests PostgreSQL de concurrence/révocation/cloisonnement, tests navigateur clavier/tactile/mobile/lecteur selon R17. Aucun endpoint, table d'historique, déploiement ou migration nouvelle n'est prétendu réalisé. Le point reste partiellement implémenté jusqu'à ces preuves.
 
 Dépendance précise relevée lors de l'audit 7.8 : la contrainte changed_fields de public.audit_events (migration 0008 préparée) autorise notamment lifecycle/email mais pas name, dentist_first_name, dentist_last_name, phone ou address. Avant le raccordement du profil, préparer une évolution versionnée ciblée ou un historique métier adapté ; ne pas injecter des noms de champs aujourd'hui interdits ni modifier une migration appliquée. Cela confirme que l'historique durable 7.5 reste incomplet.
+
+## Lecture intégrée depuis 98d1261
+
+GET /api/v1/clinics/self/profile et /api/v1/clinics/:id/profile : session authentifiée, recontrôle transactionnel compte/session/droits, clinique propre non suspendue ou permission clinics.manage. DTO strict sans e-mail ni sécurité. Panneau de lecture albanais monté seulement dans la vue authentifiée clinique, clé compte, requête relative sans cache, timeout/annulation et effacement au démontage. Aucun stockage local.
+
+Le formulaire d’édition existant reste non branché : la contrainte changed_fields décrite ci-dessus exige une évolution versionnée avant écriture. Aucun nom de champ interdit ni faux historique injecté. Réception SQL et navigateur R17 ouvertes ; build/UI préparée ne signifie pas validation visuelle.

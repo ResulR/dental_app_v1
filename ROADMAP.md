@@ -1102,6 +1102,9 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale 7.3 :** signupPG/API/commandeinterditepending,acceptances/audit/outbox/conversation etraceTermsdifférés ;aucuntextejuridique/identitéownerinventé. Suite7.4indépendante.
 
 ### 7.4 — Implémenter approbation et refus de clinique
+
+> Lot depuis 98d1261 : adaptateur transactionnel et POST de décision intégrés au runtime sous DENTAL_LAB_CLINIC_MANAGEMENT_ENABLED=false par défaut. Session/compte/permissions relus sous verrou ; révision, historique 0012, audit et outbox atomiques. Aucune activation ni recette PostgreSQL réelle ; liste paginée et interface de décision lab branchées ; validation navigateur reportée R17.
+
 - **Statut :** ◐ Noyau implémenté/testé hors ligne — persistance/API/recette différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
@@ -1122,6 +1125,9 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale 7.4 :** 4refusSQL/ROLLBACK etpermissions/race/transaction/audit/notificationsPG-API différés ; pas de décision réelle ni étatproductionvalidé. Suite7.5indépendante.
 
 ### 7.5 — Implémenter profil clinique et modifications autorisées
+
+> Lot depuis 98d1261 : GET profil propre/autorisé et panneau de lecture dans la session clinique intégrés. Requêtes sans cache, annulation au démontage, aucun stockage navigateur. Édition toujours différée : évolution versionnée de l’historique nécessaire (0008 interdit actuellement les noms de champs de contact). Aucun contournement de cette contrainte.
+
 - **Statut :** ◐ Service et formulaire préparés — validation hors ligne ; intégration et réception différées
 - **Avancement :** Contrats stricts partagés, périmètre clinique serveur, habilitation clinics.manage, révision attendue et formulaire albanais préparés. Aucun changement e-mail/statut/sécurité/suppression permis. Voir docs/CLINIC_PROFILE.md. Adaptateur transactionnel, routes/session/CSRF, historique durable consultable et branchement du formulaire restent à implémenter ; recette PostgreSQL et navigateur non exécutée. Schémas ajoutés au snapshot après contrôle de préservation intégrale des contrats précédents.
 - **Priorité :** Critique
@@ -4630,3 +4636,11 @@ Suivi seul versionné après diff/guard, commit/push confirmé dans compte rendu
 - 165 unitaires, 17 intégrations HTTP, 76 tests hors ligne migrations/gate réussis ; builds/typechecks/lint/contrats/frontières/résolution réussis. Format global toujours en échec uniquement sur scripts historiques v2/v3 inchangés ; pas d'exclusion. UI navigateur R17 non réceptionnée.
 - Bundle v4 distinct préparé, empreintes dans REGISTRATION_V4_ARTIFACTS.json. Prochaine porte : accord pour VM indépendante et recette PostgreSQL ; preuve root du reçu 0003 ; validation des conditions/politique anti-abus puis fournisseur email. Aucune activation, migration ou configuration de production autorisée par ce checkpoint. Perte de connexion/COMMIT incertain réel, permissions du planificateur email, livraison et HTTPS restent à recevoir séparément.
 - Conservation v1/v2/v3, aucun nettoyage ni relancement. Les tâches applicatives indépendantes demandées sont préparées ; aucune clôture globale des chapitres 6/7.
+
+## Checkpoint 14/10/2026 — fonctionnalités depuis 98d1261
+
+7.3 : texte e-mail albanais sans donnée personnelle/patient, URL HTTPS canonique vérifiée ; fournisseur/worker/livraison et conditions humaines restent ouverts. 7.4 : API/persistance de décision préparées et intégrées derrière flag, non activées. 7.5 : lecture profil intégrée API/UI, édition/historique non reçus. Aucun de ces points entièrement clôturé.
+
+Enveloppe v4 pour VPS existant préparée seulement dans le dépôt : image future/compte/unité/chemins distincts, contrôles d’isolation avant initdb, empreintes figées. Aucun compte/image/montage/unité réellement créé. Voir SHARED_VPS_POSTGRES_V4_PREPARATION.md ; ce bundle reçoit le code 98d1261, pas les nouveaux adaptateurs de décision/profil. Tests limités aux changements ; aucune ancienne recette PostgreSQL rejouée.
+
+La liste paginée et l’interface de décision 7.4 sont maintenant intégrées. Prochaine partie applicative indépendante : évolution versionnée de l’historique contact et raccordement de l’édition 7.5. Réceptions SQL, activation, publication des conditions et fournisseur e-mail nécessitent les accords distincts déjà définis. Les blocages privilégiés ne ferment pas ces tâches applicatives.
