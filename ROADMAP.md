@@ -1163,6 +1163,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
+- **Préparation e-mail15/10 :** modèle albanais du challenge et notices de sécurité disponibles, origine/page HTTPS et expiration explicites, token en fragment uniquement ; aucun envoi/route/outbox chiffrée prétendu. Voir docs/ACCOUNT_EMAIL_PREPARATION.md.
+
 ### 7.7 — Implémenter récupération de mot de passe
 - **Statut :** ◐ Noyau récupération préparé — validation hors ligne ; intégration et réception différées
 - **Avancement :** Réutilise scrypt et emailKey ; demandes génériques, admission compte/réseau, jetons aléatoires à digest séparé, expiration avant/après KDF, rejeu/epoch/suspension/verrou refusés. Contrat reset atomique avec révocation de toutes sessions à compléter. Schéma, outbox chiffrée, adaptateurs, routes/UI et tests PostgreSQL/énumération/navigateur non réalisés. Aucun coffre R15 ou compte réel modifié. Voir docs/PASSWORD_RECOVERY.md.
@@ -1178,6 +1180,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Préparation e-mail15/10 :** modèle albanais du challenge et notices de sécurité disponibles, origine/page HTTPS et expiration explicites, token en fragment uniquement ; aucun envoi/route/outbox chiffrée prétendu. Voir docs/ACCOUNT_EMAIL_PREPARATION.md.
 
 ### 7.8 — Implémenter invitation employés
 - **Statut :** ◐ Noyau invitations préparé — validation hors ligne ; intégration et réception différées
@@ -1195,6 +1199,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
+- **Préparation e-mail15/10 :** modèle albanais du challenge et notices de sécurité disponibles, origine/page HTTPS et expiration explicites, token en fragment uniquement ; aucun envoi/route/outbox chiffrée prétendu. Voir docs/ACCOUNT_EMAIL_PREPARATION.md.
+
 ### 7.9 — Implémenter gestion des administrateurs secondaires
 - **Statut :** ◐ Noyaux invitation/gouvernance préparés — validation hors ligne ; intégration et réception différées
 - **Avancement :** Owner actuel seul, aucune gestion par admin/employee/clinic ; moteur invitation 7.8 réutilisé avec profil et domaine admin fixes, cible admin exacte et révision, validation registry/dependencies avant permissions. Ports atomiques, matrice 7.10 et routes/UI/outbox à compléter. Aucune gestion réelle ou délégation SQL effectuée. Voir docs/ADMIN_GOVERNANCE.md.
@@ -1210,6 +1216,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Préparation e-mail15/10 :** modèle albanais du challenge et notices de sécurité disponibles, origine/page HTTPS et expiration explicites, token en fragment uniquement ; aucun envoi/route/outbox chiffrée prétendu. Voir docs/ACCOUNT_EMAIL_PREPARATION.md.
 
 ### 7.10 — Implémenter permissions granulaires et dépendances
 - **Statut :** ◐ Registre/calcul et lecture effective API/UI intégrés — réception SQL/navigateur différée
