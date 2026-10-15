@@ -40,3 +40,9 @@ SessionStore crée maintenant, uniquement pour l'émission initiale d'une sessio
 H713-ALERT01 :incrément de accounts.revision sous le verrou déjà acquis pour rendre chaque événement security_alert unique ;auth_epoch inchangé et autresappareils conservés. Peut invalider une édition administrative à ancienne révision :conflit explicite attendu, jamais écrasement. Migration/grants0008/0010 réutilisés, aucune nouvellepermission. Le futur worker doit reconnaître cet événement par aggregateaccount/corrélation/auditactionSESSION_ISSUED et produire le templatealbanais approuvé ;ne pas interpréter toutes les security_alert comme login.
 
 Tests doubles :destination propriétaire/corrélation/durabilitéatomique simulée, échecs de chaque queue et absence pour employés. Worker/provider/template/lecture des notifications internes et preuve de livraison encore NON implémentés/réceptionnés :pending n'est pas email livré. Voir FIRST_LOGIN_RECEPTION/AUTH_RUNTIME_ADMIN pour la recette réelle.
+
+## Raccordement gouvernance — 15/10/2026
+
+Le parcours administrateurs7.9 applique maintenant isCurrentOwner dans la transaction de chaque lecture/mutation après validation de la session actuelle, epoch et bornes. La sécurisation clinique7.12 et l'enveloppe de délégation7.11 utilisent déjà les contrôles owner-only. Une lecture antérieure positive n'autorise aucune écriture ultérieure. Tests ciblés refusent ancien propriétaire, profil admin même habilité, compte suspendu/verrouillé/reset, session révoquée et cible owner/autociblage. Aucun endpoint de transfert/suppression/suspension propriétaire, modification audit ou récupération exceptionnelle ajouté. Unicité SQL historique conservée sans replay.
+
+L'audit global17.1, les streams et les réceptions SQL/navigateur restent à réaliser ; l'intégration de ces parcours ne valide pas globalement7.13. Les alertes de connexion existantes restent pending sans fournisseur/worker activé.

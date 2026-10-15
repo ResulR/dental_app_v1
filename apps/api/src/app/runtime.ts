@@ -1,3 +1,9 @@
+import { adminManagementEnabled } from "./admin-management-config.js";
+import {
+  assertAdminStorageReady,
+  createAdminRuntimeService,
+  registerAdminRoutes,
+} from "../modules/identity/index.js";
 import { accountStateEnabled } from "./account-state-config.js";
 import { delegationEnabled } from "./delegation-config.js";
 import {
@@ -38,6 +44,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableAdminManagement = adminManagementEnabled(env);
   const enableAccountState = accountStateEnabled(env);
   const enableDelegation = delegationEnabled(env);
   const enableClinicManagement = clinicManagementEnabled(env);
@@ -49,6 +56,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     // Fail startup, without creating/migrating anything, if required objects or
     // read privileges are absent. Every checkout also enforces runtime identity.
     await assertAuthStorageReady(database);
+    if (enableAdminManagement) await assertAdminStorageReady(database);
     if (enableAccountState) await assertAccountStateStorageReady(database);
     if (enableDelegation) await assertDelegationStorageReady(database);
     if (enableClinicManagement)
@@ -87,6 +95,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
           sessions,
           origin: config.origin,
         });
+        if (enableAdminManagement)
+          registerAdminRoutes(app, {
+            service: createAdminRuntimeService(database),
+            sessions,
+            origin: config.origin,
+          });
         if (enableAccountState)
           registerAccountStateRoutes(app, {
             service: createAccountStateRuntimeService(database),

@@ -1202,8 +1202,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Préparation e-mail15/10 :** modèle albanais du challenge et notices de sécurité disponibles, origine/page HTTPS et expiration explicites, token en fragment uniquement ; aucun envoi/route/outbox chiffrée prétendu. Voir docs/ACCOUNT_EMAIL_PREPARATION.md.
 
 ### 7.9 — Implémenter gestion des administrateurs secondaires
-- **Statut :** ◐ Noyaux invitation/gouvernance préparés — validation hors ligne ; intégration et réception différées
-- **Avancement :** Owner actuel seul, aucune gestion par admin/employee/clinic ; moteur invitation 7.8 réutilisé avec profil et domaine admin fixes, cible admin exacte et révision, validation registry/dependencies avant permissions. Ports atomiques, matrice 7.10 et routes/UI/outbox à compléter. Aucune gestion réelle ou délégation SQL effectuée. Voir docs/ADMIN_GOVERNANCE.md.
+- **Statut :** ◐ Gestion des administrateurs existants intégrée — invitation/livraison et réceptions différées
+- **Avancement :** Gestion owner-only des comptes admin existants reliée API/runtime/UI albanaise : liste, détail, permissions, suspension/réactivation, historique0018/audit/outbox. Recontrôle session/owner courant/révision sous verrous, no-op sans effet et aucun contournement récupération. Invitation et livraison chiffrée encore non branchées. Flag désactivé ; migration0018 proposée seulement. Voir docs/ADMIN_GOVERNANCE.md.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance
@@ -1294,6 +1294,9 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception :** raccordement middleware/SessionStore et ports 7.9, recontrôle transactionnel mutations/lecture audit 17.1, tests SQL/API/concurrence/SSE/navigateur et alertes propriétaire encore différés. Pas de validation globale du chapitre.
 
 - **Alertesconnexion13/10/2026 :** SessionStoreowner revalidé prépare security_alert/outbox/notificationinterne/livraisonsecuritypending atomiquement avecsession/audit/corrélation ;échecsannulentlogin. Grants0008/0010réutilisés ;worker/provider/template etpreuvesdelivrance restentdifférés.
+
+
+- **Intégration15/10 :** gouvernance7.9, délégation7.11 et sécurisation7.12 recontrôlent propriétaire courant/session dans leurs transactions. Aucun endpoint propriétaire destructif/transfert ni mutation audit. Lecture audit17.1, alertes livrées, SSE et réception réelle restent différés.
 
 ### 7.14 — Documenter récupération exceptionnelle propriétaire
 - **Statut :** ◐ Procédure documentée — simulation encadrée et réception différées

@@ -1,4 +1,12 @@
 import {
+  AdminCommandSchema,
+  AdminFieldsSchema,
+  AdminProfileSchema,
+  AdminListSchema,
+  AdminResultSchema,
+  AdminHistorySchema,
+} from "./admin-management.js";
+import {
   ManagedProfileSchema,
   AccountStateCommandSchema,
   AccountStateFieldsSchema,
@@ -56,6 +64,12 @@ export function exportJsonSchemas() {
     ManagedProfile: ManagedProfileSchema,
     AccountStateCommand: AccountStateCommandSchema,
     AccountStateFields: AccountStateFieldsSchema,
+    AdminCommand: AdminCommandSchema,
+    AdminFields: AdminFieldsSchema,
+    AdminProfile: AdminProfileSchema,
+    AdminList: AdminListSchema,
+    AdminResult: AdminResultSchema,
+    AdminHistory: AdminHistorySchema,
     AccountStateProfile: AccountStateProfileSchema,
     AccountStateList: AccountStateListSchema,
     AccountStateResult: AccountStateResultSchema,

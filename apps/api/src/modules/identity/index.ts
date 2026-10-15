@@ -48,3 +48,10 @@ export {
 } from "./account-state.repository.js";
 export { createAccountStateRuntimeService } from "./account-state-runtime.service.js";
 export { registerAccountStateRoutes } from "./account-state.routes.js";
+
+export {
+  createAdminRepository,
+  assertAdminStorageReady,
+} from "./admin.repository.js";
+export { createAdminRuntimeService } from "./admin-runtime.service.js";
+export { registerAdminRoutes } from "./admin.routes.js";

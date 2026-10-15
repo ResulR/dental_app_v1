@@ -1,4 +1,5 @@
 import {
+  AdminPanel,
   DelegationPanel,
   AccountStatePanel,
 } from "../features/permissions/index.js";
@@ -25,6 +26,11 @@ export function App() {
         <AuthenticationPanel
           renderAuthenticated={(identity) => (
             <>
+              {identity.profile === "owner" && (
+                <PermissionBoundary identity={identity} allowClinic={false}>
+                  <AdminPanel key={identity.account_id + "-admins"} />
+                </PermissionBoundary>
+              )}
               <PermissionBoundary identity={identity}>
                 {identity.profile === "clinic" ? (
                   <ClinicProfilePanel key={identity.account_id} />

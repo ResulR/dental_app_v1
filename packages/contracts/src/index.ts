@@ -15,3 +15,5 @@ export * from "./permissions.js";
 export * from "./delegation.js";
 
 export * from "./account-state.js";
+
+export * from "./admin-management.js";
