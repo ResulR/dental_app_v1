@@ -1163,7 +1163,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
-- **Préparation e-mail15/10 :** modèle albanais du challenge et notices de sécurité disponibles, origine/page HTTPS et expiration explicites, token en fragment uniquement ; aucun envoi/route/outbox chiffrée prétendu. Voir docs/ACCOUNT_EMAIL_PREPARATION.md.
+- **Préparation e-mail15/10 :** modèles albanais et codec privé AES-GCM préparés/testés, clés synthétiques seulement ; origine/page HTTPS et expiration explicites, token en fragment uniquement. Persistance atomique/worker/routes/livraison encore absents. Voir docs/ACCOUNT_EMAIL_PREPARATION.md.
 
 ### 7.7 — Implémenter récupération de mot de passe
 - **Statut :** ◐ Noyau récupération préparé — validation hors ligne ; intégration et réception différées
@@ -1181,7 +1181,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
-- **Préparation e-mail15/10 :** modèle albanais du challenge et notices de sécurité disponibles, origine/page HTTPS et expiration explicites, token en fragment uniquement ; aucun envoi/route/outbox chiffrée prétendu. Voir docs/ACCOUNT_EMAIL_PREPARATION.md.
+- **Préparation e-mail15/10 :** modèles albanais et codec privé AES-GCM préparés/testés, clés synthétiques seulement ; origine/page HTTPS et expiration explicites, token en fragment uniquement. Persistance atomique/worker/routes/livraison encore absents. Voir docs/ACCOUNT_EMAIL_PREPARATION.md.
 
 ### 7.8 — Implémenter invitation employés
 - **Statut :** ◐ Noyau invitations préparé — validation hors ligne ; intégration et réception différées
@@ -1199,7 +1199,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
-- **Préparation e-mail15/10 :** modèle albanais du challenge et notices de sécurité disponibles, origine/page HTTPS et expiration explicites, token en fragment uniquement ; aucun envoi/route/outbox chiffrée prétendu. Voir docs/ACCOUNT_EMAIL_PREPARATION.md.
+- **Préparation e-mail15/10 :** modèles albanais et codec privé AES-GCM préparés/testés, clés synthétiques seulement ; origine/page HTTPS et expiration explicites, token en fragment uniquement. Persistance atomique/worker/routes/livraison encore absents. Voir docs/ACCOUNT_EMAIL_PREPARATION.md.
 
 ### 7.9 — Implémenter gestion des administrateurs secondaires
 - **Statut :** ◐ Gestion des administrateurs existants intégrée — invitation/livraison et réceptions différées
@@ -1217,7 +1217,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
-- **Préparation e-mail15/10 :** modèle albanais du challenge et notices de sécurité disponibles, origine/page HTTPS et expiration explicites, token en fragment uniquement ; aucun envoi/route/outbox chiffrée prétendu. Voir docs/ACCOUNT_EMAIL_PREPARATION.md.
+- **Préparation e-mail15/10 :** modèles albanais et codec privé AES-GCM préparés/testés, clés synthétiques seulement ; origine/page HTTPS et expiration explicites, token en fragment uniquement. Persistance atomique/worker/routes/livraison encore absents. Voir docs/ACCOUNT_EMAIL_PREPARATION.md.
 
 ### 7.10 — Implémenter permissions granulaires et dépendances
 - **Statut :** ◐ Registre/calcul et lecture effective API/UI intégrés — réception SQL/navigateur différée

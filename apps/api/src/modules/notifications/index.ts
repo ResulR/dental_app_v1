@@ -5,3 +5,4 @@ export {
   accountChallengeEmail,
   accountSecurityEmail,
 } from "./account-email.js";
+export { createPrivateMailCodec } from "./private-mail-codec.js";
