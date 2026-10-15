@@ -2609,6 +2609,571 @@
         "shade",
         "work_type"
       ]
+    },
+    "CatalogCreate": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "material",
+            "shade",
+            "work_type"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "kind",
+        "label"
+      ],
+      "additionalProperties": false
+    },
+    "CatalogEdit": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "operation": {
+              "type": "string",
+              "const": "restrict"
+            },
+            "expected_revision": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            }
+          },
+          "required": [
+            "operation",
+            "expected_revision",
+            "reason"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "operation": {
+              "type": "string",
+              "const": "update"
+            },
+            "expected_revision": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "is_active": {
+              "type": "boolean"
+            },
+            "use_state": {
+              "type": "string",
+              "enum": [
+                "available",
+                "unavailable"
+              ]
+            }
+          },
+          "required": [
+            "operation",
+            "expected_revision",
+            "label",
+            "is_active",
+            "use_state"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "operation": {
+              "type": "string",
+              "const": "remove"
+            },
+            "expected_revision": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "operation",
+            "expected_revision"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "CatalogHistory": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "items": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "actor_id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "create",
+                  "update",
+                  "remove",
+                  "restrict"
+                ]
+              },
+              "occurred_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              "previous": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "is_active": {
+                        "type": [
+                          "boolean",
+                          "null"
+                        ]
+                      },
+                      "use_state": {
+                        "type": "string",
+                        "enum": [
+                          "available",
+                          "unavailable",
+                          "forbidden"
+                        ]
+                      },
+                      "forbidden_reason": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "label",
+                      "is_active",
+                      "use_state",
+                      "forbidden_reason"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "next": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "is_active": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "use_state": {
+                    "type": "string",
+                    "enum": [
+                      "available",
+                      "unavailable",
+                      "forbidden"
+                    ]
+                  },
+                  "forbidden_reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "label",
+                  "is_active",
+                  "use_state",
+                  "forbidden_reason"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "actor_id",
+              "revision",
+              "operation",
+              "occurred_at",
+              "previous",
+              "next"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "next_before": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "items",
+        "next_before"
+      ],
+      "additionalProperties": false
+    },
+    "CatalogImpacts": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "items": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "number": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "clinic_id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "correction_requested",
+                  "rejected",
+                  "accepted",
+                  "manufacturing",
+                  "completed",
+                  "delivered",
+                  "cancelled"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "number",
+              "clinic_id",
+              "status"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "next_after": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "items",
+        "next_after"
+      ],
+      "additionalProperties": false
+    },
+    "CatalogManagedFields": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "label": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "is_active": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "use_state": {
+          "type": "string",
+          "enum": [
+            "available",
+            "unavailable",
+            "forbidden"
+          ]
+        },
+        "forbidden_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "label",
+        "is_active",
+        "use_state",
+        "forbidden_reason"
+      ],
+      "additionalProperties": false
+    },
+    "CatalogManagedPage": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "items": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "is_active": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "use_state": {
+                "type": "string",
+                "enum": [
+                  "available",
+                  "unavailable",
+                  "forbidden"
+                ]
+              },
+              "forbidden_reason": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "material",
+                  "shade",
+                  "work_type"
+                ]
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "label",
+              "is_active",
+              "use_state",
+              "forbidden_reason",
+              "id",
+              "kind",
+              "revision"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "next_after": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "items",
+        "next_after"
+      ],
+      "additionalProperties": false
+    },
+    "CatalogManagedProfile": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "label": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "is_active": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "use_state": {
+          "type": "string",
+          "enum": [
+            "available",
+            "unavailable",
+            "forbidden"
+          ]
+        },
+        "forbidden_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "material",
+            "shade",
+            "work_type"
+          ]
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "label",
+        "is_active",
+        "use_state",
+        "forbidden_reason",
+        "id",
+        "kind",
+        "revision"
+      ],
+      "additionalProperties": false
+    },
+    "CatalogMutationResult": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "applied",
+            "conflict",
+            "denied",
+            "invalid",
+            "restricted"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false
     }
   }
 }

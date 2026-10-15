@@ -1,3 +1,9 @@
+import { catalogManagementEnabled } from "./catalog-management-config.js";
+import {
+  assertCatalogManagementReady,
+  createCatalogManagementService,
+  registerCatalogManagementRoutes,
+} from "../modules/catalog/index.js";
 import { catalogEnabled } from "./catalog-config.js";
 import {
   assertCatalogStorageReady,
@@ -50,6 +56,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableCatalogManagement = catalogManagementEnabled(env);
   const enableCatalog = catalogEnabled(env);
   const enableAdminManagement = adminManagementEnabled(env);
   const enableAccountState = accountStateEnabled(env);
@@ -63,6 +70,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     // Fail startup, without creating/migrating anything, if required objects or
     // read privileges are absent. Every checkout also enforces runtime identity.
     await assertAuthStorageReady(database);
+    if (enableCatalogManagement) await assertCatalogManagementReady(database);
     if (enableCatalog) await assertCatalogStorageReady(database);
     if (enableAdminManagement) await assertAdminStorageReady(database);
     if (enableAccountState) await assertAccountStateStorageReady(database);
@@ -103,6 +111,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
           sessions,
           origin: config.origin,
         });
+        if (enableCatalogManagement)
+          registerCatalogManagementRoutes(app, {
+            service: createCatalogManagementService(database),
+            sessions,
+            origin: config.origin,
+          });
         if (enableCatalog)
           registerCatalogRoutes(app, {
             service: createCatalogService(database),

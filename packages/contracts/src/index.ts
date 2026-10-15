@@ -19,3 +19,5 @@ export * from "./account-state.js";
 export * from "./admin-management.js";
 
 export * from "./catalog.js";
+
+export * from "./catalog-management.js";

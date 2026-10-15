@@ -1361,7 +1361,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Implémentation15/10 :** lecture paginée des trois catégories actives/disponibles, session/droits courants, UI albanaise, contrats stricts et flagCATALOG désactivé. Aucun catalogue/snapshot modifié, aucune migration. Voir docs/CATALOG_READ.md.
 
 ### 8.2 — Implémenter administration des catalogues
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Administration API/runtime/UI intégrée — réception SQL/navigateur différée
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Catalogue et paramètres
@@ -1375,8 +1375,10 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
+- **Préparation15/10 :** Ajout, édition, disponibilité, retrait courant, permissions actuelles, révisions, historique/audit/outbox intégrés. Références/snapshots préservés ; migration0019 proposée seulement. Voir docs/CATALOG_MANAGEMENT.md.
+
 ### 8.3 — Implémenter références indisponibles
-- **Statut :** ☐ À faire
+- **Statut :** ◐ État administrable — parcours soumission/exception à intégrer
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Catalogue et paramètres
@@ -1390,8 +1392,10 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
+- **Préparation15/10 :** État indisponible administrable sans altérer les snapshots. Avertissement de soumission et acceptation exceptionnelle justifiée/confirmée restent dépendants des writers commandes9–10. Aucune clôture du parcours.
+
 ### 8.4 — Implémenter références interdites
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Interdiction motivée et alerte préparées — protections des futurs writers à intégrer
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Catalogue et paramètres
@@ -1405,8 +1409,10 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
+- **Préparation15/10 :** Commande restrict, aucun contournement par édition/retrait, alerte propriétaire transactionnelle préparée sans livraison. Refus de soumission/acceptation à brancher aux futurs writers ; SQL/navigateur et décision de levée différés.
+
 ### 8.5 — Implémenter blocage des travaux concernés
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Blocages et examen propriétaire intégrés — réception et progression différées
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Catalogue et paramètres
@@ -1419,6 +1425,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Préparation15/10 :** Blocages non livrés sans mutation de statut ; examen owner paginé inclut historiques/livrés. Limite technique1000 refuse atomiquement au-delà, aucune troncature. Verrouillage des futurs writers et levée conforme restent à recevoir.
 
 ### 8.6 — Implémenter paramètres publics du laboratoire
 - **Statut :** ☐ À faire
