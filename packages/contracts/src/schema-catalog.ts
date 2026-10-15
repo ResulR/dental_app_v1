@@ -2,6 +2,7 @@ import { EffectivePermissionsSchema } from "./permissions.js";
 import {
   ClinicReviewRequestSchema,
   ClinicReviewQueueSchema,
+  ClinicDirectorySchema,
 } from "./clinic-review.js";
 import { z } from "zod";
 import {
@@ -38,6 +39,7 @@ export function exportJsonSchemas() {
     EffectivePermissions: EffectivePermissionsSchema,
     ClinicReviewRequest: ClinicReviewRequestSchema,
     ClinicReviewQueue: ClinicReviewQueueSchema,
+    ClinicDirectory: ClinicDirectorySchema,
     RegistrationTerms: RegistrationTermsSchema,
     ClinicRegistrationRequest: ClinicRegistrationRequestSchema,
     ClinicRegistrationReceipt: ClinicRegistrationReceiptSchema,

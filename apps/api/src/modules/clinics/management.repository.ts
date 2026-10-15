@@ -9,6 +9,7 @@ import {
   ClinicContactUpdateSchema,
   ClinicContactHistorySchema,
   ClinicReviewQueueSchema,
+  ClinicDirectorySchema,
 } from "@dental-lab/contracts";
 import type { ClinicDecision } from "./review.service.js";
 type Database = Pick<
@@ -237,6 +238,29 @@ export function createClinicManagementRepository(
         return ClinicContactHistorySchema.parse({
           items,
           next_before: result.rows.length > 50 ? items[49]?.revision : null,
+        });
+      });
+    },
+    async directory(after?: string) {
+      return database.transaction(async (tx) => {
+        if (!manager(await access(tx))) return null;
+        const result = await tx.query<{
+          id: string;
+          name: string;
+          revision: string;
+          review_state: string;
+          suspended: boolean;
+        }>(
+          "SELECT id,name,revision::text,review_state,suspended FROM public.clinics WHERE ($1::uuid IS NULL OR id>$1) ORDER BY id LIMIT 51",
+          [after ?? null],
+        );
+        const rows = result.rows.slice(0, 50);
+        return ClinicDirectorySchema.parse({
+          items: rows.map((row) => ({
+            ...row,
+            revision: Number(row.revision),
+          })),
+          next_after: result.rows.length > 50 ? rows[49]?.id : null,
         });
       });
     },

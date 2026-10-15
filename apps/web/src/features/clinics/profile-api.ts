@@ -2,7 +2,7 @@ import {
   ClinicProfileSchema,
   ClinicContactHistorySchema,
   ClinicContactUpdateSchema,
-  ObjectIdSchema,
+  ClinicIdSchema,
 } from "@dental-lab/contracts";
 import type { ClinicProfile, ClinicContactUpdate } from "@dental-lab/contracts";
 export function createClinicProfileClient(transport: typeof fetch = fetch) {
@@ -13,7 +13,7 @@ export function createClinicProfileClient(transport: typeof fetch = fetch) {
       signal: AbortSignal,
     ): Promise<{ kind: "applied" | "conflict" | "denied" | "invalid" }> {
       if (
-        !ObjectIdSchema.safeParse(id).success ||
+        !ClinicIdSchema.safeParse(id).success ||
         !ClinicContactUpdateSchema.safeParse(input).success
       )
         return { kind: "invalid" };
@@ -34,7 +34,7 @@ export function createClinicProfileClient(transport: typeof fetch = fetch) {
       throw new Error("PROFILE_SAVE_UNCERTAIN");
     },
     async history(id: string, signal: AbortSignal, before?: number) {
-      if (!ObjectIdSchema.safeParse(id).success) return null;
+      if (!ClinicIdSchema.safeParse(id).success) return null;
       const response = await transport(
         "/api/v1/clinics/" +
           id +
@@ -54,7 +54,7 @@ export function createClinicProfileClient(transport: typeof fetch = fetch) {
       return parsed.success ? parsed.data : null;
     },
     async own(signal: AbortSignal, id?: string): Promise<ClinicProfile | null> {
-      if (id !== undefined && !ObjectIdSchema.safeParse(id).success)
+      if (id !== undefined && !ClinicIdSchema.safeParse(id).success)
         return null;
       const response = await transport(
         "/api/v1/clinics/" + (id ?? "self") + "/profile",

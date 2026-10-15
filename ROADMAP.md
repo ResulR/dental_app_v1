@@ -1128,8 +1128,12 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 > Lot depuis 8172039 : édition transactionnelle du profil et historique paginé avant/après intégrés API/UI albanaise, permissions courantes/révision/audit, sans stockage local. Migration0015 dédiée préparée, non appliquée ; 0008 intacte. 17 tests ciblés réussis ; réception PostgreSQL/navigateur et activation toujours différées. Voir CLINIC_PROFILE.md.
 
-- **Statut :** ◐ Service et formulaire préparés — validation hors ligne ; intégration et réception différées
-- **Avancement :** Contrats stricts partagés, périmètre clinique serveur, habilitation clinics.manage, révision attendue et formulaire albanais préparés. Aucun changement e-mail/statut/sécurité/suppression permis. Voir docs/CLINIC_PROFILE.md. Adaptateur transactionnel, routes/session/CSRF, historique durable consultable et branchement du formulaire restent à implémenter ; recette PostgreSQL et navigateur non exécutée. Schémas ajoutés au snapshot après contrôle de préservation intégrale des contrats précédents.
+- **Statut :** ◐ Édition, historique et annuaire intégrés — réception PostgreSQL/navigateur différée
+- **Avancement :** Contrats stricts partagés, périmètre clinique serveur, habilitation clinics.manage, révision attendue et formulaire albanais préparés. Aucun changement e-mail/statut/sécurité/suppression permis. Voir docs/CLINIC_PROFILE.md. Adaptateur transactionnel, routes/session/origine, historique consultable, formulaire et annuaire laboratoire sont reliés. Recette PostgreSQL et navigateur non exécutée. Schémas ajoutés au snapshot après contrôle de préservation intégrale des contrats précédents.
+- **Implémentation :** API et interface albanaise reliées ; annuaire toutes cliniques réservé aux habilités, identifiants UUID contrôlés avant SQL.
+- **Validation hors ligne :** tests ciblés et contrôles techniques consignés dans EXECUTION_LOG.
+- **Application PostgreSQL :** migration0015 proposée, non exécutée.
+- **Réception finale :** différée ; aucune activation ou validation de production.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance

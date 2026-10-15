@@ -138,3 +138,89 @@ test("profile client does not retry uncertain saves and transmits only explicit 
     credentials: "same-origin",
   });
 });
+
+test("profile transport refuses malformed UUID paths before any fetch", async () => {
+  const fetcher = vi.fn(),
+    client = createClinicProfileClient(fetcher),
+    signal = new globalThis.AbortController().signal;
+  for (const invalid of [
+    "bad",
+    "../self",
+    "x?force=true",
+    "70000000-0000-0000-0000-not-an-uuid!",
+  ]) {
+    expect(await client.save(invalid, input, signal)).toEqual({
+      kind: "invalid",
+    });
+    expect(await client.history(invalid, signal)).toBeNull();
+    expect(await client.own(signal, invalid)).toBeNull();
+  }
+  expect(fetcher).not.toHaveBeenCalled();
+});
+
+test("contact history is scoped and bounded with a revision cursor", async () => {
+  const entries = Array.from({ length: 51 }, (_, n) => ({
+    id: "70000000-0000-4000-8000-" + String(n + 10).padStart(12, "0"),
+    actor_id: id,
+    previous_revision: String(99 - n),
+    revision: String(100 - n),
+    occurred_at: new Date("2026-10-14T00:00:00Z"),
+    previous: contact,
+    next: { ...contact, name: "Changed" },
+  }));
+  const db = database(),
+    base = db.query.getMockImplementation();
+  db.query.mockImplementation(async (sql, values) => {
+    if (sql.startsWith("SELECT account_id,suspended"))
+      return { rows: [{ account_id: id, suspended: false }] };
+    if (sql.includes("FROM public.clinic_contact_events"))
+      return { rows: entries };
+    return base(sql, values);
+  });
+  const result = await createClinicManagementRepository(
+    db,
+    identity,
+  ).contactHistory(clinic, 101);
+  expect(result.items).toHaveLength(50);
+  expect(result.next_before).toBe(51);
+  expect(result.items[0]).toMatchObject({
+    previous_revision: 99,
+    revision: 100,
+    occurred_at: "2026-10-14T00:00:00.000Z",
+    previous: contact,
+  });
+  const [sql, args] = db.query.mock.calls.find(([sql]) =>
+    sql.includes("FROM public.clinic_contact_events"),
+  );
+  expect(sql).toContain("clinic_id=$1");
+  expect(sql).toContain("aggregate_revision<$2");
+  expect(sql).toContain("LIMIT 51");
+  expect(args).toEqual([clinic, 101]);
+  expect(
+    db.query.mock.calls.some(([sql]) => /^(INSERT|UPDATE|DELETE)/.test(sql)),
+  ).toBe(false);
+});
+test("foreign or suspended clinic cannot read contact history", async () => {
+  for (const record of [
+    { account_id: clinic, suspended: false },
+    { account_id: id, suspended: true },
+  ]) {
+    const db = database(),
+      base = db.query.getMockImplementation();
+    db.query.mockImplementation((sql, values) =>
+      sql.startsWith("SELECT account_id,suspended")
+        ? Promise.resolve({ rows: [record] })
+        : base(sql, values),
+    );
+    expect(
+      await createClinicManagementRepository(db, identity).contactHistory(
+        clinic,
+      ),
+    ).toBeNull();
+    expect(
+      db.query.mock.calls.some(([sql]) =>
+        sql.includes("FROM public.clinic_contact_events"),
+      ),
+    ).toBe(false);
+  }
+});

@@ -21,6 +21,7 @@ export function createClinicManagementService(
       if (!current) return { kind: "denied" as const };
       return profile.update({ ...identity, clinicId: current.id }, id, input);
     },
+    directory: store.directory,
     pending: store.pending,
     decide: (input: ClinicDecision) => review.decide(identity, input),
   };

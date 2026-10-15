@@ -2,6 +2,7 @@ import {
   ClinicRegistrationPanel,
   ClinicProfilePanel,
   ClinicReviewPanel,
+  ClinicDirectoryPanel,
 } from "../features/clinics/index.js";
 import { AppShell } from "../shared/AppShell.js";
 import {
@@ -23,7 +24,12 @@ export function App() {
               {identity.profile === "clinic" ? (
                 <ClinicProfilePanel key={identity.account_id} />
               ) : (
-                <ClinicReviewPanel key={identity.account_id} />
+                <>
+                  <ClinicReviewPanel key={identity.account_id} />
+                  <ClinicDirectoryPanel
+                    key={identity.account_id + "-directory"}
+                  />
+                </>
               )}
             </PermissionBoundary>
           )}

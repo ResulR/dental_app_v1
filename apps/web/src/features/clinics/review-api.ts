@@ -1,5 +1,7 @@
 import {
   ClinicReviewQueueSchema,
+  ClinicDirectorySchema,
+  ClinicIdSchema,
   ClinicReviewRequestSchema,
 } from "@dental-lab/contracts";
 import type { ClinicReviewRequest } from "@dental-lab/contracts";
@@ -10,7 +12,21 @@ export function createClinicReviewClient(transport: typeof fetch = fetch) {
     redirect: "error",
   } as const;
   return {
+    async directory(signal: AbortSignal, after?: string) {
+      if (after !== undefined && !ClinicIdSchema.safeParse(after).success)
+        return null;
+      const response = await transport(
+        "/api/v1/clinics/directory" +
+          (after ? "?after=" + encodeURIComponent(after) : ""),
+        { ...options, signal },
+      );
+      if (response.status !== 200) return null;
+      const parsed = ClinicDirectorySchema.safeParse(await response.json());
+      return parsed.success ? parsed.data : null;
+    },
     async pending(signal: AbortSignal, after?: string) {
+      if (after !== undefined && !ClinicIdSchema.safeParse(after).success)
+        return null;
       const response = await transport(
         "/api/v1/clinics/pending" +
           (after ? "?after=" + encodeURIComponent(after) : ""),
@@ -26,7 +42,7 @@ export function createClinicReviewClient(transport: typeof fetch = fetch) {
       signal: AbortSignal,
     ): Promise<"applied" | "conflict" | "denied" | "invalid" | "uncertain"> {
       if (
-        !/^[0-9a-f-]{36}$/i.test(id) ||
+        !ClinicIdSchema.safeParse(id).success ||
         !ClinicReviewRequestSchema.safeParse(input).success
       )
         return "invalid";

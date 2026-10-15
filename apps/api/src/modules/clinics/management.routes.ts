@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import {
-  ObjectIdSchema,
+  ClinicIdSchema,
   ClinicContactUpdateSchema,
   RevisionSchema,
   ClinicReviewRequestSchema,
@@ -28,7 +28,7 @@ export function registerClinicManagementRoutes(
         return;
       }
       const id = req.params.id;
-      if (id !== undefined && !ObjectIdSchema.safeParse(id).success) {
+      if (id !== undefined && !ClinicIdSchema.safeParse(id).success) {
         sendProblem(res, "VALIDATION_FAILED", 400);
         return;
       }
@@ -58,7 +58,7 @@ export function registerClinicManagementRoutes(
         ? RevisionSchema.safeParse(Number(before))
         : null;
     if (
-      !ObjectIdSchema.safeParse(req.params.id).success ||
+      !ClinicIdSchema.safeParse(req.params.id).success ||
       Object.keys(req.query).some((k) => k !== "before") ||
       (before !== undefined && (!parsed?.success || parsed.data < 1))
     ) {
@@ -91,7 +91,7 @@ export function registerClinicManagementRoutes(
     }
     const parsed = ClinicContactUpdateSchema.safeParse(req.body);
     if (
-      !ObjectIdSchema.safeParse(req.params.id).success ||
+      !ClinicIdSchema.safeParse(req.params.id).success ||
       Object.keys(req.query).length ||
       !req.is("application/json") ||
       !parsed.success
@@ -123,11 +123,36 @@ export function registerClinicManagementRoutes(
       result.kind === "denied" ? 403 : result.kind === "conflict" ? 409 : 400,
     );
   });
+  app.get("/api/v1/clinics/directory", async (req, res) => {
+    const after = req.query.after;
+    if (
+      Object.keys(req.query).some((k) => k !== "after") ||
+      (after !== undefined && !ClinicIdSchema.safeParse(after).success)
+    ) {
+      sendProblem(res, "VALIDATION_FAILED", 400);
+      return;
+    }
+    const token = readSessionCookie(req.headers.cookie);
+    const identity = token ? await services.sessions.authenticate(token) : null;
+    if (!identity) {
+      sendProblem(res, "AUTHENTICATION_REQUIRED", 401);
+      return;
+    }
+    const queue = await createClinicManagementService(
+      services.database,
+      identity,
+    ).directory(after as string | undefined);
+    if (!queue) {
+      sendProblem(res, "FORBIDDEN", 403);
+      return;
+    }
+    res.json(queue);
+  });
   app.get("/api/v1/clinics/pending", async (req, res) => {
     const after = req.query.after;
     if (
       Object.keys(req.query).some((k) => k !== "after") ||
-      (after !== undefined && !ObjectIdSchema.safeParse(after).success)
+      (after !== undefined && !ClinicIdSchema.safeParse(after).success)
     ) {
       sendProblem(res, "VALIDATION_FAILED", 400);
       return;
@@ -157,7 +182,7 @@ export function registerClinicManagementRoutes(
     if (
       !req.is("application/json") ||
       Object.keys(req.query).length ||
-      !ObjectIdSchema.safeParse(req.params.id).success ||
+      !ClinicIdSchema.safeParse(req.params.id).success ||
       !parsed.success
     ) {
       sendProblem(res, "VALIDATION_FAILED", 400);

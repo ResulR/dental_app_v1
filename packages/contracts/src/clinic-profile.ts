@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ObjectIdSchema, RevisionSchema } from "./schemas.js";
+export const ClinicIdSchema = z.uuid();
 const contact = z.string().trim().min(1).max(2000);
 export const ClinicContactFieldsSchema = z.strictObject({
   name: contact,
