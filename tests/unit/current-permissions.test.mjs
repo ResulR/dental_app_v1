@@ -116,7 +116,8 @@ test("permission transport is bounded same-origin and fails closed without retry
     permissions: ["clinics.manage"],
   };
   const transport = vi.fn(
-    async () => new globalThis.Response(JSON.stringify(snapshot), { status: 200 }),
+    async () =>
+      new globalThis.Response(JSON.stringify(snapshot), { status: 200 }),
   );
   expect(await createAuthClient(transport).permissions()).toEqual(snapshot);
   expect(transport.mock.calls[0][1]).toMatchObject({
