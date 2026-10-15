@@ -1,3 +1,9 @@
+import { catalogEnabled } from "./catalog-config.js";
+import {
+  assertCatalogStorageReady,
+  createCatalogService,
+  registerCatalogRoutes,
+} from "../modules/catalog/index.js";
 import { adminManagementEnabled } from "./admin-management-config.js";
 import {
   assertAdminStorageReady,
@@ -44,6 +50,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableCatalog = catalogEnabled(env);
   const enableAdminManagement = adminManagementEnabled(env);
   const enableAccountState = accountStateEnabled(env);
   const enableDelegation = delegationEnabled(env);
@@ -56,6 +63,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     // Fail startup, without creating/migrating anything, if required objects or
     // read privileges are absent. Every checkout also enforces runtime identity.
     await assertAuthStorageReady(database);
+    if (enableCatalog) await assertCatalogStorageReady(database);
     if (enableAdminManagement) await assertAdminStorageReady(database);
     if (enableAccountState) await assertAccountStateStorageReady(database);
     if (enableDelegation) await assertDelegationStorageReady(database);
@@ -95,6 +103,14 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
           sessions,
           origin: config.origin,
         });
+        if (enableCatalog)
+          registerCatalogRoutes(app, {
+            service: createCatalogService(database),
+            authenticate: async (cookie) => {
+              const token = readSessionCookie(cookie);
+              return token ? sessions.authenticate(token) : null;
+            },
+          });
         if (enableAdminManagement)
           registerAdminRoutes(app, {
             service: createAdminRuntimeService(database),

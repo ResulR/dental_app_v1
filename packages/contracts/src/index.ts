@@ -17,3 +17,5 @@ export * from "./delegation.js";
 export * from "./account-state.js";
 
 export * from "./admin-management.js";
+
+export * from "./catalog.js";

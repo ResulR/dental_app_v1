@@ -9,12 +9,17 @@ export function PermissionBoundary({
   children,
   permission = "clinics.manage",
   allowClinic = true,
+  allowCatalogReader = false,
 }: {
   identity: SessionIdentity;
   children: ReactNode;
   permission?:
-    "clinics.manage" | "employees.manage_permissions" | "employees.suspend";
+    | "clinics.manage"
+    | "employees.manage_permissions"
+    | "employees.suspend"
+    | "catalog.manage";
   allowClinic?: boolean;
+  allowCatalogReader?: boolean;
 }) {
   const [loaded, setLoaded] = useState<{
     accountKey: string;
@@ -53,7 +58,12 @@ export function PermissionBoundary({
     );
   if (
     !(allowClinic && identity.profile === "clinic") &&
-    !snapshot.permissions.includes(permission)
+    !snapshot.permissions.includes(permission) &&
+    !(
+      allowCatalogReader &&
+      permission === "catalog.manage" &&
+      snapshot.permissions.includes("orders.create_for_clinic")
+    )
   )
     return <p>Nuk keni leje për këtë funksion.</p>;
   return children;

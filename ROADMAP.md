@@ -1343,7 +1343,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 08 — Catalogue et paramètres
 
 ### 8.1 — Implémenter lecture des catalogues actifs
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Lecture API/runtime/UI intégrée — réception SQL/navigateur différée
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Catalogue et paramètres
@@ -1356,6 +1356,9 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+- **Implémentation15/10 :** lecture paginée des trois catégories actives/disponibles, session/droits courants, UI albanaise, contrats stricts et flagCATALOG désactivé. Aucun catalogue/snapshot modifié, aucune migration. Voir docs/CATALOG_READ.md.
 
 ### 8.2 — Implémenter administration des catalogues
 - **Statut :** ☐ À faire

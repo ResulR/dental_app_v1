@@ -1,3 +1,4 @@
+import { CatalogPanel } from "../features/catalog/index.js";
 import {
   AdminPanel,
   DelegationPanel,
@@ -26,6 +27,14 @@ export function App() {
         <AuthenticationPanel
           renderAuthenticated={(identity) => (
             <>
+              <PermissionBoundary
+                identity={identity}
+                permission="catalog.manage"
+                allowCatalogReader
+                allowClinic
+              >
+                <CatalogPanel key={identity.account_id + "-catalog"} />
+              </PermissionBoundary>
               {identity.profile === "owner" && (
                 <PermissionBoundary identity={identity} allowClinic={false}>
                   <AdminPanel key={identity.account_id + "-admins"} />

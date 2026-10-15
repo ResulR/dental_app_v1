@@ -1,4 +1,9 @@
 import {
+  CatalogKindSchema,
+  ActiveCatalogItemSchema,
+  ActiveCatalogPageSchema,
+} from "./catalog.js";
+import {
   AdminCommandSchema,
   AdminFieldsSchema,
   AdminProfileSchema,
@@ -64,6 +69,9 @@ export function exportJsonSchemas() {
     ManagedProfile: ManagedProfileSchema,
     AccountStateCommand: AccountStateCommandSchema,
     AccountStateFields: AccountStateFieldsSchema,
+    CatalogKind: CatalogKindSchema,
+    ActiveCatalogItem: ActiveCatalogItemSchema,
+    ActiveCatalogPage: ActiveCatalogPageSchema,
     AdminCommand: AdminCommandSchema,
     AdminFields: AdminFieldsSchema,
     AdminProfile: AdminProfileSchema,
