@@ -1095,6 +1095,462 @@
         "next_after"
       ],
       "additionalProperties": false
+    },
+    "DelegationCommand": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "expected_revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "permission_codes": {
+          "maxItems": 29,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "orders.read_logistics",
+              "orders.read_details",
+              "files.view",
+              "files.download",
+              "messaging.order.read",
+              "messaging.order.reply",
+              "messaging.general.read",
+              "messaging.general.reply",
+              "orders.accept",
+              "orders.reject",
+              "orders.request_correction",
+              "orders.edit_instructions",
+              "orders.start_manufacturing",
+              "orders.create_for_clinic",
+              "orders.cancel",
+              "orders.change_status",
+              "delivery.plan",
+              "delivery.set_priority",
+              "delivery.mark_delivered",
+              "delivery.correct",
+              "linked_works.manage",
+              "files.add_followup",
+              "files.share_followup",
+              "catalog.manage",
+              "clinics.manage",
+              "employees.create",
+              "employees.suspend",
+              "employees.manage_permissions",
+              "settings.manage"
+            ]
+          }
+        },
+        "confirmed_dropped_codes": {
+          "maxItems": 29,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "orders.read_logistics",
+              "orders.read_details",
+              "files.view",
+              "files.download",
+              "messaging.order.read",
+              "messaging.order.reply",
+              "messaging.general.read",
+              "messaging.general.reply",
+              "orders.accept",
+              "orders.reject",
+              "orders.request_correction",
+              "orders.edit_instructions",
+              "orders.start_manufacturing",
+              "orders.create_for_clinic",
+              "orders.cancel",
+              "orders.change_status",
+              "delivery.plan",
+              "delivery.set_priority",
+              "delivery.mark_delivered",
+              "delivery.correct",
+              "linked_works.manage",
+              "files.add_followup",
+              "files.share_followup",
+              "catalog.manage",
+              "clinics.manage",
+              "employees.create",
+              "employees.suspend",
+              "employees.manage_permissions",
+              "settings.manage"
+            ]
+          }
+        }
+      },
+      "required": [
+        "expected_revision",
+        "permission_codes"
+      ],
+      "additionalProperties": false
+    },
+    "DelegationHistory": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "items": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "actor_id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 2,
+                "maximum": 9007199254740991
+              },
+              "occurred_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              "previous_codes": {
+                "maxItems": 29,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "orders.read_logistics",
+                    "orders.read_details",
+                    "files.view",
+                    "files.download",
+                    "messaging.order.read",
+                    "messaging.order.reply",
+                    "messaging.general.read",
+                    "messaging.general.reply",
+                    "orders.accept",
+                    "orders.reject",
+                    "orders.request_correction",
+                    "orders.edit_instructions",
+                    "orders.start_manufacturing",
+                    "orders.create_for_clinic",
+                    "orders.cancel",
+                    "orders.change_status",
+                    "delivery.plan",
+                    "delivery.set_priority",
+                    "delivery.mark_delivered",
+                    "delivery.correct",
+                    "linked_works.manage",
+                    "files.add_followup",
+                    "files.share_followup",
+                    "catalog.manage",
+                    "clinics.manage",
+                    "employees.create",
+                    "employees.suspend",
+                    "employees.manage_permissions",
+                    "settings.manage"
+                  ]
+                }
+              },
+              "next_codes": {
+                "maxItems": 29,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "orders.read_logistics",
+                    "orders.read_details",
+                    "files.view",
+                    "files.download",
+                    "messaging.order.read",
+                    "messaging.order.reply",
+                    "messaging.general.read",
+                    "messaging.general.reply",
+                    "orders.accept",
+                    "orders.reject",
+                    "orders.request_correction",
+                    "orders.edit_instructions",
+                    "orders.start_manufacturing",
+                    "orders.create_for_clinic",
+                    "orders.cancel",
+                    "orders.change_status",
+                    "delivery.plan",
+                    "delivery.set_priority",
+                    "delivery.mark_delivered",
+                    "delivery.correct",
+                    "linked_works.manage",
+                    "files.add_followup",
+                    "files.share_followup",
+                    "catalog.manage",
+                    "clinics.manage",
+                    "employees.create",
+                    "employees.suspend",
+                    "employees.manage_permissions",
+                    "settings.manage"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "id",
+              "actor_id",
+              "revision",
+              "occurred_at",
+              "previous_codes",
+              "next_codes"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "next_before": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "items",
+        "next_before"
+      ],
+      "additionalProperties": false
+    },
+    "DelegationKind": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+      "enum": [
+        "employee",
+        "envelope"
+      ]
+    },
+    "DelegationList": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "items": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "email": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 320
+              },
+              "lifecycle": {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "invited",
+                  "suspended"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "email",
+              "lifecycle"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "next_after": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "items",
+        "next_after"
+      ],
+      "additionalProperties": false
+    },
+    "DelegationProfile": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "email": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 320
+        },
+        "permission_codes": {
+          "maxItems": 29,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "orders.read_logistics",
+              "orders.read_details",
+              "files.view",
+              "files.download",
+              "messaging.order.read",
+              "messaging.order.reply",
+              "messaging.general.read",
+              "messaging.general.reply",
+              "orders.accept",
+              "orders.reject",
+              "orders.request_correction",
+              "orders.edit_instructions",
+              "orders.start_manufacturing",
+              "orders.create_for_clinic",
+              "orders.cancel",
+              "orders.change_status",
+              "delivery.plan",
+              "delivery.set_priority",
+              "delivery.mark_delivered",
+              "delivery.correct",
+              "linked_works.manage",
+              "files.add_followup",
+              "files.share_followup",
+              "catalog.manage",
+              "clinics.manage",
+              "employees.create",
+              "employees.suspend",
+              "employees.manage_permissions",
+              "settings.manage"
+            ]
+          }
+        },
+        "editable_codes": {
+          "maxItems": 29,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "orders.read_logistics",
+              "orders.read_details",
+              "files.view",
+              "files.download",
+              "messaging.order.read",
+              "messaging.order.reply",
+              "messaging.general.read",
+              "messaging.general.reply",
+              "orders.accept",
+              "orders.reject",
+              "orders.request_correction",
+              "orders.edit_instructions",
+              "orders.start_manufacturing",
+              "orders.create_for_clinic",
+              "orders.cancel",
+              "orders.change_status",
+              "delivery.plan",
+              "delivery.set_priority",
+              "delivery.mark_delivered",
+              "delivery.correct",
+              "linked_works.manage",
+              "files.add_followup",
+              "files.share_followup",
+              "catalog.manage",
+              "clinics.manage",
+              "employees.create",
+              "employees.suspend",
+              "employees.manage_permissions",
+              "settings.manage"
+            ]
+          }
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "email",
+        "permission_codes",
+        "editable_codes"
+      ],
+      "additionalProperties": false
+    },
+    "DelegationResult": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "applied",
+            "conflict",
+            "denied",
+            "invalid",
+            "confirmation_required"
+          ]
+        },
+        "dropped_codes": {
+          "maxItems": 29,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "orders.read_logistics",
+              "orders.read_details",
+              "files.view",
+              "files.download",
+              "messaging.order.read",
+              "messaging.order.reply",
+              "messaging.general.read",
+              "messaging.general.reply",
+              "orders.accept",
+              "orders.reject",
+              "orders.request_correction",
+              "orders.edit_instructions",
+              "orders.start_manufacturing",
+              "orders.create_for_clinic",
+              "orders.cancel",
+              "orders.change_status",
+              "delivery.plan",
+              "delivery.set_priority",
+              "delivery.mark_delivered",
+              "delivery.correct",
+              "linked_works.manage",
+              "files.add_followup",
+              "files.share_followup",
+              "catalog.manage",
+              "clinics.manage",
+              "employees.create",
+              "employees.suspend",
+              "employees.manage_permissions",
+              "settings.manage"
+            ]
+          }
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false
     }
   }
 }

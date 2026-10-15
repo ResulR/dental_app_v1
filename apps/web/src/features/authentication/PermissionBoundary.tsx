@@ -7,9 +7,13 @@ type Snapshot = NonNullable<Awaited<ReturnType<typeof client.permissions>>>;
 export function PermissionBoundary({
   identity,
   children,
+  permission = "clinics.manage",
+  allowClinic = true,
 }: {
   identity: SessionIdentity;
   children: ReactNode;
+  permission?: "clinics.manage" | "employees.manage_permissions";
+  allowClinic?: boolean;
 }) {
   const [loaded, setLoaded] = useState<{
     accountKey: string;
@@ -47,9 +51,9 @@ export function PermissionBoundary({
       </p>
     );
   if (
-    identity.profile !== "clinic" &&
-    !snapshot.permissions.includes("clinics.manage")
+    !(allowClinic && identity.profile === "clinic") &&
+    !snapshot.permissions.includes(permission)
   )
-    return <p>Nuk keni leje për menaxhimin e klinikave.</p>;
+    return <p>Nuk keni leje për këtë funksion.</p>;
   return children;
 }

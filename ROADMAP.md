@@ -1228,8 +1228,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 7.11 — Implémenter délégation limitée des employés
-- **Statut :** ◐ Planificateur/noyau préparés — validation hors ligne ; intégration et réception différées
-- **Avancement :** Owner actuel/admin employees.manage_permissions, cible employee exacte, modifications effectives dans enveloppe courante, prérequis et preview/confirmation des dépendants, révision et commande stricte préparés. Préserve droits owner hors enveloppe inchangés (H711-01 documenté). Réutilise registre/calcul et tables 0002. Adaptateurs atomiques/contexte, configuration owner de l’enveloppe, routes/UI et recettes réelles restent à implémenter. Voir docs/EMPLOYEE_DELEGATION.md.
+- **Statut :** ◐ API et interface albanaise intégrées — réception SQL/navigateur différée
+- **Implémentation :** délégation employés et configuration des enveloppes admin réservée au propriétaire, contrôle serveur courant, confirmation des dépendants, historique/audit/outbox et révocation atomiques dans le code ; flag désactivé.
+- **Validation hors ligne :** 20tests ciblés réussis ; détails et limites dans EMPLOYEE_DELEGATION.md/EXECUTION_LOG.md.
+- **Application PostgreSQL :** nouvelle migration0016 proposée, non exécutée ; aucun grant réel modifié.
+- **Réception finale :** différée ; concurrence/rollback réels et navigateur non reçus. Aucune activation ou clôture du chapitre.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance

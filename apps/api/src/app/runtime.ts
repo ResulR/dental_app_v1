@@ -1,3 +1,9 @@
+import { delegationEnabled } from "./delegation-config.js";
+import {
+  assertDelegationStorageReady,
+  createDelegationRuntimeService,
+  registerDelegationRoutes,
+} from "../modules/permissions/index.js";
 import { createCurrentPermissionsRepository } from "../modules/permissions/index.js";
 import { clinicManagementEnabled } from "./clinic-management-config.js";
 import {
@@ -16,6 +22,8 @@ import type { Express } from "express";
 import { createApplicationDatabase } from "../shared/database.js";
 import { readAuthConfig } from "./auth-config.js";
 import {
+  readSessionCookie,
+  mutationOriginAllowed,
   assertAuthStorageReady,
   createAuthenticationService,
   createIdentityRepository,
@@ -26,6 +34,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableDelegation = delegationEnabled(env);
   const enableClinicManagement = clinicManagementEnabled(env);
   const enableRegistration = registrationEnabled(env);
   const config = readAuthConfig(env);
@@ -35,6 +44,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     // Fail startup, without creating/migrating anything, if required objects or
     // read privileges are absent. Every checkout also enforces runtime identity.
     await assertAuthStorageReady(database);
+    if (enableDelegation) await assertDelegationStorageReady(database);
     if (enableClinicManagement)
       await assertClinicManagementStorageReady(database);
     const repository = createIdentityRepository(database);
@@ -71,6 +81,16 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
           sessions,
           origin: config.origin,
         });
+        if (enableDelegation)
+          registerDelegationRoutes(app, {
+            service: createDelegationRuntimeService(database),
+            authenticate: async (cookie) => {
+              const token = readSessionCookie(cookie);
+              return token ? sessions.authenticate(token) : null;
+            },
+            originAllowed: (origin) =>
+              mutationOriginAllowed(origin, config.origin),
+          });
         if (enableClinicManagement)
           registerClinicManagementRoutes(app, {
             sessions,

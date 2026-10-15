@@ -1,3 +1,4 @@
+import { DelegationPanel } from "../features/permissions/index.js";
 import {
   ClinicRegistrationPanel,
   ClinicProfilePanel,
@@ -20,18 +21,33 @@ export function App() {
         </p>
         <AuthenticationPanel
           renderAuthenticated={(identity) => (
-            <PermissionBoundary identity={identity}>
-              {identity.profile === "clinic" ? (
-                <ClinicProfilePanel key={identity.account_id} />
-              ) : (
-                <>
-                  <ClinicReviewPanel key={identity.account_id} />
-                  <ClinicDirectoryPanel
-                    key={identity.account_id + "-directory"}
+            <>
+              <PermissionBoundary identity={identity}>
+                {identity.profile === "clinic" ? (
+                  <ClinicProfilePanel key={identity.account_id} />
+                ) : (
+                  <>
+                    <ClinicReviewPanel key={identity.account_id} />
+                    <ClinicDirectoryPanel
+                      key={identity.account_id + "-directory"}
+                    />
+                  </>
+                )}
+              </PermissionBoundary>
+              {(identity.profile === "owner" ||
+                identity.profile === "admin") && (
+                <PermissionBoundary
+                  identity={identity}
+                  permission="employees.manage_permissions"
+                  allowClinic={false}
+                >
+                  <DelegationPanel
+                    key={identity.account_id}
+                    owner={identity.profile === "owner"}
                   />
-                </>
+                </PermissionBoundary>
               )}
-            </PermissionBoundary>
+            </>
           )}
         />
         <ClinicRegistrationPanel />

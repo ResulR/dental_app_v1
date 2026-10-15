@@ -1,3 +1,11 @@
+import {
+  DelegationKindSchema,
+  DelegationCommandSchema,
+  DelegationListSchema,
+  DelegationProfileSchema,
+  DelegationResultSchema,
+  DelegationHistorySchema,
+} from "./delegation.js";
 import { EffectivePermissionsSchema } from "./permissions.js";
 import {
   ClinicReviewRequestSchema,
@@ -36,6 +44,13 @@ import {
 } from "./clinic-registration.js";
 export function exportJsonSchemas() {
   const schemas = {
+    DelegationKind: DelegationKindSchema,
+    DelegationCommand: DelegationCommandSchema,
+    DelegationList: DelegationListSchema,
+    DelegationProfile: DelegationProfileSchema,
+    DelegationResult: DelegationResultSchema,
+    DelegationHistory: DelegationHistorySchema,
+
     EffectivePermissions: EffectivePermissionsSchema,
     ClinicReviewRequest: ClinicReviewRequestSchema,
     ClinicReviewQueue: ClinicReviewQueueSchema,
