@@ -1,4 +1,13 @@
 import {
+  ManagedProfileSchema,
+  AccountStateCommandSchema,
+  AccountStateFieldsSchema,
+  AccountStateProfileSchema,
+  AccountStateListSchema,
+  AccountStateResultSchema,
+  AccountStateHistorySchema,
+} from "./account-state.js";
+import {
   DelegationKindSchema,
   DelegationCommandSchema,
   DelegationListSchema,
@@ -44,6 +53,14 @@ import {
 } from "./clinic-registration.js";
 export function exportJsonSchemas() {
   const schemas = {
+    ManagedProfile: ManagedProfileSchema,
+    AccountStateCommand: AccountStateCommandSchema,
+    AccountStateFields: AccountStateFieldsSchema,
+    AccountStateProfile: AccountStateProfileSchema,
+    AccountStateList: AccountStateListSchema,
+    AccountStateResult: AccountStateResultSchema,
+    AccountStateHistory: AccountStateHistorySchema,
+
     DelegationKind: DelegationKindSchema,
     DelegationCommand: DelegationCommandSchema,
     DelegationList: DelegationListSchema,

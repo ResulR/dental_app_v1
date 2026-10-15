@@ -1,4 +1,7 @@
-import { DelegationPanel } from "../features/permissions/index.js";
+import {
+  DelegationPanel,
+  AccountStatePanel,
+} from "../features/permissions/index.js";
 import {
   ClinicRegistrationPanel,
   ClinicProfilePanel,
@@ -33,6 +36,12 @@ export function App() {
                     />
                   </>
                 )}
+                {identity.profile !== "clinic" && (
+                  <AccountStatePanel
+                    type="clinic"
+                    key={identity.account_id + "-clinic-state"}
+                  />
+                )}
               </PermissionBoundary>
               {(identity.profile === "owner" ||
                 identity.profile === "admin") && (
@@ -44,6 +53,19 @@ export function App() {
                   <DelegationPanel
                     key={identity.account_id}
                     owner={identity.profile === "owner"}
+                  />
+                </PermissionBoundary>
+              )}
+              {(identity.profile === "owner" ||
+                identity.profile === "admin") && (
+                <PermissionBoundary
+                  identity={identity}
+                  permission="employees.suspend"
+                  allowClinic={false}
+                >
+                  <AccountStatePanel
+                    type="employee"
+                    key={identity.account_id + "-employee-state"}
                   />
                 </PermissionBoundary>
               )}

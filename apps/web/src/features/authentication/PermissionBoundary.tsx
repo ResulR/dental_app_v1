@@ -12,7 +12,8 @@ export function PermissionBoundary({
 }: {
   identity: SessionIdentity;
   children: ReactNode;
-  permission?: "clinics.manage" | "employees.manage_permissions";
+  permission?:
+    "clinics.manage" | "employees.manage_permissions" | "employees.suspend";
   allowClinic?: boolean;
 }) {
   const [loaded, setLoaded] = useState<{

@@ -41,3 +41,10 @@ export { createPersistentLoginLimiter } from "./login-limit.repository.js";
 export { registerAuthenticationRoutes } from "./authentication.routes.js";
 
 export { assertAuthStorageReady } from "./auth-readiness.js";
+
+export {
+  createAccountStateRepository,
+  assertAccountStateStorageReady,
+} from "./account-state.repository.js";
+export { createAccountStateRuntimeService } from "./account-state-runtime.service.js";
+export { registerAccountStateRoutes } from "./account-state.routes.js";

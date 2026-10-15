@@ -1247,8 +1247,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 7.12 — Implémenter suspension, réactivation et sécuriser compte
-- **Statut :** ◐ Noyau états/sécurisation préparé — validation hors ligne ; intégration et réception différées
-- **Avancement :** Cible clinic/employee, permissions actuelles/révision/commande stricte, suspension compte+clinique et epoch/révocations, réactivation sans lever flags, sécurisation clinique owner seul. Réutilise 7.9/7.10, aucun compte réel modifié. Adaptateurs SQL/API/SSE/UI, audit champs sécurité et procédure vérification du demandeur/récupération compromise restent à implémenter ; aucune révocation API/événements réelle déclarée. Voir docs/ACCOUNT_STATE.md.
+- **Statut :** ◐ Suspension/réactivation/sécurisation API/UI intégrées — réception différée
+- **Implémentation :** comptes clinique/employé, contrôles serveur courants, confirmation albanaise, état/revocation/history/audit/outbox transactionnels ; sécurisation owner seul et aucune levée de verrou par réactivation.
+- **Validation hors ligne :** 16tests ciblés réussis, détails dans ACCOUNT_STATE.md et EXECUTION_LOG.md.
+- **Application PostgreSQL :** migration0017 proposée, non appliquée ; flag désactivé.
+- **Réception finale :** SQL/navigateur/flux temps réel futurs non reçus ; procédure humaine de récupération compromise à valider avant exploitation. Aucune activation de production.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance
