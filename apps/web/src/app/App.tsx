@@ -4,7 +4,10 @@ import {
   ClinicReviewPanel,
 } from "../features/clinics/index.js";
 import { AppShell } from "../shared/AppShell.js";
-import { AuthenticationPanel } from "../features/authentication/index.js";
+import {
+  AuthenticationPanel,
+  PermissionBoundary,
+} from "../features/authentication/index.js";
 export function App() {
   return (
     <AppShell navigation={[]}>
@@ -15,13 +18,15 @@ export function App() {
           Porositë, dorëzimet dhe bisedat në një vend të vetëm.
         </p>
         <AuthenticationPanel
-          renderAuthenticated={(identity) =>
-            identity.profile === "clinic" ? (
-              <ClinicProfilePanel key={identity.account_id} />
-            ) : (
-              <ClinicReviewPanel key={identity.account_id} />
-            )
-          }
+          renderAuthenticated={(identity) => (
+            <PermissionBoundary identity={identity}>
+              {identity.profile === "clinic" ? (
+                <ClinicProfilePanel key={identity.account_id} />
+              ) : (
+                <ClinicReviewPanel key={identity.account_id} />
+              )}
+            </PermissionBoundary>
+          )}
         />
         <ClinicRegistrationPanel />
       </div>

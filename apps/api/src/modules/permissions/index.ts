@@ -3,3 +3,5 @@ export {
   createEmployeeDelegationService,
   planEmployeeGrantChange,
 } from "./delegation.service.js";
+
+export { createCurrentPermissionsRepository } from "./current.repository.js";

@@ -1208,8 +1208,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 7.10 — Implémenter permissions granulaires et dépendances
-- **Statut :** ◐ Registre/calcul effectif implémentés — validation hors ligne ; intégration et réception différées
-- **Avancement :** 29 codes/prérequis exacts de 0002, ensemble demandé strict sans ajout implicite, calcul récursif et droits distincts, owner_current et périmètre propre clinique, protections de profil. Validation locale raccordée à 7.9 ; contexte/transactions PostgreSQL et frontières HTTP/projections/SSE/jobs/UI restent à implémenter et tester. Aucun grant réel ou rôle SQL modifié. Voir docs/PERMISSIONS_IMPLEMENTATION.md.
+- **Statut :** ◐ Registre/calcul et lecture effective API/UI intégrés — réception SQL/navigateur différée
+- **Avancement :** 29 codes/prérequis exacts de 0002, ensemble demandé strict sans ajout implicite, calcul récursif et droits distincts, owner_current et périmètre propre clinique, protections de profil. Validation locale raccordée à7.9 ; lecture effective session/compte/grants reliée au runtime GET auth/permissions et contrôle de visibilité clinique en albanais, 25 tests ciblés réussis. Autorisations transactionnelles des mutations, projections/SSE/jobs futurs et recettes réelles restent à compléter. Aucun grant réel ou rôle SQL modifié. Voir docs/PERMISSIONS_IMPLEMENTATION.md.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Authentification, comptes et gouvernance

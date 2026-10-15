@@ -1,3 +1,4 @@
+import { EffectivePermissionsSchema } from "./permissions.js";
 import {
   ClinicReviewRequestSchema,
   ClinicReviewQueueSchema,
@@ -34,6 +35,7 @@ import {
 } from "./clinic-registration.js";
 export function exportJsonSchemas() {
   const schemas = {
+    EffectivePermissions: EffectivePermissionsSchema,
     ClinicReviewRequest: ClinicReviewRequestSchema,
     ClinicReviewQueue: ClinicReviewQueueSchema,
     RegistrationTerms: RegistrationTermsSchema,

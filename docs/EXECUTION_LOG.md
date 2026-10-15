@@ -806,3 +806,9 @@ Audit UID1002/main8172039 propre, origine identique aprèsfetch, aucun ancien te
 17 tests ciblés passent (doubles SQL), buildscontrats/API/web, typeweb, lint, frontières79sources, catalogue/filtre migration et contrat additif passent. Recettes PostgreSQL/navigateur non exécutées. Aucun replay/édition v4 ou v1/v2/v3. Snapshot ajouté après égalité de tous les contrats antérieurs ; aucun écrasement global. Prochainepartie indépendante7.10 après audit des dépendances de livraison7.6–7.9. Diff et garde-index avantcommit/push ; hash dansGit et bilan.
 
 Contrôle final du lot profil : `format:changed` réussi ; `format:check` signale uniquement les deux scripts historiques figés `linked-works-postgres-v2.mjs` et `linked-works-postgres-v3.mjs`, laissés intacts conformément à la consigne. Aucun autre écart signalé. `git diff --check` réussi.
+
+## 15/10/2026 — reprise et clôture lecture des permissions7.10
+
+Reprise depuis4951ba6 poussé ; UID1002, aucun ancien processus de test, fetch/main concordants. Le processus2144509 avait terminé exit0 avant interruption : format changed, typeweb, lint, frontières82sources et buildweb134modules. Les25tests ciblés du processus2144346 avaient réussi ; deux références Response de test signalées par lint ont été corrigées en globalThis.Response, puis lint réussi. Builds API/contrats et contrat additif validés. Vérification globale du format renouvelée, exception historique v2/v3 maintenue sans modification.
+
+Lecture courante SQL account/session/limites/grants, endpoint GET auth/permissions et visibilité clinique en albanais intégrés. Aucun grant modifié, aucune migration, activation ou recettePG. Revalidation identique conserve le formulaire ; changement d'identité/refus masque les commandes. Ce contrôle de présentation ne remplace pas les autorisations transactionnelles. Édition7.5 déjà poussée4951ba6. Prochain complément indépendant : accès laboratoire aux profils approuvés/refusés via annuaire autorisé.

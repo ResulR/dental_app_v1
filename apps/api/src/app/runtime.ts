@@ -1,3 +1,4 @@
+import { createCurrentPermissionsRepository } from "../modules/permissions/index.js";
 import { clinicManagementEnabled } from "./clinic-management-config.js";
 import {
   registerClinicManagementRoutes,
@@ -64,6 +65,8 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     return {
       registerRoutes: (app: Express) => {
         registerAuthenticationRoutes(app, {
+          currentPermissions:
+            createCurrentPermissionsRepository(database).current,
           authentication,
           sessions,
           origin: config.origin,

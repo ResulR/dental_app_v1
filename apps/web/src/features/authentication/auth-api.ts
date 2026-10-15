@@ -1,4 +1,5 @@
 import {
+  EffectivePermissionsSchema,
   LoginRequestSchema,
   ProblemSchema,
   SessionIdentitySchema,
@@ -88,6 +89,12 @@ export function createAuthClient(transport: typeof fetch = fetch) {
     return response?.status === 204 ? { kind: "ok" } : failure(response);
   }
   return {
+    async permissions(signal?: AbortSignal) {
+      const response = await request("permissions", undefined, signal);
+      if (response?.status !== 200) return null;
+      const parsed = EffectivePermissionsSchema.safeParse(response.body);
+      return parsed.success ? parsed.data : null;
+    },
     async session(signal?: AbortSignal): Promise<SessionResult> {
       const response = await request("session", undefined, signal);
       if (response?.status !== 200) return failure(response);

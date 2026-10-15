@@ -11,3 +11,11 @@ PermissionContext est exclusivement un contexte serveur actuel : session/epoch v
 Le noyau est raccordé à la validation locale des changements de droits d'administrateurs 7.9 ; le port validatePermissions et mutateAtomic conserve le recontrôle du registre/prérequis courant dans la transaction. Le module ne prétend pas filtrer des routes/repositories encore absents.
 
 Restent : adaptateurs de contexte/permissions PostgreSQL, mises à jour et audit atomiques, middleware/projections/recherche/fichiers/SSE/jobs, UI et tests négatifs de toutes les frontières réelles. 7.11 traitera l'enveloppe de délégation, sans auto-élévation. Réception PostgreSQL/API/navigateur différée ; aucun RLS ni protection par simple masquage React annoncé.
+
+## Lecture effective intégrée — 14/10/2026
+
+GET `/api/v1/auth/permissions` est relié au runtime authentifié : session cookie vérifiée puis lecture SQL unique des compte/session/limites/grants/owner_slot/clinique courants. Révocation, epoch, expiration absolue, suspension, verrou/reset et propriétaire obsolète échouent fermés. Aucun identifiant/grant client accepté. Contrat strict additif des 29 codes, réponse no-store sans secret ni données patient. Readiness exige désormais SELECT account_grants déjà prévu par0010 ; aucune migration ou activation effectuée.
+
+L'interface albanaise affiche la gestion clinique seulement après vérification du droit effectif clinics.manage ; une clinique active accède à son panneau propre. Relecture lors de chaque validation de session (focus/visibilité/période30s), absence de persistance navigateur, réponse invalide/indisponible masque le panneau. Une revalidation identique préserve le formulaire non enregistré ; changement d'identité masque immédiatement. Le délai de rafraîchissement visuel n'accorde aucun droit : les opérations serveur recontrôlent leur propre contexte transactionnel.
+
+25 tests ciblés réussis (registre, lecture courante, refus, transport, HTTP, authentification/runtime/readiness), doubles SQL uniquement. API/contrats compilés, types web et snapshot validés. Pas de preuve PostgreSQL réel ni navigateur supplémentaire ; les futurs endpoints fichiers/SSE/jobs ne sont pas déclarés couverts.

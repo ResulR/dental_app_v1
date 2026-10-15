@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import {
+  EffectivePermissionsSchema,
   LoginRequestSchema,
   EmptyAuthMutationSchema,
   SessionIdentitySchema,
@@ -18,6 +19,10 @@ type Services = {
   authentication: ReturnType<typeof createAuthenticationService>;
   sessions: ReturnType<typeof createSessionService>;
   origin: string;
+  currentPermissions?: (actor: {
+    accountId: string;
+    sessionId: string;
+  }) => Promise<unknown | null>;
 };
 export function registerAuthenticationRoutes(
   app: Express,
@@ -97,6 +102,33 @@ export function registerAuthenticationRoutes(
       }),
     );
   });
+  if (services.currentPermissions)
+    app.get("/api/v1/auth/permissions", async (req, res) => {
+      if (Object.keys(req.query).length !== 0) {
+        sendProblem(res, "VALIDATION_FAILED", 400);
+        return;
+      }
+      const token = readSessionCookie(req.headers.cookie);
+      const identity = token
+        ? await services.sessions.authenticate(token)
+        : null;
+      if (!identity) {
+        sendProblem(res, "AUTHENTICATION_REQUIRED", 401);
+        return;
+      }
+      const current = await services.currentPermissions!(identity);
+      if (!current) {
+        sendProblem(res, "AUTHENTICATION_REQUIRED", 401);
+        return;
+      }
+      const snapshot = EffectivePermissionsSchema.parse(current);
+      if (
+        snapshot.account_id !== identity.accountId ||
+        snapshot.profile !== identity.profile
+      )
+        throw new Error("PERMISSION_IDENTITY_MISMATCH");
+      res.json(snapshot);
+    });
   app.post("/api/v1/auth/renew", async (req, res) => {
     if (!empty(req, res)) return;
     const token = readSessionCookie(req.headers.cookie);

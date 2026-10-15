@@ -965,6 +965,70 @@
         "next_before"
       ],
       "additionalProperties": false
+    },
+    "EffectivePermissions": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "account_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "profile": {
+          "type": "string",
+          "enum": [
+            "owner",
+            "admin",
+            "employee",
+            "clinic"
+          ]
+        },
+        "permissions": {
+          "maxItems": 29,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "orders.read_logistics",
+              "orders.read_details",
+              "files.view",
+              "files.download",
+              "messaging.order.read",
+              "messaging.order.reply",
+              "messaging.general.read",
+              "messaging.general.reply",
+              "orders.accept",
+              "orders.reject",
+              "orders.request_correction",
+              "orders.edit_instructions",
+              "orders.start_manufacturing",
+              "orders.create_for_clinic",
+              "orders.cancel",
+              "orders.change_status",
+              "delivery.plan",
+              "delivery.set_priority",
+              "delivery.mark_delivered",
+              "delivery.correct",
+              "linked_works.manage",
+              "files.add_followup",
+              "files.share_followup",
+              "catalog.manage",
+              "clinics.manage",
+              "employees.create",
+              "employees.suspend",
+              "employees.manage_permissions",
+              "settings.manage"
+            ]
+          }
+        }
+      },
+      "required": [
+        "account_id",
+        "profile",
+        "permissions"
+      ],
+      "additionalProperties": false
     }
   }
 }

@@ -9,3 +9,5 @@ export * from "./authentication.js";
 export * from "./clinic-registration.js";
 
 export * from "./clinic-review.js";
+
+export * from "./permissions.js";

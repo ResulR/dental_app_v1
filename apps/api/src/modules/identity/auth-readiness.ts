@@ -1,6 +1,7 @@
 import type { createApplicationDatabase } from "../../shared/database.js";
 const reads = [
   "accounts",
+  "account_grants",
   "credentials",
   "clinics",
   "owner_slot",

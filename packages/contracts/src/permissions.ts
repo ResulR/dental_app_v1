@@ -1,0 +1,36 @@
+import { z } from "zod";
+import { SessionIdentitySchema } from "./authentication.js";
+export const PermissionCodeSchema = z.enum([
+  "orders.read_logistics",
+  "orders.read_details",
+  "files.view",
+  "files.download",
+  "messaging.order.read",
+  "messaging.order.reply",
+  "messaging.general.read",
+  "messaging.general.reply",
+  "orders.accept",
+  "orders.reject",
+  "orders.request_correction",
+  "orders.edit_instructions",
+  "orders.start_manufacturing",
+  "orders.create_for_clinic",
+  "orders.cancel",
+  "orders.change_status",
+  "delivery.plan",
+  "delivery.set_priority",
+  "delivery.mark_delivered",
+  "delivery.correct",
+  "linked_works.manage",
+  "files.add_followup",
+  "files.share_followup",
+  "catalog.manage",
+  "clinics.manage",
+  "employees.create",
+  "employees.suspend",
+  "employees.manage_permissions",
+  "settings.manage",
+]);
+export const EffectivePermissionsSchema = SessionIdentitySchema.extend({
+  permissions: z.array(PermissionCodeSchema).max(29),
+});
