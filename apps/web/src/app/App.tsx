@@ -52,7 +52,13 @@ export function App() {
                 permission="orders.read_logistics"
                 allowClinic
               >
-                <OrderTrackingPanel key={identity.account_id + "-tracking"} />
+                {(snapshot) => (
+                  <OrderTrackingPanel
+                    key={identity.account_id + "-tracking"}
+                    clinic={identity.profile === "clinic"}
+                    permissions={snapshot.permissions}
+                  />
+                )}
               </PermissionBoundary>
               {identity.profile === "clinic" && (
                 <ClinicOrderForm key={identity.account_id + "-order-form"} />

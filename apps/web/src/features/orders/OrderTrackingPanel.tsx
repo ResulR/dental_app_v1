@@ -1,3 +1,5 @@
+import { OrderLifecycleActions } from "./OrderLifecycleActions.js";
+import type { EffectivePermissionsSchema } from "@dental-lab/contracts";
 import { useEffect, useRef, useState } from "react";
 import { OrderSearchSchema } from "@dental-lab/contracts";
 import type {
@@ -10,7 +12,15 @@ import { orderStatusLabels } from "./status-labels.js";
 import { Button } from "../../shared/Button.js";
 const api = createOrderTrackingClient();
 type Status = ReturnType<typeof StatusSchema.parse>;
-export function OrderTrackingPanel() {
+export function OrderTrackingPanel({
+  clinic,
+  permissions,
+}: {
+  clinic: boolean;
+  permissions: ReturnType<
+    typeof EffectivePermissionsSchema.parse
+  >["permissions"];
+}) {
   const [q, setQ] = useState(""),
     [status, setStatus] = useState(""),
     [kind, setKind] = useState(""),
@@ -181,6 +191,16 @@ export function OrderTrackingPanel() {
                 E dëshiruar: {row.requested_delivery_date ?? "—"} · E
                 planifikuar: {row.planned_delivery_date ?? "—"}
               </p>
+              <OrderLifecycleActions
+                orderId={row.id}
+                clinic={clinic}
+                permissions={permissions}
+                onFinished={(text) => {
+                  setPage(null);
+                  setDetail(null);
+                  setMessage(text);
+                }}
+              />
               {page.can_read_details && (
                 <Button disabled={busy} onClick={() => void open(row.id)}>
                   Hap detajet

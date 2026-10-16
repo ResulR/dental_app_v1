@@ -1,4 +1,12 @@
 import {
+  OrderLifecycleContextQuerySchema,
+  OrderLifecycleContextSchema,
+} from "./order-lifecycle.js";
+import {
+  OrderLifecycleSchema,
+  OrderLifecycleResultSchema,
+} from "./order-lifecycle.js";
+import {
   OrderSearchSchema,
   OrderTrackingPageSchema,
   OrderDetailQuerySchema,
@@ -102,6 +110,10 @@ import {
 } from "./clinic-registration.js";
 export function exportJsonSchemas() {
   const schemas = {
+    OrderLifecycleContextQuery: OrderLifecycleContextQuerySchema,
+    OrderLifecycleContext: OrderLifecycleContextSchema,
+    OrderLifecycle: OrderLifecycleSchema,
+    OrderLifecycleResult: OrderLifecycleResultSchema,
     OrderSearch: OrderSearchSchema,
     OrderTrackingPage: OrderTrackingPageSchema,
     OrderDetailQuery: OrderDetailQuerySchema,

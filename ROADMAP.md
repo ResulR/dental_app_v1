@@ -1635,7 +1635,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 10 — Workflow et décisions des commandes
 
 ### 10.1 — Implémenter moteur de transitions des commandes
-- **Statut :** ◐ Décisions serveur intégrées — interface et réceptions différées
+- **Statut :** ◐ Transitions complémentaires intégrées — autres flux et réceptions différés
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -1650,6 +1650,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 - **Préparation16/10 :** Acceptation/refus/version courante et démarrage protégé, historique/audit/outbox atomiques ; périmètre et limites dans docs/ORDER_DECISIONS.md. Aucun workflow complet ni réception SQL déclaré.
+
+- **Implémentation16/10 :** voir docs/ORDER_LIFECYCLE.md : cinq actions versionnées, audit/outbox et fermeture/réouverture atomiques. Validation hors ligne avec doublesSQL ; aucune application PostgreSQL ni réception finale.
 
 ### 10.2 — Implémenter acceptation/refus initial
 - **Statut :** ◐ API et revue albanaise intégrées — réceptions différées
@@ -1671,7 +1673,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Interface16/10 :** File paginée pending/accepted, instructions/snapshots historiques, permissions détaillées et décisions versionnées ; relecture imposée après toute décision ou résultat incertain. Les autres files et le suivi clinique restent ouverts.
 
 ### 10.3 — Implémenter demande et renvoi de correction
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Demande de correction intégrée — édition/renvoi à faire
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -1684,6 +1686,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation16/10 :** voir docs/ORDER_LIFECYCLE.md : cinq actions versionnées, audit/outbox et fermeture/réouverture atomiques. Validation hors ligne avec doublesSQL ; aucune application PostgreSQL ni réception finale.
 
 ### 10.4 — Implémenter modification directe En attente
 - **Statut :** ☐ À faire
@@ -1731,7 +1735,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 10.7 — Implémenter annulation directe préacceptation
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Annulation directe clinique intégrée — réceptions différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -1744,6 +1748,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation16/10 :** voir docs/ORDER_LIFECYCLE.md : cinq actions versionnées, audit/outbox et fermeture/réouverture atomiques. Validation hors ligne avec doublesSQL ; aucune application PostgreSQL ni réception finale.
 
 ### 10.8 — Implémenter annulation sur demande Acceptée
 - **Statut :** ☐ À faire
@@ -1761,7 +1767,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 10.9 — Implémenter annulation directe côté labo
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Annulation laboratoire intégrée — réceptions différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -1774,6 +1780,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation16/10 :** voir docs/ORDER_LIFECYCLE.md : cinq actions versionnées, audit/outbox et fermeture/réouverture atomiques. Validation hors ligne avec doublesSQL ; aucune application PostgreSQL ni réception finale.
 
 ### 10.10 — Implémenter modification labo avant fabrication
 - **Statut :** ☐ À faire
@@ -2252,7 +2260,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 13.7 — Clôturer conversation lors de livraison
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Clôture/réouverture transactionnelle intégrée — réceptions différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel
@@ -2265,6 +2273,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation16/10 :** voir docs/ORDER_LIFECYCLE.md : cinq actions versionnées, audit/outbox et fermeture/réouverture atomiques. Validation hors ligne avec doublesSQL ; aucune application PostgreSQL ni réception finale.
 
 ### 13.8 — Implémenter boîte de réception laboratoire
 - **Statut :** ☐ À faire
