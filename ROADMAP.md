@@ -1647,7 +1647,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Préparation16/10 :** Acceptation/refus/version courante et démarrage protégé, historique/audit/outbox atomiques ; périmètre et limites dans docs/ORDER_DECISIONS.md. Aucun workflow complet ni réception SQL déclaré.
 
 ### 10.2 — Implémenter acceptation/refus initial
-- **Statut :** ◐ Décisions serveur intégrées — interface et réceptions différées
+- **Statut :** ◐ API et revue albanaise intégrées — réceptions différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -1662,6 +1662,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 - **Préparation16/10 :** Acceptation/refus/version courante et démarrage protégé, historique/audit/outbox atomiques ; périmètre et limites dans docs/ORDER_DECISIONS.md. Aucun workflow complet ni réception SQL déclaré.
+
+- **Interface16/10 :** File paginée pending/accepted, instructions/snapshots historiques, permissions détaillées et décisions versionnées ; relecture imposée après toute décision ou résultat incertain. Les autres files et le suivi clinique restent ouverts.
 
 ### 10.3 — Implémenter demande et renvoi de correction
 - **Statut :** ☐ À faire

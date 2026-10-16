@@ -8,3 +8,6 @@ export { assertOrderSubmissionReady } from "./submission-readiness.js";
 export { createOrderDecisionService } from "./decision.service.js";
 export { registerOrderDecisionRoutes } from "./decision.routes.js";
 export { assertOrderDecisionReady } from "./decision.repository.js";
+
+export { createOrderReviewService } from "./review.service.js";
+export { registerOrderReviewRoutes } from "./review.routes.js";

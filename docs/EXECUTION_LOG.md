@@ -924,3 +924,11 @@ Validation finale du lot : types des trois workspaces, architecture153sources, b
 ## 16/10/2026 — 14:00 Europe/Brussels — décisions initiales et fabrication
 
 Dépôt9.7 poussé9b57593. API serveur accepte/refuse pending ou démarre accepted sous permissions actuelles et CAS version/révision. Références verrouillées avant commande ; exception indisponible motivée, interdiction/blocage non contournables, demande pendante bloque fabrication, version officielle figée. Statut/historique/outbox/audit atomiques sans email. Dix tests ciblés réussis (doublesSQL/HTTP local), buildscontrats/API, contrats2additions et frontières158sources réussis. Pas de migration ni recettePG ; UI et autres transitions restent ouvertes.
+
+## 16/10/2026 — 14:04 Europe/Brussels — interface de revue des commandes
+
+Décisions serveur poussées30de91b. File de revue paginée et UI albanaise intégrées : permission détaillée actuelle, libellés snapshots immuables, patient/date/dents/instructions, action avec version/révision affichées, relecture après décision ou incertitude. PermissionBoundary expose son snapshot vérifié au panneau, sans inventer de droits dans SessionIdentity. Un défaut TS sur le curseur issu du spread de ligneSQL a été corrigé en utilisant la ligne source puis la validation stricte de la page. Résultats des contrôles consignés après terminaison. Aucun changement de migration, service ou environnement historique.
+
+Cinq tests revue réussis, buildAPI après correction, typesweb, lint, architecture164sources, buildweb167modules et contrat additif préservant tous les anciens schémas réussis. Revue finale : garde synchrone du formulaire avant création de clé contre double clic ; conflit de clé interdit désormais la répétition du bouton. Revalidation ciblée finale en cours pour ce dernier ajustement.
+
+Reprise 16/10/2026 16:52 Europe/Brussels : processus2225026 terminé, aucun enfant de compilation résiduel. Dernier ajustement formulaire vérifié : typesweb, lint et buildweb réussis. Format global échoue uniquement sur les deux scripts historiques linked-works-postgres-v2.mjs/v3.mjs ; aucune exclusion, aucune réécriture. 23tests ciblés réussis sur les trois lots (8dépôt,10décisions,5revue). Aucun test réel PostgreSQL ni recette navigateur revendiqué.

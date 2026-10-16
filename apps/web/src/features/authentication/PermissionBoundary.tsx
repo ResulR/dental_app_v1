@@ -12,13 +12,14 @@ export function PermissionBoundary({
   allowCatalogReader = false,
 }: {
   identity: SessionIdentity;
-  children: ReactNode;
+  children: ReactNode | ((snapshot: Snapshot) => ReactNode);
   permission?:
     | "clinics.manage"
     | "employees.manage_permissions"
     | "employees.suspend"
     | "catalog.manage"
-    | "settings.manage";
+    | "settings.manage"
+    | "orders.read_details";
   allowClinic?: boolean;
   allowCatalogReader?: boolean;
 }) {
@@ -67,5 +68,5 @@ export function PermissionBoundary({
     )
   )
     return <p>Nuk keni leje për këtë funksion.</p>;
-  return children;
+  return typeof children === "function" ? children(snapshot) : children;
 }

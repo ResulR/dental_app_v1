@@ -1,3 +1,4 @@
+import { OrderReviewPageSchema } from "./order-review.js";
 import {
   OrderDecisionSchema,
   OrderDecisionResultSchema,
@@ -95,6 +96,7 @@ import {
 } from "./clinic-registration.js";
 export function exportJsonSchemas() {
   const schemas = {
+    OrderReviewPage: OrderReviewPageSchema,
     OrderDecision: OrderDecisionSchema,
     OrderDecisionResult: OrderDecisionResultSchema,
     OrderSubmission: OrderSubmissionSchema,

@@ -4427,6 +4427,208 @@
           "additionalProperties": false
         }
       ]
+    },
+    "OrderReviewPage": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "items": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "number": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]*$"
+              },
+              "clinic_name": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "normal",
+                  "retouch"
+                ]
+              },
+              "origin": {
+                "type": "string",
+                "enum": [
+                  "clinic",
+                  "laboratory"
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "accepted"
+                ]
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "version_id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "patient": {
+                "type": "object",
+                "properties": {
+                  "first_name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "last_name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "internal_reference": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "additionalProperties": false
+              },
+              "requested_delivery_date": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "description": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "material": {
+                "type": "string"
+              },
+              "shade": {
+                "type": "string"
+              },
+              "work_type": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "teeth": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "fdi": {
+                      "type": "number",
+                      "enum": [
+                        11,
+                        12,
+                        13,
+                        14,
+                        15,
+                        16,
+                        17,
+                        18,
+                        21,
+                        22,
+                        23,
+                        24,
+                        25,
+                        26,
+                        27,
+                        28,
+                        31,
+                        32,
+                        33,
+                        34,
+                        35,
+                        36,
+                        37,
+                        38,
+                        41,
+                        42,
+                        43,
+                        44,
+                        45,
+                        46,
+                        47,
+                        48
+                      ]
+                    },
+                    "selection": {
+                      "type": "string",
+                      "enum": [
+                        "normal",
+                        "pontic"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "fdi",
+                    "selection"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "file_count": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "security_block": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "number",
+              "clinic_name",
+              "kind",
+              "origin",
+              "status",
+              "revision",
+              "version_id",
+              "patient",
+              "requested_delivery_date",
+              "description",
+              "material",
+              "shade",
+              "work_type",
+              "teeth",
+              "file_count",
+              "security_block"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "next_after": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "items",
+        "next_after"
+      ],
+      "additionalProperties": false
     }
   }
 }

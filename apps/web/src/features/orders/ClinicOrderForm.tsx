@@ -145,6 +145,12 @@ export function ClinicOrderForm() {
     };
   }
   async function submit() {
+    if (
+      pending.current ||
+      submission?.kind === "submitted" ||
+      submission?.kind === "conflict"
+    )
+      return;
     const request =
       intent ??
       OrderSubmissionSchema.parse({
@@ -370,7 +376,7 @@ export function ClinicOrderForm() {
           Kontrollo të dhënat
         </Button>
       </form>
-      {intent && (
+      {intent && submission?.kind !== "conflict" && (
         <Button disabled={busy} onClick={() => void submit()}>
           Verifiko përsëri të njëjtin dërgim
         </Button>

@@ -1,3 +1,7 @@
+import {
+  createOrderReviewService,
+  registerOrderReviewRoutes,
+} from "../modules/orders/index.js";
 import { orderDecisionEnabled } from "./order-decision-config.js";
 import {
   assertOrderDecisionReady,
@@ -146,6 +150,11 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
             service: createLaboratorySettingsService(database),
             sessions,
             origin: config.origin,
+          });
+        if (enableOrderDecision)
+          registerOrderReviewRoutes(app, {
+            service: createOrderReviewService(database),
+            sessions,
           });
         if (enableOrderDecision)
           registerOrderDecisionRoutes(app, {
