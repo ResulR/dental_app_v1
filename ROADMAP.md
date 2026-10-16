@@ -1450,6 +1450,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Préparation16/10 :** Nom/adresse/téléphone/e-mail/horaires/carte, lecture authentifiée, settings.manage serveur, révision/historique/audit/outbox. Aucun envoi ni configuration réelle ; logo dépend du pipeline fichiers. Migration0020 proposée seulement ; voir docs/LABORATORY_SETTINGS.md.
 
+- **Préparation logo16/10 :** Orchestration privée fail-closed et six tests unitaires ; adaptateurs effectifs de stockage/scan/décodage/publication encore absents. Aucun upload/API/UI activé, aucune clôture8.6. Voir docs/LOGO_PIPELINE.md.
+
 ## Chapitre 09 — Commande clinique : saisie et dépôt
 
 ### 9.1 — Implémenter formulaire d’identification patient

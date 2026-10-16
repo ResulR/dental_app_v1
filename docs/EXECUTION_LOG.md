@@ -908,3 +908,9 @@ Reprise UID1002, main/origin893d078 propres, aucun outil résiduel. LectureCDC/r
 Catalogue relu sous verrous UUID ordonnés : interdit bloque, indisponible avertit, catégorie manquante refuse. Aucun DML/historique réécrit ; futurs writers devront garder ces verrous dans leur transaction métier. Fichiers non vérifiés bloqués, aucun abandon silencieux. TypeScript exactOptionalPropertyTypes avait signalé work_type_id optionnel : signature corrigée, puis buildAPI réussi. 7tests ciblés passent, typesweb/builds/lint/contrats2additions/frontières validés. Aucun SQL réel, activation ou livraison.
 
 Contrôle global de formatage : seuls scripts/linked-works-postgres-v2.mjs et scripts/linked-works-postgres-v3.mjs restent signalés ; fichiers historiques inchangés, aucune exclusion ajoutée. Diff sans erreur. Réceptions PostgreSQL et navigateur toujours différées.
+
+## 16/10/2026 — 11:17 Europe/Brussels — préparation du logo8.6
+
+Lot formulaire/contrôle9.1–9.5 poussé6752e40. Noyau files ajoute admission obligatoire, limites explicites, quarantaine/hash, inspection obligatoire et publication conditionnelle, conservation sur échec ou résultat incertain. Aucun adaptateur réel, route publique, configuration ou logo fonctionnel revendiqué ; docs/LOGO_PIPELINE.md précise les dépendances et limites de sécurité.
+
+Six tests ciblés avec ports doublés réussis ; buildAPI, lint et frontières146sources réussis. Le lot formulaire compte sept tests distincts, buildscontrats/API/web, typesweb et contrats additifs vérifiés. Aucun test de scan réel, PostgreSQL ou navigateur. Diff et garde versioning contrôlés avant commit ; scripts historiques inchangés. Prochain travail applicatif : dépôt officiel idempotent, snapshots et écritures métier atomiques, puis acceptation/progression protégées. Budgets et adaptateurs fichiers restent à recevoir avant activation du logo.
