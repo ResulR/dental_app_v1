@@ -1,0 +1,12 @@
+--- a/scripts/run-quality.py
++++ b/scripts/run-quality.py
+@@ -99,7 +99,8 @@
+
+
+ def node(script, *args):
+-    return [NODE, "--v8-pool-size=1", "--max-old-space-size=192", script, *args]
++    heap = 256 if script == "node_modules/typescript/bin/tsc" else 192
++    return [NODE, "--v8-pool-size=1", f"--max-old-space-size={heap}", script, *args]
+
+
+ def plan(name):

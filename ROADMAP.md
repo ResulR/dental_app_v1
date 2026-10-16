@@ -1582,7 +1582,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Implémentation16/10 :** Dépôt transactionnel, reçu idempotent et snapshots serveur reliés au formulaire ; docs/ORDER_SUBMISSION.md. Hors ligne testé, aucune application PostgreSQL ni réception finale.
 
 ### 9.8 — Implémenter interface récap et suivi clinique
-- **Statut :** ☐ À faire
+- **Statut :** ⚠ Suivi préparé — validation bloquée par heap TypeScript192Mio
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Commande clinique : saisie et dépôt
@@ -1595,6 +1595,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **État16/10 :** API/UI de suivi, recherche/filtres et historique préparés sans activation. BuildAPI échoué (OOM), tests non exécutés, aucun succès fonctionnel revendiqué ; voir docs/BUILD_MEMORY_BLOCK.md. Pas de recettePG ni modification des protections.
 
 ### 9.9 — Implémenter création au nom de la clinique par le labo
 - **Statut :** ☐ À faire
