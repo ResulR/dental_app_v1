@@ -1,3 +1,4 @@
+import { OrderTrackingPanel } from "../features/orders/index.js";
 import { ClinicOrderForm, OrderReviewPanel } from "../features/orders/index.js";
 import { LaboratorySettingsPanel } from "../features/settings/index.js";
 import {
@@ -46,6 +47,13 @@ export function App() {
                   )}
                 </PermissionBoundary>
               )}
+              <PermissionBoundary
+                identity={identity}
+                permission="orders.read_logistics"
+                allowClinic
+              >
+                <OrderTrackingPanel key={identity.account_id + "-tracking"} />
+              </PermissionBoundary>
               {identity.profile === "clinic" && (
                 <ClinicOrderForm key={identity.account_id + "-order-form"} />
               )}

@@ -1582,7 +1582,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Implémentation16/10 :** Dépôt transactionnel, reçu idempotent et snapshots serveur reliés au formulaire ; docs/ORDER_SUBMISSION.md. Hors ligne testé, aucune application PostgreSQL ni réception finale.
 
 ### 9.8 — Implémenter interface récap et suivi clinique
-- **Statut :** ⚠ Suivi préparé — validation bloquée par heap TypeScript192Mio
+- **Statut :** ◐ Suivi intégré et testé hors ligne — réceptions SQL/navigateur différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Commande clinique : saisie et dépôt
@@ -1596,7 +1596,10 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
-- **État16/10 :** API/UI de suivi, recherche/filtres et historique préparés sans activation. BuildAPI échoué (OOM), tests non exécutés, aucun succès fonctionnel revendiqué ; voir docs/BUILD_MEMORY_BLOCK.md. Pas de recettePG ni modification des protections.
+- **Implémentation16/10 :** API/UI albanaise de suivi clinique/laboratoire : recherche POST, filtres, pagination, fiche snapshots et historique des statuts ; permissions actuelles et cloisonnement serveur. Voir docs/ORDER_TRACKING.md.
+- **Validation hors ligne :** buildAPI réussi après patch heap256Mio autorisé, tests ciblés avec doubles SQL/HTTP, typesweb, lint, architecture, buildweb et contrats additifs vérifiés. Résultats détaillés dans le journal.
+- **Application PostgreSQL :** aucune ; runtime désactivé par défaut, aucun nouveau DDL.
+- **Réception finale :** différée SQL/navigateur ; ne clôture ni les transitions restantes ni l'historique comparé de toutes les versions.
 
 ### 9.9 — Implémenter création au nom de la clinique par le labo
 - **Statut :** ☐ À faire

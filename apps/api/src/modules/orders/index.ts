@@ -11,3 +11,6 @@ export { assertOrderDecisionReady } from "./decision.repository.js";
 
 export { createOrderReviewService } from "./review.service.js";
 export { registerOrderReviewRoutes } from "./review.routes.js";
+
+export { createOrderTrackingService } from "./tracking.service.js";
+export { registerOrderTrackingRoutes } from "./tracking.routes.js";

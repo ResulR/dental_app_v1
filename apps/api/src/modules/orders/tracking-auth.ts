@@ -1,0 +1,34 @@
+import type { DatabaseExecutor } from "../../shared/database.js";
+import { createCurrentPermissionsRepository } from "../permissions/index.js";
+export async function trackingAuthority(
+  tx: DatabaseExecutor,
+  actor: { accountId: string; sessionId: string },
+) {
+  await tx.query("SELECT id FROM public.accounts WHERE id=$1 FOR SHARE", [
+    actor.accountId,
+  ]);
+  await tx.query("LOCK TABLE public.account_grants IN SHARE MODE");
+  await tx.query(
+    "SELECT id FROM public.sessions WHERE id=$1 AND account_id=$2 FOR SHARE",
+    [actor.sessionId, actor.accountId],
+  );
+  await tx.query(
+    "SELECT id FROM public.clinics WHERE account_id=$1 FOR SHARE",
+    [actor.accountId],
+  );
+  const identity = await createCurrentPermissionsRepository(tx).current(actor);
+  if (!identity) return null;
+  if (identity.profile === "clinic") {
+    const clinic = await tx.query(
+      "SELECT id FROM public.clinics WHERE account_id=$1 AND review_state='approved' AND NOT suspended",
+      [actor.accountId],
+    );
+    if (clinic.rows.length !== 1) return null;
+    return { clinicId: clinic.rows[0]!.id as string, details: true };
+  }
+  if (!identity.permissions.includes("orders.read_logistics")) return null;
+  return {
+    clinicId: null,
+    details: identity.permissions.includes("orders.read_details"),
+  };
+}

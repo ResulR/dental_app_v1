@@ -1,3 +1,8 @@
+import { orderTrackingEnabled } from "./order-tracking-config.js";
+import {
+  createOrderTrackingService,
+  registerOrderTrackingRoutes,
+} from "../modules/orders/index.js";
 import {
   createOrderReviewService,
   registerOrderReviewRoutes,
@@ -83,6 +88,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableOrderTracking = orderTrackingEnabled(env);
   const enableOrderDecision = orderDecisionEnabled(env);
   const enableOrderSubmission = orderSubmissionEnabled(env);
   const enableOrderPreflight = orderPreflightEnabled(env);
@@ -148,6 +154,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
         if (enableLaboratorySettings)
           registerLaboratorySettingsRoutes(app, {
             service: createLaboratorySettingsService(database),
+            sessions,
+            origin: config.origin,
+          });
+        if (enableOrderTracking)
+          registerOrderTrackingRoutes(app, {
+            service: createOrderTrackingService(database),
             sessions,
             origin: config.origin,
           });

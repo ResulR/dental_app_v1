@@ -1,3 +1,9 @@
+import {
+  OrderSearchSchema,
+  OrderTrackingPageSchema,
+  OrderDetailQuerySchema,
+  OrderTrackingDetailSchema,
+} from "./order-tracking.js";
 import { OrderReviewPageSchema } from "./order-review.js";
 import {
   OrderDecisionSchema,
@@ -96,6 +102,10 @@ import {
 } from "./clinic-registration.js";
 export function exportJsonSchemas() {
   const schemas = {
+    OrderSearch: OrderSearchSchema,
+    OrderTrackingPage: OrderTrackingPageSchema,
+    OrderDetailQuery: OrderDetailQuerySchema,
+    OrderTrackingDetail: OrderTrackingDetailSchema,
     OrderReviewPage: OrderReviewPageSchema,
     OrderDecision: OrderDecisionSchema,
     OrderDecisionResult: OrderDecisionResultSchema,
