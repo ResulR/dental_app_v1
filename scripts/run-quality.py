@@ -99,7 +99,8 @@ def run(command, label, timeout=TIMEOUT):
 
 
 def node(script, *args):
-    return [NODE, "--v8-pool-size=1", "--max-old-space-size=192", script, *args]
+    heap = 256 if script == "node_modules/typescript/bin/tsc" else 192
+    return [NODE, "--v8-pool-size=1", f"--max-old-space-size={heap}", script, *args]
 
 
 def plan(name):
