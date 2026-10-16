@@ -1,3 +1,9 @@
+import { laboratorySettingsEnabled } from "./laboratory-settings-config.js";
+import {
+  assertLaboratorySettingsReady,
+  createLaboratorySettingsService,
+  registerLaboratorySettingsRoutes,
+} from "../modules/settings/index.js";
 import { catalogManagementEnabled } from "./catalog-management-config.js";
 import {
   assertCatalogManagementReady,
@@ -56,6 +62,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableLaboratorySettings = laboratorySettingsEnabled(env);
   const enableCatalogManagement = catalogManagementEnabled(env);
   const enableCatalog = catalogEnabled(env);
   const enableAdminManagement = adminManagementEnabled(env);
@@ -70,6 +77,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     // Fail startup, without creating/migrating anything, if required objects or
     // read privileges are absent. Every checkout also enforces runtime identity.
     await assertAuthStorageReady(database);
+    if (enableLaboratorySettings) await assertLaboratorySettingsReady(database);
     if (enableCatalogManagement) await assertCatalogManagementReady(database);
     if (enableCatalog) await assertCatalogStorageReady(database);
     if (enableAdminManagement) await assertAdminStorageReady(database);
@@ -111,6 +119,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
           sessions,
           origin: config.origin,
         });
+        if (enableLaboratorySettings)
+          registerLaboratorySettingsRoutes(app, {
+            service: createLaboratorySettingsService(database),
+            sessions,
+            origin: config.origin,
+          });
         if (enableCatalogManagement)
           registerCatalogManagementRoutes(app, {
             service: createCatalogManagementService(database),

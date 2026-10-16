@@ -1,0 +1,15 @@
+# Coordonnées publiques du laboratoire — 8.6
+
+Code API/runtime/UI albanaise intégré, non activé. Flag DENTAL_LAB_LABORATORY_SETTINGS_ENABLED absent/false par défaut, true seulement avec authentification et readiness. Aucun paramètre réel ou fournisseur inventé.
+
+GET /api/v1/laboratory-settings lit nom, adresse, téléphone, e-mail, horaires libres et lien de localisation. H86-01 : ces informations publiques du portail sont visibles par les comptes actuellement actifs et authentifiés, y compris la clinique active ; aucune route anonyme. Ce choix réversible n'ouvre aucun accès aux commandes, patients, secrets ou paramètres internes. Les null représentent des informations non renseignées, sans données fictives de remplacement.
+
+PUT au même chemin exige settings.manage effectif et profil non clinique, origin canonique, JSON strict et révision attendue. Histoire métier GET /history (before révision, pages50+1) sous la même permission, sans accès au journal d'audit global. Verrous compte/grants/session/clinique, identité courante, puis singleton FOR UPDATE/CAS ; mutation, avant/après, audit et settings_changed/outbox_dispatch dans une transaction. Pas de modification des comptes/adresses de connexion, catalogue ou travaux. No-op sans événement ; réponse ambiguë jamais rejouée automatiquement.
+
+H86-02 : bornes techniques texte200/1000/100/254/2000/2048, null pour retrait explicite d'un champ. Aucun horaire réel, format de téléphone national, champ financier, fournisseur e-mail ou texte juridique ajouté. L'e-mail est une coordonnée affichée, pas une configuration d'envoi. Carte : HTTPS sans credentials, lien externe volontaire noreferrer ; aucune requête serveur, iframe ou chargement automatique externe. Texte rendu React sans HTML injecté.
+
+Migration0020 proposée uniquement : singleton initial non configuré/révision0 et historique append-only. SHA256 2ca9c155ebb928628e00215dc383b209789dc4f1e1f65395eba757eb68af6f99. Pas de replay d'une migration antérieure. Privilèges application SELECT/UPDATE colonnes pour singleton ; SELECT/INSERT pour historique. Readiness refuse l'absence du singleton et les droits de suppression ou mutation d'historique. Aucun GRANT automatique runtime.
+
+Validation : 12 tests ciblés avec SQL doublé et HTTP éphémère local ; permissions/retrait, clinique suspendue, conflits, no-op, champs interdits, URL hostile, étapes d'écriture en échec, contrat de transport et composition auth. Buildscontrats/API/web, typesweb, lint, frontières133sources, snapshot5schémas purement additifs et inventaire migrations passent. Aucune atomicité/concurrence PostgreSQL ni recette navigateur déclarée acquise.
+
+Restent pour clôturer8.6 : logo via stockage/validation/serving de fichiers contrôlés (chapitre12), sans URL distante arbitraire ni simulation ; réceptionSQL0020/dépendances, essais concurrentiels/rollback réels et navigateur/relecture albanaise. L'upload/logo n'est pas exposé tant que ce pipeline manque. Aucune activation ni modification système autorisée par ce document.

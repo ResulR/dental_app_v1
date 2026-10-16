@@ -1,4 +1,11 @@
 import {
+  LaboratoryFieldsSchema,
+  LaboratoryProfileSchema,
+  LaboratoryUpdateSchema,
+  LaboratoryMutationResultSchema,
+  LaboratoryHistorySchema,
+} from "./laboratory-settings.js";
+import {
   CatalogImpactsSchema,
   CatalogCreateSchema,
   CatalogEditSchema,
@@ -76,6 +83,12 @@ import {
 } from "./clinic-registration.js";
 export function exportJsonSchemas() {
   const schemas = {
+    LaboratoryFields: LaboratoryFieldsSchema,
+    LaboratoryProfile: LaboratoryProfileSchema,
+    LaboratoryUpdate: LaboratoryUpdateSchema,
+    LaboratoryMutationResult: LaboratoryMutationResultSchema,
+    LaboratoryHistory: LaboratoryHistorySchema,
+
     ManagedProfile: ManagedProfileSchema,
     AccountStateCommand: AccountStateCommandSchema,
     AccountStateFields: AccountStateFieldsSchema,

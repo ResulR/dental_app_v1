@@ -884,3 +884,11 @@ Reprise ec7d00f/main propre, distant confirmé, UID1002. Catalogue8.2 connecté 
 Services PG246009, dental-site619021, Remote1892718, nginx895970, pm2-debian842 actifs/PID identiques. Aucune migration, activation, modification système/service/voisin, livraison d'e-mail, lecture de données patient ou suppression de preuve. Documentation CATALOG_MANAGEMENT.md précise limites et réceptions restantes. Invitations : persistance privée, clés opérateur, durées et anti-abus restent les dépendances documentées ; aucune configuration ou fournisseur inventé.
 
 Format global final : seuls scripts/linked-works-postgres-v2.mjs et scripts/linked-works-postgres-v3.mjs restent non conformes ; octets inchangés, aucune exclusion ni correction. Tous les fichiers applicatifs modifiés conformes. Vérification Git staged et garde versioning réussies.
+
+## 16/10/2026 — reprise f63a6b5 et coordonnées du laboratoire8.6
+
+UID1002, main/originf63a6b5 identiques, arbre propre, aucun outil enfant encore actif. Services PG246009/dental-site619021/Remote1892718/nginx895970/pm2-debian842 actifs/PID identiques. RelectureCDC3/roadmap8.6/dépendances : logo non supporté par un pipeline validé, non simulé.
+
+Coordonnées publiques reliées API/runtime/UI albanaise : lecture authentifiée active, gestion settings.manage courante hors clinique, champs stricts et sans finance, CAS/no-op, historique/audit/outbox transactionnels, sans livraison. Carte HTTPS sans credentials ouverte volontairement, aucun fetch externe. Migration0020 uniquement proposée SHA2ca9c155ebb928628e00215dc383b209789dc4f1e1f65395eba757eb68af6f99, flagoff, aucun secret. Voir LABORATORY_SETTINGS.md pour hypothèses réversibles et limites.
+
+12tests ciblés passent avec SQL doublé/HTTP local ; buildscontrats/API/web, typesweb, lint, architecture133sources, contrats5schémas additifs préservant tous les anciens et inventaire sources réussis. Aucun PostgreSQL réel, migration, service, déploiement, e-mail ou preuvev1/v2/v3 touché. Logo/pipelinefichiers, réceptionSQL/navigateur et progression commandes restent non terminés. Suite indépendante : adapter la persistance chiffrée d'une intention d'invitation dans une transaction fournie, sans émettre d'invitation ni activer une livraison.

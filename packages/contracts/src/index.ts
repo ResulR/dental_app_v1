@@ -21,3 +21,5 @@ export * from "./admin-management.js";
 export * from "./catalog.js";
 
 export * from "./catalog-management.js";
+
+export * from "./laboratory-settings.js";

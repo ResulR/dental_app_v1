@@ -1,3 +1,4 @@
+import { LaboratorySettingsPanel } from "../features/settings/index.js";
 import {
   CatalogPanel,
   CatalogManagementPanel,
@@ -30,6 +31,19 @@ export function App() {
         <AuthenticationPanel
           renderAuthenticated={(identity) => (
             <>
+              <LaboratorySettingsPanel
+                key={identity.account_id + "-lab-info"}
+              />
+              <PermissionBoundary
+                identity={identity}
+                permission="settings.manage"
+                allowClinic={false}
+              >
+                <LaboratorySettingsPanel
+                  manage
+                  key={identity.account_id + "-lab-settings"}
+                />
+              </PermissionBoundary>
               <PermissionBoundary
                 identity={identity}
                 permission="catalog.manage"

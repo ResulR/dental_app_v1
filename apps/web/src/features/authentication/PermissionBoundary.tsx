@@ -17,7 +17,8 @@ export function PermissionBoundary({
     | "clinics.manage"
     | "employees.manage_permissions"
     | "employees.suspend"
-    | "catalog.manage";
+    | "catalog.manage"
+    | "settings.manage";
   allowClinic?: boolean;
   allowCatalogReader?: boolean;
 }) {

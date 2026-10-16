@@ -1429,7 +1429,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Préparation15/10 :** Blocages non livrés sans mutation de statut ; examen owner paginé inclut historiques/livrés. Limite technique1000 refuse atomiquement au-delà, aucune troncature. Verrouillage des futurs writers et levée conforme restent à recevoir.
 
 ### 8.6 — Implémenter paramètres publics du laboratoire
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Coordonnées API/runtime/UI intégrées — logo et réceptions différés
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Catalogue et paramètres
@@ -1443,6 +1443,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
+
+- **Préparation16/10 :** Nom/adresse/téléphone/e-mail/horaires/carte, lecture authentifiée, settings.manage serveur, révision/historique/audit/outbox. Aucun envoi ni configuration réelle ; logo dépend du pipeline fichiers. Migration0020 proposée seulement ; voir docs/LABORATORY_SETTINGS.md.
 
 ## Chapitre 09 — Commande clinique : saisie et dépôt
 
