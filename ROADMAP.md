@@ -1720,7 +1720,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 10.6 — Implémenter retrait des demandes pendantes
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Retrait clinique versionné intégré — réceptions différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -1733,6 +1733,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation16/10 :** API/UI albanaise, droits actuels, CAS commande/demande et audit/outbox transactionnels ; docs/ORDER_REQUESTS.md. Tests hors ligne avec doublesSQL ; aucune application PostgreSQL, réception finale différée. Propositions de modification non créées par ce lot.
 
 ### 10.7 — Implémenter annulation directe préacceptation
 - **Statut :** ◐ Annulation directe clinique intégrée — réceptions différées
@@ -1752,7 +1754,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Implémentation16/10 :** voir docs/ORDER_LIFECYCLE.md : cinq actions versionnées, audit/outbox et fermeture/réouverture atomiques. Validation hors ligne avec doublesSQL ; aucune application PostgreSQL ni réception finale.
 
 ### 10.8 — Implémenter annulation sur demande Acceptée
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Demande et décision d’annulation intégrées — réceptions différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -1765,6 +1767,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation16/10 :** API/UI albanaise, droits actuels, CAS commande/demande et audit/outbox transactionnels ; docs/ORDER_REQUESTS.md. Tests hors ligne avec doublesSQL ; aucune application PostgreSQL, réception finale différée. Propositions de modification non créées par ce lot.
 
 ### 10.9 — Implémenter annulation directe côté labo
 - **Statut :** ◐ Annulation laboratoire intégrée — réceptions différées

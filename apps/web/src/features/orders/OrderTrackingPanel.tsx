@@ -1,3 +1,4 @@
+import { OrderRequestActions } from "./OrderRequestActions.js";
 import { OrderLifecycleActions } from "./OrderLifecycleActions.js";
 import type { EffectivePermissionsSchema } from "@dental-lab/contracts";
 import { useEffect, useRef, useState } from "react";
@@ -191,6 +192,16 @@ export function OrderTrackingPanel({
                 E dëshiruar: {row.requested_delivery_date ?? "—"} · E
                 planifikuar: {row.planned_delivery_date ?? "—"}
               </p>
+              <OrderRequestActions
+                orderId={row.id}
+                clinic={clinic}
+                permissions={permissions}
+                onFinished={(text) => {
+                  setPage(null);
+                  setDetail(null);
+                  setMessage(text);
+                }}
+              />
               <OrderLifecycleActions
                 orderId={row.id}
                 clinic={clinic}
