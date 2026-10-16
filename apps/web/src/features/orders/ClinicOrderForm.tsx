@@ -1,3 +1,8 @@
+import { createOrderSubmissionClient } from "./submission-api.js";
+import {
+  OrderSubmissionSchema,
+  type OrderSubmissionResultSchema,
+} from "@dental-lab/contracts";
 import { useEffect, useRef, useState } from "react";
 import { FDI, OrderPreflightInputSchema } from "@dental-lab/contracts";
 import type {
@@ -13,7 +18,8 @@ type Kind = ReturnType<typeof CatalogKindSchema.parse>;
 type Item = ReturnType<typeof ActiveCatalogItemSchema.parse>;
 type Tooth = ReturnType<typeof ToothSchema.parse>;
 const catalog = createCatalogClient(),
-  api = createOrderPreflightClient();
+  api = createOrderPreflightClient(),
+  submissionApi = createOrderSubmissionClient();
 const kinds: Kind[] = ["material", "shade", "work_type"];
 const labels: Record<Kind, string> = {
   material: "Materiali",
@@ -53,6 +59,14 @@ export function ClinicOrderForm() {
     > | null>(null);
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
+  const [submission, setSubmission] = useState<ReturnType<
+    typeof OrderSubmissionResultSchema.parse
+  > | null>(null);
+  const [intent, setIntent] = useState<ReturnType<
+    typeof OrderSubmissionSchema.parse
+  > | null>(null);
+  const [ack, setAck] = useState(false);
+  const frozen = busy || intent !== null || submission?.kind === "submitted";
   const pending = useRef<AbortController | null>(null);
   useEffect(
     () => () => {
@@ -62,6 +76,8 @@ export function ClinicOrderForm() {
     [],
   );
   function edit() {
+    setSubmission(null);
+    setAck(false);
     setResult(null);
     setMessage("");
   }
@@ -128,6 +144,29 @@ export function ClinicOrderForm() {
       file_ids: [],
     };
   }
+  async function submit() {
+    const request =
+      intent ??
+      OrderSubmissionSchema.parse({
+        idempotency_key: crypto.randomUUID(),
+        input: input(),
+        confirmed_warnings: ack,
+      });
+    setIntent(request);
+    await run(async (signal) => {
+      try {
+        const response = await submissionApi.submit(request, signal);
+        if (signal.aborted) return;
+        setSubmission(response);
+        if (response.kind !== "conflict") setIntent(null);
+      } catch {
+        if (!signal.aborted || pending.current)
+          setMessage(
+            "Rezultati i dërgimit është i pasigurt. Mos e mbyllni ekranin. Përdorni të njëjtën kërkesë për ta verifikuar; mos krijoni një porosi tjetër.",
+          );
+      }
+    });
+  }
   async function check() {
     if (!OrderPreflightInputSchema.safeParse(input()).success) {
       setResult(null);
@@ -162,16 +201,17 @@ export function ClinicOrderForm() {
     <section aria-label="Përgatitja e porosisë">
       <h3>Përgatitja e porosisë</h3>
       <p>
-        Ky formular kontrollon të dhënat dhe gjendjen aktuale të katalogut. Nuk
-        krijon porosi dhe nuk ruan draft. Mbyllja e ekranit i humb të dhënat.
+        Kontrolloni të dhënat, pastaj dërgoni porosinë me konfirmim të qartë.
+        Drafti nuk ruhet në pajisje. Mos e mbyllni ekranin nëse rezultati i
+        dërgimit është i pasigurt.
       </p>
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          void check();
+          if (!frozen) void check();
         }}
       >
-        <fieldset disabled={busy}>
+        <fieldset disabled={frozen}>
           <legend>Identifikimi i pacientit</legend>
           <label>
             Emri
@@ -211,7 +251,7 @@ export function ClinicOrderForm() {
             dyja.
           </p>
         </fieldset>
-        <fieldset disabled={busy}>
+        <fieldset disabled={frozen}>
           <legend>Puna e kërkuar</legend>
           {kinds.map((kind) => (
             <div key={kind}>
@@ -282,7 +322,7 @@ export function ClinicOrderForm() {
             />
           </label>
         </fieldset>
-        <fieldset disabled={busy}>
+        <fieldset disabled={frozen}>
           <legend>Dhëmbët (opsional)</legend>
           <p>Shtypni për të kaluar: bosh → normal → pontik (antar) → bosh.</p>
           <div
@@ -326,10 +366,40 @@ export function ClinicOrderForm() {
         {!teeth.length && !description.trim() && (
           <p>Nuk ka dhëmbë ose përshkrim. Ky është paralajmërim, jo ndalim.</p>
         )}
-        <Button type="submit" disabled={busy}>
+        <Button type="submit" disabled={frozen}>
           Kontrollo të dhënat
         </Button>
       </form>
+      {intent && (
+        <Button disabled={busy} onClick={() => void submit()}>
+          Verifiko përsëri të njëjtin dërgim
+        </Button>
+      )}
+      {submission?.kind === "submitted" && (
+        <p role="status">
+          Porosia nr. {submission.number} u regjistrua. Marrë më{" "}
+          {submission.received_at}. Statusi fillestar: Në pritje.
+        </p>
+      )}
+      {submission?.kind === "blocked" && (
+        <ul role="alert">
+          {submission.reasons.map((code) => (
+            <li key={code}>{issues[code]}</li>
+          ))}
+        </ul>
+      )}
+      {submission?.kind === "confirmation_required" && (
+        <p role="alert">
+          Gjendja ndryshoi. Kontrolloni përsëri dhe konfirmoni paralajmërimet
+          para dërgimit.
+        </p>
+      )}
+      {submission?.kind === "conflict" && (
+        <p role="alert">
+          Kjo kërkesë është përdorur me të dhëna të tjera. Nevojitet verifikim;
+          dërgimi i ri është bllokuar.
+        </p>
+      )}
       {message && <p role="status">{message}</p>}
       {result && (
         <div role="status">
@@ -357,6 +427,26 @@ export function ClinicOrderForm() {
               </li>
             ))}
           </ul>
+          {result.status === "checked" && !frozen && (
+            <>
+              {result.warnings.length > 0 && (
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={ack}
+                    onChange={(e) => setAck(e.target.checked)}
+                  />
+                  I lexova paralajmërimet dhe dëshiroj të vazhdoj.
+                </label>
+              )}
+              <Button
+                disabled={result.warnings.length > 0 && !ack}
+                onClick={() => void submit()}
+              >
+                Konfirmo dhe dërgo porosinë
+              </Button>
+            </>
+          )}
           <p>
             Ky kontroll nuk rezervon referencat; gjendja duhet kontrolluar
             sërish gjatë depozitimit zyrtar.

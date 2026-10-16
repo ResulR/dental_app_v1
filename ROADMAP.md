@@ -1455,7 +1455,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 09 — Commande clinique : saisie et dépôt
 
 ### 9.1 — Implémenter formulaire d’identification patient
-- **Statut :** ◐ Saisie et contrôle API intégrés — dépôt officiel et réception différés
+- **Statut :** ◐ Dépôt clinique API/UI intégré sans pièces jointes — réceptions SQL/navigateur différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Commande clinique : saisie et dépôt
@@ -1471,8 +1471,10 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Préparation16/10 :** Formulaire clinique albanais relié au contrôle serveur/catalogue, sans persistance ni dépôt simulé. Validation partagée et avertissements ; voir docs/ORDER_PREFLIGHT.md. Aucune clôture SQL/navigateur ou dépôt officiel.
 
+- **Implémentation16/10 :** Dépôt transactionnel, reçu idempotent et snapshots serveur reliés au formulaire ; docs/ORDER_SUBMISSION.md. Hors ligne testé, aucune application PostgreSQL ni réception finale.
+
 ### 9.2 — Implémenter sélection du matériau, teinte et type
-- **Statut :** ◐ Saisie et contrôle API intégrés — dépôt officiel et réception différés
+- **Statut :** ◐ Dépôt clinique API/UI intégré sans pièces jointes — réceptions SQL/navigateur différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Commande clinique : saisie et dépôt
@@ -1488,8 +1490,10 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Préparation16/10 :** Formulaire clinique albanais relié au contrôle serveur/catalogue, sans persistance ni dépôt simulé. Validation partagée et avertissements ; voir docs/ORDER_PREFLIGHT.md. Aucune clôture SQL/navigateur ou dépôt officiel.
 
+- **Implémentation16/10 :** Dépôt transactionnel, reçu idempotent et snapshots serveur reliés au formulaire ; docs/ORDER_SUBMISSION.md. Hors ligne testé, aucune application PostgreSQL ni réception finale.
+
 ### 9.3 — Implémenter schéma FDI 32 dents et pontiques
-- **Statut :** ◐ Saisie et contrôle API intégrés — dépôt officiel et réception différés
+- **Statut :** ◐ Dépôt clinique API/UI intégré sans pièces jointes — réceptions SQL/navigateur différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Commande clinique : saisie et dépôt
@@ -1505,8 +1509,10 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Préparation16/10 :** Formulaire clinique albanais relié au contrôle serveur/catalogue, sans persistance ni dépôt simulé. Validation partagée et avertissements ; voir docs/ORDER_PREFLIGHT.md. Aucune clôture SQL/navigateur ou dépôt officiel.
 
+- **Implémentation16/10 :** Dépôt transactionnel, reçu idempotent et snapshots serveur reliés au formulaire ; docs/ORDER_SUBMISSION.md. Hors ligne testé, aucune application PostgreSQL ni réception finale.
+
 ### 9.4 — Implémenter dates souhaitée et planifiée distinctes
-- **Statut :** ◐ Saisie et contrôle API intégrés — dépôt officiel et réception différés
+- **Statut :** ◐ Dépôt clinique API/UI intégré sans pièces jointes — réceptions SQL/navigateur différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Commande clinique : saisie et dépôt
@@ -1522,8 +1528,10 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Préparation16/10 :** Formulaire clinique albanais relié au contrôle serveur/catalogue, sans persistance ni dépôt simulé. Validation partagée et avertissements ; voir docs/ORDER_PREFLIGHT.md. Aucune clôture SQL/navigateur ou dépôt officiel.
 
+- **Implémentation16/10 :** Dépôt transactionnel, reçu idempotent et snapshots serveur reliés au formulaire ; docs/ORDER_SUBMISSION.md. Hors ligne testé, aucune application PostgreSQL ni réception finale.
+
 ### 9.5 — Implémenter avertissement commande peu détaillée
-- **Statut :** ◐ Saisie et contrôle API intégrés — dépôt officiel et réception différés
+- **Statut :** ◐ Dépôt clinique API/UI intégré sans pièces jointes — réceptions SQL/navigateur différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Commande clinique : saisie et dépôt
@@ -1538,6 +1546,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 - **Préparation16/10 :** Formulaire clinique albanais relié au contrôle serveur/catalogue, sans persistance ni dépôt simulé. Validation partagée et avertissements ; voir docs/ORDER_PREFLIGHT.md. Aucune clôture SQL/navigateur ou dépôt officiel.
+
+- **Implémentation16/10 :** Dépôt transactionnel, reçu idempotent et snapshots serveur reliés au formulaire ; docs/ORDER_SUBMISSION.md. Hors ligne testé, aucune application PostgreSQL ni réception finale.
 
 ### 9.6 — Implémenter détecteur non bloquant de doublons
 - **Statut :** ☐ À faire
@@ -1555,7 +1565,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 9.7 — Implémenter dépôt transactionnel et numérotation
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Dépôt clinique API/UI intégré sans pièces jointes — réceptions SQL/navigateur différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Commande clinique : saisie et dépôt
@@ -1568,6 +1578,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation16/10 :** Dépôt transactionnel, reçu idempotent et snapshots serveur reliés au formulaire ; docs/ORDER_SUBMISSION.md. Hors ligne testé, aucune application PostgreSQL ni réception finale.
 
 ### 9.8 — Implémenter interface récap et suivi clinique
 - **Statut :** ☐ À faire

@@ -914,3 +914,9 @@ Contrôle global de formatage : seuls scripts/linked-works-postgres-v2.mjs et sc
 Lot formulaire/contrôle9.1–9.5 poussé6752e40. Noyau files ajoute admission obligatoire, limites explicites, quarantaine/hash, inspection obligatoire et publication conditionnelle, conservation sur échec ou résultat incertain. Aucun adaptateur réel, route publique, configuration ou logo fonctionnel revendiqué ; docs/LOGO_PIPELINE.md précise les dépendances et limites de sécurité.
 
 Six tests ciblés avec ports doublés réussis ; buildAPI, lint et frontières146sources réussis. Le lot formulaire compte sept tests distincts, buildscontrats/API/web, typesweb et contrats additifs vérifiés. Aucun test de scan réel, PostgreSQL ou navigateur. Diff et garde versioning contrôlés avant commit ; scripts historiques inchangés. Prochain travail applicatif : dépôt officiel idempotent, snapshots et écritures métier atomiques, puis acceptation/progression protégées. Budgets et adaptateurs fichiers restent à recevoir avant activation du logo.
+
+## 16/10/2026 — 13:54 Europe/Brussels — dépôt officiel clinique9.7
+
+Reprise UID1002, main/origin0388645 propres. Schémas0003/0004/0007/0008/0010 et droits courants relus, sans connexion PostgreSQL. API/runtime/UI albanaise relient le dépôt à une transaction unique ; snapshots/historique/événements/audit/reçu, numérotation et horodatage serveur, idempotence sérialisée par compte. Aucun changement de migration ni activation. Huit tests ciblés réussis avec doublesSQL/HTTP local ; buildscontrats/API réussis. Les validations globales restantes sont consignées après résultat. Aucun rollback/concurrence réel PostgreSQL annoncé reçu.
+
+Validation finale du lot : types des trois workspaces, architecture153sources, buildweb163modules et snapshot additif2schémas réussis. Lint avait signalé un import type et deux globals de tests ; correction ciblée, lint ensuite réussi. Aucun contrôle désactivé.

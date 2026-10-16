@@ -13,3 +13,5 @@ Le formulaire utilise le catalogue paginé réel ; un choix devenu indisponible 
 7tests ciblés SQL doublé/HTTP local passent : autorité courante, clinique approuvée, catégories/états, ordre verrous, absence de DML, identifications/date/FDI/injection, avertissements non bloquants, fichiers fermés, cache et faux reçu refusé. Buildscontrats/API/web, typesweb, lint, contrats2schémas additifs et frontières vérifiés. Aucun test PostgreSQL ni navigateur/FDI tactile annoncé reçu ; R17 conservée.
 
 Prochain travail : dépôt officiel idempotent avec numéro serveur, snapshots/version/dents/logistique/conversation/audit/outbox/reçu en transaction ; confirmation avertissements, fichiers vérifiés, acceptation exceptionnelle motivée et progression bloquée. Ne pas utiliser un succès preflight comme autorisation différée. Les réceptionsSQL déjà validées ne doivent pas être rejouées ; aucune migration ou activation exécutée.
+
+Suite16/10 : dépôt sans pièces jointes désormais intégré dans le code sous flag séparé, voir ORDER_SUBMISSION.md ; les limites du contrôle préalable ci-dessus restent valables.

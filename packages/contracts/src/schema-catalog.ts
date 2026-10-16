@@ -1,4 +1,8 @@
 import {
+  OrderSubmissionSchema,
+  OrderSubmissionResultSchema,
+} from "./order-submission.js";
+import {
   OrderPreflightInputSchema,
   OrderPreflightResultSchema,
 } from "./order-preflight.js";
@@ -87,6 +91,8 @@ import {
 } from "./clinic-registration.js";
 export function exportJsonSchemas() {
   const schemas = {
+    OrderSubmission: OrderSubmissionSchema,
+    OrderSubmissionResult: OrderSubmissionResultSchema,
     OrderPreflightInput: OrderPreflightInputSchema,
     OrderPreflightResult: OrderPreflightResultSchema,
     LaboratoryFields: LaboratoryFieldsSchema,
