@@ -1,3 +1,4 @@
+import { ClinicOrderForm } from "../features/orders/index.js";
 import { LaboratorySettingsPanel } from "../features/settings/index.js";
 import {
   CatalogPanel,
@@ -31,6 +32,9 @@ export function App() {
         <AuthenticationPanel
           renderAuthenticated={(identity) => (
             <>
+              {identity.profile === "clinic" && (
+                <ClinicOrderForm key={identity.account_id + "-order-form"} />
+              )}
               <LaboratorySettingsPanel
                 key={identity.account_id + "-lab-info"}
               />

@@ -11,3 +11,5 @@ export {
 } from "./management.repository.js";
 export { createCatalogManagementService } from "./management.service.js";
 export { registerCatalogManagementRoutes } from "./management.routes.js";
+
+export { readCatalogForUse } from "./use.repository.js";

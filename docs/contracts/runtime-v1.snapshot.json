@@ -3736,6 +3736,224 @@
         "fields"
       ],
       "additionalProperties": false
+    },
+    "OrderPreflightInput": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "patient": {
+          "type": "object",
+          "properties": {
+            "first_name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "last_name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "internal_reference": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "requested_delivery_date": {
+          "type": "string",
+          "format": "date",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+        },
+        "material_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "shade_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "work_type_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 10000
+        },
+        "teeth": {
+          "maxItems": 32,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "fdi": {
+                "type": "number",
+                "enum": [
+                  11,
+                  12,
+                  13,
+                  14,
+                  15,
+                  16,
+                  17,
+                  18,
+                  21,
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27,
+                  28,
+                  31,
+                  32,
+                  33,
+                  34,
+                  35,
+                  36,
+                  37,
+                  38,
+                  41,
+                  42,
+                  43,
+                  44,
+                  45,
+                  46,
+                  47,
+                  48
+                ]
+              },
+              "selection": {
+                "type": "string",
+                "enum": [
+                  "normal",
+                  "pontic"
+                ]
+              }
+            },
+            "required": [
+              "fdi",
+              "selection"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "file_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        }
+      },
+      "required": [
+        "patient",
+        "requested_delivery_date",
+        "material_id",
+        "shade_id",
+        "teeth",
+        "file_ids"
+      ],
+      "additionalProperties": false
+    },
+    "OrderPreflightResult": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "persisted": {
+          "type": "boolean",
+          "const": false
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "checked",
+            "blocked"
+          ]
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "catalog_forbidden",
+              "catalog_missing",
+              "files_not_ready"
+            ]
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "catalog_unavailable",
+              "low_detail"
+            ]
+          }
+        },
+        "references": {
+          "maxItems": 3,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "material",
+                  "shade",
+                  "work_type"
+                ]
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "available",
+                  "unavailable",
+                  "forbidden"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "label",
+              "revision",
+              "state"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "persisted",
+        "status",
+        "reasons",
+        "warnings",
+        "references"
+      ],
+      "additionalProperties": false
     }
   }
 }

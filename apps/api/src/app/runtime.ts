@@ -1,3 +1,8 @@
+import { orderPreflightEnabled } from "./order-preflight-config.js";
+import {
+  createOrderPreflightService,
+  registerOrderPreflightRoutes,
+} from "../modules/orders/index.js";
 import { laboratorySettingsEnabled } from "./laboratory-settings-config.js";
 import {
   assertLaboratorySettingsReady,
@@ -62,6 +67,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableOrderPreflight = orderPreflightEnabled(env);
   const enableLaboratorySettings = laboratorySettingsEnabled(env);
   const enableCatalogManagement = catalogManagementEnabled(env);
   const enableCatalog = catalogEnabled(env);
@@ -122,6 +128,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
         if (enableLaboratorySettings)
           registerLaboratorySettingsRoutes(app, {
             service: createLaboratorySettingsService(database),
+            sessions,
+            origin: config.origin,
+          });
+        if (enableOrderPreflight)
+          registerOrderPreflightRoutes(app, {
+            service: createOrderPreflightService(database),
             sessions,
             origin: config.origin,
           });
