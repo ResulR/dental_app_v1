@@ -1,3 +1,9 @@
+import { orderDecisionEnabled } from "./order-decision-config.js";
+import {
+  assertOrderDecisionReady,
+  createOrderDecisionService,
+  registerOrderDecisionRoutes,
+} from "../modules/orders/index.js";
 import { orderSubmissionEnabled } from "./order-submission-config.js";
 import {
   assertOrderSubmissionReady,
@@ -73,6 +79,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableOrderDecision = orderDecisionEnabled(env);
   const enableOrderSubmission = orderSubmissionEnabled(env);
   const enableOrderPreflight = orderPreflightEnabled(env);
   const enableLaboratorySettings = laboratorySettingsEnabled(env);
@@ -94,6 +101,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     if (enableCatalogManagement) await assertCatalogManagementReady(database);
     if (enableCatalog) await assertCatalogStorageReady(database);
     if (enableOrderSubmission) await assertOrderSubmissionReady(database);
+    if (enableOrderDecision) await assertOrderDecisionReady(database);
     if (enableAdminManagement) await assertAdminStorageReady(database);
     if (enableAccountState) await assertAccountStateStorageReady(database);
     if (enableDelegation) await assertDelegationStorageReady(database);
@@ -136,6 +144,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
         if (enableLaboratorySettings)
           registerLaboratorySettingsRoutes(app, {
             service: createLaboratorySettingsService(database),
+            sessions,
+            origin: config.origin,
+          });
+        if (enableOrderDecision)
+          registerOrderDecisionRoutes(app, {
+            service: createOrderDecisionService(database),
             sessions,
             origin: config.origin,
           });

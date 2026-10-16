@@ -1,0 +1,11 @@
+# Décisions initiales et démarrage — 8.3–8.5,10.1/10.2/10.11
+
+POST /api/v1/orders/decision prépare trois actions seulement : accept, reject, start_manufacturing. Flag ORDER_DECISION désactivé par défaut et dépend du flag de dépôt ; readiness vérifie les objets/droits sans mutation. Aucune activation PostgreSQL, aucun compte ou e-mail réel.
+
+Permission effective courante spécifique à l’action, session/epoch et rôle laboratoire obligatoires ; le propriétaire doit être réellement titulaire. Rejet avec motif obligatoire. Acceptation/refus seulement pending, démarrage seulement accepted. Version ET révision attendues doivent correspondre après verrouillage ; aucun client ne choisit le statut résultant.
+
+Ordre de verrous : compte, droits, session, références catalogue triées, commande. Les identités immuables des snapshots sont découvertes avant les verrous puis la version est recontrôlée sous verrou commande. Tous les futurs writers d’instructions/demandes doivent partager ce protocole (références avant commande et création/décision de demande sous verrou commande). Une interdiction ou un blocage actif interdit acceptation/fabrication ; jamais d’override propriétaire. Indisponibilité : confirmation et motif nécessaires à l’acceptation exceptionnelle, conservés dans l’événement, sans réactiver le catalogue. Le refus motivé reste possible malgré un blocage.
+
+Démarrage : aucune demande pendante, statut accepted et version courante ; manufacturing_version_id est fixé atomiquement. Pas de mutation des instructions/snapshots. Les pièces jointes entraînent encore files_not_ready : leur cycle privé n’est pas intégré. L’état métier, l’événement historique, l’outbox et l’audit sont transactionnels ; toute erreur se propage, aucun retry automatique. Un conflit impose une relecture. Les autres transitions et les writers de modification ne sont pas inventés.
+
+Dix tests ciblés avec doubles transactionnels et HTTP local passent : droits/prérequis, version/révision obsolètes, concurrence de deux décisions, exception commerciale, interdictions, refus motivé, demandes pendantes, gel de version, échecs d’écriture/readiness. Ces tests ne constituent pas une réception PostgreSQL réelle. L’interface de décision et la lecture de la file restent à intégrer au moment de ce lot serveur.

@@ -1630,7 +1630,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 10 — Workflow et décisions des commandes
 
 ### 10.1 — Implémenter moteur de transitions des commandes
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Décisions serveur intégrées — interface et réceptions différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -1644,8 +1644,10 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
+- **Préparation16/10 :** Acceptation/refus/version courante et démarrage protégé, historique/audit/outbox atomiques ; périmètre et limites dans docs/ORDER_DECISIONS.md. Aucun workflow complet ni réception SQL déclaré.
+
 ### 10.2 — Implémenter acceptation/refus initial
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Décisions serveur intégrées — interface et réceptions différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -1658,6 +1660,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Préparation16/10 :** Acceptation/refus/version courante et démarrage protégé, historique/audit/outbox atomiques ; périmètre et limites dans docs/ORDER_DECISIONS.md. Aucun workflow complet ni réception SQL déclaré.
 
 ### 10.3 — Implémenter demande et renvoi de correction
 - **Statut :** ☐ À faire
@@ -1780,7 +1784,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 10.11 — Implémenter verrouillage des instructions dès fabrication
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Décisions serveur intégrées — interface et réceptions différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -1793,6 +1797,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Préparation16/10 :** Acceptation/refus/version courante et démarrage protégé, historique/audit/outbox atomiques ; périmètre et limites dans docs/ORDER_DECISIONS.md. Aucun workflow complet ni réception SQL déclaré.
 
 ### 10.12 — Implémenter commande liée de remplacement
 - **Statut :** ☐ À faire

@@ -27,3 +27,5 @@ export * from "./laboratory-settings.js";
 export * from "./order-preflight.js";
 
 export * from "./order-submission.js";
+
+export * from "./order-decision.js";

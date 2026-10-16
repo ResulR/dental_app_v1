@@ -4,3 +4,7 @@ export { registerOrderPreflightRoutes } from "./preflight.routes.js";
 export { createOrderSubmissionService } from "./submission.service.js";
 export { registerOrderSubmissionRoutes } from "./submission.routes.js";
 export { assertOrderSubmissionReady } from "./submission-readiness.js";
+
+export { createOrderDecisionService } from "./decision.service.js";
+export { registerOrderDecisionRoutes } from "./decision.routes.js";
+export { assertOrderDecisionReady } from "./decision.repository.js";

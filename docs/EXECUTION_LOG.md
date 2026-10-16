@@ -920,3 +920,7 @@ Six tests ciblés avec ports doublés réussis ; buildAPI, lint et frontières14
 Reprise UID1002, main/origin0388645 propres. Schémas0003/0004/0007/0008/0010 et droits courants relus, sans connexion PostgreSQL. API/runtime/UI albanaise relient le dépôt à une transaction unique ; snapshots/historique/événements/audit/reçu, numérotation et horodatage serveur, idempotence sérialisée par compte. Aucun changement de migration ni activation. Huit tests ciblés réussis avec doublesSQL/HTTP local ; buildscontrats/API réussis. Les validations globales restantes sont consignées après résultat. Aucun rollback/concurrence réel PostgreSQL annoncé reçu.
 
 Validation finale du lot : types des trois workspaces, architecture153sources, buildweb163modules et snapshot additif2schémas réussis. Lint avait signalé un import type et deux globals de tests ; correction ciblée, lint ensuite réussi. Aucun contrôle désactivé.
+
+## 16/10/2026 — 14:00 Europe/Brussels — décisions initiales et fabrication
+
+Dépôt9.7 poussé9b57593. API serveur accepte/refuse pending ou démarre accepted sous permissions actuelles et CAS version/révision. Références verrouillées avant commande ; exception indisponible motivée, interdiction/blocage non contournables, demande pendante bloque fabrication, version officielle figée. Statut/historique/outbox/audit atomiques sans email. Dix tests ciblés réussis (doublesSQL/HTTP local), buildscontrats/API, contrats2additions et frontières158sources réussis. Pas de migration ni recettePG ; UI et autres transitions restent ouvertes.
