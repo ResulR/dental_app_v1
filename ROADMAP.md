@@ -1201,6 +1201,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Préparation e-mail15/10 :** modèles albanais et codec privé AES-GCM préparés/testés, clés synthétiques seulement ; origine/page HTTPS et expiration explicites, token en fragment uniquement. Persistance atomique/worker/routes/livraison encore absents. Voir docs/ACCOUNT_EMAIL_PREPARATION.md.
 
+- **Préparation16/10 :** Persistance chiffrée d’intention invitation employee/admin sous transaction fournie, vérification du destinataire/jeton/état et INSERT-only ; migration0021 proposée. Émetteur/activation, routes/UI et livraison non branchés. Voir docs/ACCOUNT_EMAIL_PREPARATION.md.
+
 ### 7.9 — Implémenter gestion des administrateurs secondaires
 - **Statut :** ◐ Gestion des administrateurs existants intégrée — invitation/livraison et réceptions différées
 - **Avancement :** Gestion owner-only des comptes admin existants reliée API/runtime/UI albanaise : liste, détail, permissions, suspension/réactivation, historique0018/audit/outbox. Recontrôle session/owner courant/révision sous verrous, no-op sans effet et aucun contournement récupération. Invitation et livraison chiffrée encore non branchées. Flag désactivé ; migration0018 proposée seulement. Voir docs/ADMIN_GOVERNANCE.md.
@@ -1218,6 +1220,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 - **Préparation e-mail15/10 :** modèles albanais et codec privé AES-GCM préparés/testés, clés synthétiques seulement ; origine/page HTTPS et expiration explicites, token en fragment uniquement. Persistance atomique/worker/routes/livraison encore absents. Voir docs/ACCOUNT_EMAIL_PREPARATION.md.
+
+- **Préparation16/10 :** Persistance chiffrée d’intention invitation employee/admin sous transaction fournie, vérification du destinataire/jeton/état et INSERT-only ; migration0021 proposée. Émetteur/activation, routes/UI et livraison non branchés. Voir docs/ACCOUNT_EMAIL_PREPARATION.md.
 
 ### 7.10 — Implémenter permissions granulaires et dépendances
 - **Statut :** ◐ Registre/calcul et lecture effective API/UI intégrés — réception SQL/navigateur différée

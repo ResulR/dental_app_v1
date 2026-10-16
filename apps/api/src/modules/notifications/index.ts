@@ -6,3 +6,8 @@ export {
   accountSecurityEmail,
 } from "./account-email.js";
 export { createPrivateMailCodec } from "./private-mail-codec.js";
+
+export {
+  createPrivateInvitationMailAppender,
+  assertPrivateInvitationMailReady,
+} from "./private-invitation-mail.repository.js";
