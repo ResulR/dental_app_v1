@@ -964,3 +964,7 @@ Huit tests ciblés réussis : permissions/cloisonnement, statuts interdits, unic
 Checkpoint après deux lots fonctionnels cohérents ; prochaine priorité : édition versionnée clinique pending/correction et renvoi explicite, puis propositions accepted. Réceptions SQL/navigateur, pipeline fichiers réel et livraison e-mail restent différés ; pas de demande d'activation ni de changement de privilèges.
 
 Contrôle final : format global échoue uniquement sur les deux scripts historiques linked-works-postgres-v2.mjs/v3.mjs, inchangés et non exclus. Aucun autre défaut de format signalé. Services PostgreSQL246009/Dental619021/Remote1892718/Nginx895970/PM2842 actifs, PID inchangés ; aucune migration ni autre service modifié.
+
+## 2026-10-17T06:37:34+02:00 Europe/Brussels — édition versionnée et renvoi clinique
+
+Reprise HEAD0faf299, UID1002, travail préparé attribué et contrôlé. 10.3/10.4/10.10 : API, runtime désactivé, UI albanaise et consultation des versions ; permissions, motif laboratoire, verrou fabrication/demandes, snapshots et CAS. Renvoi explicite après correction et revalidation, pas de retour implicite. Dix tests ciblés réussis avec doubles transactionnels/HTTP ; builds contrats/API/web, typesweb, lint, architecture197sources, contrats additifs réussis. Aucune preuve PostgreSQL réelle/navigateur, aucun fichier ni e-mail simulé. Protections runner comparées AST hors plan : identiques, 256Mio tsc seulement et 90s. Suite : demandes de modification clinique puis retouches ; production et historiques intacts.

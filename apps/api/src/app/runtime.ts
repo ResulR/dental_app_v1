@@ -1,3 +1,9 @@
+import { orderEditEnabled } from "./order-edit-config.js";
+import {
+  createOrderEditService,
+  registerOrderEditRoutes,
+  assertOrderEditReady,
+} from "../modules/orders/index.js";
 import { orderRequestEnabled } from "./order-request-config.js";
 import {
   createCancellationRequestService,
@@ -100,6 +106,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableOrderEdit = orderEditEnabled(env);
   const enableOrderRequest = orderRequestEnabled(env);
   const enableOrderLifecycle = orderLifecycleEnabled(env);
   const enableOrderTracking = orderTrackingEnabled(env);
@@ -128,6 +135,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     if (enableOrderDecision) await assertOrderDecisionReady(database);
     if (enableOrderLifecycle) await assertOrderLifecycleReady(database);
     if (enableOrderRequest) await assertCancellationRequestReady(database);
+    if (enableOrderEdit) await assertOrderEditReady(database);
     if (enableAdminManagement) await assertAdminStorageReady(database);
     if (enableAccountState) await assertAccountStateStorageReady(database);
     if (enableDelegation) await assertDelegationStorageReady(database);
@@ -170,6 +178,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
         if (enableLaboratorySettings)
           registerLaboratorySettingsRoutes(app, {
             service: createLaboratorySettingsService(database),
+            sessions,
+            origin: config.origin,
+          });
+        if (enableOrderEdit)
+          registerOrderEditRoutes(app, {
+            service: createOrderEditService(database),
             sessions,
             origin: config.origin,
           });

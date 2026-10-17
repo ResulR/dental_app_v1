@@ -1,4 +1,11 @@
 import {
+  OrderInstructionsSchema,
+  OrderEditSchema,
+  OrderEditQuerySchema,
+  OrderEditViewSchema,
+  OrderEditResultSchema,
+} from "./order-edit.js";
+import {
   OrderCancellationRequestSchema,
   OrderRequestContextSchema,
   OrderRequestResultSchema,
@@ -115,6 +122,11 @@ import {
 } from "./clinic-registration.js";
 export function exportJsonSchemas() {
   const schemas = {
+    OrderInstructions: OrderInstructionsSchema,
+    OrderEdit: OrderEditSchema,
+    OrderEditQuery: OrderEditQuerySchema,
+    OrderEditView: OrderEditViewSchema,
+    OrderEditResult: OrderEditResultSchema,
     OrderCancellationRequest: OrderCancellationRequestSchema,
     OrderRequestContext: OrderRequestContextSchema,
     OrderRequestResult: OrderRequestResultSchema,

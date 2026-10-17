@@ -1673,7 +1673,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Interface16/10 :** File paginée pending/accepted, instructions/snapshots historiques, permissions détaillées et décisions versionnées ; relecture imposée après toute décision ou résultat incertain. Les autres files et le suivi clinique restent ouverts.
 
 ### 10.3 — Implémenter demande et renvoi de correction
-- **Statut :** ◐ Demande de correction intégrée — édition/renvoi à faire
+- **Statut :** ◐ Correction et renvoi intégrés — fichiers et réceptions différés
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -1689,8 +1689,13 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Implémentation16/10 :** voir docs/ORDER_LIFECYCLE.md : cinq actions versionnées, audit/outbox et fermeture/réouverture atomiques. Validation hors ligne avec doublesSQL ; aucune application PostgreSQL ni réception finale.
 
+- **Implémentation17/10 :** API et interface albanaise, versions immuables, snapshots conservés, permissions actuelles, CAS et demandes pendantes ; voir docs/ORDER_EDIT.md.
+- **Validation hors ligne :** 10 tests ciblés avec doubles SQL/HTTP ; builds, types web, lint, contrats et architecture réussis.
+- **Application PostgreSQL :** aucune ; activation désactivée par défaut.
+- **Réception finale :** différée (PostgreSQL réel, navigateur, pipeline fichiers et livraison des notifications).
+
 ### 10.4 — Implémenter modification directe En attente
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Édition versionnée intégrée — fichiers et réceptions différés
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -1703,6 +1708,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation17/10 :** API et interface albanaise, versions immuables, snapshots conservés, permissions actuelles, CAS et demandes pendantes ; voir docs/ORDER_EDIT.md.
+- **Validation hors ligne :** 10 tests ciblés avec doubles SQL/HTTP ; builds, types web, lint, contrats et architecture réussis.
+- **Application PostgreSQL :** aucune ; activation désactivée par défaut.
+- **Réception finale :** différée (PostgreSQL réel, navigateur, pipeline fichiers et livraison des notifications).
 
 ### 10.5 — Implémenter demandes de modification Acceptée
 - **Statut :** ☐ À faire
@@ -1788,7 +1798,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Implémentation16/10 :** voir docs/ORDER_LIFECYCLE.md : cinq actions versionnées, audit/outbox et fermeture/réouverture atomiques. Validation hors ligne avec doublesSQL ; aucune application PostgreSQL ni réception finale.
 
 ### 10.10 — Implémenter modification labo avant fabrication
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Édition laboratoire motivée intégrée — fichiers et réceptions différés
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -1801,6 +1811,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation17/10 :** API et interface albanaise, versions immuables, snapshots conservés, permissions actuelles, CAS et demandes pendantes ; voir docs/ORDER_EDIT.md.
+- **Validation hors ligne :** 10 tests ciblés avec doubles SQL/HTTP ; builds, types web, lint, contrats et architecture réussis.
+- **Application PostgreSQL :** aucune ; activation désactivée par défaut.
+- **Réception finale :** différée (PostgreSQL réel, navigateur, pipeline fichiers et livraison des notifications).
 
 ### 10.11 — Implémenter verrouillage des instructions dès fabrication
 - **Statut :** ◐ Décisions serveur intégrées — interface et réceptions différées

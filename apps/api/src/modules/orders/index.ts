@@ -22,3 +22,7 @@ export { assertOrderLifecycleReady } from "./lifecycle.repository.js";
 export { createCancellationRequestService } from "./cancellation-request.service.js";
 export { registerCancellationRequestRoutes } from "./cancellation-request.routes.js";
 export { assertCancellationRequestReady } from "./cancellation-request.repository.js";
+
+export { createOrderEditService } from "./edit.service.js";
+export { registerOrderEditRoutes } from "./edit.routes.js";
+export { assertOrderEditReady } from "./edit.repository.js";
