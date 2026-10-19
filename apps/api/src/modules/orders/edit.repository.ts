@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import {
   OrderEditSchema,
+  OrderModificationProposalSchema,
   OrderEditQuerySchema,
   OrderEditViewSchema,
   OrderInstructionsSchema,
@@ -75,8 +76,10 @@ export function createOrderEditRepository(
         };
       });
     },
-    async decide(actor: Actor, raw: unknown) {
-      const parsed = OrderEditSchema.safeParse(raw);
+    async decide(actor: Actor, raw: unknown, proposal = false) {
+      const parsed = (
+        proposal ? OrderModificationProposalSchema : OrderEditSchema
+      ).safeParse(raw);
       if (!parsed.success) return { kind: "invalid" as const };
       const command = parsed.data;
       const result = (r: unknown) => ({
@@ -85,7 +88,7 @@ export function createOrderEditRepository(
       });
       return db.transaction(async (tx) => {
         const auth = await editAuthority(tx, actor);
-        if (!auth || (!auth.clinic && command.action === "resubmit_correction"))
+        if (!auth || (!auth.clinic && command.action !== "save"))
           return { kind: "denied" as const };
         if (!auth.clinic && command.action === "save" && !command.reason)
           return { kind: "invalid" as const };
@@ -104,11 +107,11 @@ export function createOrderEditRepository(
         );
         if (!previous) throw new Error("ORDER_EDIT_VERSION_MISSING");
         const input =
-          command.action === "save"
+          command.action !== "resubmit_correction"
             ? command.input
             : OrderInstructionsSchema.safeParse(editableInput(previous));
         const instructions =
-          command.action === "save"
+          command.action !== "resubmit_correction"
             ? command.input
             : "success" in input && input.success
               ? input.data
@@ -131,7 +134,9 @@ export function createOrderEditRepository(
           command.action === "resubmit_correction"
             ? order.status === "correction_requested"
             : auth.clinic
-              ? ["pending", "correction_requested"].includes(order.status)
+              ? command.action === "propose_modification"
+                ? order.status === "accepted"
+                : ["pending", "correction_requested"].includes(order.status)
               : order.status === "accepted";
         if (!allowed || order.manufacturing_version_id !== null)
           return result({ kind: "conflict" });
@@ -182,7 +187,7 @@ export function createOrderEditRepository(
         const revision = Number(order.revision) + 1,
           correlation = randomUUID(),
           eventId = randomUUID();
-        if (command.action === "save") {
+        if (command.action !== "resubmit_correction") {
           const snapshots = new Map<string, string>();
           for (const ref of catalog.references) {
             const oldRef = previous[ref.kind + "_id"],
@@ -216,7 +221,7 @@ export function createOrderEditRepository(
               order.origin,
               next,
               actor.accountId,
-              command.reason ?? null,
+              "reason" in command ? (command.reason ?? null) : null,
               instructions.patient.first_name ?? null,
               instructions.patient.last_name ?? null,
               instructions.patient.internal_reference ?? null,
@@ -239,6 +244,21 @@ export function createOrderEditRepository(
               ],
             );
         }
+        if (command.action === "propose_modification") {
+          await tx.query(
+            "INSERT INTO public.order_requests(id,order_id,clinic_id,kind,base_version_id,proposed_version_id,requested_by) VALUES($1,$2,$3,'modification',$4,$5,$6)",
+            [
+              randomUUID(),
+              order.id,
+              order.clinic_id,
+              order.current_version_id,
+              versionId,
+              actor.accountId,
+            ],
+          );
+          // The proposed version is immutable but never official before a laboratory decision.
+          versionId = order.current_version_id;
+        }
         const status =
           command.action === "resubmit_correction" ? "pending" : order.status;
         if (
@@ -258,7 +278,9 @@ export function createOrderEditRepository(
         const event =
           command.action === "save"
             ? "instructions_changed"
-            : "correction_resubmitted";
+            : command.action === "propose_modification"
+              ? "modification_requested"
+              : "correction_resubmitted";
         await tx.query(
           "INSERT INTO public.outbox_events(id,type,aggregate_type,aggregate_id,aggregate_revision,clinic_id,actor_id,correlation_id) VALUES($1,$2,'order',$3,$4,$5,$6,$7)",
           [
@@ -283,7 +305,13 @@ export function createOrderEditRepository(
             order.id,
             correlation,
             revision,
-            [command.action === "save" ? "version" : "status"],
+            [
+              command.action === "save"
+                ? "version"
+                : command.action === "propose_modification"
+                  ? "request"
+                  : "status",
+            ],
           ],
         );
         return result({

@@ -39,3 +39,5 @@ export * from "./order-lifecycle.js";
 export * from "./order-cancellation-request.js";
 
 export * from "./order-edit.js";
+
+export * from "./order-modification.js";

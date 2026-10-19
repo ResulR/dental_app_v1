@@ -968,3 +968,11 @@ Contrôle final : format global échoue uniquement sur les deux scripts historiq
 ## 2026-10-17T06:37:34+02:00 Europe/Brussels — édition versionnée et renvoi clinique
 
 Reprise HEAD0faf299, UID1002, travail préparé attribué et contrôlé. 10.3/10.4/10.10 : API, runtime désactivé, UI albanaise et consultation des versions ; permissions, motif laboratoire, verrou fabrication/demandes, snapshots et CAS. Renvoi explicite après correction et revalidation, pas de retour implicite. Dix tests ciblés réussis avec doubles transactionnels/HTTP ; builds contrats/API/web, typesweb, lint, architecture197sources, contrats additifs réussis. Aucune preuve PostgreSQL réelle/navigateur, aucun fichier ni e-mail simulé. Protections runner comparées AST hors plan : identiques, 256Mio tsc seulement et 90s. Suite : demandes de modification clinique puis retouches ; production et historiques intacts.
+
+## 2026-10-19T16:33:57+02:00 Europe/Brussels — demandes de modification 10.5
+
+Reprise7238b68 proprement poussé ; modifications du 17/10 conservées, aucun processus de test résiduel, UID1002 et limites inchangées. Proposition clinique sur Acceptée dans version distincte ; comparaison avant/après, décision laboratoire avec revalidation et CAS, retrait clinique concurrent, audit/outbox atomiques. Aucun workflow de proposition laboratoire inventé. Dix-neuf tests ciblés réussis dont huit décision/revue, dix édition/proposition et un HTTP. Buildscontrats/API et typesweb réussis. Lint corrigé pour globalThis.AbortController dans un test, puis réussi ; aucune règle désactivée. Snapshot trois nouveaux schémas strictement additifs. Aucun SQL réel, aucune activation, aucun e-mail. Recevabilité finale dépend de PostgreSQL/navigateur/pipeline fichiers ; suite retouches depuis Livrée.
+
+Architecture : import type route→repository détecté puis remplacé par la couche service ; contrôle frontières204sources réussi, buildAPI22.10s, 19tests confirmés, buildweb183modules et contrats réussis. Aucun garde-fou désactivé.
+
+Format global19/10 : seules les deux exceptions historiques linked-works-postgres-v2.mjs/v3.mjs, conservées sans exclusion ni réécriture. Aucun autre défaut signalé.

@@ -1,4 +1,9 @@
 import {
+  OrderModificationProposalSchema,
+  OrderModificationDecisionSchema,
+  OrderModificationContextSchema,
+} from "./order-modification.js";
+import {
   OrderInstructionsSchema,
   OrderEditSchema,
   OrderEditQuerySchema,
@@ -124,6 +129,9 @@ export function exportJsonSchemas() {
   const schemas = {
     OrderInstructions: OrderInstructionsSchema,
     OrderEdit: OrderEditSchema,
+    OrderModificationProposal: OrderModificationProposalSchema,
+    OrderModificationDecision: OrderModificationDecisionSchema,
+    OrderModificationContext: OrderModificationContextSchema,
     OrderEditQuery: OrderEditQuerySchema,
     OrderEditView: OrderEditViewSchema,
     OrderEditResult: OrderEditResultSchema,

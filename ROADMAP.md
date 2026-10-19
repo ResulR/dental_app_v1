@@ -1715,7 +1715,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale :** différée (PostgreSQL réel, navigateur, pipeline fichiers et livraison des notifications).
 
 ### 10.5 — Implémenter demandes de modification Acceptée
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Propositions et décisions intégrées — fichiers et réceptions différés
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -1728,6 +1728,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation19/10 :** proposition clinique séparée, comparaison avant/après albanaise, acceptation/refus laboratoire avec permissions et CAS ; retrait existant réutilisé. Voir docs/ORDER_MODIFICATIONS.md.
+- **Validation hors ligne :** 19 tests ciblés (édition incluse), doubles transactionnels et HTTP.
+- **Application PostgreSQL :** aucune, nouvelle activation désactivée par défaut.
+- **Réception finale :** PostgreSQL réel, navigateur, fichiers et notifications différés.
 
 ### 10.6 — Implémenter retrait des demandes pendantes
 - **Statut :** ◐ Retrait clinique versionné intégré — réceptions différées

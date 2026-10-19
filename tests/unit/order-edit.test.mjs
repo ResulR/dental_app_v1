@@ -409,3 +409,59 @@ test("history scoped to order and snapshot labels preserved; client does not ret
   ).rejects.toThrow();
   expect(fetcher).toHaveBeenCalledTimes(1);
 });
+
+test("clinical accepted proposal appends a separate version without changing official instructions; pending and stale submissions fail", async () => {
+  const { createOrderModificationService } =
+    await import("../../apps/api/dist/modules/orders/index.js");
+  const proposed = { ...command, action: "propose_modification" };
+  const db = fixture({ status: "accepted" });
+  const r = await createOrderModificationService(db).propose(actor, proposed);
+  expect(r.result.kind).toBe("updated");
+  expect(db.state.version).toBe(id);
+  expect(db.state.status).toBe("accepted");
+  const version = db.state.writes.find(([s]) =>
+    s.startsWith("INSERT INTO public.order_versions"),
+  )[1][0];
+  const req = db.state.writes.find(([s]) =>
+    s.startsWith("INSERT INTO public.order_requests"),
+  )[1];
+  expect(req[3]).toBe(id);
+  expect(req[4]).toBe(version);
+  expect(version).not.toBe(id);
+  expect(
+    db.state.writes.find(([s]) =>
+      s.startsWith("INSERT INTO public.outbox_events"),
+    )[1][1],
+  ).toBe("modification_requested");
+  expect(
+    (await createOrderModificationService(db).propose(actor, proposed)).result
+      .kind,
+  ).toBe("conflict");
+  for (const patch of [
+    { status: "pending" },
+    { status: "accepted", pending: true },
+    { status: "accepted", profile: "owner" },
+  ]) {
+    const blocked = fixture(patch);
+    await createOrderModificationService(blocked).propose(actor, proposed);
+    expect(blocked.state.writes).toEqual([]);
+  }
+  const concurrent = fixture({ status: "accepted" }),
+    repo = createOrderModificationService(concurrent);
+  const pair = await Promise.all([
+    repo.propose(actor, proposed),
+    repo.propose(actor, proposed),
+  ]);
+  expect(pair.map((r) => r.result.kind).sort()).toEqual([
+    "conflict",
+    "updated",
+  ]);
+  const failing = fixture({
+    status: "accepted",
+    failAt: "INSERT INTO public.order_requests",
+  });
+  await expect(
+    createOrderModificationService(failing).propose(actor, proposed),
+  ).rejects.toThrow("SYNTHETIC_FAILURE");
+  expect(failing.state.writes).toEqual([]);
+});

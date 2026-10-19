@@ -1,3 +1,8 @@
+import { orderModificationEnabled } from "./order-modification-config.js";
+import {
+  createOrderModificationService,
+  registerOrderModificationRoutes,
+} from "../modules/orders/index.js";
 import { orderEditEnabled } from "./order-edit-config.js";
 import {
   createOrderEditService,
@@ -106,6 +111,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableOrderModification = orderModificationEnabled(env);
   const enableOrderEdit = orderEditEnabled(env);
   const enableOrderRequest = orderRequestEnabled(env);
   const enableOrderLifecycle = orderLifecycleEnabled(env);
@@ -178,6 +184,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
         if (enableLaboratorySettings)
           registerLaboratorySettingsRoutes(app, {
             service: createLaboratorySettingsService(database),
+            sessions,
+            origin: config.origin,
+          });
+        if (enableOrderModification)
+          registerOrderModificationRoutes(app, {
+            service: createOrderModificationService(database),
             sessions,
             origin: config.origin,
           });

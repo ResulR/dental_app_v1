@@ -26,3 +26,6 @@ export { assertCancellationRequestReady } from "./cancellation-request.repositor
 export { createOrderEditService } from "./edit.service.js";
 export { registerOrderEditRoutes } from "./edit.routes.js";
 export { assertOrderEditReady } from "./edit.repository.js";
+
+export { createOrderModificationService } from "./modification.service.js";
+export { registerOrderModificationRoutes } from "./modification.routes.js";

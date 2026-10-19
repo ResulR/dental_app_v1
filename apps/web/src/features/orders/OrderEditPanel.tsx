@@ -1,3 +1,6 @@
+import { OrderModificationProposalSchema } from "@dental-lab/contracts";
+import { createOrderModificationClient } from "./modification-api.js";
+import { OrderModificationReview } from "./OrderModificationReview.js";
 import { useEffect, useRef, useState } from "react";
 import { FDI, OrderEditSchema } from "@dental-lab/contracts";
 import type {
@@ -9,6 +12,7 @@ import type {
 import { createCatalogClient } from "../catalog/index.js";
 import { createOrderEditClient } from "./edit-api.js";
 import { Button } from "../../shared/Button.js";
+const modifications = createOrderModificationClient();
 const api = createOrderEditClient(),
   catalog = createCatalogClient();
 type Kind = ReturnType<typeof CatalogKindSchema.parse>;
@@ -127,7 +131,9 @@ export function OrderEditPanel({
       }
     });
   }
-  async function submit(action: "save" | "resubmit_correction") {
+  async function submit(
+    action: "save" | "resubmit_correction" | "propose_modification",
+  ) {
     if (!view || !input) return;
     const command = {
       order_id: orderId,
@@ -135,11 +141,15 @@ export function OrderEditPanel({
       expected_revision: view.revision,
       action,
       confirmed_warnings: ack,
-      ...(action === "save"
+      ...(action !== "resubmit_correction"
         ? { input, ...(reason.trim() ? { reason: reason.trim() } : {}) }
         : {}),
     };
-    const parsed = OrderEditSchema.safeParse(command);
+    const parsed = (
+      action === "propose_modification"
+        ? OrderModificationProposalSchema
+        : OrderEditSchema
+    ).safeParse(command);
     if (!parsed.success) {
       setMessage(
         "Kontrolloni pacientin, datën, referencat dhe dhëmbët. Referenca e fshirë duhet zëvendësuar ose hequr shprehimisht për llojin opsional.",
@@ -147,7 +157,9 @@ export function OrderEditPanel({
       return;
     }
     await run(async (signal) => {
-      const r = await api.decide(parsed.data, signal);
+      const r = await (action === "propose_modification"
+        ? modifications.propose(parsed.data, signal)
+        : api.decide(parsed.data, signal));
       if (signal.aborted) return;
       if (r.kind === "confirmation_required") {
         setMessage(
@@ -161,7 +173,9 @@ export function OrderEditPanel({
         r.kind === "updated"
           ? (action === "save"
               ? "Versioni i ri u ruajt. Statusi nuk ndryshoi."
-              : "Korrigjimi u ridërgua: në pritje të vendimit të ri të laboratorit.") +
+              : action === "propose_modification"
+                ? "Propozimi u regjistrua; versioni zyrtar mbetet i pandryshuar."
+                : "Korrigjimi u ridërgua: në pritje të vendimit të ri të laboratorit.") +
               " Ringarkoni porosinë."
           : r.kind === "blocked"
             ? blocked[r.reason]
@@ -176,7 +190,7 @@ export function OrderEditPanel({
       current &&
       view.file_count === 0 &&
       (clinic
-        ? ["pending", "correction_requested"].includes(view.status)
+        ? ["pending", "correction_requested", "accepted"].includes(view.status)
         : view.status === "accepted");
   return (
     <div>
@@ -200,7 +214,11 @@ export function OrderEditPanel({
             </p>
           )}
           <fieldset disabled={busy || !editable}>
-            <legend>Udhëzimet zyrtare</legend>
+            <legend>
+              {clinic && view.status === "accepted"
+                ? "Propozoni ndryshime — origjinali mbetet i pandryshuar"
+                : "Udhëzimet zyrtare"}
+            </legend>
             {(["first_name", "last_name", "internal_reference"] as const).map(
               (key) => (
                 <label key={key}>
@@ -366,9 +384,17 @@ export function OrderEditPanel({
             </label>
             <Button
               disabled={!clinic && !reason.trim()}
-              onClick={() => void submit("save")}
+              onClick={() =>
+                void submit(
+                  clinic && view.status === "accepted"
+                    ? "propose_modification"
+                    : "save",
+                )
+              }
             >
-              Ruaj si version të ri
+              {clinic && view.status === "accepted"
+                ? "Dërgo propozimin për shqyrtim"
+                : "Ruaj si version të ri"}
             </Button>
             {clinic && view.status === "correction_requested" && (
               <>
@@ -416,6 +442,11 @@ export function OrderEditPanel({
           </Button>
         </section>
       )}
+      <OrderModificationReview
+        orderId={orderId}
+        clinic={clinic}
+        onFinished={onFinished}
+      />
       {message && <p role="status">{message}</p>}
     </div>
   );
