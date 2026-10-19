@@ -45,3 +45,5 @@ export * from "./order-modification.js";
 export * from "./retouch.js";
 
 export * from "./linked-work-tracking.js";
+
+export * from "./laboratory-linked-work.js";

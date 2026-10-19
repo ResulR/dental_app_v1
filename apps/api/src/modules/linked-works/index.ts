@@ -4,3 +4,7 @@ export { assertRetouchReady } from "./retouch.readiness.js";
 
 export { createLinkedWorkTrackingService } from "./tracking.service.js";
 export { registerLinkedWorkTrackingRoutes } from "./tracking.routes.js";
+
+export { createLaboratoryLinkedWorkService } from "./laboratory.service.js";
+export { registerLaboratoryLinkedWorkRoutes } from "./laboratory.routes.js";
+export { assertLaboratoryLinkedReady } from "./laboratory.readiness.js";

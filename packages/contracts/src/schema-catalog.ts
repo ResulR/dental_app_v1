@@ -1,4 +1,8 @@
 import {
+  LaboratoryLinkedWorkSchema,
+  LaboratoryLinkedWorkResultSchema,
+} from "./laboratory-linked-work.js";
+import {
   LinkedWorkQuerySchema,
   LinkedWorkPageSchema,
 } from "./linked-work-tracking.js";
@@ -137,6 +141,8 @@ export function exportJsonSchemas() {
   const schemas = {
     LinkedWorkQuery: LinkedWorkQuerySchema,
     LinkedWorkPage: LinkedWorkPageSchema,
+    LaboratoryLinkedWork: LaboratoryLinkedWorkSchema,
+    LaboratoryLinkedWorkResult: LaboratoryLinkedWorkResultSchema,
     RetouchSubmission: RetouchSubmissionSchema,
     RetouchSubmissionResult: RetouchSubmissionResultSchema,
     OrderInstructions: OrderInstructionsSchema,

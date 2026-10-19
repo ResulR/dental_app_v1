@@ -1840,7 +1840,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Préparation16/10 :** Acceptation/refus/version courante et démarrage protégé, historique/audit/outbox atomiques ; périmètre et limites dans docs/ORDER_DECISIONS.md. Aucun workflow complet ni réception SQL déclaré.
 
 ### 10.12 — Implémenter commande liée de remplacement
-- **Statut :** ☐ À faire
+- **Statut :** ◐ En cours
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -1854,8 +1854,13 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
+- **Implémentation19/10 :** API transactionnelle et formulaire albanais intégrés derrière activation désactivée ; création Acceptée, origine laboratoire, contrôle des permissions, snapshots, reçu, filiation, audit/outbox. R14 : source annulée uniquement pour remplacement en fabrication ; Terminée/Livrée conservées. Voir docs/LABORATORY_LINKED_WORK.md.
+- **Validation hors ligne :** 8 tests ciblés réussis (doubles transactionnels et HTTP), builds contrats/API/web, types web, lint, architecture, contrats additifs et workspace réussis ; aucune équivalence avec PostgreSQL.
+- **Application PostgreSQL :** aucune ; pas de nouvelle migration dans ce lot.
+- **Réception finale :** différée (transactions/verrous/privilèges réels, navigateur, pipeline fichiers et notifications).
+
 ### 10.13 — Implémenter commande liée supplémentaire
-- **Statut :** ☐ À faire
+- **Statut :** ◐ En cours
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -1868,6 +1873,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation19/10 :** API transactionnelle et formulaire albanais intégrés derrière activation désactivée ; création Acceptée, origine laboratoire, contrôle des permissions, snapshots, reçu, filiation, audit/outbox. R14 : source annulée uniquement pour remplacement en fabrication ; Terminée/Livrée conservées. Voir docs/LABORATORY_LINKED_WORK.md.
+- **Validation hors ligne :** 8 tests ciblés réussis (doubles transactionnels et HTTP), builds contrats/API/web, types web, lint, architecture, contrats additifs et workspace réussis ; aucune équivalence avec PostgreSQL.
+- **Application PostgreSQL :** aucune ; pas de nouvelle migration dans ce lot.
+- **Réception finale :** différée (transactions/verrous/privilèges réels, navigateur, pipeline fichiers et notifications).
 
 ### 10.14 — Implémenter vues de la file des actions
 - **Statut :** ☐ À faire

@@ -1,3 +1,9 @@
+import { laboratoryLinkedEnabled } from "./laboratory-linked-config.js";
+import {
+  createLaboratoryLinkedWorkService,
+  registerLaboratoryLinkedWorkRoutes,
+  assertLaboratoryLinkedReady,
+} from "../modules/linked-works/index.js";
 import { retouchEnabled } from "./retouch-config.js";
 import {
   createRetouchService,
@@ -119,6 +125,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableLaboratoryLinked = laboratoryLinkedEnabled(env);
   const enableRetouch = retouchEnabled(env);
   const enableOrderModification = orderModificationEnabled(env);
   const enableOrderEdit = orderEditEnabled(env);
@@ -152,6 +159,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     if (enableOrderRequest) await assertCancellationRequestReady(database);
     if (enableOrderEdit) await assertOrderEditReady(database);
     if (enableRetouch) await assertRetouchReady(database);
+    if (enableLaboratoryLinked) await assertLaboratoryLinkedReady(database);
     if (enableAdminManagement) await assertAdminStorageReady(database);
     if (enableAccountState) await assertAccountStateStorageReady(database);
     if (enableDelegation) await assertDelegationStorageReady(database);
@@ -197,9 +205,15 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
             sessions,
             origin: config.origin,
           });
-        if (enableRetouch)
+        if (enableRetouch || enableLaboratoryLinked)
           registerLinkedWorkTrackingRoutes(app, {
             service: createLinkedWorkTrackingService(database),
+            sessions,
+            origin: config.origin,
+          });
+        if (enableLaboratoryLinked)
+          registerLaboratoryLinkedWorkRoutes(app, {
+            service: createLaboratoryLinkedWorkService(database),
             sessions,
             origin: config.origin,
           });

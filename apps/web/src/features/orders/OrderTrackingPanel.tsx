@@ -1,3 +1,4 @@
+import { LaboratoryLinkedWorkForm } from "./LaboratoryLinkedWorkForm.js";
 import { LinkedWorkPanel } from "./LinkedWorkPanel.js";
 import { OrderRetouchForm } from "./OrderRetouchForm.js";
 import { OrderEditPanel } from "./OrderEditPanel.js";
@@ -259,6 +260,23 @@ export function OrderTrackingPanel({
       )}
       {detail && (
         <article>
+          {!clinic &&
+            permissions.includes("orders.create_for_clinic") &&
+            permissions.includes("linked_works.manage") &&
+            ["manufacturing", "completed", "delivered"].includes(
+              detail.order.status,
+            ) && (
+              <LaboratoryLinkedWorkForm
+                key={detail.order.id + ":" + detail.order.revision}
+                source={detail.order}
+                canCancel={permissions.includes("orders.cancel")}
+                onFinished={(text) => {
+                  setPage(null);
+                  setDetail(null);
+                  setMessage(text);
+                }}
+              />
+            )}
           <h4>
             Porosia nr. {detail.order.number} ·{" "}
             {orderStatusLabels[detail.order.status]}
