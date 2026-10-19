@@ -1,4 +1,8 @@
 import {
+  LinkedWorkQuerySchema,
+  LinkedWorkPageSchema,
+} from "./linked-work-tracking.js";
+import {
   RetouchSubmissionSchema,
   RetouchSubmissionResultSchema,
 } from "./retouch.js";
@@ -131,6 +135,8 @@ import {
 } from "./clinic-registration.js";
 export function exportJsonSchemas() {
   const schemas = {
+    LinkedWorkQuery: LinkedWorkQuerySchema,
+    LinkedWorkPage: LinkedWorkPageSchema,
     RetouchSubmission: RetouchSubmissionSchema,
     RetouchSubmissionResult: RetouchSubmissionResultSchema,
     OrderInstructions: OrderInstructionsSchema,

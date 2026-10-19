@@ -2000,7 +2000,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale :** PostgreSQL/concurrence réelle, navigateur et notifications différés.
 
 ### 11.6 — Implémenter navigation chaîne de commandes et retouches
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Navigation bidirectionnelle intégrée — réceptions différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Retouches et refabrications
@@ -2014,6 +2014,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
+
+- **Implémentation19/10 :** POST orders/links paginé, autorité commune au suivi, métadonnées sans patient, UI albanaise source/enfant avec ouverture des détails selon permissions.
+- **Validation hors ligne :** tests ciblés de cloisonnement, droits logistiques/détails, curseur et HTTP ; voir docs/RETOUCH_SUBMISSION.md.
+- **Application PostgreSQL :** aucune ; même activation différée que les retouches.
+- **Réception finale :** PostgreSQL et navigation navigateur à réceptionner.
 
 ## Chapitre 12 — Fichiers privés et transferts
 

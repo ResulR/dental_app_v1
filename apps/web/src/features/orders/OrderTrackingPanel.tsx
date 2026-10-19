@@ -1,3 +1,4 @@
+import { LinkedWorkPanel } from "./LinkedWorkPanel.js";
 import { OrderRetouchForm } from "./OrderRetouchForm.js";
 import { OrderEditPanel } from "./OrderEditPanel.js";
 import { OrderRequestActions } from "./OrderRequestActions.js";
@@ -204,6 +205,10 @@ export function OrderTrackingPanel({
                   }}
                 />
               )}
+              <LinkedWorkPanel
+                orderId={row.id}
+                onOpen={(id) => void open(id)}
+              />
               <OrderEditPanel
                 orderId={row.id}
                 clinic={clinic}

@@ -29,3 +29,5 @@ export { assertOrderEditReady } from "./edit.repository.js";
 
 export { createOrderModificationService } from "./modification.service.js";
 export { registerOrderModificationRoutes } from "./modification.routes.js";
+
+export { trackingAuthority as readOrderTrackingAuthority } from "./tracking-auth.js";

@@ -1,6 +1,8 @@
 import { retouchEnabled } from "./retouch-config.js";
 import {
   createRetouchService,
+  createLinkedWorkTrackingService,
+  registerLinkedWorkTrackingRoutes,
   registerRetouchRoutes,
   assertRetouchReady,
 } from "../modules/linked-works/index.js";
@@ -192,6 +194,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
         if (enableLaboratorySettings)
           registerLaboratorySettingsRoutes(app, {
             service: createLaboratorySettingsService(database),
+            sessions,
+            origin: config.origin,
+          });
+        if (enableRetouch)
+          registerLinkedWorkTrackingRoutes(app, {
+            service: createLinkedWorkTrackingService(database),
             sessions,
             origin: config.origin,
           });
