@@ -1903,7 +1903,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 11 — Retouches et refabrications
 
 ### 11.1 — Implémenter initiation depuis commande livrée
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Initiation clinique intégrée — réceptions différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Retouches et refabrications
@@ -1917,8 +1917,13 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
+- **Implémentation19/10 :** voir docs/RETOUCH_SUBMISSION.md : source Livrée revalidée, nouveau numéro/conversation/version/lien, reçu idempotent et unicité active ; UI albanaise reliée.
+- **Validation hors ligne :** 8 tests ciblés avec doubles transactionnels/HTTP, aucune équivalence PostgreSQL réelle.
+- **Application PostgreSQL :** aucune, feature désactivée par défaut, schéma existant réutilisé.
+- **Réception finale :** PostgreSQL/concurrence réelle, navigateur et notifications différés.
+
 ### 11.2 — Implémenter formulaire de retouche simplifié
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Formulaire simplifié intégré — fichiers différés — réceptions différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Retouches et refabrications
@@ -1932,8 +1937,13 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
+- **Implémentation19/10 :** voir docs/RETOUCH_SUBMISSION.md : source Livrée revalidée, nouveau numéro/conversation/version/lien, reçu idempotent et unicité active ; UI albanaise reliée.
+- **Validation hors ligne :** 8 tests ciblés avec doubles transactionnels/HTTP, aucune équivalence PostgreSQL réelle.
+- **Application PostgreSQL :** aucune, feature désactivée par défaut, schéma existant réutilisé.
+- **Réception finale :** PostgreSQL/concurrence réelle, navigateur et notifications différés.
+
 ### 11.3 — Implémenter demande retouche et historique
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Dépôt transactionnel et lien intégrés — réceptions différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Retouches et refabrications
@@ -1947,8 +1957,13 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
+- **Implémentation19/10 :** voir docs/RETOUCH_SUBMISSION.md : source Livrée revalidée, nouveau numéro/conversation/version/lien, reçu idempotent et unicité active ; UI albanaise reliée.
+- **Validation hors ligne :** 8 tests ciblés avec doubles transactionnels/HTTP, aucune équivalence PostgreSQL réelle.
+- **Application PostgreSQL :** aucune, feature désactivée par défaut, schéma existant réutilisé.
+- **Réception finale :** PostgreSQL/concurrence réelle, navigateur et notifications différés.
+
 ### 11.4 — Appliquer états, modifications et annulations des commandes aux retouches
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Socle commandes réutilisé — validation bout en bout différée
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Retouches et refabrications
@@ -1962,8 +1977,10 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
+- **Implémentation19/10 :** retouche créée comme orders.kind=retouch, mêmes décisions/lifecycle/édition/demandes, absence de dents et problème obligatoire vérifiés par édition. Synchronisation work_links via FK existante. Aucun rejeu des recettes historiques ; parcours PostgreSQL complet encore à réceptionner.
+
 ### 11.5 — Implémenter nouvelle retouche après refus/annulation/livraison
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Nouvelle demande après état terminal intégrée — réceptions différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Retouches et refabrications
@@ -1976,6 +1993,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation19/10 :** voir docs/RETOUCH_SUBMISSION.md : source Livrée revalidée, nouveau numéro/conversation/version/lien, reçu idempotent et unicité active ; UI albanaise reliée.
+- **Validation hors ligne :** 8 tests ciblés avec doubles transactionnels/HTTP, aucune équivalence PostgreSQL réelle.
+- **Application PostgreSQL :** aucune, feature désactivée par défaut, schéma existant réutilisé.
+- **Réception finale :** PostgreSQL/concurrence réelle, navigateur et notifications différés.
 
 ### 11.6 — Implémenter navigation chaîne de commandes et retouches
 - **Statut :** ☐ À faire

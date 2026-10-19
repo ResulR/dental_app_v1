@@ -1,3 +1,9 @@
+import { retouchEnabled } from "./retouch-config.js";
+import {
+  createRetouchService,
+  registerRetouchRoutes,
+  assertRetouchReady,
+} from "../modules/linked-works/index.js";
 import { orderModificationEnabled } from "./order-modification-config.js";
 import {
   createOrderModificationService,
@@ -111,6 +117,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableRetouch = retouchEnabled(env);
   const enableOrderModification = orderModificationEnabled(env);
   const enableOrderEdit = orderEditEnabled(env);
   const enableOrderRequest = orderRequestEnabled(env);
@@ -142,6 +149,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     if (enableOrderLifecycle) await assertOrderLifecycleReady(database);
     if (enableOrderRequest) await assertCancellationRequestReady(database);
     if (enableOrderEdit) await assertOrderEditReady(database);
+    if (enableRetouch) await assertRetouchReady(database);
     if (enableAdminManagement) await assertAdminStorageReady(database);
     if (enableAccountState) await assertAccountStateStorageReady(database);
     if (enableDelegation) await assertDelegationStorageReady(database);
@@ -184,6 +192,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
         if (enableLaboratorySettings)
           registerLaboratorySettingsRoutes(app, {
             service: createLaboratorySettingsService(database),
+            sessions,
+            origin: config.origin,
+          });
+        if (enableRetouch)
+          registerRetouchRoutes(app, {
+            service: createRetouchService(database),
             sessions,
             origin: config.origin,
           });

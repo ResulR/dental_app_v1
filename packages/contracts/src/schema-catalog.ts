@@ -1,4 +1,8 @@
 import {
+  RetouchSubmissionSchema,
+  RetouchSubmissionResultSchema,
+} from "./retouch.js";
+import {
   OrderModificationProposalSchema,
   OrderModificationDecisionSchema,
   OrderModificationContextSchema,
@@ -127,6 +131,8 @@ import {
 } from "./clinic-registration.js";
 export function exportJsonSchemas() {
   const schemas = {
+    RetouchSubmission: RetouchSubmissionSchema,
+    RetouchSubmissionResult: RetouchSubmissionResultSchema,
     OrderInstructions: OrderInstructionsSchema,
     OrderEdit: OrderEditSchema,
     OrderModificationProposal: OrderModificationProposalSchema,

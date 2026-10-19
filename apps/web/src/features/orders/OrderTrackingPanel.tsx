@@ -1,3 +1,4 @@
+import { OrderRetouchForm } from "./OrderRetouchForm.js";
 import { OrderEditPanel } from "./OrderEditPanel.js";
 import { OrderRequestActions } from "./OrderRequestActions.js";
 import { OrderLifecycleActions } from "./OrderLifecycleActions.js";
@@ -193,6 +194,16 @@ export function OrderTrackingPanel({
                 E dëshiruar: {row.requested_delivery_date ?? "—"} · E
                 planifikuar: {row.planned_delivery_date ?? "—"}
               </p>
+              {clinic && row.status === "delivered" && (
+                <OrderRetouchForm
+                  sourceId={row.id}
+                  onFinished={(text) => {
+                    setPage(null);
+                    setDetail(null);
+                    setMessage(text);
+                  }}
+                />
+              )}
               <OrderEditPanel
                 orderId={row.id}
                 clinic={clinic}

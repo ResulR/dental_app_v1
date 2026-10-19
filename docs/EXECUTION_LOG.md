@@ -976,3 +976,9 @@ Reprise7238b68 proprement poussé ; modifications du 17/10 conservées, aucun pr
 Architecture : import type route→repository détecté puis remplacé par la couche service ; contrôle frontières204sources réussi, buildAPI22.10s, 19tests confirmés, buildweb183modules et contrats réussis. Aucun garde-fou désactivé.
 
 Format global19/10 : seules les deux exceptions historiques linked-works-postgres-v2.mjs/v3.mjs, conservées sans exclusion ni réécriture. Aucun autre défaut signalé.
+
+## 2026-10-19T16:41:44+02:00 Europe/Brussels — retouches depuis Livrée
+
+Lotmodification0064cc0 poussé. Schéma0004/0005 et modèles audités, aucune migration nécessaire pour ce dépôt. Nouveau module linked-works, contrats/API/runtime désactivé et formulaire albanais relié au suivi clinique. Source immuable, nouveau numéro/conversation/version, lien et reçu atomiques ; unicité active et replay vérifiés par doubles. Huit tests ciblés réussis, buildscontrats/API réussis. Typeweb a détecté un champ state absent du contrat catalogue : affichage corrigé sans inventer cette donnée ; contrôle serveur inchangé. Première édition automatique du JSX a échoué sur motif introuvable, aucun changement partiel ; corrigée explicitement. RéceptionPG réelle/navigateur/fichiers/consommateurs d’événements et navigation de chaîne restent différés. Aucun service ni historique modifié.
+
+Validation finale retouches : typesweb23.05s, lint43.47s, frontières213sources, buildweb186modules, contrats deux ajouts stricts réussis. Runner comparé AST hors plan : protections identiques. Les huit tests utilisent doublesSQL/HTTP, aucune exécution PostgreSQL.
