@@ -148,3 +148,13 @@ réception PostgreSQL et stockage sous concurrence, puis recette d'accès aux
 fichiers et habilitation de chaque destination. Les objets temporaires ou
 incertains restent conservés jusqu'à une réconciliation autoritative ; aucun
 nettoyage automatique n'a été ajouté.
+
+La consultation des seules métadonnées de la version courante d'un message est
+également préparée sous `POST /api/v1/messages/files`, sans montage runtime.
+Elle verrouille le parent autorisé et exige la conversation de la même clinique,
+le message non masqué et sa version courante ; au laboratoire, `files.view` et
+`messaging.order.read` ou `messaging.general.read` sont requis. Seuls les objets
+ready vérifiés sont paginés. Aucun chemin, hash ni octet n'est retourné et
+`download_available` vaut toujours false. Sans API de lecture des conversations
+réceptionnée, aucun panneau albanais de messagerie ou téléchargement n'est
+annoncé actif.
