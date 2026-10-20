@@ -135,7 +135,14 @@ export function OrderTrackingPanel({
   return (
     <section aria-label="Ndjekja e porosive">
       <h3>Ndjekja e porosive</h3>
-      <DeliveryCalendar onOpen={(id) => void open(id)} />
+      <DeliveryCalendar
+        onOpen={(id) => void open(id)}
+        allowPlan={
+          !clinic &&
+          permissions.includes("delivery.plan") &&
+          import.meta.env.VITE_DENTAL_LAB_DELIVERY_PLAN_ENABLED === "true"
+        }
+      />
       <form
         onSubmit={(e) => {
           e.preventDefault();

@@ -2726,7 +2726,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 16.4 — Implémenter ajustement date par glisser-déposer desktop
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Partiel — glisser-déposer sous permission et drapeau de planification, relecture serveur, confirmation/annulation et commande versionnée ; formulaire mobile/clavier existant. Recette navigateur desktop/mobile et PostgreSQL restent nécessaires.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Planning, livraisons, archives et recherche

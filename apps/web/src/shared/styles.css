@@ -265,3 +265,9 @@ footer {
     grid-template-columns: repeat(7, minmax(0, 1fr));
   }
 }
+
+@media (min-width: 900px) {
+  .calendar-work[draggable="true"] {
+    cursor: grab;
+  }
+}

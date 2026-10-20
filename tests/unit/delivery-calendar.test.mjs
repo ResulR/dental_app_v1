@@ -1,4 +1,7 @@
 import { test, expect } from "vitest";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { DeliveryCalendar } from "../../apps/web/src/features/orders/DeliveryCalendar.tsx";
 import {
   calendarPeriod,
   laboratoryToday,
@@ -74,4 +77,15 @@ test("effective calendar search is scoped and asks SQL to prefer planned date", 
   ).toHaveLength(2);
   expect(sql).not.toContain("patient_");
   expect(sql).toContain("ORDER BY o.id LIMIT 51");
+});
+
+test("calendar planning affordance is gated while read-only calendar remains available", () => {
+  const render = (allowPlan) =>
+    renderToStaticMarkup(
+      createElement(DeliveryCalendar, { onOpen: () => {}, allowPlan }),
+    );
+  expect(render(false)).toContain("Kalendari i punëve");
+  expect(render(false)).not.toContain("tërhiqni punën");
+  expect(render(true)).toContain("tërhiqni punën");
+  expect(render(true)).toContain("Ndrysho datën");
 });
