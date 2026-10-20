@@ -70,3 +70,10 @@ export type {
   DeliveryPlanContext,
   DeliveryPlanResult,
 } from "./delivery-plan.js";
+export {
+  DeliveryPriorityQuerySchema,
+  DeliveryPriorityCommandSchema,
+  DeliveryPriorityContextSchema,
+  DeliveryPriorityResultSchema,
+} from "./delivery-priority.js";
+export type { DeliveryPriorityContext } from "./delivery-priority.js";

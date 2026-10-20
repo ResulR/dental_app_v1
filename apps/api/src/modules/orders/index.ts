@@ -37,3 +37,6 @@ export { registerActionInboxRoutes } from "./action-inbox.routes.js";
 export { createDeliveryPlanService } from "./delivery-plan.service.js";
 export { registerDeliveryPlanRoutes } from "./delivery-plan.routes.js";
 export { assertDeliveryPlanReady } from "./delivery-plan.repository.js";
+export { createDeliveryPriorityService } from "./delivery-priority.service.js";
+export { registerDeliveryPriorityRoutes } from "./delivery-priority.routes.js";
+export { assertDeliveryPriorityReady } from "./delivery-priority.repository.js";

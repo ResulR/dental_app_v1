@@ -1,4 +1,10 @@
 import {
+  DeliveryPriorityQuerySchema,
+  DeliveryPriorityCommandSchema,
+  DeliveryPriorityContextSchema,
+  DeliveryPriorityResultSchema,
+} from "./delivery-priority.js";
+import {
   DeliveryPlanQuerySchema,
   DeliveryPlanCommandSchema,
   DeliveryPlanContextSchema,
@@ -178,6 +184,10 @@ export function exportJsonSchemas() {
     OrderLifecycle: OrderLifecycleSchema,
     OrderLifecycleResult: OrderLifecycleResultSchema,
     OrderSearch: OrderSearchSchema,
+    DeliveryPriorityQuery: DeliveryPriorityQuerySchema,
+    DeliveryPriorityCommand: DeliveryPriorityCommandSchema,
+    DeliveryPriorityContext: DeliveryPriorityContextSchema,
+    DeliveryPriorityResult: DeliveryPriorityResultSchema,
     DeliveryPlanQuery: DeliveryPlanQuerySchema,
     DeliveryPlanCommand: DeliveryPlanCommandSchema,
     DeliveryPlanContext: DeliveryPlanContextSchema,

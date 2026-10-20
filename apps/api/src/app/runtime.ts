@@ -1,3 +1,9 @@
+import { deliveryPriorityEnabled } from "./delivery-priority-config.js";
+import {
+  createDeliveryPriorityService,
+  registerDeliveryPriorityRoutes,
+  assertDeliveryPriorityReady,
+} from "../modules/orders/index.js";
 import { deliveryPlanEnabled } from "./delivery-plan-config.js";
 import {
   createDeliveryPlanService,
@@ -136,6 +142,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableDeliveryPriority = deliveryPriorityEnabled(env);
   const enableDeliveryPlan = deliveryPlanEnabled(env);
   const enableActionInbox = actionInboxEnabled(env);
   const enableLaboratoryLinked = laboratoryLinkedEnabled(env);
@@ -163,6 +170,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     // Fail startup, without creating/migrating anything, if required objects or
     // read privileges are absent. Every checkout also enforces runtime identity.
     await assertAuthStorageReady(database);
+    if (enableDeliveryPriority) await assertDeliveryPriorityReady(database);
     if (enableDeliveryPlan) await assertDeliveryPlanReady(database);
     if (enableLaboratorySettings) await assertLaboratorySettingsReady(database);
     if (enableCatalogManagement) await assertCatalogManagementReady(database);
@@ -213,6 +221,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
           sessions,
           origin: config.origin,
         });
+        if (enableDeliveryPriority)
+          registerDeliveryPriorityRoutes(app, {
+            service: createDeliveryPriorityService(database),
+            sessions,
+            origin: config.origin,
+          });
         if (enableDeliveryPlan)
           registerDeliveryPlanRoutes(app, {
             service: createDeliveryPlanService(database),
