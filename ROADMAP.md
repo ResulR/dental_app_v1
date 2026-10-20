@@ -2068,7 +2068,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 12.3 — Implémenter limites 200 Mo / 1 Go par commande
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Contrôles préparés — branchement transferts différé
+- **Implémentation20/10 :** limites décimales, tailles réelles en flux, doublons et erreurs fermées dans files/transfer-limits ; voir docs/TRANSFER_LIMITS.md. Aucun upload activé.
+- **Validation hors ligne :** 5 tests ciblés réussis, build API, lint et frontières réussis ; aucun stockage réel éprouvé.
+- **Application PostgreSQL :** aucune.
+- **Réception finale :** dépend des adaptateurs de stockage, capacité, analyse et de leur recette.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fichiers privés et transferts
@@ -2083,7 +2087,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 12.4 — Implémenter limite 1 Go par message
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Contrôles préparés — branchement transferts différé
+- **Implémentation20/10 :** limites décimales, tailles réelles en flux, doublons et erreurs fermées dans files/transfer-limits ; voir docs/TRANSFER_LIMITS.md. Aucun upload activé.
+- **Validation hors ligne :** 5 tests ciblés réussis, build API, lint et frontières réussis ; aucun stockage réel éprouvé.
+- **Application PostgreSQL :** aucune.
+- **Réception finale :** dépend des adaptateurs de stockage, capacité, analyse et de leur recette.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fichiers privés et transferts
