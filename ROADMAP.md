@@ -2741,7 +2741,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 16.5 — Implémenter Prêts à livrer
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Partiel — raccourci laboratoire réservé à `delivery.mark_delivered`, liste serveur filtrée `Terminée`, pagination et action individuelle existante avec mode/confirmation ; recette PostgreSQL et UX restent à réaliser.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Planning, livraisons, archives et recherche

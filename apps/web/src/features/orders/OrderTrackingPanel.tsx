@@ -88,17 +88,19 @@ export function OrderTrackingPanel({
       }
     }
   }
-  async function search(after?: string) {
-    const raw = after
-      ? { ...lastQuery.current, after }
-      : {
-          ...(q.trim() ? { q: q.trim() } : {}),
-          ...(status ? { status } : {}),
-          ...(kind ? { kind } : {}),
-          date_kind: dateKind,
-          ...(from ? { from } : {}),
-          ...(to ? { to } : {}),
-        };
+  async function search(after?: string, ready = false) {
+    const raw = ready
+      ? { status: "completed", date_kind: "requested" }
+      : after
+        ? { ...lastQuery.current, after }
+        : {
+            ...(q.trim() ? { q: q.trim() } : {}),
+            ...(status ? { status } : {}),
+            ...(kind ? { kind } : {}),
+            date_kind: dateKind,
+            ...(from ? { from } : {}),
+            ...(to ? { to } : {}),
+          };
     const parsed = OrderSearchSchema.safeParse(raw);
     if (!parsed.success) {
       setMessage("Kontrolloni filtrat dhe intervalin e datave.");
@@ -110,6 +112,14 @@ export function OrderTrackingPanel({
         lastQuery.current = parsed.data;
         setPage(next);
         setDetail(null);
+        if (ready) {
+          setStatus("completed");
+          setQ("");
+          setKind("");
+          setFrom("");
+          setTo("");
+          setDateKind("requested");
+        }
       }
     });
   }
@@ -191,6 +201,17 @@ export function OrderTrackingPanel({
           <Button type="submit">Kërko</Button>
         </fieldset>
       </form>
+      {!clinic && permissions.includes("delivery.mark_delivered") && (
+        <div>
+          <Button disabled={busy} onClick={() => void search(undefined, true)}>
+            Punët gati për dorëzim
+          </Button>
+          <p>
+            Vetëm punët e përfunduara. Mënyra dhe dalja fizike konfirmohen për
+            çdo porosi pas ringarkimit të gjendjes.
+          </p>
+        </div>
+      )}
       {page && !page.can_read_details && (
         <p>
           Qasje logjistike: kërkimi i pacientit dhe udhëzimet nuk janë të
