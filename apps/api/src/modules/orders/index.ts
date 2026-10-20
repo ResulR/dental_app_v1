@@ -31,3 +31,6 @@ export { createOrderModificationService } from "./modification.service.js";
 export { registerOrderModificationRoutes } from "./modification.routes.js";
 
 export { trackingAuthority as readOrderTrackingAuthority } from "./tracking-auth.js";
+
+export { createActionInboxService } from "./action-inbox.service.js";
+export { registerActionInboxRoutes } from "./action-inbox.routes.js";

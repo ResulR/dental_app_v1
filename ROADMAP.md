@@ -1880,7 +1880,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale :** différée (transactions/verrous/privilèges réels, navigateur, pipeline fichiers et notifications).
 
 ### 10.14 — Implémenter vues de la file des actions
-- **Statut :** ☐ À faire
+- **Statut :** ◐ En cours
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -1893,6 +1893,11 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Implémentation19/10 :** file serveur paginée et interface albanaise intégrées, permissions effectives par catégorie, retouches prioritaires et branchement sur décisions existantes. État métier indépendant de lecture des notifications. Voir docs/ACTION_INBOX.md.
+- **Validation hors ligne :** 7 tests ciblés réussis (doubles/HTTP et régression revue), builds contrats/API/web, types web, lint, frontières, contrats et workspace réussis.
+- **Application PostgreSQL :** aucune, aucune nouvelle migration.
+- **Réception finale :** SQL réel/ACL/concurrence de lecture et navigateur différés.
 
 ### 10.15 — Tester concurrence métier extrême
 - **Statut :** ☐ À faire

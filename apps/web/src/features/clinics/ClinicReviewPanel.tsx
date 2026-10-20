@@ -4,11 +4,13 @@ import type { ClinicReviewQueue } from "@dental-lab/contracts";
 import { Button } from "../../shared/Button.js";
 import { createClinicReviewClient } from "./review-api.js";
 const api = createClinicReviewClient();
-export function ClinicReviewPanel() {
+export function ClinicReviewPanel({
+  initialClinic,
+}: { initialClinic?: ClinicReviewQueue["items"][number] } = {}) {
   const [queue, setQueue] = useState<ClinicReviewQueue | null>(null);
   const [selected, setSelected] = useState<
     ClinicReviewQueue["items"][number] | null
-  >(null);
+  >(initialClinic ?? null);
   const [reason, setReason] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);

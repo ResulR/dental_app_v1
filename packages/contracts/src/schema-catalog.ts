@@ -1,4 +1,8 @@
 import {
+  ActionInboxQuerySchema,
+  ActionInboxPageSchema,
+} from "./action-inbox.js";
+import {
   LaboratoryLinkedWorkSchema,
   LaboratoryLinkedWorkResultSchema,
 } from "./laboratory-linked-work.js";
@@ -141,6 +145,8 @@ export function exportJsonSchemas() {
   const schemas = {
     LinkedWorkQuery: LinkedWorkQuerySchema,
     LinkedWorkPage: LinkedWorkPageSchema,
+    ActionInboxQuery: ActionInboxQuerySchema,
+    ActionInboxPage: ActionInboxPageSchema,
     LaboratoryLinkedWork: LaboratoryLinkedWorkSchema,
     LaboratoryLinkedWorkResult: LaboratoryLinkedWorkResultSchema,
     RetouchSubmission: RetouchSubmissionSchema,

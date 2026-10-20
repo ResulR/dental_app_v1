@@ -8298,6 +8298,211 @@
         "address"
       ],
       "additionalProperties": false
+    },
+    "ActionInboxPage": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "permissions": {
+          "maxItems": 29,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "orders.read_logistics",
+              "orders.read_details",
+              "files.view",
+              "files.download",
+              "messaging.order.read",
+              "messaging.order.reply",
+              "messaging.general.read",
+              "messaging.general.reply",
+              "orders.accept",
+              "orders.reject",
+              "orders.request_correction",
+              "orders.edit_instructions",
+              "orders.start_manufacturing",
+              "orders.create_for_clinic",
+              "orders.cancel",
+              "orders.change_status",
+              "delivery.plan",
+              "delivery.set_priority",
+              "delivery.mark_delivered",
+              "delivery.correct",
+              "linked_works.manage",
+              "files.add_followup",
+              "files.share_followup",
+              "catalog.manage",
+              "clinics.manage",
+              "employees.create",
+              "employees.suspend",
+              "employees.manage_permissions",
+              "settings.manage"
+            ]
+          }
+        },
+        "items": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "new_order",
+                  "correction_resubmitted",
+                  "retouch",
+                  "modification",
+                  "cancellation",
+                  "registration"
+                ]
+              },
+              "rank": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2
+              },
+              "order_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "number": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]*$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "clinic_name": {
+                "type": "string"
+              },
+              "occurred_at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "rank",
+              "order_id",
+              "number",
+              "clinic_name",
+              "occurred_at",
+              "revision"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "next_after": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "rank": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 2
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "new_order",
+                    "correction_resubmitted",
+                    "retouch",
+                    "modification",
+                    "cancellation",
+                    "registration"
+                  ]
+                }
+              },
+              "required": [
+                "rank",
+                "id",
+                "kind"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "permissions",
+        "items",
+        "next_after"
+      ],
+      "additionalProperties": false
+    },
+    "ActionInboxQuery": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "after": {
+          "type": "object",
+          "properties": {
+            "rank": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2
+            },
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "new_order",
+                "correction_resubmitted",
+                "retouch",
+                "modification",
+                "cancellation",
+                "registration"
+              ]
+            }
+          },
+          "required": [
+            "rank",
+            "id",
+            "kind"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

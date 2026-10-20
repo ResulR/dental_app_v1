@@ -1,3 +1,4 @@
+import { ActionInboxPanel } from "../features/orders/index.js";
 import { OrderTrackingPanel } from "../features/orders/index.js";
 import { ClinicOrderForm, OrderReviewPanel } from "../features/orders/index.js";
 import { LaboratorySettingsPanel } from "../features/settings/index.js";
@@ -33,6 +34,9 @@ export function App() {
         <AuthenticationPanel
           renderAuthenticated={(identity) => (
             <>
+              {identity.profile !== "clinic" && (
+                <ActionInboxPanel key={identity.account_id + "-action-inbox"} />
+              )}
               {identity.profile !== "clinic" && (
                 <PermissionBoundary
                   identity={identity}

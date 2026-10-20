@@ -1,3 +1,5 @@
+import { OrderReviewPageSchema as PageSchema } from "@dental-lab/contracts";
+import { createOrderTrackingClient } from "./tracking-api.js";
 import { useEffect, useRef, useState } from "react";
 import type {
   EffectivePermissionsSchema,
@@ -22,7 +24,9 @@ const blocked = {
 };
 export function OrderReviewPanel({
   permissions,
+  orderId,
 }: {
+  orderId?: string;
   permissions: ReturnType<
     typeof EffectivePermissionsSchema.parse
   >["permissions"];
@@ -69,10 +73,27 @@ export function OrderReviewPanel({
   }
   async function load(after?: string) {
     await run(async (signal) => {
-      const next = await api.list(signal, after);
+      let next: Page;
+      if (orderId) {
+        const { order } = await createOrderTrackingClient().detail(
+          { order_id: orderId },
+          signal,
+        );
+        next = PageSchema.parse({
+          items: [
+            Object.fromEntries(
+              Object.keys(PageSchema.shape.items.element.shape).map((k) => [
+                k,
+                order[k as keyof typeof order],
+              ]),
+            ),
+          ],
+          next_after: null,
+        });
+      } else next = await api.list(signal, after);
       if (!signal.aborted) {
         setPage(next);
-        setSelected(null);
+        setSelected(orderId ?? null);
         setReason("");
         setConfirm(false);
       }
@@ -126,7 +147,9 @@ export function OrderReviewPanel({
         ndryshon etiketat historike më poshtë.
       </p>
       <Button disabled={busy} onClick={() => void load()}>
-        Ngarko porositë në pritje / të pranuara
+        {orderId
+          ? "Rilexo porosinë për vendim"
+          : "Ngarko porositë në pritje / të pranuara"}
       </Button>
       {page?.next_after && (
         <Button

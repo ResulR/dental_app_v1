@@ -1,3 +1,8 @@
+import { actionInboxEnabled } from "./action-inbox-config.js";
+import {
+  createActionInboxService,
+  registerActionInboxRoutes,
+} from "../modules/orders/index.js";
 import { laboratoryLinkedEnabled } from "./laboratory-linked-config.js";
 import {
   createLaboratoryLinkedWorkService,
@@ -125,6 +130,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableActionInbox = actionInboxEnabled(env);
   const enableLaboratoryLinked = laboratoryLinkedEnabled(env);
   const enableRetouch = retouchEnabled(env);
   const enableOrderModification = orderModificationEnabled(env);
@@ -208,6 +214,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
         if (enableRetouch || enableLaboratoryLinked)
           registerLinkedWorkTrackingRoutes(app, {
             service: createLinkedWorkTrackingService(database),
+            sessions,
+            origin: config.origin,
+          });
+        if (enableActionInbox)
+          registerActionInboxRoutes(app, {
+            service: createActionInboxService(database),
             sessions,
             origin: config.origin,
           });
