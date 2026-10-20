@@ -2121,7 +2121,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 12.6 — Implémenter idempotence et finalisation fichiers
-- **Statut :** ◐ Orchestration en flux préparée — adaptateurs et réception différés
+- **Statut :** ◐ Orchestration en flux et associations initiales intégrées — activation différée
+- **Associations 20/10/2026 :** commandes/retouches raccordées transactionnellement à `prepareNewOrderFiles`, avec contrôles de périmètre, état, taille et expiration, événements et rollback. Politique absente du runtime : fichiers toujours refusés en exploitation. Messages et réutilisation historique restent à intégrer ; réception SQL indépendante requise.
 - **Avancement 20/10/2026 :** `upload-pipeline.ts` prépare admission exclusive, taille/hash, scellement, attestation et récupération distinguant rejet/commit incertain. `docs/UPLOAD_PIPELINE.md` décrit les obligations des adaptateurs ; aucun transfert ni association activé. Tests avec doubles uniquement, pas preuve PostgreSQL/stockage/analyse.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test

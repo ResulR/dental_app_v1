@@ -1033,3 +1033,15 @@ fragments. Activation interdite avant validation racine privée/réserve/TTL/bud
 analyseurs réels et recettes d'intégrité/concurrence. Ce lot est une préparation
 testée, pas une intégration fonctionnelle complète des pièces jointes.
 Aucune migration, activation, modification de service, transfert réel ou purge.
+
+## 2026-10-20 11:10 UTC — Associations transactionnelles initiales
+Départ 46e3737 propre/synchronisé, UID1002, aucun runner résiduel. Ajout
+attachment.repository.ts et branchement dans commandes/retouches : vérifications
+de clinique/auteur/destination/intégrité/taille/expiration, verrous triés, associations
+et événements dans la transaction métier existante. Politique optionnelle serveur
+absente du runtime : refus files_not_ready conservé, aucun transfert activé.
+Nouveaux tests de succès, rejeu, refus et échec tardif avec rollback du double.
+Build API/types OK ; tests commandes et HTTP OK ; retouches 9/9 ; format ciblé,
+lint global, frontières 237 sources et contrats OK. Aucune preuve PostgreSQL réelle.
+Diff vérifié ; migrations, runtime/configuration et historiques v2/v3 inchangés.
+Documentation UPLOAD_PIPELINE complétée. Suite : consultation privée des métadonnées.

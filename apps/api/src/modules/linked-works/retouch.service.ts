@@ -2,8 +2,9 @@ import { createRetouchRepository } from "./retouch.repository.js";
 import { RetouchSubmissionResultSchema } from "@dental-lab/contracts";
 export function createRetouchService(
   db: Parameters<typeof createRetouchRepository>[0],
+  attachmentPolicy?: Parameters<typeof createRetouchRepository>[1],
 ) {
-  const repo = createRetouchRepository(db);
+  const repo = createRetouchRepository(db, attachmentPolicy);
   return {
     async submit(actor: Parameters<typeof repo.submit>[0], raw: unknown) {
       try {

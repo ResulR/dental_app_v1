@@ -120,6 +120,16 @@ function fixture(patch = {}) {
               },
             ],
           };
+        if (sql.includes("FROM public.file_objects"))
+          return { rows: patch.files ?? [] };
+        if (sql.includes("FROM public.upload_sessions"))
+          return { rows: patch.uploads ?? [] };
+        if (sql.startsWith("SELECT file_id FROM public.order_version_files"))
+          return { rows: [] };
+        if (sql.startsWith("UPDATE public.upload_sessions")) {
+          draft.writes.push([sql, values]);
+          return { rows: [{ id }] };
+        }
         if (sql.startsWith("INSERT")) {
           if (patch.failAt && sql.includes(patch.failAt))
             throw new Error("SYNTHETIC_FAILURE");
@@ -437,4 +447,45 @@ test("feature remains off and readiness rejects missing privileges/index; client
     ),
   ).rejects.toThrow();
   expect(transport).toHaveBeenCalledTimes(1);
+});
+
+test("retouch attaches new verified files to child, scopes upload to source, rolls back on link failure", async () => {
+  const policy = {
+    storagePolicyVersion: "test",
+    capacityPolicyVersion: "test",
+  };
+  const files = [
+    {
+      id,
+      clinic_id: id,
+      created_by: id,
+      state: "ready",
+      size_bytes: "3",
+      content_sha256: Buffer.alloc(32),
+      verified_at: new Date(),
+      media_type_verified: "model/stl",
+      storage_policy_version: "test",
+    },
+  ];
+  const uploads = [
+    { id, file_id: id, revision: "1", declared_size: "3", received_bytes: "3" },
+  ];
+  const cmd = { ...command, input: { ...input, file_ids: [id] } };
+  const db = fixture({ files, uploads });
+  const r = await createRetouchService(db, policy).submit(actor, cmd);
+  expect(r.result.kind).toBe("submitted");
+  const binding = db.state.writes.find(([s]) =>
+    s.startsWith("INSERT INTO public.order_version_files"),
+  );
+  expect(binding[1][1]).toBe(r.result.order_id);
+  expect(binding[1][1]).not.toBe(input.source_order_id);
+  expect(
+    db.calls.find(([s]) => s.includes("FROM public.upload_sessions"))[1][3],
+  ).toBe(input.source_order_id);
+  const failing = fixture({ files, uploads, failAt: "public.work_links(" });
+  await expect(
+    createRetouchService(failing, policy).submit(actor, cmd),
+  ).rejects.toThrow("SYNTHETIC_FAILURE");
+  expect(failing.state.writes).toEqual([]);
+  expect(failing.state.sourceStatus).toBe("delivered");
 });

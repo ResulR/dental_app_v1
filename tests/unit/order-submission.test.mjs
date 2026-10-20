@@ -75,6 +75,17 @@ function fixture(patch = {}) {
               },
             ],
           };
+        if (sql.includes("FROM public.file_objects"))
+          return { rows: patch.files ?? [] };
+        if (sql.includes("FROM public.upload_sessions"))
+          return { rows: patch.uploads ?? [] };
+        if (sql.startsWith("SELECT file_id FROM public.order_version_files"))
+          return { rows: patch.bound ? [{ file_id: id }] : [] };
+        if (sql.startsWith("UPDATE public.upload_sessions")) {
+          if (patch.expiredAtAttach) return { rows: [] };
+          draft.writes.push([sql, values]);
+          return { rows: [{ id }] };
+        }
         if (sql.startsWith("INSERT")) {
           if (patch.failAt && sql.includes(patch.failAt))
             throw new Error("SYNTHETIC_FAILURE");
@@ -307,4 +318,102 @@ test("client rejects false receipts and never retries automatically; feature and
       query: async () => ({ rows: [{ ready: true }] }),
     }),
   ).resolves.toBeUndefined();
+});
+
+const attachmentPolicy = {
+  storagePolicyVersion: "test-storage",
+  capacityPolicyVersion: "test-capacity",
+};
+const readyFile = {
+  id,
+  clinic_id: id,
+  created_by: id,
+  state: "ready",
+  size_bytes: "3",
+  content_sha256: Buffer.alloc(32),
+  media_type_verified: "model/stl",
+  verified_at: new Date(),
+  storage_policy_version: "test-storage",
+};
+const readyUpload = {
+  id,
+  file_id: id,
+  revision: "1",
+  declared_size: "3",
+  received_bytes: "3",
+};
+const attachedCommand = { ...command, input: { ...input, file_ids: [id] } };
+test("files are attached with order, audit and receipt in the same transaction; replay never rebinds", async () => {
+  const db = fixture({ files: [readyFile], uploads: [readyUpload] });
+  const service = createOrderSubmissionService(db, attachmentPolicy);
+  expect((await service.submit(actor, attachedCommand)).result.kind).toBe(
+    "submitted",
+  );
+  const binding = db.state.writes.find(([s]) =>
+    s.startsWith("INSERT INTO public.order_version_files"),
+  );
+  expect(binding[1].slice(2)).toEqual([id, id, actor.accountId]);
+  expect(db.state.writes.some(([s]) => s.includes("file_events"))).toBe(true);
+  const before = db.state.writes.length;
+  expect((await service.submit(actor, attachedCommand)).result.replayed).toBe(
+    true,
+  );
+  expect(db.state.writes).toHaveLength(before);
+  const query = db.calls.find(([s]) =>
+    s.includes("FROM public.upload_sessions"),
+  );
+  expect(query[0]).toContain("expires_at>statement_timestamp()");
+  expect(query[0]).toContain("intended_order_id IS NOT DISTINCT FROM");
+  expect(query[1]).toEqual([[id], id, actor.accountId, null, "test-capacity"]);
+});
+test("wrong clinic/owner, quarantined, missing integrity, duplicate bindings and expired sessions refuse before writes", async () => {
+  const patches = [
+    { files: [{ ...readyFile, clinic_id: shade }] },
+    { files: [{ ...readyFile, created_by: shade }] },
+    { files: [{ ...readyFile, state: "quarantined" }] },
+    { files: [{ ...readyFile, content_sha256: null }] },
+    { files: [{ ...readyFile, storage_policy_version: "other" }] },
+    { files: [{ ...readyFile, size_bytes: "200000001" }] },
+    { uploads: [] },
+    { uploads: [{ ...readyUpload, received_bytes: "2" }] },
+    { bound: true },
+  ];
+  for (const patch of patches) {
+    const db = fixture({
+      files: [readyFile],
+      uploads: [readyUpload],
+      ...patch,
+    });
+    expect(
+      (
+        await createOrderSubmissionService(db, attachmentPolicy).submit(
+          actor,
+          attachedCommand,
+        )
+      ).result,
+    ).toMatchObject({ kind: "blocked", reasons: ["files_not_ready"] });
+    expect(db.state.writes).toEqual([]);
+  }
+});
+test("attachment, audit and later aggregate failures roll back all writes in transaction double", async () => {
+  for (const patch of [
+    { expiredAtAttach: true },
+    { failAt: "public.order_version_files(" },
+    { failAt: "public.file_events(" },
+    { failAt: "public.submission_receipts(" },
+  ]) {
+    const db = fixture({
+      files: [readyFile],
+      uploads: [readyUpload],
+      ...patch,
+    });
+    await expect(
+      createOrderSubmissionService(db, attachmentPolicy).submit(
+        actor,
+        attachedCommand,
+      ),
+    ).rejects.toThrow();
+    expect(db.state.writes).toEqual([]);
+    expect(db.state.receipt).toBeNull();
+  }
 });

@@ -62,3 +62,25 @@ scanner réels, permissions de consultation/téléchargement et cloisonnement,
 associations transactionnelles commandes/retouches/messages, interfaces albanaises,
 réception PostgreSQL/concurrence réelle et recette du stockage.
 L'absence d'adaptateurs bloque ces transferts ; elle ne clôt pas le chapitre 12.
+
+## Associations initiales — 20 octobre 2026
+prepareNewOrderFiles est appelé dans les transactions existantes de soumission
+clinique et de retouche. Sans politique fournie par la composition serveur, les
+fichiers restent refusés ; le runtime n'en fournit aucune. Une politique versionnée
+n'est pas en soi une attestation de disponibilité du stockage/analyseur.
+
+Le chemin préparé verrouille les objets triés puis les sessions triées, contrôle
+clinique/auteur, état ready, intégrité, versions de politique, destination et
+expiration. Les tailles viennent de la base : 1 Go pour la création initiale,
+200 Mo/fichier sans plafond cumulatif inventé pour la retouche. Une retouche est
+une nouvelle commande : son upload initial vise la commande source validée,
+puis est rattaché au nouvel enfant. Les fichiers déjà liés sont refusés par ce
+chemin ; leur réutilisation historique exige un chemin explicite distinct.
+
+Association de version, événement fichier, commande, lien de retouche, audit et
+reçu restent dans une transaction unique. Expiration après préparation ou échec
+d'association provoquent une exception et le rollback, jamais un résultat partiel.
+Les futurs nettoyeurs/réconciliateurs devront respecter le même ordre de verrous
+et contrôler les associations sous verrou avant toute suppression.
+Tests transactionnels avec doubles ; verrous/SQL/contraintes réels non réceptionnés.
+Messages et modifications de versions ne sont pas encore raccordés à ce chemin.

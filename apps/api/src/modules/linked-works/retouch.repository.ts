@@ -6,10 +6,13 @@ import {
 import type { createApplicationDatabase } from "../../shared/database.js";
 import { createCurrentPermissionsRepository } from "../permissions/index.js";
 import { readCatalogForUse } from "../catalog/index.js";
+import { prepareNewOrderFiles } from "../files/index.js";
+import type { AttachmentPolicy } from "../files/index.js";
 type Actor = { accountId: string; sessionId: string };
 // No retry here: a lost COMMIT response must be reconciled using the same receipt key.
 export function createRetouchRepository(
   database: Pick<ReturnType<typeof createApplicationDatabase>, "transaction">,
+  attachmentPolicy?: AttachmentPolicy,
 ) {
   return {
     async submit(actor: Actor, raw: unknown) {
@@ -146,7 +149,18 @@ export function createRetouchRepository(
           reasons.push("catalog_missing");
         if (references.some((r) => r.state === "forbidden"))
           reasons.push("catalog_forbidden");
-        if (input.file_ids.length) reasons.push("files_not_ready");
+        const attachments = await prepareNewOrderFiles(
+          tx,
+          {
+            actorId: actor.accountId,
+            clinicId: String(clinicId),
+            fileIds: input.file_ids,
+            purpose: "retouch",
+            sourceOrderId: fields.source_order_id,
+          },
+          attachmentPolicy,
+        );
+        if (!attachments) reasons.push("files_not_ready");
         if (reasons.length)
           return {
             kind: "result" as const,
@@ -203,6 +217,8 @@ export function createRetouchRepository(
             input.requested_delivery_date,
           ],
         );
+        if (!attachments) throw new Error("ATTACHMENT_PLAN_MISSING");
+        await attachments.attach(orderId, versionId);
         await tx.query(
           "INSERT INTO public.order_logistics(order_id,clinic_id) VALUES($1,$2)",
           [orderId, clinicId],
