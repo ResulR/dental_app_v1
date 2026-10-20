@@ -1002,3 +1002,34 @@ Clôture10.14 : formatage global exécuté, exit1 exclusivement pour scripts/lin
 ## 2026-10-20T11:47:00+02:00 Europe/Brussels — limites fichiers12.3/12.4
 
 Reprise8bec4af, Git propre, UID1002 vérifié. Audit du schéma0006 et modèle3.7 : stockage/capacité/analyse opérationnels non branchés. Ajout de limites décimales et contrôle incrémental des octets dans le module files, sans route ni adaptateur fictif. 200Mo/fichier, 1Go par dépôt initial/message, pas de plafond cumulatif conversation ou plafond supplémentaire pour suivi/révision/retouche. Rejet doublons/tailles invalides, dépassement/troncature, annulation et panne propagées. Aucun octet patient écrit. 5 tests unitaires réussis, format ciblé réussi, buildAPI26.71s, lint57.68s, frontières235sources réussis. Aucun changement frontend/contrat, donc pas de rebuild web ou recette SQL rejouée. Runner modifié uniquement par ajout de la tâche ciblée ; limites mémoire/durée inchangées. Migrations et scripts historiques inchangés ; services surveillés actifs aux mêmes PID. Points encore préparés, pas intégrés aux uploads : prochaine dépendance obligatoire = politique stockage privé/capacité/quarantaine/analyse validée avant transfert réel. Voir docs/TRANSFER_LIMITS.md.
+
+## 2026-10-20 11:03 UTC — 12.6 réception en flux préparée, sans activation
+
+Départ e2bd530, main propre/synchronisée, identité dental-ai contrôlée. Audit du
+module files, runtime, migrations 0006/0007, CDC 4.2 et modèle files-lifecycle :
+aucun adaptateur de stockage/capacité/scanner branché. Associations SQL prévues,
+mais refus files_not_ready conservés. Aucun accès SQL de production.
+
+Ajouts upload-pipeline.ts et tests : admission exclusive déléguée à un port
+transactionnel obligatoire, taille serveur, streaming avec backpressure et budget
+de fragment explicite, SHA-256, scellement comparé, attestations de validation et
+analyse, finalisation privée. Récupération rejetée/incertaine distincte ; aucune
+suppression d'objet potentiellement committé. Aucun adaptateur fictif en runtime.
+Docs UPLOAD_PIPELINE.md et roadmap 12.6 mises à jour ; statut non validé.
+
+Vérifications finales séquentielles via runner : format:changed OK ; build:api
+(types inclus) 26,88 s ; test:upload-pipeline 14/14 (9 pipeline + 5 limites) ;
+lint 59,89 s ; frontières 236 sources ; contrats et workspace OK. Tests avec doubles
+en mémoire uniquement : aucune preuve PostgreSQL, analyse antivirus ou stockage réel.
+Frontend inchangé, build web non rejoué. Formatage global non rejoué ; exception
+historique v2/v3 conservée, sans masquer le lint global réussi. git diff --check OK.
+Comparaison AST du runner hors plan() identique à e2bd530 ; aucune limite modifiée.
+Migrations et scripts historiques v2/v3 sans différence. PostgreSQL17-main246009,
+nginx895970,pm2-debian842,dental-site619021 actifs, PID identiques au relevé précédent.
+
+Reste à implémenter : adaptateurs durables et réconciliation, associations métier,
+autorisations de consultation/téléchargement, API et UI albanaises, reprise de
+fragments. Activation interdite avant validation racine privée/réserve/TTL/budgets,
+analyseurs réels et recettes d'intégrité/concurrence. Ce lot est une préparation
+testée, pas une intégration fonctionnelle complète des pièces jointes.
+Aucune migration, activation, modification de service, transfert réel ou purge.

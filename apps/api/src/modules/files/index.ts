@@ -7,3 +7,7 @@ export {
   FILE_MAX_BYTES,
   BATCH_MAX_BYTES,
 } from "./transfer-limits.js";
+export {
+  createUploadPipeline,
+  UploadPipelineError,
+} from "./upload-pipeline.js";
