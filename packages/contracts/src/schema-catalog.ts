@@ -1,4 +1,10 @@
 import {
+  DeliveryPlanQuerySchema,
+  DeliveryPlanCommandSchema,
+  DeliveryPlanContextSchema,
+  DeliveryPlanResultSchema,
+} from "./delivery-plan.js";
+import {
   MessageSubmissionSchema,
   MessageSubmissionResultSchema,
 } from "./message-submission.js";
@@ -172,6 +178,10 @@ export function exportJsonSchemas() {
     OrderLifecycle: OrderLifecycleSchema,
     OrderLifecycleResult: OrderLifecycleResultSchema,
     OrderSearch: OrderSearchSchema,
+    DeliveryPlanQuery: DeliveryPlanQuerySchema,
+    DeliveryPlanCommand: DeliveryPlanCommandSchema,
+    DeliveryPlanContext: DeliveryPlanContextSchema,
+    DeliveryPlanResult: DeliveryPlanResultSchema,
     MessageSubmission: MessageSubmissionSchema,
     MessageSubmissionResult: MessageSubmissionResultSchema,
     OrderFilesQuery: OrderFilesQuerySchema,

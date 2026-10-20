@@ -131,6 +131,7 @@ def plan(name):
     commands["test:laboratory-settings"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/laboratory-settings.test.mjs", "tests/integration/laboratory-settings-http.test.mjs", "tests/integration/auth-runtime-composition.test.mjs"), "targeted laboratory settings")]
     commands["test:message-submission"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/message-submission.test.mjs", "tests/integration/message-submission-http.test.mjs"), "targeted prepared message submission")]
     commands["test:message-files"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/message-files.test.mjs", "tests/integration/message-files-http.test.mjs"), "targeted prepared message metadata")]
+    commands["test:delivery-plan"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/delivery-plan.test.mjs", "tests/integration/delivery-plan-http.test.mjs"), "targeted versioned delivery planning")]
     commands["test:upload-pipeline"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/upload-pipeline.test.mjs", "tests/unit/transfer-limits.test.mjs"), "targeted streaming upload pipeline")]
     commands["test:transfer-limits"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/transfer-limits.test.mjs"), "targeted bounded transfer limits")]
     commands["test:logo-pipeline"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/logo-pipeline.test.mjs"), "targeted fail-closed logo pipeline")]

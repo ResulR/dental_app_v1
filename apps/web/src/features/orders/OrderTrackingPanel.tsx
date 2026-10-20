@@ -1,3 +1,4 @@
+import { DeliveryPlanPanel } from "./DeliveryPlanPanel.js";
 import { OrderFilesPanel } from "./OrderFilesPanel.js";
 import { LaboratoryLinkedWorkForm } from "./LaboratoryLinkedWorkForm.js";
 import { LinkedWorkPanel } from "./LinkedWorkPanel.js";
@@ -317,6 +318,15 @@ export function OrderTrackingPanel({
             Skedarë: {detail.order.file_count}.{" "}
             {detail.order.security_block ? "Bllokim sigurie aktiv." : ""}
           </p>
+          {!clinic &&
+            permissions.includes("delivery.plan") &&
+            import.meta.env.VITE_DENTAL_LAB_DELIVERY_PLAN_ENABLED ===
+              "true" && (
+              <DeliveryPlanPanel
+                key={detail.order.id}
+                orderId={detail.order.id}
+              />
+            )}
           {(clinic || permissions.includes("files.view")) && (
             <OrderFilesPanel
               key={detail.order.id + ":" + detail.order.version_id}

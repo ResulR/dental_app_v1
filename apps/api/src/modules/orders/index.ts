@@ -34,3 +34,6 @@ export { trackingAuthority as readOrderTrackingAuthority } from "./tracking-auth
 
 export { createActionInboxService } from "./action-inbox.service.js";
 export { registerActionInboxRoutes } from "./action-inbox.routes.js";
+export { createDeliveryPlanService } from "./delivery-plan.service.js";
+export { registerDeliveryPlanRoutes } from "./delivery-plan.routes.js";
+export { assertDeliveryPlanReady } from "./delivery-plan.repository.js";

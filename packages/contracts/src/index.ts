@@ -59,3 +59,14 @@ export type {
   MessageSubmission,
   MessageSubmissionResult,
 } from "./message-submission.js";
+export {
+  DeliveryPlanQuerySchema,
+  DeliveryPlanCommandSchema,
+  DeliveryPlanContextSchema,
+  DeliveryPlanResultSchema,
+} from "./delivery-plan.js";
+export type {
+  DeliveryPlanCommand,
+  DeliveryPlanContext,
+  DeliveryPlanResult,
+} from "./delivery-plan.js";

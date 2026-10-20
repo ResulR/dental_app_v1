@@ -83,7 +83,8 @@ d'association provoquent une exception et le rollback, jamais un résultat parti
 Les futurs nettoyeurs/réconciliateurs devront respecter le même ordre de verrous
 et contrôler les associations sous verrou avant toute suppression.
 Tests transactionnels avec doubles ; verrous/SQL/contraintes réels non réceptionnés.
-Messages et modifications de versions ne sont pas encore raccordés à ce chemin.
+Les messages ont désormais leur association préparée distincte (voir ci-dessous),
+mais les modifications des versions de commande ne sont pas encore raccordées.
 
 ## Consultation intégrée — 20 octobre 2026
 POST /api/v1/orders/files utilise la session et l'origine vérifiées du suivi :

@@ -1529,6 +1529,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Préparation16/10 :** Formulaire clinique albanais relié au contrôle serveur/catalogue, sans persistance ni dépôt simulé. Validation partagée et avertissements ; voir docs/ORDER_PREFLIGHT.md. Aucune clôture SQL/navigateur ou dépôt officiel.
 
 - **Implémentation16/10 :** Dépôt transactionnel, reçu idempotent et snapshots serveur reliés au formulaire ; docs/ORDER_SUBMISSION.md. Hors ligne testé, aucune application PostgreSQL ni réception finale.
+- **Planification 20/10 :** édition laboratoire de la date planifiée, contexte/historique/API/panneau albanais, permission `delivery.plan`, révisions et audit transactionnels ; voir docs/DELIVERY_PLAN.md. Drapeaux désactivés, SQL/concurrence/navigateur réels non réceptionnés.
 
 ### 9.5 — Implémenter avertissement commande peu détaillée
 - **Statut :** ◐ Dépôt clinique API/UI intégré sans pièces jointes — réceptions SQL/navigateur différées
@@ -2122,7 +2123,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 ### 12.6 — Implémenter idempotence et finalisation fichiers
 - **Statut :** ◐ Orchestration en flux et associations initiales intégrées — activation différée
-- **Associations 20/10/2026 :** commandes/retouches raccordées transactionnellement à `prepareNewOrderFiles`, avec contrôles de périmètre, état, taille et expiration, événements et rollback. Politique absente du runtime : fichiers toujours refusés en exploitation. Messages et réutilisation historique restent à intégrer ; réception SQL indépendante requise.
+- **Associations 20/10/2026 :** commandes/retouches raccordées transactionnellement à `prepareNewOrderFiles`, avec contrôles de périmètre, état, taille et expiration, événements et rollback. Politique absente du runtime : fichiers toujours refusés en exploitation. Messages raccordés dans un chemin préparé distinct sans route runtime ; réutilisation historique reste à intégrer ; réception SQL indépendante requise.
 - **Avancement 20/10/2026 :** `upload-pipeline.ts` prépare admission exclusive, taille/hash, scellement, attestation et récupération distinguant rejet/commit incertain. `docs/UPLOAD_PIPELINE.md` décrit les obligations des adaptateurs ; aucun transfert ni association activé. Tests avec doubles uniquement, pas preuve PostgreSQL/stockage/analyse.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
@@ -2247,7 +2248,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 13 — Messagerie temps réel
 
 ### 13.1 — Créer conversation générale par clinique
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Création transactionnelle intégrée, lecture/réception différées
+- **Preuve code 20/10 :** inscription clinique insère la conversation générale dans la même transaction ; index SQL d'unicité par clinique dans 0007. Pas de migration/reception PostgreSQL ni interface de messagerie active.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel
@@ -2262,7 +2264,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 13.2 — Créer conversation liée à chaque commande
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Création transactionnelle intégrée, lecture/réception différées
+- **Preuve code 20/10 :** soumission clinique, retouche et création laboratoire insèrent conversation et marqueurs de lecture avec la commande ; clôture/réouverture sur livraison corrigée. Réception PostgreSQL et interface de messagerie restent ouvertes.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel
