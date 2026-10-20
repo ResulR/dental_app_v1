@@ -1,4 +1,6 @@
 import {
+  OrderFilesQuerySchema,
+  OrderFilesPageSchema,
   OrderSearchSchema,
   OrderDetailQuerySchema,
   OrderTrackingPageSchema,
@@ -21,6 +23,15 @@ export function createOrderTrackingClient(transport: typeof fetch = fetch) {
     return result;
   }
   return {
+    async files(raw: unknown, signal: AbortSignal) {
+      const input = OrderFilesQuerySchema.parse(raw);
+      const page = OrderFilesPageSchema.parse(
+        await post("files", input, signal),
+      );
+      if (page.version_id !== input.version_id)
+        throw new Error("ORDER_FILE_VERSION_CHANGED");
+      return page;
+    },
     async search(raw: unknown, signal: AbortSignal) {
       return OrderTrackingPageSchema.parse(
         await post("search", OrderSearchSchema.parse(raw), signal),

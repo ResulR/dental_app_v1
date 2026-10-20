@@ -2168,7 +2168,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 12.9 — Implémenter aperçus protégés et permissions fichier
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Consultation des métadonnées intégrée — aperçus et réception différés
+- **Avancement 20/10/2026 :** API privée paginée `/api/v1/orders/files`, version courante et clinique vérifiées, droits détaillés + files.view côté laboratoire. Panneau albanais branché à la fiche commande/retouche. Aucun binaire, hash ou chemin exposé ; téléchargement explicitement indisponible. Tests unitaires/HTTP avec doubles, aucune recette PostgreSQL ou navigateur réelle.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fichiers privés et transferts

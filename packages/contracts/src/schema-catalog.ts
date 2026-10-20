@@ -1,3 +1,4 @@
+import { OrderFilesQuerySchema, OrderFilesPageSchema } from "./order-files.js";
 import {
   ActionInboxQuerySchema,
   ActionInboxPageSchema,
@@ -167,6 +168,8 @@ export function exportJsonSchemas() {
     OrderLifecycle: OrderLifecycleSchema,
     OrderLifecycleResult: OrderLifecycleResultSchema,
     OrderSearch: OrderSearchSchema,
+    OrderFilesQuery: OrderFilesQuerySchema,
+    OrderFilesPage: OrderFilesPageSchema,
     OrderTrackingPage: OrderTrackingPageSchema,
     OrderDetailQuery: OrderDetailQuerySchema,
     OrderTrackingDetail: OrderTrackingDetailSchema,

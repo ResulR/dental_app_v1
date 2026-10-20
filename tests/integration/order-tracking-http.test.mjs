@@ -10,7 +10,11 @@ test("tracking search enforces origin authentication strict body and private res
   const server = createApp(
     (app) =>
       registerOrderTrackingRoutes(app, {
-        service: { search: decide, detail: async () => ({ kind: "denied" }) },
+        service: {
+          search: decide,
+          detail: async () => ({ kind: "denied" }),
+          files: async () => ({ kind: "denied" }),
+        },
         sessions: { authenticate: async () => actor },
         origin: "https://dental.example.test",
       }),
@@ -79,6 +83,89 @@ test("tracking search enforces origin authentication strict body and private res
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(result);
     expect(response.headers.get("cache-control")).toContain("no-store");
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test("files HTTP requires origin session and strict version scope; denial carries no metadata", async () => {
+  const id = "91000000-0000-4000-8000-000000000001";
+  let denied = false;
+  const files = vi.fn(async () =>
+    denied
+      ? { kind: "denied" }
+      : {
+          kind: "page",
+          page: {
+            version_id: id,
+            items: [],
+            next_after: null,
+            download_available: false,
+          },
+        },
+  );
+  const server = createApp(
+    (app) =>
+      registerOrderTrackingRoutes(app, {
+        service: {
+          search: async () => ({ kind: "denied" }),
+          detail: async () => ({ kind: "denied" }),
+          files,
+        },
+        sessions: {
+          authenticate: async () => ({ accountId: id, sessionId: id }),
+        },
+        origin: "https://dental.example.test",
+      }),
+    () => {},
+  ).listen(0, "127.0.0.1");
+  await new Promise((resolve) => server.once("listening", resolve));
+  const url =
+    "http://127.0.0.1:" + server.address().port + "/api/v1/orders/files";
+  const headers = {
+    origin: "https://dental.example.test",
+    "content-type": "application/json",
+    cookie:
+      "__Host-dental_session=" + Buffer.alloc(32, 1).toString("base64url"),
+  };
+  const body = JSON.stringify({ order_id: id, version_id: id });
+  try {
+    expect(
+      (
+        await fetch(url, {
+          method: "POST",
+          headers: { ...headers, origin: "https://evil.example" },
+          body,
+        })
+      ).status,
+    ).toBe(403);
+    expect(
+      (
+        await fetch(url, {
+          method: "POST",
+          headers: { ...headers, cookie: "" },
+          body,
+        })
+      ).status,
+    ).toBe(401);
+    expect(
+      (
+        await fetch(url, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ order_id: id, version_id: id, clinic_id: id }),
+        })
+      ).status,
+    ).toBe(400);
+    expect(files).not.toHaveBeenCalled();
+    const response = await fetch(url, { method: "POST", headers, body });
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toContain("no-store");
+    expect((await response.json()).download_available).toBe(false);
+    denied = true;
+    const forbidden = await fetch(url, { method: "POST", headers, body });
+    expect(forbidden.status).toBe(403);
+    expect(await forbidden.text()).not.toContain("filename");
   } finally {
     await closeServer(server);
   }

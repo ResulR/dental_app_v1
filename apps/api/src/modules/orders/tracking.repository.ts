@@ -1,3 +1,7 @@
+import { OrderFilesQuerySchema } from "@dental-lab/contracts";
+import type { OrderFilesPage } from "@dental-lab/contracts";
+import { readOrderFileMetadata } from "../files/index.js";
+import { createCurrentPermissionsRepository } from "../permissions/index.js";
 import type {
   OrderTrackingPage,
   OrderTrackingDetail,
@@ -14,6 +18,10 @@ const iso = (v: unknown) => (v instanceof Date ? v.toISOString() : v);
 type TrackingActor = { accountId: string; sessionId: string };
 type TrackingFailure = { kind: "invalid" } | { kind: "denied" };
 export interface OrderTrackingRepository {
+  files(
+    actor: TrackingActor,
+    raw: unknown,
+  ): Promise<TrackingFailure | { kind: "page"; page: OrderFilesPage }>;
   search(
     actor: TrackingActor,
     raw: unknown,
@@ -27,6 +35,39 @@ export function createOrderTrackingRepository(
   database: Pick<ReturnType<typeof createApplicationDatabase>, "transaction">,
 ): OrderTrackingRepository {
   return {
+    async files(actor: TrackingActor, raw: unknown) {
+      const parsed = OrderFilesQuerySchema.safeParse(raw);
+      if (!parsed.success) return { kind: "invalid" as const };
+      const input = parsed.data;
+      return database.transaction(async (tx) => {
+        const auth = await trackingAuthority(tx, actor);
+        if (!auth?.details) return { kind: "denied" as const };
+        if (auth.clinicId === null) {
+          const identity =
+            await createCurrentPermissionsRepository(tx).current(actor);
+          if (!identity?.permissions.includes("files.view"))
+            return { kind: "denied" as const };
+        }
+        const parent = await tx.query(
+          "SELECT id,clinic_id,current_version_id FROM public.orders WHERE id=$1 AND ($2::uuid IS NULL OR clinic_id=$2) FOR SHARE",
+          [input.order_id, auth.clinicId],
+        );
+        if (
+          parent.rows.length !== 1 ||
+          parent.rows[0]!.current_version_id !== input.version_id
+        )
+          return { kind: "denied" as const };
+        return {
+          kind: "page" as const,
+          page: await readOrderFileMetadata(tx, {
+            orderId: input.order_id,
+            versionId: input.version_id,
+            clinicId: String(parent.rows[0]!.clinic_id),
+            ...(input.after ? { after: input.after } : {}),
+          }),
+        };
+      });
+    },
     async search(
       actor: { accountId: string; sessionId: string },
       raw: unknown,

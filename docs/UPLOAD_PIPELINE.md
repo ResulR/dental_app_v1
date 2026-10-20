@@ -84,3 +84,30 @@ Les futurs nettoyeurs/réconciliateurs devront respecter le même ordre de verro
 et contrôler les associations sous verrou avant toute suppression.
 Tests transactionnels avec doubles ; verrous/SQL/contraintes réels non réceptionnés.
 Messages et modifications de versions ne sont pas encore raccordés à ce chemin.
+
+## Consultation intégrée — 20 octobre 2026
+POST /api/v1/orders/files utilise la session et l'origine vérifiées du suivi :
+order_id/version_id obligatoires, curseur after facultatif, aucune clinique fournie
+par le client. Le parent courant est verrouillé et filtré par clinique ; au labo,
+orders.read_logistics + orders.read_details + files.view sont nécessaires.
+files.download seul ne donne pas accès à cette consultation. Retouches incluses
+comme commandes ; ni suivi interne ni messages ni versions historiques ajoutés
+implicitement.
+
+Réponse paginée de 50 métadonnées (aucune limite métier du nombre de fichiers) :
+id, nom original échappé par React, format et taille, sans hash/path/object_key.
+Uniquement les objets ready de la version courante. Le contrat annonce
+download_available:false ; aucun endpoint de transfert binaire n'est créé.
+Le panneau albanais est intégré à la fiche du travail, gère chargement/erreur,
+pagination, annulation et changement de version. Il n'affiche pas de succès
+d'upload ni de bouton de téléchargement simulé. Recette navigateur reportée.
+
+Audit non privilégié 20/10/2026 14:52 UTC : /dev/sda1 dispose de
+56 180 101 120 octets disponibles ; ce chiffre n'est PAS une réserve attribuée.
+clamdscan et clamscan absents du PATH dental-ai ; cela ne prouve pas l'absence
+de tout analyseur sur le VPS. Aucun adaptateur d'analyse opérationnel ni racine
+privée/capacité réservée validée dans la composition applicative.
+Avant activation : décision de stockage/réserve, budgets/TTL, validation des
+formats et analyseur, puis réception du stockage et SQL. Aucune installation
+globale ni activation effectuée. Le prochain travail applicatif indépendant
+reste l'association des messages et les accès aux catégories supplémentaires.

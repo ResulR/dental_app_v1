@@ -38,6 +38,30 @@ function fixture(patch = {}) {
       };
     if (sql.startsWith("SELECT id FROM public.clinics WHERE account_id=$1 AND"))
       return { rows: patch.unapproved ? [] : [{ id }] };
+    if (sql.startsWith("SELECT id,clinic_id,current_version_id"))
+      return {
+        rows: patch.foreign
+          ? []
+          : [
+              {
+                id,
+                clinic_id: id,
+                current_version_id: patch.stale ? other : id,
+              },
+            ],
+      };
+    if (sql.includes("FROM public.order_version_files b"))
+      return {
+        rows: patch.files ?? [
+          {
+            id,
+            filename: "Synthetic.stl",
+            format: "stl",
+            size_bytes: "3",
+            object_key: "SECRET_NOT_EXPOSED",
+          },
+        ],
+      };
     if (sql.startsWith("SELECT id FROM public.orders WHERE"))
       return { rows: patch.foreign ? [] : [{ id }] };
     if (sql.startsWith("SELECT o.id,o.number")) {
@@ -270,4 +294,124 @@ test("database errors never produce an empty success and tracking activation fai
   await expect(service.detail(actor, { order_id: id })).rejects.toThrow(
     "Synthetic database failure",
   );
+});
+
+test("file metadata scopes parent and current version, filters unhealthy objects and exposes no storage identifier", async () => {
+  const db = fixture();
+  const result = await createOrderTrackingService(db).files(actor, {
+    order_id: id,
+    version_id: id,
+  });
+  expect(result).toMatchObject({
+    kind: "page",
+    page: {
+      version_id: id,
+      download_available: false,
+      items: [{ id, filename: "Synthetic.stl", format: "stl", size_bytes: 3 }],
+    },
+  });
+  expect(JSON.stringify(result)).not.toContain("SECRET");
+  const parent = db.query.mock.calls.find(([s]) =>
+    s.startsWith("SELECT id,clinic_id,current_version_id"),
+  );
+  expect(parent[1]).toEqual([id, id]);
+  expect(parent[0]).toContain("FOR SHARE");
+  const files = db.query.mock.calls.find(([s]) =>
+    s.includes("FROM public.order_version_files b"),
+  );
+  expect(files[1]).toEqual([id, id, id, null]);
+  expect(files[0]).toContain("f.state='ready'");
+  expect(files[0]).toContain("LIMIT 51");
+});
+test("file metadata denies foreign clinic stale version revoked/suspended account and missing detailed/file grants before any filename read", async () => {
+  for (const patch of [
+    { foreign: true },
+    { stale: true },
+    { revoked: true },
+    { suspended: true },
+    { unapproved: true },
+    { profile: "employee", grants: ["orders.read_logistics", "files.view"] },
+    {
+      profile: "employee",
+      grants: ["orders.read_logistics", "orders.read_details"],
+    },
+    {
+      profile: "employee",
+      grants: [
+        "orders.read_logistics",
+        "orders.read_details",
+        "files.download",
+      ],
+    },
+  ]) {
+    const db = fixture(patch);
+    expect(
+      (
+        await createOrderTrackingService(db).files(actor, {
+          order_id: id,
+          version_id: id,
+        })
+      ).kind,
+    ).toBe("denied");
+    expect(
+      db.query.mock.calls.some(([s]) =>
+        s.includes("FROM public.order_version_files b"),
+      ),
+    ).toBe(false);
+  }
+  const db = fixture({
+    profile: "employee",
+    grants: ["orders.read_logistics", "orders.read_details", "files.view"],
+  });
+  expect(
+    (
+      await createOrderTrackingService(db).files(actor, {
+        order_id: id,
+        version_id: id,
+      })
+    ).kind,
+  ).toBe("page");
+  const invalid = fixture();
+  expect(
+    (
+      await createOrderTrackingService(invalid).files(actor, {
+        order_id: id,
+        version_id: id,
+        clinic_id: other,
+      })
+    ).kind,
+  ).toBe("invalid");
+  expect(invalid.transaction).not.toHaveBeenCalled();
+});
+test("metadata pagination does not expose extra row and client rejects false download readiness or mismatched version", async () => {
+  const files = Array.from({ length: 51 }, (_, i) => ({
+    id: "91000000-0000-4000-8000-" + String(i + 1).padStart(12, "0"),
+    filename: "Synthetic.stl",
+    format: "stl",
+    size_bytes: "3",
+  }));
+  const page = (
+    await createOrderTrackingService(fixture({ files })).files(actor, {
+      order_id: id,
+      version_id: id,
+      after: other,
+    })
+  ).page;
+  expect(page.items).toHaveLength(50);
+  expect(page.next_after).toBe(files[49].id);
+  for (const change of [{ version_id: other }, { download_available: true }]) {
+    const transport = vi.fn(
+      async () =>
+        new globalThis.Response(JSON.stringify({ ...page, ...change }), {
+          status: 200,
+        }),
+    );
+    await expect(
+      createOrderTrackingClient(transport).files(
+        { order_id: id, version_id: id },
+        new globalThis.AbortController().signal,
+      ),
+    ).rejects.toThrow();
+    expect(transport).toHaveBeenCalledTimes(1);
+  }
 });

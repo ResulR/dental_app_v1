@@ -49,3 +49,5 @@ export * from "./linked-work-tracking.js";
 export * from "./laboratory-linked-work.js";
 
 export * from "./action-inbox.js";
+export { OrderFilesQuerySchema, OrderFilesPageSchema } from "./order-files.js";
+export type { OrderFilesQuery, OrderFilesPage } from "./order-files.js";

@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import {
+  OrderFilesQuerySchema,
   OrderSearchSchema,
   OrderDetailQuerySchema,
 } from "@dental-lab/contracts";
@@ -15,14 +16,18 @@ export function registerOrderTrackingRoutes(
     origin: string;
   },
 ) {
-  for (const action of ["search", "detail"] as const)
+  for (const action of ["search", "detail", "files"] as const)
     app.post("/api/v1/orders/" + action, async (req, res) => {
       if (!mutationOriginAllowed(req.headers.origin, services.origin)) {
         sendProblem(res, "FORBIDDEN", 403);
         return;
       }
       const schema =
-        action === "search" ? OrderSearchSchema : OrderDetailQuerySchema;
+        action === "files"
+          ? OrderFilesQuerySchema
+          : action === "search"
+            ? OrderSearchSchema
+            : OrderDetailQuerySchema;
       if (
         !req.is("application/json") ||
         Object.keys(req.query).length ||

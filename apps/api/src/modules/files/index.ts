@@ -13,3 +13,4 @@ export {
 } from "./upload-pipeline.js";
 export { prepareNewOrderFiles } from "./attachment.repository.js";
 export type { AttachmentPolicy } from "./attachment.repository.js";
+export { readOrderFileMetadata } from "./metadata.repository.js";

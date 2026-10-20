@@ -1045,3 +1045,28 @@ Build API/types OK ; tests commandes et HTTP OK ; retouches 9/9 ; format ciblé,
 lint global, frontières 237 sources et contrats OK. Aucune preuve PostgreSQL réelle.
 Diff vérifié ; migrations, runtime/configuration et historiques v2/v3 inchangés.
 Documentation UPLOAD_PIPELINE complétée. Suite : consultation privée des métadonnées.
+
+## 2026-10-20 14:54 UTC — 12.9 consultation privée intégrée
+Reprise contrôlée : 677aa1c poussé, arbre propre, UID1002, aucun ancien outil actif.
+Ajout des contrats OrderFilesQuery/Page, API POST orders/files, lecture minimale
+des métadonnées sous autorisation/clinique/version courante et fichiers ready.
+Le labo exige lecture détaillée et files.view, téléchargement distinct.
+Panneau albanais réel dans la fiche commande/retouche : chargement, pagination,
+erreurs, abort et rejet des réponses d'une autre version. Aucun transfert binaire,
+chemin privé, hash ou faux bouton de téléchargement. Runtime/config inchangés.
+
+Validation : builds contrats 17 s/API 26,82 s, typecheck web 26,23 s ; tests suivi
+11/11 incluant HTTP origine/session/corps strict, clinique étrangère, version
+obsolète, permissions manquantes, pagination et faux download_available.
+Lint global, frontières, contrats, build web et workspace réussis. Deux schémas
+ajoutés au snapshot, tous les précédents strictement identiques ; helper temporaire
+retiré du runner. git diff --check OK ; runner, migrations et historiques v2/v3
+identiques à 677aa1c. Pas de recette PostgreSQL, navigateur ou scanner réelle.
+Formatage ciblé seulement ; exception historique v2/v3 maintenue.
+
+Audit disque en lecture seule et absence de clamscan/clamdscan dans PATH consignés
+dans UPLOAD_PIPELINE.md, sans conclure à l'absence de tout analyseur système.
+Services surveillés actifs, PID inchangés (246009/895970/842/619021).
+Restent : décision et validation de réserve/racine privée/analyseur/budgets/TTL ;
+adaptateurs durables, transferts, reprises/réconciliation ; association messages,
+suivi et droits des téléchargements ; réception SQL et navigateur. Aucun nettoyage.
