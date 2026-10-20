@@ -6,7 +6,9 @@ const OrderSearchDefinition = z
     q: z.string().trim().max(120).optional(),
     status: StatusSchema.optional(),
     kind: z.enum(["normal", "retouch"]).optional(),
-    date_kind: z.enum(["requested", "planned"]).default("requested"),
+    date_kind: z
+      .enum(["requested", "planned", "effective"])
+      .default("requested"),
     from: z.iso.date().optional(),
     to: z.iso.date().optional(),
     after: z.uuid().optional(),

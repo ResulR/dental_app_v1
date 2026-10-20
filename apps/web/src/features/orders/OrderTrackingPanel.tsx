@@ -1,4 +1,5 @@
 import { deliveryUrgency, deliveryUrgencyLabel } from "./delivery-urgency.js";
+import { DeliveryCalendar } from "./DeliveryCalendar.js";
 import { DeliveryPriorityPanel } from "./DeliveryPriorityPanel.js";
 import { DeliveryPlanPanel } from "./DeliveryPlanPanel.js";
 import { OrderFilesPanel } from "./OrderFilesPanel.js";
@@ -46,6 +47,7 @@ export function OrderTrackingPanel({
       typeof OrderTrackingDetailSchema.parse
     > | null>(null);
   const pending = useRef<AbortController | null>(null),
+    detailElement = useRef<HTMLElement | null>(null),
     lastQuery = useRef<ReturnType<typeof OrderSearchSchema.parse> | null>(null);
   useEffect(
     () => () => {
@@ -58,6 +60,9 @@ export function OrderTrackingPanel({
     const timer = setInterval(() => setClock(new Date()), 60_000);
     return () => clearInterval(timer);
   }, []);
+  useEffect(() => {
+    if (detail) detailElement.current?.scrollIntoView({ block: "start" });
+  }, [detail]);
   async function run(work: (signal: AbortSignal) => Promise<void>) {
     if (pending.current) return;
     const controller = new AbortController();
@@ -120,6 +125,7 @@ export function OrderTrackingPanel({
   return (
     <section aria-label="Ndjekja e porosive">
       <h3>Ndjekja e porosive</h3>
+      <DeliveryCalendar onOpen={(id) => void open(id)} />
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -277,7 +283,7 @@ export function OrderTrackingPanel({
         </Button>
       )}
       {detail && (
-        <article>
+        <article ref={detailElement}>
           {!clinic &&
             permissions.includes("orders.create_for_clinic") &&
             permissions.includes("linked_works.manage") &&

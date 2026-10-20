@@ -134,6 +134,7 @@ def plan(name):
     commands["test:delivery-plan"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/delivery-plan.test.mjs", "tests/integration/delivery-plan-http.test.mjs"), "targeted versioned delivery planning")]
     commands["test:delivery-priority"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/delivery-priority.test.mjs", "tests/integration/delivery-priority-http.test.mjs", "tests/unit/delivery-plan.test.mjs"), "targeted priority and planning interaction")]
     commands["test:delivery-urgency"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/delivery-urgency.test.mjs", "tests/unit/order-tracking.test.mjs"), "targeted date warning and tracking regression")]
+    commands["test:delivery-calendar"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/delivery-calendar.test.mjs", "tests/unit/order-tracking.test.mjs", "tests/integration/order-tracking-http.test.mjs"), "targeted calendar and tracking permissions")]
     commands["test:upload-pipeline"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/upload-pipeline.test.mjs", "tests/unit/transfer-limits.test.mjs"), "targeted streaming upload pipeline")]
     commands["test:transfer-limits"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/transfer-limits.test.mjs"), "targeted bounded transfer limits")]
     commands["test:logo-pipeline"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/logo-pipeline.test.mjs"), "targeted fail-closed logo pipeline")]

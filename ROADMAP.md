@@ -2711,7 +2711,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 16.3 — Implémenter calendrier semaine/mois
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Partiel — calendrier albanais semaine/mois branché sur la recherche serveur cloisonnée, date planifiée ou souhaitée provisoire, pagination explicite et ouverture du détail selon permission ; recette navigateur et réception PostgreSQL restent à réaliser.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Planning, livraisons, archives et recherche

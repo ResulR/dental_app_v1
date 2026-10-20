@@ -3196,7 +3196,8 @@
           "type": "string",
           "enum": [
             "requested",
-            "planned"
+            "planned",
+            "effective"
           ]
         },
         "from": {
