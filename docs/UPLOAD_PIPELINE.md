@@ -111,3 +111,40 @@ Avant activation : décision de stockage/réserve, budgets/TTL, validation des
 formats et analyseur, puis réception du stockage et SQL. Aucune installation
 globale ni activation effectuée. Le prochain travail applicatif indépendant
 reste l'association des messages et les accès aux catégories supplémentaires.
+
+## Association préparée des messages — 20 octobre 2026
+
+Le module `messaging` prépare `POST /api/v1/messages`, sans enregistrement dans
+le runtime. Un texte seul peut être persisté par le service préparé ; pour tout
+`file_id`, l'absence de politique explicite de stockage et de capacité entraîne
+`files_not_ready` sans écriture. Le serveur contrôle à nouveau identité,
+session, clinique approuvée ou permissions laboratoire (`messaging.*.reply`,
+`files.view`), conversation ciblée, fermeture et clé d'idempotence. La réponse
+n'annonce `sent` qu'après la transaction. Une répétition de même clé avec le
+même contenu renvoie le reçu ; une autre charge utile renvoie `conflict`.
+
+Dans la même transaction, sous verrou de conversation et verrous ordonnés des
+fichiers/sessions, le chemin préparé exige état ready, preuve SHA-256 et format
+vérifié, propriétaire et clinique identiques, versions de politique explicites,
+destination `message` et conversation exacte, session non expirée et taille
+cohérente. Il refuse les doubles et toute association antérieure à une version
+de commande, un suivi ou un message. Limites : 200 Mo par fichier et 1 Go par
+message. Le numéro séquentiel, le message, sa version, les liens vers les
+fichiers, événements fichiers/outbox et audit sont écrits atomiquement ; une
+expiration tardive ou un conflit annule l'ensemble. La FK composite de
+`message_version_files` protège aussi la clinique au niveau SQL. Les tests
+utilisent un double transactionnel ; ni contraintes PostgreSQL ni verrouillage
+réel n'ont été reçus pour ce code.
+
+Aucun adaptateur réel de stockage privé, réservation durable ou analyse de
+sécurité n'est installé dans cette composition. L'espace libre du disque ne
+constitue pas une réservation ; l'absence des binaires dans le PATH ne suffit
+pas à qualifier un analyseur. Le pipeline ne doit pas être composé avec une
+politique de test. Aucun upload, téléchargement, purge, reprise, interface
+d'envoi ou succès de transfert n'est activé. Avant composition : décisions
+explicites sur racine privée et ACL, réserve réelle, budgets/TTL et format,
+analyseur qualifié, stratégie de réconciliation après COMMIT incertain,
+réception PostgreSQL et stockage sous concurrence, puis recette d'accès aux
+fichiers et habilitation de chaque destination. Les objets temporaires ou
+incertains restent conservés jusqu'à une réconciliation autoritative ; aucun
+nettoyage automatique n'a été ajouté.

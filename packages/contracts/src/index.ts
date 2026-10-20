@@ -51,3 +51,11 @@ export * from "./laboratory-linked-work.js";
 export * from "./action-inbox.js";
 export { OrderFilesQuerySchema, OrderFilesPageSchema } from "./order-files.js";
 export type { OrderFilesQuery, OrderFilesPage } from "./order-files.js";
+export {
+  MessageSubmissionSchema,
+  MessageSubmissionResultSchema,
+} from "./message-submission.js";
+export type {
+  MessageSubmission,
+  MessageSubmissionResult,
+} from "./message-submission.js";

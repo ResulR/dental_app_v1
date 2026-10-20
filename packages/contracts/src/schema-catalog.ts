@@ -1,3 +1,7 @@
+import {
+  MessageSubmissionSchema,
+  MessageSubmissionResultSchema,
+} from "./message-submission.js";
 import { OrderFilesQuerySchema, OrderFilesPageSchema } from "./order-files.js";
 import {
   ActionInboxQuerySchema,
@@ -168,6 +172,8 @@ export function exportJsonSchemas() {
     OrderLifecycle: OrderLifecycleSchema,
     OrderLifecycleResult: OrderLifecycleResultSchema,
     OrderSearch: OrderSearchSchema,
+    MessageSubmission: MessageSubmissionSchema,
+    MessageSubmissionResult: MessageSubmissionResultSchema,
     OrderFilesQuery: OrderFilesQuerySchema,
     OrderFilesPage: OrderFilesPageSchema,
     OrderTrackingPage: OrderTrackingPageSchema,

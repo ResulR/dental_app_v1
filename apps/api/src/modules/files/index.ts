@@ -14,3 +14,4 @@ export {
 export { prepareNewOrderFiles } from "./attachment.repository.js";
 export type { AttachmentPolicy } from "./attachment.repository.js";
 export { readOrderFileMetadata } from "./metadata.repository.js";
+export { prepareMessageFiles } from "./message-attachments.repository.js";
