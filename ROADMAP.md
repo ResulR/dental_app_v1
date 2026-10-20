@@ -2696,7 +2696,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 16.2 — Implémenter priorité et urgence
-- **Statut :** ◐ Partiel — priorité manuelle versionnée, API/interface albanaise sous drapeaux inactifs ; alertes J-2/retard, calendrier et réception PostgreSQL restent à réaliser (docs/DELIVERY_PRIORITY.md).
+- **Statut :** ◐ Partiel — priorité manuelle versionnée sous drapeaux inactifs ; repères J-2/retard visuels sur les données suivies. Notifications fiables, calendrier et réception PostgreSQL restent à réaliser (docs/DELIVERY_PRIORITY.md).
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Planning, livraisons, archives et recherche

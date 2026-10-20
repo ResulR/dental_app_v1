@@ -1,3 +1,4 @@
+import { deliveryUrgency, deliveryUrgencyLabel } from "./delivery-urgency.js";
 import { DeliveryPriorityPanel } from "./DeliveryPriorityPanel.js";
 import { DeliveryPlanPanel } from "./DeliveryPlanPanel.js";
 import { OrderFilesPanel } from "./OrderFilesPanel.js";
@@ -35,6 +36,7 @@ export function OrderTrackingPanel({
     [from, setFrom] = useState(""),
     [to, setTo] = useState(""),
     [dateKind, setDateKind] = useState("requested"),
+    [clock, setClock] = useState(() => new Date()),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   const [page, setPage] = useState<ReturnType<
@@ -52,6 +54,10 @@ export function OrderTrackingPanel({
     },
     [],
   );
+  useEffect(() => {
+    const timer = setInterval(() => setClock(new Date()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
   async function run(work: (signal: AbortSignal) => Promise<void>) {
     if (pending.current) return;
     const controller = new AbortController();
@@ -199,6 +205,15 @@ export function OrderTrackingPanel({
                 E dëshiruar: {row.requested_delivery_date ?? "—"} · E
                 planifikuar: {row.planned_delivery_date ?? "—"}
               </p>
+              {(() => {
+                const urgency = deliveryUrgency(
+                  row.status,
+                  row.planned_delivery_date,
+                  row.requested_delivery_date,
+                  clock,
+                );
+                return urgency ? <p>{deliveryUrgencyLabel(urgency)}</p> : null;
+              })()}
               {clinic && row.status === "delivered" && (
                 <OrderRetouchForm
                   sourceId={row.id}
@@ -303,6 +318,15 @@ export function OrderTrackingPanel({
             E dëshiruar: {detail.order.requested_delivery_date ?? "—"} · E
             planifikuar: {detail.order.planned_delivery_date ?? "—"}
           </p>
+          {(() => {
+            const urgency = deliveryUrgency(
+              detail.order.status,
+              detail.order.planned_delivery_date,
+              detail.order.requested_delivery_date,
+              clock,
+            );
+            return urgency ? <p>{deliveryUrgencyLabel(urgency)}</p> : null;
+          })()}
           <p style={{ whiteSpace: "pre-wrap" }}>
             {detail.order.description || "Pa përshkrim."}
           </p>
