@@ -166,6 +166,7 @@ def plan(name):
     commands["test:clinic-profile"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/clinic-profile-persistence.test.mjs", "tests/unit/clinic-management.test.mjs", "tests/integration/clinic-management-http.test.mjs", "tests/integration/clinic-profile-http.test.mjs"), "targeted profile persistence and HTTP")]
     commands["test:clinic-management"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/clinic-management.test.mjs", "tests/integration/clinic-management-http.test.mjs", "tests/unit/registration-runtime.test.mjs", "tests/integration/registration-runtime-http.test.mjs"), "targeted clinic tests")]
     commands["prepare:registration-v4"] = [(["/usr/bin/python3", "scripts/prepare-registration-v4.py"], "prepare registration v4 bundle only")]
+    commands["check:delivery-batch-v5"] = [(["/bin/bash", "-n", "tests/postgres/run-delivery-batch-v5.sh"], "v5 shell syntax only"), (node("--check", "tests/postgres/delivery-batch-v5.mjs"), "v5 JavaScript syntax only")]
     commands["check:registration-recipe"] = [(["/bin/bash", "-n", "tests/postgres/run-registration-v4.sh"], "v4 shell syntax"), (node("--check", "tests/postgres/catalog-registration-v4.mjs"), "v4 JavaScript syntax")]
     commands["check:migrations"] = [(["/usr/bin/python3", "scripts/migration-catalog.py"], "migration source inventory")]
     commands["test:migrations"] = [

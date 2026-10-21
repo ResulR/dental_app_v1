@@ -20,4 +20,17 @@
 
 ## Critères d'arrêt et sortie
 
-Tout écart de privilège, de garde d'identité, de mémoire, de couverture d'un élément du lot, de version, de statut, de rollback, de verrouillage ou de services de production arrête l'essai. Arrêter **uniquement** le processus v5 par son PID/pg_ctl propre à la nouvelle racine ; ne supprimer aucun fichier de preuve. Comparer services, sockets et PostgreSQL de production avant/après. Une recette exécutable avec fixture SQL synthétique et contrôles de ressources reste à versionner et à examiner avant de lancer cet essai ; les tests Vitest actuels restent des doubles transactionnels.
+Tout écart de privilège, de garde d'identité, de mémoire, de couverture d'un élément du lot, de version, de statut, de rollback, de verrouillage ou de services de production arrête l'essai. Arrêter **uniquement** le processus v5 par son PID/pg_ctl propre à la nouvelle racine ; ne supprimer aucun fichier de preuve. Comparer services, sockets et PostgreSQL de production avant/après. La fixture synthétique et le lanceur `tests/postgres/run-delivery-batch-v5.sh` sont versionnés pour examen statique. Ils ne sont pas une preuve PostgreSQL : la réception doit vérifier leurs empreintes, leurs gardes et leurs ressources, puis autoriser séparément l'exécution. Les tests Vitest actuels restent des doubles transactionnels.
+
+## Commandes proposées après réception du diff et des empreintes (ne pas exécuter maintenant)
+
+Depuis la session `dental-ai` du VPS, sans sudo :
+
+```bash
+cd /srv/dental-lab
+sha256sum tests/postgres/run-delivery-batch-v5.sh tests/postgres/delivery-batch-v5-fixture.sql tests/postgres/delivery-batch-v5.mjs migrations/0022_delivery_batch_receipts.sql
+test ! -e /srv/dental-lab/.local/delivery-batch-v5
+DENTAL_BATCH_V5_APPROVED=private-unix-socket-one-shot /bin/bash tests/postgres/run-delivery-batch-v5.sh
+```
+
+Risques : consommation temporaire de mémoire/CPU/disque sur le VPS partagé, verrou d'essai ne couvrant que l'instance v5, échec possible des migrations/fixtures et comparaison avant/après des sockets sensible à une activité externe. Le lanceur refuse les ressources insuffisantes et conserve la racine, les marqueurs et les journaux même en cas d'échec ; il ne doit jamais être relancé sur une racine déjà créée. Résultat attendu : `real-postgres-batch-passed`, puis `V5_SQL_OK_STOPPED` dans `.local/delivery-batch-v5/ok`, production accessible et services/sockets identiques. Aucun de ces résultats n'est actuellement revendiqué.
