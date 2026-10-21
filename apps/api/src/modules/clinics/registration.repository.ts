@@ -68,9 +68,15 @@ export function createClinicRegistrationRepository(database: Database) {
             "INSERT INTO public.clinic_terms_acceptances(account_id,terms_version_id) VALUES($1,$2)",
             [account, data.terms_version_id],
           );
-          await tx.query(
-            "INSERT INTO public.conversations(clinic_id,kind) VALUES($1,'general')",
+          const generalConversation = await tx.query<{ id: string }>(
+            "INSERT INTO public.conversations(clinic_id,kind) VALUES($1,'general') RETURNING id",
             [clinic],
+          );
+          if (generalConversation.rows.length !== 1)
+            throw new Error("GENERAL_CONVERSATION_NOT_CREATED");
+          await tx.query(
+            "INSERT INTO public.conversation_reads(conversation_id,side) VALUES($1,'clinic'),($1,'laboratory')",
+            [generalConversation.rows[0]!.id],
           );
           await tx.query(
             "INSERT INTO public.audit_events(process_code,action,object_type,object_id,request_id,aggregate_revision) VALUES('clinic_registration','CLINIC_REGISTERED','clinic',$1,$2,1)",

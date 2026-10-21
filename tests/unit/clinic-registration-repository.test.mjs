@@ -28,6 +28,11 @@ function fixture(options = {}) {
       };
     if (sql.startsWith("SELECT a.id"))
       return { rows: options.noOwner ? [] : [{ id: "owner-fixture" }] };
+    if (sql.startsWith("INSERT INTO public.conversations"))
+      return {
+        rows: options.noConversation ? [] : [{ id: version }],
+        rowCount: 1,
+      };
     return { rows: [], rowCount: 1 };
   });
   const transaction = vi.fn(async (work) => {
@@ -44,26 +49,28 @@ function fixture(options = {}) {
     committed: () => committed,
   };
 }
-test("registration composes all eight writes in one transaction after terms lock and owner recheck", async () => {
+test("registration composes conversation and paired read markers in one transaction after terms lock and owner recheck", async () => {
   const f = fixture();
   expect(await f.repository.registerAtomic(data)).toBe("created");
   expect(f.transaction).toHaveBeenCalledTimes(1);
   expect(f.statements[0].sql).toContain("FOR SHARE");
   expect(f.committed().filter((s) => s.sql.startsWith("INSERT"))).toHaveLength(
-    8,
+    9,
   );
   const values = f.statements.map((s) => s.values);
   const account = values[2][0],
     clinic = values[3][0],
-    event = values[8][0];
+    event = values[9][0];
   expect(values[3][1]).toBe(account);
   expect(values[4]).toEqual([account, data.password_hash]);
   expect(values[5]).toEqual([account, version]);
   expect(values[6]).toEqual([clinic]);
-  expect(values[7][0]).toBe(clinic);
-  expect(values[8][1]).toBe(clinic);
-  expect(values[8][2]).toBe(values[7][1]);
-  expect(values[9]).toEqual([event]);
+  expect(values[7]).toEqual([version]);
+  expect(f.statements[7].sql).toContain("'clinic'),($1,'laboratory'");
+  expect(values[8][0]).toBe(clinic);
+  expect(values[9][1]).toBe(clinic);
+  expect(values[9][2]).toBe(values[8][1]);
+  expect(values[10]).toEqual([event]);
   expect(f.statements[2].sql).toContain("'clinic'");
   expect(f.statements[3].sql).toContain("'pending'");
   expect(f.statements.every((s) => !s.sql.includes(data.email))).toBe(true);
@@ -86,6 +93,7 @@ test("failure at every write aborts the callback; no committed result or retry",
     "credentials",
     "clinic_terms_acceptances",
     "conversations",
+    "conversation_reads",
     "audit_events",
     "outbox_events",
     "outbox_dispatches",
@@ -123,4 +131,15 @@ test("preflight reads report absence without creating an owner or publishing ter
   expect(await f.repository.ownerInitialized()).toBe(false);
   expect(f.transaction).not.toHaveBeenCalled();
   expect(f.statements.every((s) => s.sql.startsWith("SELECT"))).toBe(true);
+});
+
+test("missing conversation receipt aborts registration before read markers and audit", async () => {
+  const f = fixture({ noConversation: true });
+  await expect(f.repository.registerAtomic(data)).rejects.toThrow(
+    "GENERAL_CONVERSATION_NOT_CREATED",
+  );
+  expect(f.committed()).toEqual([]);
+  expect(
+    f.statements.some((s) => s.sql.includes("public.conversation_reads")),
+  ).toBe(false);
 });

@@ -2248,8 +2248,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 13 — Messagerie temps réel
 
 ### 13.1 — Créer conversation générale par clinique
-- **Statut :** ◐ Création transactionnelle intégrée, lecture/réception différées
-- **Preuve code 20/10 :** inscription clinique insère la conversation générale dans la même transaction ; index SQL d'unicité par clinique dans 0007. Pas de migration/reception PostgreSQL ni interface de messagerie active.
+- **Statut :** ◐ Création transactionnelle avec les deux marqueurs de lecture intégrée ; lecture/envoi textuels derrière drapeau fermé, réception PostgreSQL et navigateur différées
+- **Preuve code 21/10 :** inscription clinique insère conversation générale et marqueurs `clinic`/`laboratory` dans la même transaction ; index SQL d'unicité par clinique dans 0007. Les conversations créées avant ce correctif nécessitent une vérification et un éventuel rattrapage versionné des marqueurs avant les accusés « Lu ». Aucune migration de production ni activation.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel
