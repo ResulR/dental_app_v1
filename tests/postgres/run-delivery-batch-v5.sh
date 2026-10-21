@@ -13,7 +13,7 @@ cd /srv/dental-lab
 test -z "$(git status --porcelain=v1)"
 printf '%s\n' \
   '29f680d5b6605ccd2bac15f2669a79d9169c26574389466430fcc4a632ecafd8  tests/postgres/delivery-batch-v5-fixture.sql' \
-  'ddc4155f6c9b92ed9f4f53acfcf41c497d6636dc17a545609bf10eac72b4c64f  tests/postgres/delivery-batch-v5.mjs' \
+  '59956ff402ec17f551cd3762ec6a13031ffa18fb0d93c7de886abe8ed4616791  tests/postgres/delivery-batch-v5.mjs' \
   'e259575c72f6c9b84aca172bcbdbcd7a67f5245f18f1902a926d33118e838cd4  migrations/0022_delivery_batch_receipts.sql' | sha256sum -c -
 root=/srv/dental-lab/.local/delivery-batch-v5
 pgbin=/usr/lib/postgresql/17/bin
@@ -33,7 +33,7 @@ printf 'attempted\n' > "$root/attempt"
 git rev-parse HEAD > "$root/commit"
 sha256sum migrations/00{02..13}*.sql migrations/0022_delivery_batch_receipts.sql tests/postgres/delivery-batch-v5-fixture.sql tests/postgres/delivery-batch-v5.mjs > "$root/sha256"
 sha256sum -c "$root/sha256" > "$root/sha256-check.log"
-systemctl show nginx.service postgresql.service dental-site.service dental-ai-remote.service -p Id -p ActiveState -p SubState -p MainPID > "$root/services-before"
+systemctl show nginx.service postgresql.service postgresql@17-main.service dental-site.service dental-ai-remote.service -p Id -p ActiveState -p SubState -p MainPID > "$root/services-before"
 "$pgbin/pg_isready" -h /var/run/postgresql -p 5432 > "$root/production-before"
 ss -xl > "$root/sockets-before"
 stop_v5() {
@@ -44,7 +44,7 @@ stop_v5() {
   fi
   if "$pgbin/pg_ctl" -D "$root/pgdata" status > "$root/status-after-stop.log" 2>&1; then rc=1; fi
   if test -e "$root/socket/.s.PGSQL.55435"; then rc=1; fi
-  systemctl show nginx.service postgresql.service dental-site.service dental-ai-remote.service -p Id -p ActiveState -p SubState -p MainPID > "$root/services-after" || rc=1
+  systemctl show nginx.service postgresql.service postgresql@17-main.service dental-site.service dental-ai-remote.service -p Id -p ActiveState -p SubState -p MainPID > "$root/services-after" || rc=1
   "$pgbin/pg_isready" -h /var/run/postgresql -p 5432 > "$root/production-after" || rc=1
   ss -xl > "$root/sockets-after" || rc=1
   cmp -s "$root/services-before" "$root/services-after" || rc=1

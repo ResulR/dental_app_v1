@@ -127,6 +127,10 @@ try {
   );
   assert.equal(first.result.kind, "delivered");
   assert.equal(first.result.items.length, 2);
+  assert.deepEqual(
+    first.result.items.map(({ revision }) => revision),
+    [2, 2],
+  );
   assert.deepEqual(await snapshot(observer), {
     delivered: 2,
     events: 2,
