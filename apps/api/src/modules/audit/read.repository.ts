@@ -67,7 +67,7 @@ export function createAuditReadRepository(
 }
 export async function assertAuditReadReady(db: DatabaseExecutor) {
   const r = await db.query(
-    "SELECT has_table_privilege(current_user,'public.audit_events','SELECT') AS ready",
+    "SELECT has_table_privilege(current_user,'public.audit_events','SELECT') AND has_table_privilege(current_user,'public.audit_events','INSERT') AND NOT has_table_privilege(current_user,'public.audit_events','UPDATE') AND NOT has_table_privilege(current_user,'public.audit_events','DELETE') AND NOT has_table_privilege(current_user,'public.audit_events','TRUNCATE') AND NOT EXISTS (SELECT 1 FROM pg_catalog.pg_attribute a WHERE a.attrelid='public.audit_events'::regclass AND a.attnum>0 AND NOT a.attisdropped AND has_column_privilege(current_user,a.attrelid,a.attnum,'UPDATE')) AS ready",
   );
   if (r.rows[0]?.ready !== true)
     throw new Error("AUDIT_READ_STORAGE_NOT_READY");

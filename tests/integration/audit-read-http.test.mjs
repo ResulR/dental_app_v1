@@ -56,6 +56,10 @@ test("global audit HTTP rejects origin, session, unknown fields and denied actor
         })
       ).status,
     ).toBe(400);
+    for (const method of ["PUT", "PATCH", "DELETE"]) {
+      const mutation = await fetch(url, { method, headers, body: "{}" });
+      expect(mutation.status).toBe(404);
+    }
     expect(page).not.toHaveBeenCalled();
     const response = await fetch(url, { method: "POST", headers, body: "{}" });
     expect(response.status).toBe(200);

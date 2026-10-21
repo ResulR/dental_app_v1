@@ -1,5 +1,8 @@
 import { test, expect, vi } from "vitest";
-import { createAuditReadRepository } from "../../apps/api/dist/modules/audit/index.js";
+import {
+  createAuditReadRepository,
+  assertAuditReadReady,
+} from "../../apps/api/dist/modules/audit/index.js";
 import { auditReadEnabled } from "../../apps/api/dist/app/audit-read-config.js";
 const id = "94000000-0000-4000-8000-000000000001";
 const actor = { accountId: id, sessionId: id };
@@ -85,6 +88,20 @@ test.each(["admin", "employee", "clinic"])(
     ).toBe(false);
   },
 );
+test("audit readiness refuses any application-role mutation grant", async () => {
+  const db = { query: vi.fn(async () => ({ rows: [{ ready: true }] })) };
+  await expect(assertAuditReadReady(db)).resolves.toBeUndefined();
+  const sql = db.query.mock.calls[0][0];
+  for (const privilege of ["SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE"])
+    expect(sql).toContain(`'public.audit_events','${privilege}'`);
+  expect(sql).toContain(
+    "has_column_privilege(current_user,a.attrelid,a.attnum,'UPDATE')",
+  );
+  db.query.mockResolvedValueOnce({ rows: [{ ready: false }] });
+  await expect(assertAuditReadReady(db)).rejects.toThrow(
+    "AUDIT_READ_STORAGE_NOT_READY",
+  );
+});
 test("strict query and activation gate reject unknown filters", async () => {
   const db = fixture();
   expect(

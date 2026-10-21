@@ -2834,7 +2834,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 17.2 — Rendre journal non modifiable dans l’application
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Aucune route de mutation, privilèges SQL applicatifs sans UPDATE/DELETE/TRUNCATE et garde de démarrage en place ; falsification PostgreSQL réelle et rétention à valider
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Administration, audit, rétention et conformité
