@@ -1,4 +1,11 @@
 import { auditReadEnabled } from "./audit-read-config.js";
+import { generalMessagingEnabled } from "./general-messaging-config.js";
+import {
+  createGeneralMessagingService,
+  createMessageSubmissionService,
+  registerGeneralMessagingRoutes,
+  assertGeneralMessagingReady,
+} from "../modules/messaging/index.js";
 import {
   createAuditReadService,
   registerAuditReadRoutes,
@@ -154,6 +161,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableGeneralMessaging = generalMessagingEnabled(env);
   const enableAuditRead = auditReadEnabled(env);
   const enableDeliveryBatch = deliveryBatchEnabled(env);
   const enableDeliveryPriority = deliveryPriorityEnabled(env);
@@ -184,6 +192,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     // Fail startup, without creating/migrating anything, if required objects or
     // read privileges are absent. Every checkout also enforces runtime identity.
     await assertAuthStorageReady(database);
+    if (enableGeneralMessaging) await assertGeneralMessagingReady(database);
     if (enableAuditRead) await assertAuditReadReady(database);
     if (enableDeliveryPriority) await assertDeliveryPriorityReady(database);
     if (enableDeliveryPlan) await assertDeliveryPlanReady(database);
@@ -237,6 +246,13 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
           sessions,
           origin: config.origin,
         });
+        if (enableGeneralMessaging)
+          registerGeneralMessagingRoutes(app, {
+            reader: createGeneralMessagingService(database),
+            sender: createMessageSubmissionService(database, undefined, true),
+            sessions,
+            origin: config.origin,
+          });
         if (enableDeliveryPriority)
           registerDeliveryPriorityRoutes(app, {
             service: createDeliveryPriorityService(database),

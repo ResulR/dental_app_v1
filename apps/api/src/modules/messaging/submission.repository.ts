@@ -8,16 +8,19 @@ import { createCurrentPermissionsRepository } from "../permissions/index.js";
 import { prepareMessageFiles } from "../files/index.js";
 import type { AttachmentPolicy } from "../files/index.js";
 type Actor = { accountId: string; sessionId: string };
-// Not composed by runtime until independent messaging/file readiness.
+// General text-only runtime uses generalOnly=true; file bindings stay unmounted.
 export function createMessageSubmissionRepository(
   db: Pick<ReturnType<typeof createApplicationDatabase>, "transaction">,
   attachmentPolicy?: AttachmentPolicy,
+  generalOnly = false,
 ) {
   return {
     async send(actor: Actor, raw: unknown) {
       const parsed = MessageSubmissionSchema.safeParse(raw);
       if (!parsed.success) return { kind: "invalid" as const };
       const input = parsed.data;
+      if (generalOnly && (input.body === null || input.file_ids.length))
+        return { kind: "invalid" as const };
       const fingerprint = createHash("sha256")
         .update(
           JSON.stringify({
@@ -58,7 +61,8 @@ export function createMessageSubmissionRepository(
           [input.conversation_id, clinicId],
         );
         const conversation = conversations.rows[0];
-        if (!conversation) return { kind: "denied" as const };
+        if (!conversation || (generalOnly && conversation.kind !== "general"))
+          return { kind: "denied" as const };
         if (identity.profile !== "clinic") {
           const permission =
             conversation.kind === "order"

@@ -295,3 +295,17 @@ test("concurrent key replay and failures at every write roll back all aggregate 
     expect(failing.state.seq).toBe(0);
   }
 });
+
+test("text-only general mode rejects order conversations and all file references", async () => {
+  const order = fixture();
+  const sender = createMessageSubmissionService(order, undefined, true);
+  expect((await sender.send(actor, command)).kind).toBe("denied");
+  expect(order.state.writes).toEqual([]);
+  const general = fixture({ kind: "general" });
+  const text = createMessageSubmissionService(general, undefined, true);
+  expect((await text.send(actor, { ...command, file_ids: [id] })).kind).toBe(
+    "invalid",
+  );
+  expect(general.transaction).not.toHaveBeenCalled();
+  expect((await text.send(actor, command)).result.kind).toBe("sent");
+});

@@ -20,7 +20,8 @@ export function PermissionBoundary({
     | "catalog.manage"
     | "settings.manage"
     | "orders.read_details"
-    | "orders.read_logistics";
+    | "orders.read_logistics"
+    | "messaging.general.read";
   allowClinic?: boolean;
   allowCatalogReader?: boolean;
 }) {
