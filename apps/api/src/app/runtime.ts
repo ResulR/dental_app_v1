@@ -1,3 +1,9 @@
+import { deliveryBatchEnabled } from "./delivery-batch-config.js";
+import {
+  createDeliveryBatchService,
+  registerDeliveryBatchRoutes,
+  assertDeliveryBatchReady,
+} from "../modules/orders/index.js";
 import { deliveryPriorityEnabled } from "./delivery-priority-config.js";
 import {
   createDeliveryPriorityService,
@@ -142,6 +148,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableDeliveryBatch = deliveryBatchEnabled(env);
   const enableDeliveryPriority = deliveryPriorityEnabled(env);
   const enableDeliveryPlan = deliveryPlanEnabled(env);
   const enableActionInbox = actionInboxEnabled(env);
@@ -178,6 +185,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     if (enableOrderSubmission) await assertOrderSubmissionReady(database);
     if (enableOrderDecision) await assertOrderDecisionReady(database);
     if (enableOrderLifecycle) await assertOrderLifecycleReady(database);
+    if (enableDeliveryBatch) await assertDeliveryBatchReady(database);
     if (enableOrderRequest) await assertCancellationRequestReady(database);
     if (enableOrderEdit) await assertOrderEditReady(database);
     if (enableRetouch) await assertRetouchReady(database);
@@ -278,6 +286,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
         if (enableOrderRequest)
           registerCancellationRequestRoutes(app, {
             service: createCancellationRequestService(database),
+            sessions,
+            origin: config.origin,
+          });
+        if (enableDeliveryBatch)
+          registerDeliveryBatchRoutes(app, {
+            service: createDeliveryBatchService(database),
             sessions,
             origin: config.origin,
           });

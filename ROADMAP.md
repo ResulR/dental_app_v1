@@ -2756,7 +2756,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 16.6 — Implémenter livraison individuelle et groupée
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Code intégré ; recette PostgreSQL isolée et migration 0022 à réceptionner avant activation
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Planning, livraisons, archives et recherche
@@ -2771,7 +2771,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 16.7 — Implémenter correction exceptionnelle de livraison
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Déjà intégrée au cycle de vie (motif, permission admin, retouche bloquante, réouverture conversation, archive remise à zéro) ; recette PostgreSQL réelle restante
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Planning, livraisons, archives et recherche

@@ -18,6 +18,9 @@ export { registerOrderTrackingRoutes } from "./tracking.routes.js";
 export { createOrderLifecycleService } from "./lifecycle.service.js";
 export { registerOrderLifecycleRoutes } from "./lifecycle.routes.js";
 export { assertOrderLifecycleReady } from "./lifecycle.repository.js";
+export { createDeliveryBatchService } from "./delivery-batch.service.js";
+export { registerDeliveryBatchRoutes } from "./delivery-batch.routes.js";
+export { assertDeliveryBatchReady } from "./delivery-batch.repository.js";
 
 export { createCancellationRequestService } from "./cancellation-request.service.js";
 export { registerCancellationRequestRoutes } from "./cancellation-request.routes.js";

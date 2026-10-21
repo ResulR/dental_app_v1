@@ -1,5 +1,6 @@
 import { deliveryUrgency, deliveryUrgencyLabel } from "./delivery-urgency.js";
 import { DeliveryCalendar } from "./DeliveryCalendar.js";
+import { ReadyDeliveryBatch } from "./ReadyDeliveryBatch.js";
 import { DeliveryPriorityPanel } from "./DeliveryPriorityPanel.js";
 import { DeliveryPlanPanel } from "./DeliveryPlanPanel.js";
 import { OrderFilesPanel } from "./OrderFilesPanel.js";
@@ -39,6 +40,7 @@ export function OrderTrackingPanel({
     [dateKind, setDateKind] = useState("requested"),
     [clock, setClock] = useState(() => new Date()),
     [busy, setBusy] = useState(false),
+    [readyOnly, setReadyOnly] = useState(false),
     [message, setMessage] = useState("");
   const [page, setPage] = useState<ReturnType<
       typeof OrderTrackingPageSchema.parse
@@ -111,6 +113,7 @@ export function OrderTrackingPanel({
       if (!signal.aborted) {
         lastQuery.current = parsed.data;
         setPage(next);
+        setReadyOnly(ready || (!!after && readyOnly));
         setDetail(null);
         if (ready) {
           setStatus("completed");
@@ -219,6 +222,21 @@ export function OrderTrackingPanel({
           </p>
         </div>
       )}
+      {page &&
+        readyOnly &&
+        !clinic &&
+        permissions.includes("delivery.mark_delivered") &&
+        import.meta.env.VITE_DENTAL_LAB_DELIVERY_BATCH_ENABLED === "true" && (
+          <ReadyDeliveryBatch
+            key={page.items.map((row) => row.id).join(":")}
+            rows={page.items}
+            onFinished={(text) => {
+              setPage(null);
+              setDetail(null);
+              setMessage(text);
+            }}
+          />
+        )}
       {page && !page.can_read_details && (
         <p>
           Qasje logjistike: kërkimi i pacientit dhe udhëzimet nuk janë të
