@@ -2280,7 +2280,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 13.3 — Implémenter réception/envoi des messages
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Réception paginée et envoi idempotent de la conversation générale textuelle intégrés derrière drapeau fermé ; conversation de commande, fichiers, tests PostgreSQL et navigateur restent ouverts.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel
@@ -2756,7 +2756,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 16.6 — Implémenter livraison individuelle et groupée
-- **Statut :** ◐ Code intégré ; recette PostgreSQL isolée et migration 0022 à réceptionner avant activation
+- **Statut :** ◐ Code intégré ; recette PostgreSQL 17 isolée v5 réceptionnée le 21/10/2026 (atomicité, rollback, idempotence, verrous concurrents, permissions, immutabilité des reçus et éligibilité). Preuves conservées dans `.local/delivery-batch-v5/` (`result.json`, `ok`, journaux, états avant/après et empreintes vérifiées) ; PostgreSQL v5 arrêté et services inchangés. Recette navigateur, migration/activation de production et autres scénarios hors 16.6 restent ouverts.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Planning, livraisons, archives et recherche
@@ -2849,7 +2849,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 17.3 — Implémenter gestion de la rétention à échéance
-- **Statut :** ☐ À faire
+- **Statut :** ☐ Décisions métier/juridiques requises avant calcul d'échéance ou effacement ; catégories et questions consignées dans `docs/admin-proposals/POST_V5_VALIDATION_GAPS.md`. J+30 reste uniquement une archive d'interface.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Administration, audit, rétention et conformité
@@ -2894,7 +2894,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 17.6 — Implémenter demandes via messagerie générale
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Conversation générale textuelle : lecture paginée par clinique/permission, envoi idempotent et interface albanaise intégrés derrière drapeaux fermés. Pas de tickets dédiés, fichiers refusés ; réception PostgreSQL, vérification navigateur, procédures de réponse du propriétaire et activation restent à faire.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Administration, audit, rétention et conformité

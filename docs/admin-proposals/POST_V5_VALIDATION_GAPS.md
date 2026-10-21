@@ -1,0 +1,15 @@
+# Réception distincte après la v5 — 16.7, archives et audit 17.2
+
+La v5 a réussi le 21/10/2026 sur PostgreSQL 17 isolé. Les marqueurs `.local/delivery-batch-v5/result.json` et `ok`, les empreintes, le journal d'arrêt et les comparaisons des services/sockets ont été revérifiés en lecture seule. Elle prouve uniquement les scénarios 16.6 énumérés dans `DELIVERY_BATCH_REAL_SQL.md`. Ne pas relancer ou modifier sa racine.
+
+| Point | Validation encore absente | Données et assertions dans un **nouveau** cluster isolé |
+| --- | --- | --- |
+| 16.7 | Correction réelle, permissions et verrous avec/sans retouche | Livraison, correction motivée par propriétaire ; admin secondaire autorisé vs non autorisé ; clinique interdite ; retouche liée bloque la correction sans mutation ; concurrent livraison/correction ; rollback injecté ; statut, livraison, conversation, échéance, événements et audit cohérents. |
+| 16.8–16.9 | Horloge et cloisonnement PostgreSQL réel, parcours navigateur | J+29/J+30 en Europe/Pristina, bornes de changement d'heure ; commande livrée absente des actifs mais accessible en archive, détails/retouche possibles ; seconde clinique exclue ; correction annule l'échéance et nouvelle livraison la recalcule ; aucun effacement. |
+| 17.2 | Falsification réelle par rôle applicatif et garde de démarrage | `has_table_privilege` et `has_column_privilege` pour audit ; tenter UPDATE/DELETE/TRUNCATE sous rôle applicatif dans transactions annulées, chacune refusée ; INSERT métier autorisé ; aucune route HTTP de mutation ; garde de démarrage refuse un rôle trop puissant. |
+
+Recette à produire et examiner **avant** toute autorisation : nouveau nom/racine distincte de v1–v5, base synthétique neuve ; empreintes et migrations réellement nécessaires ; garde d'identité et de ressources identique au modèle v5 ; socket Unix privée ; échantillons sans données patient ; vérification avant/après de PostgreSQL de production, PID des services et sockets ; arrêt borné et conservation intégrale même en échec. Aucun lancement implicite. Les tests Vitest avec doubles ne prouvent pas les verrous ou permissions PostgreSQL ; les parcours navigateur nécessitent une réception séparée.
+
+# 17.3 — Décisions nécessaires avant rétention
+
+J+30 est une **vue d'archive** et ne déclenche aucune purge. La conservation des sauvegardes à 30 jours est indiquée dans le cahier, mais ne définit pas celle des données métier. Le responsable doit approuver, par catégorie (commandes, documents et fichiers médicaux, messages, audits, brouillons, temporaires, sauvegardes), le point de départ, la durée, la base applicable, l'action finale et son autorité. Il faut aussi décider la gestion vérifiable des exceptions légales, des litiges, des demandes de personnes, des références entre entités, des notifications du propriétaire, de la justification minimisée des décisions et de la non-réapparition après restauration. Aucun calendrier de suppression, exception automatique ou texte juridique n'est implémenté tant que ces choix ne sont pas validés. Les contrôles d'accès, l'archive sans effacement et la lecture d'audit restent utilisables indépendamment.
