@@ -177,10 +177,155 @@ try {
     (await service(a).receipt(clinic, { receipt_id: receipt(1) })).kind,
     "denied",
   );
+  // Check table grants and trigger guards under the exact application role.
+  await observer.query("BEGIN");
+  try {
+    await observer.query("SET LOCAL ROLE dental_lab_app");
+    const {
+      rows: [grants],
+    } = await observer.query(
+      "SELECT has_table_privilege(current_user,'public.delivery_batch_receipts','SELECT') AS can_read,has_table_privilege(current_user,'public.delivery_batch_receipts','INSERT') AS can_insert,has_table_privilege(current_user,'public.delivery_batch_receipts','DELETE') AS can_delete,has_table_privilege(current_user,'public.audit_events','UPDATE') AS can_edit_audit,has_table_privilege(current_user,'public.audit_events','DELETE') AS can_delete_audit",
+    );
+    assert.deepEqual(grants, {
+      can_read: true,
+      can_insert: true,
+      can_delete: false,
+      can_edit_audit: false,
+      can_delete_audit: false,
+    });
+    await assert.rejects(
+      observer.query(
+        'UPDATE public.delivery_batch_receipts SET result=\'{"kind":"pending"}\'::jsonb WHERE id=$1',
+        [receipt(1)],
+      ),
+      /DELIVERY_BATCH_RECEIPT_IMMUTABLE/,
+    );
+  } finally {
+    await observer.query("ROLLBACK");
+  }
+  await observer.query("BEGIN");
+  try {
+    await observer.query("SET LOCAL ROLE dental_lab_app");
+    await assert.rejects(
+      observer.query(
+        "INSERT INTO public.delivery_batch_receipts(id,actor_id,payload_hash,result) VALUES($1,$2,decode(repeat('aa',32),'hex'),$3::jsonb)",
+        [receipt(19), owner.accountId, JSON.stringify(first.result)],
+      ),
+      /DELIVERY_BATCH_RECEIPT_MUST_START_PENDING/,
+    );
+  } finally {
+    await observer.query("ROLLBACK");
+  }
+  await observer.query("BEGIN");
+  await observer.query("SET LOCAL ROLE dental_lab_app");
+  await observer.query(
+    "INSERT INTO public.delivery_batch_receipts(id,actor_id,payload_hash,result) VALUES($1,$2,decode(repeat('aa',32),'hex'),'{\"kind\":\"pending\"}'::jsonb)",
+    [receipt(19), owner.accountId],
+  );
+  await assert.rejects(
+    observer.query("COMMIT"),
+    /DELIVERY_BATCH_RECEIPT_PENDING_AT_COMMIT/,
+  );
+  assert.equal((await snapshot(observer)).receipts, 1);
   const beforeMixed = await snapshot(observer);
   assert.equal(
     (await service(a).deliver(owner, cmd(2, [1, 3]))).result.kind,
     "conflict",
+  );
+  assert.deepEqual(await snapshot(observer), beforeMixed);
+  assert.equal(
+    (
+      await service(a).deliver(owner, {
+        ...cmd(2, [3, 4]),
+        items: [{ ...item(3), expected_revision: 9 }, item(4)],
+      })
+    ).result.kind,
+    "conflict",
+  );
+  assert.equal(
+    (
+      await service(a).deliver(owner, {
+        ...cmd(2, [3, 4]),
+        items: [{ ...item(3), expected_version_id: receipt(99) }, item(4)],
+      })
+    ).result.kind,
+    "conflict",
+  );
+  assert.deepEqual(await snapshot(observer), beforeMixed);
+  await observer.query(
+    "UPDATE public.catalog_references SET use_state='forbidden',forbidden_reason='Synthetic safety restriction' WHERE id=$1",
+    [id("73", 1)],
+  );
+  try {
+    assert.deepEqual((await service(a).deliver(owner, cmd(2, [3, 4]))).result, {
+      kind: "blocked",
+      reason: "catalog_forbidden",
+    });
+    assert.deepEqual(await snapshot(observer), beforeMixed);
+  } finally {
+    await observer.query(
+      "UPDATE public.catalog_references SET use_state='available',forbidden_reason=NULL WHERE id=$1",
+      [id("73", 1)],
+    );
+  }
+  await observer.query(
+    "INSERT INTO public.order_requests(order_id,clinic_id,kind,base_version_id,requested_by) VALUES($1,$2,'cancellation',$3,$4)",
+    [id("75", 3), id("72", 1), id("76", 3), owner.accountId],
+  );
+  try {
+    assert.deepEqual((await service(a).deliver(owner, cmd(2, [3, 4]))).result, {
+      kind: "blocked",
+      reason: "pending_request",
+    });
+    assert.deepEqual(await snapshot(observer), beforeMixed);
+  } finally {
+    await observer.query(
+      "DELETE FROM public.order_requests WHERE order_id=$1",
+      [id("75", 3)],
+    );
+  }
+  await observer.query(
+    "INSERT INTO public.order_security_blocks(order_id,clinic_id,reference_id,reason,created_by) VALUES($1,$2,$3,'Synthetic block',$4)",
+    [id("75", 3), id("72", 1), id("73", 1), owner.accountId],
+  );
+  try {
+    assert.deepEqual((await service(a).deliver(owner, cmd(2, [3, 4]))).result, {
+      kind: "blocked",
+      reason: "security_block",
+    });
+    assert.deepEqual(await snapshot(observer), beforeMixed);
+  } finally {
+    await observer.query(
+      "DELETE FROM public.order_security_blocks WHERE order_id=$1",
+      [id("75", 3)],
+    );
+  }
+  await observer.query(
+    "INSERT INTO public.file_objects(id,clinic_id,created_by,object_key,filename_original,format,size_bytes,state,storage_policy_version) VALUES($1,$2,$3,repeat('a',64),'fixture.pdf','pdf',1,'verifying','fixture')",
+    [id("79", 1), id("72", 1), owner.accountId],
+  );
+  await observer.query(
+    "INSERT INTO public.order_version_files(version_id,order_id,clinic_id,file_id,attached_by) VALUES($1,$2,$3,$4,$5)",
+    [id("76", 3), id("75", 3), id("72", 1), id("79", 1), owner.accountId],
+  );
+  try {
+    assert.deepEqual((await service(a).deliver(owner, cmd(2, [3, 4]))).result, {
+      kind: "blocked",
+      reason: "files_not_ready",
+    });
+    assert.deepEqual(await snapshot(observer), beforeMixed);
+  } finally {
+    await observer.query(
+      "DELETE FROM public.order_version_files WHERE file_id=$1",
+      [id("79", 1)],
+    );
+    await observer.query("DELETE FROM public.file_objects WHERE id=$1", [
+      id("79", 1),
+    ]);
+  }
+  assert.equal(
+    (await service(a).deliver(clinic, cmd(2, [3, 4]))).kind,
+    "denied",
   );
   assert.deepEqual(await snapshot(observer), beforeMixed);
   let injected = false;
@@ -219,6 +364,10 @@ try {
   } finally {
     one.release();
   }
+  assert.deepEqual(
+    await service(b).receipt(owner, { receipt_id: receipt(4) }),
+    await service(a).receipt(owner, { receipt_id: receipt(4) }),
+  );
   assert.deepEqual(await snapshot(observer), {
     delivered: 4,
     events: 4,
@@ -272,6 +421,10 @@ try {
         "real-order-lock",
         "scoped-permission",
         "no-clinic-mail",
+        "finalized-receipt-immutable",
+        "pending-receipt-rollback",
+        "stale-version-and-revision",
+        "catalog-and-pending-request-blocks",
       ],
     }) + "\n",
   );

@@ -4,6 +4,9 @@ node_modules
 dist
 coverage
 package-lock.json
+# Frozen historical PostgreSQL v2/v3 receipts; reviewed separately, never reformatted.
+scripts/linked-works-postgres-v2.mjs
+scripts/linked-works-postgres-v3.mjs
 docs
 migrations
 CAHIER_DES_CHARGES.md

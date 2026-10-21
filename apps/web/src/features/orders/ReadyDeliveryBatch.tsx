@@ -106,7 +106,14 @@ export function ReadyDeliveryBatch({
     return "Nuk u gjet faturë e konfirmuar. Nëse përgjigjja ishte e pasigurt, kontrollojeni sërish.";
   }
   async function deliver() {
-    if (!prepared || !confirmed || receiptId || uncertain.current || pending.current) return;
+    if (
+      !prepared ||
+      !confirmed ||
+      receiptId ||
+      uncertain.current ||
+      pending.current
+    )
+      return;
     const id = crypto.randomUUID();
     setReceiptId(id);
     uncertain.current = id;

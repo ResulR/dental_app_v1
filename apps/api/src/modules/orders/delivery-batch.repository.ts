@@ -75,7 +75,7 @@ export function createDeliveryBatchRepository(
           if (!(await authorize(tx, actor))) return { kind: "denied" };
           // The unique key serializes retries. A failed batch rolls back its pending receipt.
           const inserted = await tx.query(
-            'INSERT INTO public.delivery_batch_receipts(id,actor_id,payload_hash,delivered_at,result) VALUES($1,$2,$3,clock_timestamp(),\'{"kind":"pending"}\'::jsonb) ON CONFLICT (id) DO NOTHING RETURNING id',
+            'INSERT INTO public.delivery_batch_receipts(id,actor_id,payload_hash,result) VALUES($1,$2,$3,\'{"kind":"pending"}\'::jsonb) ON CONFLICT (id) DO NOTHING RETURNING id',
             [input.receipt_id, actor.accountId, hash],
           );
           if (!inserted.rows.length) {
