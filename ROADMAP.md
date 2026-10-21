@@ -2819,7 +2819,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 17 — Administration, audit, rétention et conformité
 
 ### 17.1 — Implémenter journal d’audit global propriétaire
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Consultation paginée propriétaire intégrée derrière drapeau fermé ; validation PostgreSQL et activation restantes
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Administration, audit, rétention et conformité

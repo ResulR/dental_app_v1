@@ -1,0 +1,5 @@
+# 17.1 — Consultation du journal d'audit
+
+Le contrat `AuditLogQuerySchema` limite les filtres au code d'action, au type d'objet et au curseur chronologique (horodatage, UUID). L'API `POST /api/v1/audit/page` lit au plus 50 entrées par page et ne retourne que la métadonnée d'audit, sans contenu patient. Elle requiert une session courante appartenant au propriétaire principal ; un administrateur secondaire ne peut pas la consulter, même avec d'autres délégations. Les verrous de compte/session et de grants précèdent la lecture. L'interface albanaise est visible seulement au propriétaire, avec un drapeau web et un drapeau API désactivés par défaut.
+
+`0010_application_table_privileges.sql` donne déjà SELECT sur `audit_events` au rôle applicatif et ne lui donne pas UPDATE/DELETE. Aucune migration ni service n'a été activé pour ce lot. Vérification PostgreSQL réelle de la portée du propriétaire, de la pagination au même horodatage et de la révocation encore nécessaire avant activation. Ce point ne fixe aucune durée de conservation et n'autorise aucun effacement.

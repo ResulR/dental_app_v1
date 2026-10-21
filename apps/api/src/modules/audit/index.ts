@@ -1,4 +1,10 @@
 // Separate append-only port. Durable transaction storage is implemented with approved SQL later.
+export {
+  createAuditReadRepository,
+  assertAuditReadReady,
+} from "./read.repository.js";
+export { createAuditReadService } from "./read.service.js";
+export { registerAuditReadRoutes } from "./read.routes.js";
 export type AuditAction =
   | "ORDER_SUBMITTED"
   | "ORDER_STATE_CHANGED"

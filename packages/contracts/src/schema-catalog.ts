@@ -1,3 +1,9 @@
+import { AuditLogQuerySchema, AuditLogPageSchema } from "./audit-log.js";
+import {
+  DeliveryBatchCommandSchema,
+  DeliveryBatchReceiptQuerySchema,
+  DeliveryBatchResultSchema,
+} from "./delivery-batch.js";
 import {
   DeliveryPriorityQuerySchema,
   DeliveryPriorityCommandSchema,
@@ -160,6 +166,11 @@ import {
 } from "./clinic-registration.js";
 export function exportJsonSchemas() {
   const schemas = {
+    AuditLogQuery: AuditLogQuerySchema,
+    AuditLogPage: AuditLogPageSchema,
+    DeliveryBatchCommand: DeliveryBatchCommandSchema,
+    DeliveryBatchReceiptQuery: DeliveryBatchReceiptQuerySchema,
+    DeliveryBatchResult: DeliveryBatchResultSchema,
     LinkedWorkQuery: LinkedWorkQuerySchema,
     LinkedWorkPage: LinkedWorkPageSchema,
     ActionInboxQuery: ActionInboxQuerySchema,

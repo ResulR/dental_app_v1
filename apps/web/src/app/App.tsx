@@ -1,3 +1,4 @@
+import { AuditLogPanel } from "../features/audit/AuditLogPanel.js";
 import { ActionInboxPanel } from "../features/orders/index.js";
 import { OrderTrackingPanel } from "../features/orders/index.js";
 import { ClinicOrderForm, OrderReviewPanel } from "../features/orders/index.js";
@@ -98,6 +99,13 @@ export function App() {
               >
                 <CatalogPanel key={identity.account_id + "-catalog"} />
               </PermissionBoundary>
+              {identity.profile === "owner" &&
+                import.meta.env.VITE_DENTAL_LAB_AUDIT_READ_ENABLED ===
+                  "true" && (
+                  <PermissionBoundary identity={identity} allowClinic={false}>
+                    <AuditLogPanel key={identity.account_id + "-audit"} />
+                  </PermissionBoundary>
+                )}
               {identity.profile === "owner" && (
                 <PermissionBoundary identity={identity} allowClinic={false}>
                   <AdminPanel key={identity.account_id + "-admins"} />

@@ -1,3 +1,9 @@
+import { auditReadEnabled } from "./audit-read-config.js";
+import {
+  createAuditReadService,
+  registerAuditReadRoutes,
+  assertAuditReadReady,
+} from "../modules/audit/index.js";
 import { deliveryBatchEnabled } from "./delivery-batch-config.js";
 import {
   createDeliveryBatchService,
@@ -148,6 +154,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableAuditRead = auditReadEnabled(env);
   const enableDeliveryBatch = deliveryBatchEnabled(env);
   const enableDeliveryPriority = deliveryPriorityEnabled(env);
   const enableDeliveryPlan = deliveryPlanEnabled(env);
@@ -177,6 +184,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     // Fail startup, without creating/migrating anything, if required objects or
     // read privileges are absent. Every checkout also enforces runtime identity.
     await assertAuthStorageReady(database);
+    if (enableAuditRead) await assertAuditReadReady(database);
     if (enableDeliveryPriority) await assertDeliveryPriorityReady(database);
     if (enableDeliveryPlan) await assertDeliveryPlanReady(database);
     if (enableLaboratorySettings) await assertLaboratorySettingsReady(database);
@@ -286,6 +294,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
         if (enableOrderRequest)
           registerCancellationRequestRoutes(app, {
             service: createCancellationRequestService(database),
+            sessions,
+            origin: config.origin,
+          });
+        if (enableAuditRead)
+          registerAuditReadRoutes(app, {
+            reader: createAuditReadService(database),
             sessions,
             origin: config.origin,
           });
