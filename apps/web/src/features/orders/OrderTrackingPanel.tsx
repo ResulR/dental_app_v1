@@ -38,9 +38,11 @@ export function OrderTrackingPanel({
     [from, setFrom] = useState(""),
     [to, setTo] = useState(""),
     [dateKind, setDateKind] = useState("requested"),
+    [view, setView] = useState("active"),
     [clock, setClock] = useState(() => new Date()),
     [busy, setBusy] = useState(false),
     [readyOnly, setReadyOnly] = useState(false),
+    [displayedView, setDisplayedView] = useState("active"),
     [message, setMessage] = useState("");
   const [page, setPage] = useState<ReturnType<
       typeof OrderTrackingPageSchema.parse
@@ -90,19 +92,22 @@ export function OrderTrackingPanel({
       }
     }
   }
-  async function search(after?: string, ready = false) {
-    const raw = ready
-      ? { status: "completed", date_kind: "requested" }
-      : after
-        ? { ...lastQuery.current, after }
-        : {
-            ...(q.trim() ? { q: q.trim() } : {}),
-            ...(status ? { status } : {}),
-            ...(kind ? { kind } : {}),
-            date_kind: dateKind,
-            ...(from ? { from } : {}),
-            ...(to ? { to } : {}),
-          };
+  async function search(after?: string, ready = false, archive = false) {
+    const raw = archive
+      ? { view: "archive", date_kind: "requested" }
+      : ready
+        ? { status: "completed", view: "active", date_kind: "requested" }
+        : after
+          ? { ...lastQuery.current, after }
+          : {
+              ...(q.trim() ? { q: q.trim() } : {}),
+              ...(status ? { status } : {}),
+              ...(kind ? { kind } : {}),
+              date_kind: dateKind,
+              view,
+              ...(from ? { from } : {}),
+              ...(to ? { to } : {}),
+            };
     const parsed = OrderSearchSchema.safeParse(raw);
     if (!parsed.success) {
       setMessage("Kontrolloni filtrat dhe intervalin e datave.");
@@ -113,9 +118,20 @@ export function OrderTrackingPanel({
       if (!signal.aborted) {
         lastQuery.current = parsed.data;
         setPage(next);
-        setReadyOnly(ready || (!!after && readyOnly));
+        setDisplayedView(parsed.data.view);
+        setReadyOnly(ready || (!!after && readyOnly && !archive));
         setDetail(null);
+        if (archive) {
+          setView("archive");
+          setStatus("");
+          setQ("");
+          setKind("");
+          setFrom("");
+          setTo("");
+          setDateKind("requested");
+        }
         if (ready) {
+          setView("active");
           setStatus("completed");
           setQ("");
           setKind("");
@@ -162,6 +178,13 @@ export function OrderTrackingPanel({
               maxLength={120}
               onChange={(e) => setQ(e.target.value)}
             />
+          </label>
+          <label>
+            Pamja
+            <select value={view} onChange={(e) => setView(e.target.value)}>
+              <option value="active">Punët aktive</option>
+              <option value="archive">Arkivi pas 30 ditësh</option>
+            </select>
           </label>
           <label>
             Statusi
@@ -222,6 +245,12 @@ export function OrderTrackingPanel({
           </p>
         </div>
       )}
+      <Button
+        disabled={busy}
+        onClick={() => void search(undefined, false, true)}
+      >
+        Hap arkivin
+      </Button>
       {page &&
         readyOnly &&
         !clinic &&
@@ -237,6 +266,12 @@ export function OrderTrackingPanel({
             }}
           />
         )}
+      {page && displayedView === "archive" && (
+        <p>
+          Arkivi është pamje organizative pas 30 ditësh; porositë dhe historiku
+          ruhen.
+        </p>
+      )}
       {page && !page.can_read_details && (
         <p>
           Qasje logjistike: kërkimi i pacientit dhe udhëzimet nuk janë të

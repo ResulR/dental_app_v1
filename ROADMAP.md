@@ -2786,7 +2786,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 16.8 — Implémenter archivage à J+30 après Livrée
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Projection de recherche active/archive intégrée ; recette PostgreSQL réelle et activation restantes
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Planning, livraisons, archives et recherche
@@ -2801,7 +2801,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 16.9 — Implémenter consultation des archives
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Recherche et détail sous permissions existantes intégrés ; recette PostgreSQL réelle restante
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Planning, livraisons, archives et recherche

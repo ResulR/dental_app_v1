@@ -3200,6 +3200,14 @@
             "effective"
           ]
         },
+        "view": {
+          "default": "active",
+          "type": "string",
+          "enum": [
+            "active",
+            "archive"
+          ]
+        },
         "from": {
           "type": "string",
           "format": "date",

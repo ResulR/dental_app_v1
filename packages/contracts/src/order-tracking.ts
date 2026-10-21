@@ -9,6 +9,7 @@ const OrderSearchDefinition = z
     date_kind: z
       .enum(["requested", "planned", "effective"])
       .default("requested"),
+    view: z.enum(["active", "archive"]).default("active"),
     from: z.iso.date().optional(),
     to: z.iso.date().optional(),
     after: z.uuid().optional(),

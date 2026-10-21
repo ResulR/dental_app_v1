@@ -196,6 +196,7 @@ test("search parameters are bound, dates validated, history pagination explicit 
     "planned",
     "2026-11-01",
     "2026-11-30",
+    "active",
   ]);
   const result = await service.detail(actor, { order_id: id });
   expect(result.detail.history).toHaveLength(100);
@@ -414,4 +415,32 @@ test("metadata pagination does not expose extra row and client rejects false dow
     ).rejects.toThrow();
     expect(transport).toHaveBeenCalledTimes(1);
   }
+});
+
+test("archive is a scoped J+30 interface view and keeps details available", async () => {
+  const db = fixture();
+  const service = createOrderTrackingService(db);
+  const active = await service.search(actor, {});
+  const archived = await service.search(actor, {
+    view: "archive",
+    q: "Synthetic",
+  });
+  expect(active.kind).toBe("page");
+  expect(archived.kind).toBe("page");
+  const searchCalls = db.query.mock.calls.filter(
+    ([s]) =>
+      s.startsWith("SELECT o.id,o.number") &&
+      !s.includes("m.label AS material"),
+  );
+  expect(searchCalls[0][1][8]).toBe("active");
+  expect(searchCalls[1][1][8]).toBe("archive");
+  expect(searchCalls[1][0]).toContain(
+    "l.archive_due_at<=statement_timestamp()",
+  );
+  expect(searchCalls[1][0]).toContain("o.clinic_id=$1");
+  expect((await service.detail(actor, { order_id: id })).kind).toBe("detail");
+  expect(
+    db.query.mock.calls.some(([s]) => /^(UPDATE|DELETE|INSERT)/.test(s)),
+  ).toBe(false);
+  expect((await service.search(actor, { view: "all" })).kind).toBe("invalid");
 });

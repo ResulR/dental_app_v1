@@ -86,6 +86,8 @@ export function createOrderTrackingRepository(
  FROM public.orders o JOIN public.clinics c ON c.id=o.clinic_id JOIN public.order_versions v ON v.id=o.current_version_id AND v.order_id=o.id JOIN public.order_logistics l ON l.order_id=o.id
  WHERE ($1::uuid IS NULL OR o.clinic_id=$1) AND ($2::uuid IS NULL OR o.id>$2) AND ($3='' OR strpos(o.number::text,$3)>0 OR strpos(lower(c.name),lower($3))>0${patient})
  AND ($4::text IS NULL OR o.status=$4) AND ($5::text IS NULL OR o.kind=$5)
+ AND (CASE WHEN $9::text='archive' THEN o.status='delivered' AND l.archive_due_at<=statement_timestamp()
+           ELSE o.status<>'delivered' OR l.archive_due_at IS NULL OR l.archive_due_at>statement_timestamp() END)
  AND ($7::date IS NULL OR CASE WHEN $6='planned' THEN l.planned_delivery_date WHEN $6='effective' THEN COALESCE(l.planned_delivery_date,v.requested_delivery_date) ELSE v.requested_delivery_date END >=$7::date)
  AND ($8::date IS NULL OR CASE WHEN $6='planned' THEN l.planned_delivery_date WHEN $6='effective' THEN COALESCE(l.planned_delivery_date,v.requested_delivery_date) ELSE v.requested_delivery_date END <=$8::date)
  ORDER BY o.id LIMIT 51`,
@@ -98,6 +100,7 @@ export function createOrderTrackingRepository(
             input.date_kind,
             input.from ?? null,
             input.to ?? null,
+            input.view,
           ],
         );
         return {
