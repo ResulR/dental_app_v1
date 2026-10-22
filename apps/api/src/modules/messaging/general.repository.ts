@@ -1,4 +1,9 @@
+import { randomUUID } from "node:crypto";
 import {
+  MessageMutationSchema,
+  MessageMutationResultSchema,
+  MessageHistoryQuerySchema,
+  MessageHistoryResultSchema,
   GeneralConversationQuerySchema,
   GeneralConversationPageSchema,
   GeneralMessageQuerySchema,
@@ -157,9 +162,9 @@ export function createGeneralMessagingRepository(
         if (!ownRead || !otherRead) return { kind: "unavailable" as const };
         const forward = parsed.data.after_seq !== undefined;
         const rows = await tx.query(
-          `SELECT m.id,m.sequence_number::text,m.sender_side,m.created_at,
+          `SELECT m.id,m.sequence_number::text,m.sender_side,m.created_at,m.sender_id,m.revision::text,
              CASE WHEN m.hidden_at IS NULL THEN v.body ELSE NULL END AS body,
-             (m.hidden_at IS NOT NULL) AS hidden,(m.revision>1) AS edited
+             (m.hidden_at IS NOT NULL) AS hidden,(v.version_number>1) AS edited
              FROM public.messages m JOIN public.message_versions v ON v.id=m.current_version_id AND v.message_id=m.id
              WHERE m.conversation_id=$1 AND m.clinic_id=$2
                AND ($3::bigint IS NULL OR m.sequence_number<$3)
@@ -176,6 +181,8 @@ export function createGeneralMessagingRepository(
           id: row.id,
           sequence_number: Number(row.sequence_number),
           sender_side: row.sender_side,
+          own: row.sender_id === actor.accountId,
+          revision: Number(row.revision),
           body: row.body,
           created_at:
             row.created_at instanceof Date
@@ -201,6 +208,178 @@ export function createGeneralMessagingRepository(
               forward && rows.rows.length > 50
                 ? messages.at(-1)!.sequence_number
                 : null,
+          }),
+        };
+      });
+    },
+    async mutate(actor: Actor, raw: unknown, action: "edit" | "hide") {
+      const parsed = MessageMutationSchema.safeParse(raw);
+      if (
+        !parsed.success ||
+        (action === "edit" ? !parsed.data.body : parsed.data.body !== undefined)
+      )
+        return { kind: "invalid" as const };
+      const input = parsed.data;
+      return db.transaction(async (tx) => {
+        const scope = await authority(tx, actor, kind);
+        if (!scope) return { kind: "denied" as const };
+        if (scope.side === "laboratory") {
+          const identity =
+            await createCurrentPermissionsRepository(tx).current(actor);
+          if (
+            !identity?.permissions.includes(
+              kind === "general"
+                ? "messaging.general.reply"
+                : "messaging.order.reply",
+            )
+          )
+            return { kind: "denied" as const };
+        }
+        const conversations = await tx.query(
+          "SELECT id,clinic_id,closed_at FROM public.conversations WHERE id=$1 AND kind=$3 AND ($2::uuid IS NULL OR clinic_id=$2) FOR UPDATE",
+          [input.conversation_id, scope.clinicId, kind],
+        );
+        if (conversations.rows.length !== 1) return { kind: "denied" as const };
+        const message = await tx.query(
+          "SELECT id,revision::text,current_version_id,hidden_at FROM public.messages WHERE id=$1 AND conversation_id=$2 AND clinic_id=$3 AND sender_id=$4 FOR UPDATE",
+          [
+            input.message_id,
+            input.conversation_id,
+            conversations.rows[0]!.clinic_id,
+            actor.accountId,
+          ],
+        );
+        if (message.rows.length !== 1) return { kind: "denied" as const };
+        const revision = Number(message.rows[0]!.revision);
+        if (conversations.rows[0]!.closed_at !== null)
+          return {
+            kind: "result" as const,
+            result: MessageMutationResultSchema.parse({
+              kind: "closed",
+              revision,
+            }),
+          };
+        if (
+          revision !== input.expected_revision ||
+          message.rows[0]!.hidden_at !== null
+        )
+          return {
+            kind: "result" as const,
+            result: MessageMutationResultSchema.parse({
+              kind: "conflict",
+              revision,
+            }),
+          };
+        const files = await tx.query(
+          "SELECT 1 FROM public.message_version_files WHERE version_id=$1 LIMIT 1",
+          [message.rows[0]!.current_version_id],
+        );
+        if (files.rows.length)
+          return {
+            kind: "result" as const,
+            result: MessageMutationResultSchema.parse({
+              kind: "conflict",
+              revision,
+            }),
+          };
+        const next = revision + 1;
+        const versionId = randomUUID(),
+          eventId = randomUUID(),
+          requestId = randomUUID();
+        if (action === "edit") {
+          await tx.query(
+            "INSERT INTO public.message_versions(id,message_id,clinic_id,version_number,created_by,body) VALUES($1,$2,$3,$4,$5,$6)",
+            [
+              versionId,
+              input.message_id,
+              conversations.rows[0]!.clinic_id,
+              next,
+              actor.accountId,
+              input.body,
+            ],
+          );
+          await tx.query(
+            "UPDATE public.messages SET current_version_id=$2,revision=$3 WHERE id=$1",
+            [input.message_id, versionId, next],
+          );
+        } else {
+          await tx.query(
+            "UPDATE public.messages SET hidden_at=statement_timestamp(),hidden_by=$2,revision=$3 WHERE id=$1",
+            [input.message_id, actor.accountId, next],
+          );
+        }
+        await tx.query(
+          "INSERT INTO public.outbox_events(id,type,aggregate_type,aggregate_id,aggregate_revision,clinic_id,actor_id,correlation_id) VALUES($1,$2,'message',$3,$4,$5,$6,$7)",
+          [
+            eventId,
+            action === "edit" ? "message_edited" : "message_hidden",
+            input.message_id,
+            next,
+            conversations.rows[0]!.clinic_id,
+            actor.accountId,
+            requestId,
+          ],
+        );
+        await tx.query(
+          "INSERT INTO public.outbox_dispatches(event_id) VALUES($1)",
+          [eventId],
+        );
+        await tx.query(
+          "INSERT INTO public.audit_events(actor_id,action,object_type,object_id,request_id,aggregate_revision,changed_fields) VALUES($1,$2,'message',$3,$4,$5,$6::text[])",
+          [
+            actor.accountId,
+            action === "edit" ? "MESSAGE_EDITED" : "MESSAGE_HIDDEN",
+            input.message_id,
+            requestId,
+            next,
+            action === "edit" ? ["version"] : ["lifecycle"],
+          ],
+        );
+        return {
+          kind: "result" as const,
+          result: MessageMutationResultSchema.parse({
+            kind: "updated",
+            revision: next,
+          }),
+        };
+      });
+    },
+    async history(actor: Actor, raw: unknown) {
+      const parsed = MessageHistoryQuerySchema.safeParse(raw);
+      if (!parsed.success) return { kind: "invalid" as const };
+      const input = parsed.data;
+      return db.transaction(async (tx) => {
+        const scope = await authority(tx, actor, kind);
+        if (!scope) return { kind: "denied" as const };
+        const rows = await tx.query(
+          "SELECT m.id FROM public.messages m JOIN public.conversations c ON c.id=m.conversation_id AND c.clinic_id=m.clinic_id WHERE m.id=$1 AND c.id=$2 AND c.kind=$4 AND m.sender_id=$5 AND ($3::uuid IS NULL OR c.clinic_id=$3)",
+          [
+            input.message_id,
+            input.conversation_id,
+            scope.clinicId,
+            kind,
+            actor.accountId,
+          ],
+        );
+        if (rows.rows.length !== 1) return { kind: "denied" as const };
+        const versions = await tx.query(
+          "SELECT version_number::text,body,created_at FROM public.message_versions WHERE message_id=$1 AND ($2::bigint IS NULL OR version_number<$2) ORDER BY version_number DESC LIMIT 51",
+          [input.message_id, input.before_version ?? null],
+        );
+        const visible = versions.rows.slice(0, 50).map((row) => ({
+          version_number: Number(row.version_number),
+          body: row.body,
+          created_at:
+            row.created_at instanceof Date
+              ? row.created_at.toISOString()
+              : row.created_at,
+        }));
+        return {
+          kind: "result" as const,
+          result: MessageHistoryResultSchema.parse({
+            versions: visible,
+            next_before_version:
+              versions.rows.length > 50 ? visible[49]!.version_number : null,
           }),
         };
       });
@@ -253,7 +432,7 @@ export function createGeneralMessagingRepository(
 }
 export async function assertGeneralMessagingReady(db: DatabaseExecutor) {
   const result = await db.query(
-    "SELECT has_table_privilege(current_user,'public.conversations','SELECT') AND has_column_privilege(current_user,'public.conversations','last_message_seq','UPDATE') AND has_column_privilege(current_user,'public.conversations','revision','UPDATE') AND has_table_privilege(current_user,'public.messages','SELECT') AND has_table_privilege(current_user,'public.messages','INSERT') AND has_table_privilege(current_user,'public.message_versions','SELECT') AND has_table_privilege(current_user,'public.message_versions','INSERT') AND has_table_privilege(current_user,'public.conversation_reads','SELECT') AND has_column_privilege(current_user,'public.conversation_reads','last_read_seq','UPDATE') AND has_column_privilege(current_user,'public.conversation_reads','read_by','UPDATE') AND has_column_privilege(current_user,'public.conversation_reads','read_at','UPDATE') AND has_column_privilege(current_user,'public.conversation_reads','revision','UPDATE') AND has_table_privilege(current_user,'public.outbox_events','INSERT') AND has_table_privilege(current_user,'public.outbox_dispatches','INSERT') AND has_table_privilege(current_user,'public.audit_events','INSERT') AS ready",
+    "SELECT has_table_privilege(current_user,'public.conversations','SELECT') AND has_column_privilege(current_user,'public.conversations','last_message_seq','UPDATE') AND has_column_privilege(current_user,'public.conversations','revision','UPDATE') AND has_table_privilege(current_user,'public.messages','SELECT') AND has_table_privilege(current_user,'public.messages','INSERT') AND has_column_privilege(current_user,'public.messages','current_version_id','UPDATE') AND has_column_privilege(current_user,'public.messages','revision','UPDATE') AND has_column_privilege(current_user,'public.messages','hidden_at','UPDATE') AND has_column_privilege(current_user,'public.messages','hidden_by','UPDATE') AND has_table_privilege(current_user,'public.message_versions','SELECT') AND has_table_privilege(current_user,'public.message_versions','INSERT') AND has_table_privilege(current_user,'public.conversation_reads','SELECT') AND has_column_privilege(current_user,'public.conversation_reads','last_read_seq','UPDATE') AND has_column_privilege(current_user,'public.conversation_reads','read_by','UPDATE') AND has_column_privilege(current_user,'public.conversation_reads','read_at','UPDATE') AND has_column_privilege(current_user,'public.conversation_reads','revision','UPDATE') AND has_table_privilege(current_user,'public.outbox_events','INSERT') AND has_table_privilege(current_user,'public.outbox_dispatches','INSERT') AND has_table_privilege(current_user,'public.audit_events','INSERT') AS ready",
   );
   if (result.rows[0]?.ready !== true)
     throw new Error("GENERAL_MESSAGING_STORAGE_NOT_READY");

@@ -4,6 +4,8 @@ import {
   OrderConversationQuerySchema,
   GeneralMessageQuerySchema,
   GeneralReadCommandSchema,
+  MessageMutationSchema,
+  MessageHistoryQuerySchema,
   MessageSubmissionSchema,
 } from "@dental-lab/contracts";
 import { readSessionCookie, mutationOriginAllowed } from "../identity/index.js";
@@ -36,8 +38,24 @@ function registerTextMessagingRoutes(
     throw new Error("INVALID_GENERAL_MESSAGING_ORIGIN");
   const actions =
     kind === "order"
-      ? (["conversation", "messages", "markRead", "send"] as const)
-      : (["conversations", "messages", "markRead", "send"] as const);
+      ? ([
+          "conversation",
+          "messages",
+          "markRead",
+          "send",
+          "edit",
+          "hide",
+          "history",
+        ] as const)
+      : ([
+          "conversations",
+          "messages",
+          "markRead",
+          "send",
+          "edit",
+          "hide",
+          "history",
+        ] as const);
   for (const action of actions) {
     app.post("/api/v1/messaging/" + kind + "/" + action, async (req, res) => {
       if (!mutationOriginAllowed(req.headers.origin, services.origin)) {
@@ -53,13 +71,19 @@ function registerTextMessagingRoutes(
               ? GeneralMessageQuerySchema
               : action === "markRead"
                 ? GeneralReadCommandSchema
-                : MessageSubmissionSchema;
+                : action === "history"
+                  ? MessageHistoryQuerySchema
+                  : action === "edit" || action === "hide"
+                    ? MessageMutationSchema
+                    : MessageSubmissionSchema;
       if (
         !req.is("application/json") ||
         Object.keys(req.query).length ||
         !schema.safeParse(req.body).success ||
         (action === "send" &&
-          (req.body.file_ids.length !== 0 || req.body.body === null))
+          (req.body.file_ids.length !== 0 || req.body.body === null)) ||
+        (action === "edit" && req.body.body === undefined) ||
+        (action === "hide" && req.body.body !== undefined)
       ) {
         sendProblem(res, "VALIDATION_FAILED", 400);
         return;
@@ -73,9 +97,11 @@ function registerTextMessagingRoutes(
       const result =
         action === "send"
           ? await services.sender.send(actor, req.body)
-          : action === "conversation"
-            ? await services.reader.orderConversation(actor, req.body)
-            : await services.reader[action](actor, req.body);
+          : action === "edit" || action === "hide"
+            ? await services.reader.mutate(actor, req.body, action)
+            : action === "conversation"
+              ? await services.reader.orderConversation(actor, req.body)
+              : await services.reader[action](actor, req.body);
       if (result.kind !== "result") {
         sendProblem(
           res,

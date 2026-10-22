@@ -2325,7 +2325,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 13.6 — Implémenter édition et masquage de messages
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Édition versionnée et masquage de l'auteur intégrés pour le texte général/commande, contrôle de révision et conversation close, historique paginé réservé à l'auteur, audit/outbox transactionnels ; fichiers refusés. Tests avec doubles uniquement, recettes PostgreSQL/navigateur différées.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel

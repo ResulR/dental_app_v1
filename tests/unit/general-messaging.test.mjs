@@ -130,6 +130,8 @@ function fixture({
           id: clinic,
           sequence_number: String(number),
           sender_side: "clinic",
+          sender_id: clinic,
+          revision: "1",
           created_at: new Date("2026-10-21T10:00:00.000Z"),
           body: hidden ? null : "Synthetic",
           hidden,

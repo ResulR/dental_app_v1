@@ -9,6 +9,10 @@ import {
   GeneralReadReceiptSchema,
   MessageSubmissionSchema,
   MessageSubmissionResultSchema,
+  MessageMutationSchema,
+  MessageMutationResultSchema,
+  MessageHistoryQuerySchema,
+  MessageHistoryResultSchema,
 } from "@dental-lab/contracts";
 async function post(url: string, body: unknown, signal?: AbortSignal) {
   const response = await fetch(url, {
@@ -22,6 +26,28 @@ async function post(url: string, body: unknown, signal?: AbortSignal) {
   });
   if (!response.ok) throw new Error("MESSAGING_UNAVAILABLE");
   return response.json() as Promise<unknown>;
+}
+
+export async function mutateTextMessage(
+  kind: "general" | "order",
+  action: "edit" | "hide",
+  raw: unknown,
+) {
+  const input = MessageMutationSchema.parse(raw);
+  return MessageMutationResultSchema.parse(
+    await post("/api/v1/messaging/" + kind + "/" + action, input),
+  );
+}
+export async function textMessageHistory(
+  kind: "general" | "order",
+  raw: unknown,
+) {
+  return MessageHistoryResultSchema.parse(
+    await post(
+      "/api/v1/messaging/" + kind + "/history",
+      MessageHistoryQuerySchema.parse(raw),
+    ),
+  );
 }
 export async function generalConversations(raw: unknown, signal?: AbortSignal) {
   return GeneralConversationPageSchema.parse(

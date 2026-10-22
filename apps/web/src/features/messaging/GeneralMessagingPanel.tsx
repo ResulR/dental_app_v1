@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   GeneralConversationPageSchema,
   GeneralMessagePageSchema,
+  MessageHistoryResultSchema,
 } from "@dental-lab/contracts";
 import { Button } from "../../shared/Button.js";
 import {
@@ -18,9 +19,12 @@ import {
   orderMessages,
   markOrderRead,
   sendOrderMessage,
+  mutateTextMessage,
+  textMessageHistory,
 } from "./general-api.js";
 type Conversations = ReturnType<typeof GeneralConversationPageSchema.parse>;
 type Messages = ReturnType<typeof GeneralMessagePageSchema.parse>;
+type History = ReturnType<typeof MessageHistoryResultSchema.parse>;
 export function GeneralMessagingPanel({
   clinic,
   canReply,
@@ -35,6 +39,15 @@ export function GeneralMessagingPanel({
   );
   const [selected, setSelected] = useState("");
   const [closed, setClosed] = useState(false);
+  const [editing, setEditing] = useState<{
+    id: string;
+    revision: number;
+    body: string;
+  } | null>(null);
+  const [history, setHistory] = useState<{ id: string; page: History } | null>(
+    null,
+  );
+  const [mutating, setMutating] = useState(false);
   const fetchMessages = orderId ? orderMessages : generalMessages;
   const acknowledge = orderId ? markOrderRead : markGeneralRead;
   const submit = orderId ? sendOrderMessage : sendGeneralMessage;
@@ -361,6 +374,87 @@ export function GeneralMessagingPanel({
       window.removeEventListener("offline", disconnected);
     };
   }, [selected, fetchMessages, loadConversationCounts]);
+  async function changeMessage(
+    message: Messages["messages"][number],
+    action: "edit" | "hide",
+  ) {
+    if (
+      !message.own ||
+      !canReply ||
+      message.hidden ||
+      closed ||
+      mutating ||
+      !selected
+    )
+      return;
+    if (
+      action === "hide" &&
+      !window.confirm("Ta fshihni këtë mesazh? Teksti nuk do të shfaqet më.")
+    )
+      return;
+    setMutating(true);
+    setNotice("");
+    try {
+      const result = await mutateTextMessage(
+        orderId ? "order" : "general",
+        action,
+        {
+          conversation_id: selected,
+          message_id: message.id,
+          expected_revision: message.revision,
+          ...(action === "edit" ? { body: editing?.body ?? "" } : {}),
+        },
+      );
+      if (result.kind !== "updated") {
+        if (result.kind === "closed") setClosed(true);
+        setNotice(
+          result.kind === "closed"
+            ? "Biseda është mbyllur; ndryshimi nuk u ruajt."
+            : "Mesazhi ndryshoi në një sesion tjetër. Ringarkoni dhe provoni sërish.",
+        );
+        return;
+      }
+      setEditing(null);
+      const page = await fetchMessages({
+        conversation_id: selected,
+        before_seq: message.sequence_number + 1,
+      });
+      setMessages((previous) =>
+        previous?.conversation_id === selected
+          ? mergeMessagePage(previous, page, true)
+          : previous,
+      );
+    } catch {
+      setNotice(
+        "Nuk dihet nëse ndryshimi u ruajt. Ringarkoni bisedën para se të provoni sërish.",
+      );
+    } finally {
+      setMutating(false);
+    }
+  }
+  async function openHistory(messageId: string, beforeVersion?: number) {
+    if (!selected) return;
+    try {
+      const page = await textMessageHistory(orderId ? "order" : "general", {
+        conversation_id: selected,
+        message_id: messageId,
+        ...(beforeVersion ? { before_version: beforeVersion } : {}),
+      });
+      setHistory((previous) =>
+        previous?.id === messageId && beforeVersion
+          ? {
+              id: messageId,
+              page: {
+                versions: [...previous.page.versions, ...page.versions],
+                next_before_version: page.next_before_version,
+              },
+            }
+          : { id: messageId, page },
+      );
+    } catch {
+      setNotice("Historiku nuk u ngarkua. Provoni sërish.");
+    }
+  }
   async function send() {
     if (!selected || !body.trim() || busy) return;
     setBusy(true);
@@ -509,6 +603,104 @@ export function GeneralMessagingPanel({
                   </span>
                 )}
                 <p>{message.hidden ? "Mesazh i fshehur" : message.body}</p>
+                {message.own && (
+                  <div>
+                    {!closed && canReply && !message.hidden && (
+                      <>
+                        <Button
+                          type="button"
+                          disabled={mutating}
+                          onClick={() => {
+                            setEditing({
+                              id: message.id,
+                              revision: message.revision,
+                              body: message.body ?? "",
+                            });
+                            setHistory(null);
+                          }}
+                        >
+                          Ndrysho
+                        </Button>
+                        <Button
+                          type="button"
+                          disabled={mutating}
+                          onClick={() => void changeMessage(message, "hide")}
+                        >
+                          Fshih mesazhin
+                        </Button>
+                      </>
+                    )}
+                    <Button
+                      type="button"
+                      onClick={() => void openHistory(message.id)}
+                    >
+                      Historiku i versioneve
+                    </Button>
+                    {history?.id === message.id && (
+                      <div>
+                        <ol aria-label="Historiku i mesazhit">
+                          {history.page.versions.map((version) => (
+                            <li key={version.version_number}>
+                              Versioni {version.version_number} ·{" "}
+                              <time dateTime={version.created_at}>
+                                {version.created_at}
+                              </time>
+                              <p>{version.body}</p>
+                            </li>
+                          ))}
+                        </ol>
+                        {history.page.next_before_version && (
+                          <Button
+                            type="button"
+                            onClick={() =>
+                              void openHistory(
+                                message.id,
+                                history.page.next_before_version ?? undefined,
+                              )
+                            }
+                          >
+                            Versione më të vjetra
+                          </Button>
+                        )}
+                        <Button type="button" onClick={() => setHistory(null)}>
+                          Mbyll historikun
+                        </Button>
+                      </div>
+                    )}
+                    {editing?.id === message.id && (
+                      <form
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          void changeMessage(message, "edit");
+                        }}
+                      >
+                        <label>
+                          Ndrysho mesazhin
+                          <textarea
+                            value={editing.body}
+                            maxLength={100000}
+                            disabled={mutating}
+                            onChange={(event) =>
+                              setEditing({
+                                ...editing,
+                                body: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                        <Button
+                          type="submit"
+                          disabled={mutating || !editing.body.trim()}
+                        >
+                          Ruaj ndryshimin
+                        </Button>
+                        <Button type="button" onClick={() => setEditing(null)}>
+                          Anulo
+                        </Button>
+                      </form>
+                    )}
+                  </div>
+                )}
                 <span
                   aria-hidden="true"
                   data-read-end

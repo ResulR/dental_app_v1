@@ -22,4 +22,13 @@ Le code des conversations générales reste derrière un drapeau fermé. Cette n
 - Deux sessions sur chaque côté : accusés collectifs, changement de permissions/suspension, pagination et rattrapage après 51+ messages ; comparer l'état des conversations et marqueurs sous PostgreSQL réel. Vérifier le comportement de l'interface en mobile et desktop.
 - La route et l'interface de commande ont un drapeau distinct, fermé par défaut et dépendant du drapeau général côté API. Vérifier les deux configurations avant toute activation.
 
-Ces scénarios ne sont pas encore exécutés. Édition/masquage, fichiers, navigation navigateur et recette PostgreSQL complète restent à recevoir avant clôture du chapitre 13.
+Ces scénarios ne sont pas encore exécutés. L'édition et le masquage textuels sont intégrés côté code mais leurs recettes PostgreSQL et navigateur, ainsi que les fichiers, restent à recevoir avant clôture du chapitre 13.
+
+## Édition et masquage (13.6)
+
+- Sur conversations générale, commande et retouche, ouvrir deux sessions d'un même auteur puis tenter deux éditions à la même révision : une seule version supplémentaire et un seul événement/audit doivent être persistés. Refaire avec édition contre masquage et livraison concurrente : fermeture interdit toute mutation, sans version orpheline.
+- Vérifier qu'un autre compte du même côté, un laboratoire sans droit de réponse et une clinique étrangère ne peuvent ni modifier ni lire l'historique d'auteur, y compris par UUID connu. La lecture de conversation ordinaire doit afficher uniquement la version courante ou « Mesazh i fshehur ».
+- Comparer les versions, la version courante, la révision, les événements et l'audit après refus, rollback injecté et réponse réseau incertaine. Le contenu des anciennes versions ne doit pas figurer dans l'audit/outbox.
+- Tester plus de 50 versions avec pagination, accès mobile/desktop, confirmation de masquage, erreur/reconnexion et rafraîchissement entre sessions. Aucun fichier ni message déjà clos ne peut être édité par ces routes textuelles.
+
+Ces vérifications PostgreSQL réelles et navigateur ne sont pas exécutées ; la présence des tests unitaires avec doubles ne les remplace pas.

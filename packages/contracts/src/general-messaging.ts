@@ -46,6 +46,33 @@ export const GeneralReadReceiptSchema = z.strictObject({
   conversation_id: z.uuid(),
   last_read_seq: z.number().int().nonnegative(),
 });
+export const MessageMutationSchema = z.strictObject({
+  conversation_id: z.uuid(),
+  message_id: z.uuid(),
+  expected_revision: z.number().int().positive(),
+  body: z.string().trim().min(1).max(100_000).optional(),
+});
+export const MessageMutationResultSchema = z.strictObject({
+  kind: z.enum(["updated", "conflict", "closed"]),
+  revision: z.number().int().positive().nullable(),
+});
+export const MessageHistoryQuerySchema = z.strictObject({
+  conversation_id: z.uuid(),
+  message_id: z.uuid(),
+  before_version: z.number().int().positive().optional(),
+});
+export const MessageHistoryResultSchema = z.strictObject({
+  versions: z
+    .array(
+      z.strictObject({
+        version_number: z.number().int().positive(),
+        body: z.string().nullable(),
+        created_at: z.iso.datetime(),
+      }),
+    )
+    .max(50),
+  next_before_version: z.number().int().positive().nullable(),
+});
 export const GeneralMessagePageSchema = z.strictObject({
   conversation_id: z.uuid(),
   last_read_seq: z.number().int().nonnegative(),
@@ -57,6 +84,8 @@ export const GeneralMessagePageSchema = z.strictObject({
         id: z.uuid(),
         sequence_number: z.number().int().positive(),
         sender_side: z.enum(["clinic", "laboratory"]),
+        own: z.boolean(),
+        revision: z.number().int().positive(),
         body: z.string().nullable(),
         created_at: z.iso.datetime(),
         hidden: z.boolean(),
