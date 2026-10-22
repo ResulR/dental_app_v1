@@ -130,7 +130,10 @@ export function GeneralMessagingPanel({
         if (!controller.signal.aborted) {
           setConversations(page);
           if (page.closed !== undefined) setClosed(page.closed);
-          if ((clinic || orderId) && page.items.length === 1) {
+          if (
+            (clinic || orderId || generalClinicId) &&
+            page.items.length === 1
+          ) {
             setLoadingMessages(true);
             setMessages(null);
             setSelected(page.items[0]!.id);
@@ -170,7 +173,7 @@ export function GeneralMessagingPanel({
       const page = await fetchConversations({});
       setConversations(page);
       if (page.closed !== undefined) setClosed(page.closed);
-      if ((clinic || orderId) && page.items.length === 1)
+      if ((clinic || orderId || generalClinicId) && page.items.length === 1)
         setSelected(page.items[0]!.id);
     } catch {
       setNotice("Bisedat nuk u ngarkuan. Provoni sërish.");
