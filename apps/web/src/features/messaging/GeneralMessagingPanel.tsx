@@ -29,10 +29,12 @@ export function GeneralMessagingPanel({
   clinic,
   canReply,
   orderId,
+  generalClinicId,
 }: {
   clinic: boolean;
   canReply: boolean;
   orderId?: string;
+  generalClinicId?: string;
 }) {
   const [conversations, setConversations] = useState<Conversations | null>(
     null,
@@ -56,7 +58,13 @@ export function GeneralMessagingPanel({
       raw: unknown,
       signal?: AbortSignal,
     ): Promise<Conversations & { closed?: boolean }> => {
-      if (!orderId) return generalConversations(raw, signal);
+      if (!orderId)
+        return generalConversations(
+          generalClinicId
+            ? { ...(raw as object), clinic_id: generalClinicId }
+            : raw,
+          signal,
+        );
       const item = await orderConversation({ order_id: orderId }, signal);
       return {
         closed: item.closed,
@@ -72,7 +80,7 @@ export function GeneralMessagingPanel({
         next_after: null,
       };
     },
-    [orderId],
+    [orderId, generalClinicId],
   );
   const [messages, setMessages] = useState<Messages | null>(null);
   const [body, setBody] = useState("");
@@ -134,7 +142,7 @@ export function GeneralMessagingPanel({
           setNotice("Bisedat nuk u ngarkuan. Provoni sërish.");
       });
     return () => controller.abort();
-  }, [clinic, orderId, fetchConversations]);
+  }, [clinic, orderId, generalClinicId, fetchConversations]);
   useEffect(() => {
     if (!selected) return;
     const controller = new AbortController();
@@ -146,7 +154,10 @@ export function GeneralMessagingPanel({
         }
       })
       .catch(() => {
-        if (!controller.signal.aborted) setNotice("Mesazhet nuk u ngarkuan.");
+        if (!controller.signal.aborted) {
+          setMessages(null);
+          setNotice("Mesazhet nuk u ngarkuan ose lejet ndryshuan.");
+        }
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoadingMessages(false);
@@ -201,7 +212,8 @@ export function GeneralMessagingPanel({
       }
       setConnection("connected");
     } catch {
-      setNotice("Mesazhet nuk u ngarkuan.");
+      setMessages(null);
+      setNotice("Mesazhet nuk u ngarkuan ose lejet ndryshuan.");
     } finally {
       setLoadingMessages(false);
     }
@@ -352,7 +364,11 @@ export function GeneralMessagingPanel({
         );
         setConnection("connected");
       } catch {
-        if (active) setConnection("offline");
+        if (active) {
+          setConnection("offline");
+          setMessages(null);
+          setConversations(null);
+        }
       } finally {
         inFlight = false;
       }
@@ -513,7 +529,7 @@ export function GeneralMessagingPanel({
       <Button type="button" onClick={() => void reloadConversations()}>
         Rifresko bisedat
       </Button>
-      {!clinic && !orderId && (
+      {!clinic && !orderId && !generalClinicId && (
         <label>
           Klinika
           <select
@@ -540,12 +556,12 @@ export function GeneralMessagingPanel({
           </select>
         </label>
       )}
-      {!clinic && !orderId && conversations?.next_after && (
+      {!clinic && !orderId && !generalClinicId && conversations?.next_after && (
         <Button type="button" onClick={() => void moreConversations()}>
           Më shumë klinika
         </Button>
       )}
-      {(clinic || orderId) && conversations?.items[0] && (
+      {(clinic || orderId || generalClinicId) && conversations?.items[0] && (
         <p>{conversations.items[0].unread_count} mesazhe të palexuara</p>
       )}
       {selected && (

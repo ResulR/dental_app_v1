@@ -32,3 +32,9 @@ Ces scénarios ne sont pas encore exécutés. L'édition et le masquage textuels
 - Tester plus de 50 versions avec pagination, accès mobile/desktop, confirmation de masquage, erreur/reconnexion et rafraîchissement entre sessions. Aucun fichier ni message déjà clos ne peut être édité par ces routes textuelles.
 
 Ces vérifications PostgreSQL réelles et navigateur ne sont pas exécutées ; la présence des tests unitaires avec doubles ne les remplace pas.
+
+## Boîte de réception laboratoire (13.8)
+
+- PostgreSQL réel : créer conversations générales et liées à deux cliniques, dont une retouche, avec marqueurs présents puis absents ; comparer le filtre non-lus, recherche clinique/numéro, tri et pagination sous arrivée concurrente de messages. Aucun marqueur manquant ne doit être interprété comme une lecture.
+- Retirer successivement les droits de lecture générale puis commande, renouveler les sessions, interroger la liste et les détails par identifiant connu : aucune conversation interdite ni contenu conservé à l'écran après refus. Vérifier la clinique sans accès à la boîte laboratoire.
+- Navigateur mobile/desktop : filtres, pagination, ouverture/retour, état hors connexion, reprise multi-session et visibilité des badges après lecture effective. Les scénarios ne sont pas exécutés et ne valent pas réception de 13.8.

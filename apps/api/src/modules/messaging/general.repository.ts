@@ -4,6 +4,8 @@ import {
   MessageMutationResultSchema,
   MessageHistoryQuerySchema,
   MessageHistoryResultSchema,
+  MessagingInboxQuerySchema,
+  MessagingInboxPageSchema,
   GeneralConversationQuerySchema,
   GeneralConversationPageSchema,
   GeneralMessageQuerySchema,
@@ -424,6 +426,98 @@ export function createGeneralMessagingRepository(
           result: GeneralReadReceiptSchema.parse({
             conversation_id: parsed.data.conversation_id,
             last_read_seq: Math.max(previous, through),
+          }),
+        };
+      });
+    },
+  };
+}
+export function createMessagingInboxRepository(
+  db: Pick<ReturnType<typeof createApplicationDatabase>, "transaction">,
+  allowOrder: boolean,
+) {
+  return {
+    async list(actor: Actor, raw: unknown) {
+      const parsed = MessagingInboxQuerySchema.safeParse(raw);
+      if (!parsed.success) return { kind: "invalid" as const };
+      const input = parsed.data;
+      return db.transaction(async (tx) => {
+        const scope =
+          (await authority(tx, actor, "general")) ??
+          (await authority(tx, actor, "order"));
+        if (!scope || scope.side !== "laboratory")
+          return { kind: "denied" as const };
+        const identity =
+          await createCurrentPermissionsRepository(tx).current(actor);
+        if (!identity) return { kind: "denied" as const };
+        const canGeneral = identity.permissions.includes(
+          "messaging.general.read",
+        );
+        const canOrder =
+          allowOrder && identity.permissions.includes("messaging.order.read");
+        if (!canGeneral && !canOrder) return { kind: "denied" as const };
+        const rows = await tx.query(
+          `SELECT c.id AS conversation_id,c.clinic_id,k.name AS clinic_name,c.kind,c.order_id,
+               o.number::text AS order_number,c.closed_at,
+               COALESCE(last_message.created_at,c.created_at) AS activity_at,
+               r.last_read_seq::text,other.side AS other_side,
+               (SELECT count(*)::text FROM public.messages m WHERE m.conversation_id=c.id
+                  AND m.sender_side='clinic' AND m.sequence_number>r.last_read_seq) AS unread_count
+           FROM public.conversations c JOIN public.clinics k ON k.id=c.clinic_id
+           LEFT JOIN public.orders o ON o.id=c.order_id AND o.clinic_id=c.clinic_id
+           LEFT JOIN public.conversation_reads r ON r.conversation_id=c.id AND r.side='laboratory'
+           LEFT JOIN public.conversation_reads other ON other.conversation_id=c.id AND other.side='clinic'
+           LEFT JOIN LATERAL (
+             SELECT m.created_at FROM public.messages m WHERE m.conversation_id=c.id
+             ORDER BY m.sequence_number DESC LIMIT 1
+           ) last_message ON true
+           WHERE ((c.kind='general' AND $1::boolean) OR (c.kind='order' AND $2::boolean))
+             AND ($3::text IS NULL OR position(lower($3) in lower(k.name))>0 OR o.number::text=$3)
+             AND ($4::text IS NULL OR c.kind=$4)
+             AND (NOT $5::boolean OR r.last_read_seq IS NULL OR EXISTS (
+               SELECT 1 FROM public.messages unread WHERE unread.conversation_id=c.id
+                 AND unread.sender_side='clinic' AND unread.sequence_number>r.last_read_seq
+             ))
+             AND ($6::timestamptz IS NULL OR
+                  (COALESCE(last_message.created_at,c.created_at),c.id)<($6::timestamptz,$7::uuid))
+           ORDER BY activity_at DESC,c.id DESC LIMIT 51`,
+          [
+            canGeneral,
+            canOrder,
+            input.search || null,
+            input.kind ?? null,
+            input.unread_only ?? false,
+            input.before_at ?? null,
+            input.before_id ?? null,
+          ],
+        );
+        if (
+          rows.rows.some(
+            (row) => row.last_read_seq === null || row.other_side === null,
+          )
+        )
+          return { kind: "unavailable" as const };
+        const items = rows.rows.slice(0, 50).map((row) => ({
+          conversation_id: row.conversation_id,
+          clinic_id: row.clinic_id,
+          clinic_name: row.clinic_name,
+          kind: row.kind,
+          order_id: row.order_id,
+          order_number: row.order_number,
+          unread_count: Number(row.unread_count),
+          activity_at:
+            row.activity_at instanceof Date
+              ? row.activity_at.toISOString()
+              : row.activity_at,
+          closed: row.closed_at !== null,
+        }));
+        const last = rows.rows.length > 50 ? items[49]! : null;
+        return {
+          kind: "result" as const,
+          result: MessagingInboxPageSchema.parse({
+            items,
+            next_before_at: last?.activity_at ?? null,
+            next_before_id: last?.conversation_id ?? null,
           }),
         };
       });

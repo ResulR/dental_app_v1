@@ -10,6 +10,7 @@ export function PermissionBoundary({
   permission = "clinics.manage",
   allowClinic = true,
   allowCatalogReader = false,
+  alternatives = [],
 }: {
   identity: SessionIdentity;
   children: ReactNode | ((snapshot: Snapshot) => ReactNode);
@@ -21,7 +22,11 @@ export function PermissionBoundary({
     | "settings.manage"
     | "orders.read_details"
     | "orders.read_logistics"
-    | "messaging.general.read";
+    | "messaging.general.read"
+    | "messaging.order.read";
+  alternatives?: ReadonlyArray<
+    "messaging.general.read" | "messaging.order.read"
+  >;
   allowClinic?: boolean;
   allowCatalogReader?: boolean;
 }) {
@@ -63,6 +68,9 @@ export function PermissionBoundary({
   if (
     !(allowClinic && identity.profile === "clinic") &&
     !snapshot.permissions.includes(permission) &&
+    !alternatives.some((candidate) =>
+      snapshot.permissions.includes(candidate),
+    ) &&
     !(
       allowCatalogReader &&
       permission === "catalog.manage" &&

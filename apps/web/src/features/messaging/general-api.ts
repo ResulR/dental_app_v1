@@ -13,6 +13,8 @@ import {
   MessageMutationResultSchema,
   MessageHistoryQuerySchema,
   MessageHistoryResultSchema,
+  MessagingInboxQuerySchema,
+  MessagingInboxPageSchema,
 } from "@dental-lab/contracts";
 async function post(url: string, body: unknown, signal?: AbortSignal) {
   const response = await fetch(url, {
@@ -46,6 +48,15 @@ export async function textMessageHistory(
     await post(
       "/api/v1/messaging/" + kind + "/history",
       MessageHistoryQuerySchema.parse(raw),
+    ),
+  );
+}
+export async function messagingInbox(raw: unknown, signal?: AbortSignal) {
+  return MessagingInboxPageSchema.parse(
+    await post(
+      "/api/v1/messaging/inbox/list",
+      MessagingInboxQuerySchema.parse(raw),
+      signal,
     ),
   );
 }

@@ -2357,7 +2357,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Implémentation16/10 :** voir docs/ORDER_LIFECYCLE.md : cinq actions versionnées, audit/outbox et fermeture/réouverture atomiques. Validation hors ligne avec doublesSQL ; aucune application PostgreSQL ni réception finale.
 
 ### 13.8 — Implémenter boîte de réception laboratoire
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Boîte textuelle laboratoire intégrée derrière drapeau fermé : recherche clinique/numéro, filtres général/commande et non-lus, pagination, permissions distinctes et revalidation. Tests avec doubles ; PostgreSQL réel, navigateur mobile/desktop et comportement sous charge non réceptionnés.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel

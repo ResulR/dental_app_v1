@@ -1,5 +1,6 @@
 import { AuditLogPanel } from "../features/audit/AuditLogPanel.js";
 import { GeneralMessagingPanel } from "../features/messaging/GeneralMessagingPanel.js";
+import { MessagingInboxPanel } from "../features/messaging/MessagingInboxPanel.js";
 import { ActionInboxPanel } from "../features/orders/index.js";
 import { OrderTrackingPanel } from "../features/orders/index.js";
 import { ClinicOrderForm, OrderReviewPanel } from "../features/orders/index.js";
@@ -80,6 +81,28 @@ export function App() {
               {identity.profile === "clinic" && (
                 <ClinicOrderForm key={identity.account_id + "-order-form"} />
               )}
+              {identity.profile !== "clinic" &&
+                import.meta.env.VITE_DENTAL_LAB_GENERAL_MESSAGING_ENABLED ===
+                  "true" && (
+                  <PermissionBoundary
+                    identity={identity}
+                    permission="messaging.general.read"
+                    alternatives={
+                      import.meta.env
+                        .VITE_DENTAL_LAB_ORDER_MESSAGING_ENABLED === "true"
+                        ? ["messaging.order.read"]
+                        : []
+                    }
+                    allowClinic={false}
+                  >
+                    {(snapshot) => (
+                      <MessagingInboxPanel
+                        key={identity.account_id + "-inbox"}
+                        permissions={snapshot.permissions}
+                      />
+                    )}
+                  </PermissionBoundary>
+                )}
               {import.meta.env.VITE_DENTAL_LAB_GENERAL_MESSAGING_ENABLED ===
                 "true" && (
                 <PermissionBoundary

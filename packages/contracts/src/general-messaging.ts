@@ -18,6 +18,40 @@ export const GeneralConversationPageSchema = z.strictObject({
     .max(50),
   next_after: z.uuid().nullable(),
 });
+export const MessagingInboxQuerySchema = z
+  .strictObject({
+    search: z.string().trim().max(80).optional(),
+    kind: z.enum(["general", "order"]).optional(),
+    unread_only: z.boolean().optional(),
+    before_at: z.iso.datetime().optional(),
+    before_id: z.uuid().optional(),
+  })
+  .refine(
+    (value) =>
+      (value.before_at === undefined) === (value.before_id === undefined),
+  );
+export const MessagingInboxPageSchema = z.strictObject({
+  items: z
+    .array(
+      z.strictObject({
+        conversation_id: z.uuid(),
+        clinic_id: z.uuid(),
+        clinic_name: z.string(),
+        kind: z.enum(["general", "order"]),
+        order_id: z.uuid().nullable(),
+        order_number: z
+          .string()
+          .regex(/^[1-9][0-9]*$/)
+          .nullable(),
+        unread_count: z.number().int().nonnegative(),
+        activity_at: z.iso.datetime(),
+        closed: z.boolean(),
+      }),
+    )
+    .max(50),
+  next_before_at: z.iso.datetime().nullable(),
+  next_before_id: z.uuid().nullable(),
+});
 export const OrderConversationQuerySchema = z.strictObject({
   order_id: z.uuid(),
 });

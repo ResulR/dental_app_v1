@@ -4,6 +4,8 @@ import { orderMessagingEnabled } from "./order-messaging-config.js";
 import {
   createGeneralMessagingService,
   createOrderMessagingService,
+  createMessagingInboxService,
+  registerMessagingInboxRoutes,
   createMessageSubmissionService,
   registerGeneralMessagingRoutes,
   registerOrderMessagingRoutes,
@@ -255,6 +257,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
           registerGeneralMessagingRoutes(app, {
             reader: createGeneralMessagingService(database),
             sender: createMessageSubmissionService(database, undefined, true),
+            sessions,
+            origin: config.origin,
+          });
+        if (enableGeneralMessaging)
+          registerMessagingInboxRoutes(app, {
+            inbox: createMessagingInboxService(database, enableOrderMessaging),
             sessions,
             origin: config.origin,
           });
