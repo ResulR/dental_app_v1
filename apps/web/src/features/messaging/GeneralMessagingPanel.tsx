@@ -7,6 +7,7 @@ import { Button } from "../../shared/Button.js";
 import {
   generalConversations,
   generalMessages,
+  markGeneralRead,
   sendGeneralMessage,
 } from "./general-api.js";
 type Conversations = ReturnType<typeof GeneralConversationPageSchema.parse>;
@@ -25,6 +26,7 @@ export function GeneralMessagingPanel({
   const [messages, setMessages] = useState<Messages | null>(null);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
+  const [reading, setReading] = useState(false);
   const [notice, setNotice] = useState("");
   const key = useRef<string | null>(null);
   useEffect(() => {
@@ -102,6 +104,41 @@ export function GeneralMessagingPanel({
       setNotice("Mesazhet e mëparshme nuk u ngarkuan.");
     }
   }
+  const firstVisible = messages?.messages[0]?.sequence_number;
+  const lastVisible = messages?.messages.at(-1)?.sequence_number;
+  const canMarkRead =
+    messages &&
+    firstVisible !== undefined &&
+    lastVisible !== undefined &&
+    firstVisible <= messages.last_read_seq + 1 &&
+    lastVisible > messages.last_read_seq;
+  async function markVisibleRead() {
+    if (!canMarkRead || !selected || reading || lastVisible === undefined)
+      return;
+    setReading(true);
+    setNotice("");
+    try {
+      const receipt = await markGeneralRead({
+        conversation_id: selected,
+        through_seq: lastVisible,
+      });
+      setMessages((previous) =>
+        previous?.conversation_id === receipt.conversation_id
+          ? {
+              ...previous,
+              last_read_seq: Math.max(
+                previous.last_read_seq,
+                receipt.last_read_seq,
+              ),
+            }
+          : previous,
+      );
+    } catch {
+      setNotice("Leximi nuk u konfirmua. Rifreskoni bisedën.");
+    } finally {
+      setReading(false);
+    }
+  }
   async function send() {
     if (!selected || !body.trim() || busy) return;
     setBusy(true);
@@ -153,7 +190,7 @@ export function GeneralMessagingPanel({
           Klinika
           <select
             value={selected}
-            disabled={busy}
+            disabled={busy || reading}
             onChange={(e) => {
               setSelected(e.target.value);
               setMessages(null);
@@ -185,6 +222,22 @@ export function GeneralMessagingPanel({
               Mesazhe më të vjetra
             </Button>
           )}
+          {canMarkRead && (
+            <Button
+              type="button"
+              disabled={reading}
+              onClick={() => void markVisibleRead()}
+            >
+              {reading
+                ? "Duke konfirmuar..."
+                : "Shëno mesazhet e hapura si të lexuara"}
+            </Button>
+          )}
+          {messages &&
+            firstVisible !== undefined &&
+            firstVisible > messages.last_read_seq + 1 && (
+              <p>Hapni mesazhet më të vjetra para konfirmimit të leximit.</p>
+            )}
           <ol aria-label="Mesazhet">
             {messages?.messages.map((message) => (
               <li key={message.id}>
@@ -194,6 +247,14 @@ export function GeneralMessagingPanel({
                 {" · "}
                 <time dateTime={message.created_at}>{message.created_at}</time>
                 {message.edited && " · Ndryshuar"}
+                {message.sender_side === (clinic ? "clinic" : "laboratory") && (
+                  <span>
+                    {" · "}
+                    {message.sequence_number <= messages.other_read_seq
+                      ? "Lexuar"
+                      : "Dërguar"}
+                  </span>
+                )}
                 <p>{message.hidden ? "Mesazh i fshehur" : message.body}</p>
               </li>
             ))}

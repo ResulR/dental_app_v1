@@ -12,7 +12,7 @@ type ProblemCode =
 import { ProblemSchema } from "@dental-lab/contracts";
 import type { FieldIssue } from "@dental-lab/contracts";
 const titles: Record<ProblemCode, string> = {
-  DEPENDENCY_UNAVAILABLE: "Regjistrimi nuk është i disponueshëm për momentin.",
+  DEPENDENCY_UNAVAILABLE: "Shërbimi nuk është i disponueshëm për momentin.",
   STATE_CONFLICT: "Regjistrimi nuk mund të përfundohet me këto të dhëna.",
   AUTHENTICATION_REQUIRED: "Identifikimi nuk u pranua.",
   FORBIDDEN: "Kjo kërkesë nuk lejohet.",

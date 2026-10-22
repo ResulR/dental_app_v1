@@ -3,6 +3,8 @@ import {
   GeneralConversationPageSchema,
   GeneralMessageQuerySchema,
   GeneralMessagePageSchema,
+  GeneralReadCommandSchema,
+  GeneralReadReceiptSchema,
 } from "@dental-lab/contracts";
 import type {
   createApplicationDatabase,
@@ -27,7 +29,7 @@ async function authority(tx: DatabaseExecutor, actor: Actor) {
   if (!identity) return null;
   if (identity.profile !== "clinic") {
     return identity.permissions.includes("messaging.general.read")
-      ? { clinicId: null }
+      ? { clinicId: null, side: "laboratory" as const }
       : null;
   }
   const clinic = await tx.query(
@@ -35,7 +37,7 @@ async function authority(tx: DatabaseExecutor, actor: Actor) {
     [actor.accountId],
   );
   return clinic.rows.length === 1
-    ? { clinicId: String(clinic.rows[0]!.id) }
+    ? { clinicId: String(clinic.rows[0]!.id), side: "clinic" as const }
     : null;
 }
 export function createGeneralMessagingRepository(
@@ -91,6 +93,14 @@ export function createGeneralMessagingRepository(
           [parsed.data.conversation_id, scope.clinicId],
         );
         if (conversation.rows.length !== 1) return { kind: "denied" as const };
+        const reads = await tx.query(
+          "SELECT side,last_read_seq::text FROM public.conversation_reads WHERE conversation_id=$1 ORDER BY side",
+          [parsed.data.conversation_id],
+        );
+        if (reads.rows.length !== 2) return { kind: "unavailable" as const };
+        const ownRead = reads.rows.find((row) => row.side === scope.side);
+        const otherRead = reads.rows.find((row) => row.side !== scope.side);
+        if (!ownRead || !otherRead) return { kind: "unavailable" as const };
         const rows = await tx.query(
           `SELECT m.id,m.sequence_number::text,m.sender_side,m.created_at,
              CASE WHEN m.hidden_at IS NULL THEN v.body ELSE NULL END AS body,
@@ -124,9 +134,55 @@ export function createGeneralMessagingRepository(
           kind: "result" as const,
           result: GeneralMessagePageSchema.parse({
             conversation_id: parsed.data.conversation_id,
+            last_read_seq: Number(ownRead.last_read_seq),
+            other_read_seq: Number(otherRead.last_read_seq),
             messages,
             next_before_seq:
               rows.rows.length > 50 ? messages[0]!.sequence_number : null,
+          }),
+        };
+      });
+    },
+    async markRead(actor: Actor, raw: unknown) {
+      const parsed = GeneralReadCommandSchema.safeParse(raw);
+      if (!parsed.success) return { kind: "invalid" as const };
+      return db.transaction(async (tx) => {
+        const scope = await authority(tx, actor);
+        if (!scope) return { kind: "denied" as const };
+        const conversation = await tx.query(
+          "SELECT clinic_id,last_message_seq::text FROM public.conversations WHERE id=$1 AND kind='general' AND ($2::uuid IS NULL OR clinic_id=$2) FOR SHARE",
+          [parsed.data.conversation_id, scope.clinicId],
+        );
+        if (conversation.rows.length !== 1) return { kind: "denied" as const };
+        const read = await tx.query(
+          "SELECT last_read_seq::text FROM public.conversation_reads WHERE conversation_id=$1 AND side=$2 FOR UPDATE",
+          [parsed.data.conversation_id, scope.side],
+        );
+        if (read.rows.length !== 1) return { kind: "unavailable" as const };
+        const previous = Number(read.rows[0]!.last_read_seq);
+        const through = parsed.data.through_seq;
+        if (through > Number(conversation.rows[0]!.last_message_seq))
+          return { kind: "invalid" as const };
+        if (through > previous) {
+          const exists = await tx.query(
+            "SELECT 1 FROM public.messages WHERE conversation_id=$1 AND clinic_id=$2 AND sequence_number=$3",
+            [
+              parsed.data.conversation_id,
+              conversation.rows[0]!.clinic_id,
+              through,
+            ],
+          );
+          if (exists.rows.length !== 1) return { kind: "invalid" as const };
+          await tx.query(
+            "UPDATE public.conversation_reads SET last_read_seq=$3,read_by=$4,read_at=statement_timestamp(),revision=revision+1 WHERE conversation_id=$1 AND side=$2",
+            [parsed.data.conversation_id, scope.side, through, actor.accountId],
+          );
+        }
+        return {
+          kind: "result" as const,
+          result: GeneralReadReceiptSchema.parse({
+            conversation_id: parsed.data.conversation_id,
+            last_read_seq: Math.max(previous, through),
           }),
         };
       });
@@ -135,7 +191,7 @@ export function createGeneralMessagingRepository(
 }
 export async function assertGeneralMessagingReady(db: DatabaseExecutor) {
   const result = await db.query(
-    "SELECT has_table_privilege(current_user,'public.conversations','SELECT') AND has_column_privilege(current_user,'public.conversations','last_message_seq','UPDATE') AND has_column_privilege(current_user,'public.conversations','revision','UPDATE') AND has_table_privilege(current_user,'public.messages','SELECT') AND has_table_privilege(current_user,'public.messages','INSERT') AND has_table_privilege(current_user,'public.message_versions','SELECT') AND has_table_privilege(current_user,'public.message_versions','INSERT') AND has_table_privilege(current_user,'public.outbox_events','INSERT') AND has_table_privilege(current_user,'public.outbox_dispatches','INSERT') AND has_table_privilege(current_user,'public.audit_events','INSERT') AS ready",
+    "SELECT has_table_privilege(current_user,'public.conversations','SELECT') AND has_column_privilege(current_user,'public.conversations','last_message_seq','UPDATE') AND has_column_privilege(current_user,'public.conversations','revision','UPDATE') AND has_table_privilege(current_user,'public.messages','SELECT') AND has_table_privilege(current_user,'public.messages','INSERT') AND has_table_privilege(current_user,'public.message_versions','SELECT') AND has_table_privilege(current_user,'public.message_versions','INSERT') AND has_table_privilege(current_user,'public.conversation_reads','SELECT') AND has_column_privilege(current_user,'public.conversation_reads','last_read_seq','UPDATE') AND has_column_privilege(current_user,'public.conversation_reads','read_by','UPDATE') AND has_column_privilege(current_user,'public.conversation_reads','read_at','UPDATE') AND has_column_privilege(current_user,'public.conversation_reads','revision','UPDATE') AND has_table_privilege(current_user,'public.outbox_events','INSERT') AND has_table_privilege(current_user,'public.outbox_dispatches','INSERT') AND has_table_privilege(current_user,'public.audit_events','INSERT') AS ready",
   );
   if (result.rows[0]?.ready !== true)
     throw new Error("GENERAL_MESSAGING_STORAGE_NOT_READY");

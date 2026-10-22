@@ -2,6 +2,7 @@ import type { Express } from "express";
 import {
   GeneralConversationQuerySchema,
   GeneralMessageQuerySchema,
+  GeneralReadCommandSchema,
   MessageSubmissionSchema,
 } from "@dental-lab/contracts";
 import { readSessionCookie, mutationOriginAllowed } from "../identity/index.js";
@@ -21,7 +22,12 @@ export function registerGeneralMessagingRoutes(
 ) {
   if (!mutationOriginAllowed(services.origin, services.origin))
     throw new Error("INVALID_GENERAL_MESSAGING_ORIGIN");
-  for (const action of ["conversations", "messages", "send"] as const) {
+  for (const action of [
+    "conversations",
+    "messages",
+    "markRead",
+    "send",
+  ] as const) {
     app.post("/api/v1/messaging/general/" + action, async (req, res) => {
       if (!mutationOriginAllowed(req.headers.origin, services.origin)) {
         sendProblem(res, "FORBIDDEN", 403);
@@ -32,7 +38,9 @@ export function registerGeneralMessagingRoutes(
           ? GeneralConversationQuerySchema
           : action === "messages"
             ? GeneralMessageQuerySchema
-            : MessageSubmissionSchema;
+            : action === "markRead"
+              ? GeneralReadCommandSchema
+              : MessageSubmissionSchema;
       if (
         !req.is("application/json") ||
         Object.keys(req.query).length ||
@@ -56,8 +64,16 @@ export function registerGeneralMessagingRoutes(
       if (result.kind !== "result") {
         sendProblem(
           res,
-          result.kind === "denied" ? "FORBIDDEN" : "VALIDATION_FAILED",
-          result.kind === "denied" ? 403 : 400,
+          result.kind === "denied"
+            ? "FORBIDDEN"
+            : result.kind === "unavailable"
+              ? "DEPENDENCY_UNAVAILABLE"
+              : "VALIDATION_FAILED",
+          result.kind === "denied"
+            ? 403
+            : result.kind === "unavailable"
+              ? 503
+              : 400,
         );
         return;
       }

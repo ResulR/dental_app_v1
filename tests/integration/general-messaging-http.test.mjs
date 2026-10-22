@@ -9,6 +9,10 @@ test("general routes forbid foreign origin, anonymous access, files and non-gene
     result: { items: [], next_after: null },
   }));
   const messages = vi.fn(async () => ({ kind: "denied" }));
+  const markRead = vi.fn(async () => ({
+    kind: "result",
+    result: { conversation_id: id, last_read_seq: 1 },
+  }));
   const send = vi.fn(async () => ({
     kind: "result",
     result: { kind: "sent" },
@@ -16,7 +20,7 @@ test("general routes forbid foreign origin, anonymous access, files and non-gene
   const server = createApp(
     (app) =>
       registerGeneralMessagingRoutes(app, {
-        reader: { conversations, messages },
+        reader: { conversations, messages, markRead },
         sender: { send },
         sessions: {
           authenticate: async () => ({ accountId: id, sessionId: id }),
@@ -68,6 +72,38 @@ test("general routes forbid foreign origin, anonymous access, files and non-gene
     expect((await post("messages", { conversation_id: id })).status).toBe(403);
     expect((await post("conversations", {})).status).toBe(200);
     expect(conversations).toHaveBeenCalledTimes(1);
+    expect(
+      (await post("markRead", { conversation_id: id, through_seq: 0 })).status,
+    ).toBe(400);
+    expect(markRead).not.toHaveBeenCalled();
+    expect(
+      (
+        await post(
+          "markRead",
+          { conversation_id: id, through_seq: 1 },
+          { ...headers, origin: "https://evil.example" },
+        )
+      ).status,
+    ).toBe(403);
+    expect(
+      (
+        await post(
+          "markRead",
+          { conversation_id: id, through_seq: 1 },
+          { ...headers, cookie: "" },
+        )
+      ).status,
+    ).toBe(401);
+    const receipt = await post("markRead", {
+      conversation_id: id,
+      through_seq: 1,
+    });
+    expect(receipt.status).toBe(200);
+    expect(await receipt.json()).toEqual({
+      conversation_id: id,
+      last_read_seq: 1,
+    });
+    expect(markRead).toHaveBeenCalledTimes(1);
     expect((await post("send", payload)).status).toBe(200);
     expect(send).toHaveBeenCalledTimes(1);
   } finally {

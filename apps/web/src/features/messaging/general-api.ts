@@ -3,6 +3,8 @@ import {
   GeneralConversationPageSchema,
   GeneralMessageQuerySchema,
   GeneralMessagePageSchema,
+  GeneralReadCommandSchema,
+  GeneralReadReceiptSchema,
   MessageSubmissionSchema,
   MessageSubmissionResultSchema,
 } from "@dental-lab/contracts";
@@ -33,6 +35,15 @@ export async function generalMessages(raw: unknown, signal?: AbortSignal) {
     await post(
       "/api/v1/messaging/general/messages",
       GeneralMessageQuerySchema.parse(raw),
+      signal,
+    ),
+  );
+}
+export async function markGeneralRead(raw: unknown, signal?: AbortSignal) {
+  return GeneralReadReceiptSchema.parse(
+    await post(
+      "/api/v1/messaging/general/markRead",
+      GeneralReadCommandSchema.parse(raw),
       signal,
     ),
   );

@@ -21,8 +21,18 @@ export const GeneralMessageQuerySchema = z.strictObject({
   conversation_id: z.uuid(),
   before_seq: z.number().int().positive().optional(),
 });
+export const GeneralReadCommandSchema = z.strictObject({
+  conversation_id: z.uuid(),
+  through_seq: z.number().int().positive(),
+});
+export const GeneralReadReceiptSchema = z.strictObject({
+  conversation_id: z.uuid(),
+  last_read_seq: z.number().int().nonnegative(),
+});
 export const GeneralMessagePageSchema = z.strictObject({
   conversation_id: z.uuid(),
+  last_read_seq: z.number().int().nonnegative(),
+  other_read_seq: z.number().int().nonnegative(),
   messages: z
     .array(
       z.strictObject({

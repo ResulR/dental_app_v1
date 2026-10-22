@@ -2310,7 +2310,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 13.5 — Implémenter Envoyé et Lu
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Messagerie générale textuelle : marqueur de lecture monotone, reçu idempotent et statuts Envoyé/Lu intégrés derrière le flag fermé ; tests unitaires/HTTP avec doubles. Restent : lecture automatique à l'ouverture conforme au CDC, non-lus et synchronisation temps réel, conversations de commande, rattrapage versionné des marqueurs antérieurs, recette PostgreSQL réelle et navigateur. Ne vaut pas réception de 13.5.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel

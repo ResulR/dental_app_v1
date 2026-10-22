@@ -13,8 +13,10 @@ function fixture({
   approved = true,
   foreign = false,
   hidden = false,
+  missingReads = false,
 } = {}) {
   const calls = [];
+  let lastReadSeq = 0;
   const query = vi.fn(async (sql, args = []) => {
     calls.push([sql, args]);
     if (sql.startsWith("SELECT a.profile"))
@@ -35,8 +37,45 @@ function fixture({
       };
     if (sql.startsWith("SELECT id FROM public.clinics WHERE account_id=$1 AND"))
       return { rows: approved ? [{ id: clinic }] : [] };
+    if (
+      sql.startsWith(
+        "SELECT clinic_id,last_message_seq::text FROM public.conversations",
+      )
+    )
+      return {
+        rows: foreign ? [] : [{ clinic_id: clinic, last_message_seq: "1" }],
+      };
     if (sql.startsWith("SELECT clinic_id FROM public.conversations"))
-      return { rows: foreign ? [] : [{ clinic_id: clinic }] };
+      return {
+        rows: foreign ? [] : [{ clinic_id: clinic, last_message_seq: "1" }],
+      };
+    if (
+      sql.startsWith(
+        "SELECT side,last_read_seq::text FROM public.conversation_reads",
+      )
+    )
+      return {
+        rows: missingReads
+          ? []
+          : [
+              { side: "clinic", last_read_seq: String(lastReadSeq) },
+              { side: "laboratory", last_read_seq: "0" },
+            ],
+      };
+    if (
+      sql.startsWith(
+        "SELECT last_read_seq::text FROM public.conversation_reads",
+      )
+    )
+      return {
+        rows: missingReads ? [] : [{ last_read_seq: String(lastReadSeq) }],
+      };
+    if (sql.startsWith("SELECT 1 FROM public.messages WHERE"))
+      return { rows: args[2] === 1 ? [{ "?column?": 1 }] : [] };
+    if (sql.startsWith("UPDATE public.conversation_reads SET")) {
+      lastReadSeq = args[2];
+      return { rows: [] };
+    }
     if (sql.includes("FROM public.conversations c JOIN"))
       return {
         rows: [
@@ -122,11 +161,56 @@ test("conversation scope is checked before messages; hidden text stays absent", 
   const result = await f.repo.messages(actor, { conversation_id: clinic });
   expect(result.kind).toBe("result");
   expect(result.result.messages[0].body).toBeNull();
+  expect(result.result.last_read_seq).toBe(0);
+  expect(result.result.other_read_seq).toBe(0);
   expect(
     f.calls.find(([sql]) => sql.includes("FROM public.messages m JOIN"))[1][1],
   ).toBe(clinic);
 });
 
+test("read receipt is monotone and an idempotent retry never rewrites the marker", async () => {
+  const f = fixture();
+  const first = await f.repo.markRead(actor, {
+    conversation_id: clinic,
+    through_seq: 1,
+  });
+  expect(first).toMatchObject({ kind: "result", result: { last_read_seq: 1 } });
+  const again = await f.repo.markRead(actor, {
+    conversation_id: clinic,
+    through_seq: 1,
+  });
+  expect(again).toMatchObject({ kind: "result", result: { last_read_seq: 1 } });
+  expect(
+    f.calls.filter(([sql]) =>
+      sql.startsWith("UPDATE public.conversation_reads SET"),
+    ),
+  ).toHaveLength(1);
+  const page = await f.repo.messages(actor, { conversation_id: clinic });
+  expect(page.result.last_read_seq).toBe(1);
+});
+test("read rejects foreign scope, invalid sequence, and missing historic markers without mutation", async () => {
+  for (const [options, through_seq, kind] of [
+    [{ foreign: true }, 1, "denied"],
+    [{}, 2, "invalid"],
+    [{ missingReads: true }, 1, "unavailable"],
+    [{ approved: false }, 1, "denied"],
+  ]) {
+    const f = fixture(options);
+    expect(
+      (await f.repo.markRead(actor, { conversation_id: clinic, through_seq }))
+        .kind,
+    ).toBe(kind);
+    expect(
+      f.calls.some(([sql]) =>
+        sql.startsWith("UPDATE public.conversation_reads SET"),
+      ),
+    ).toBe(false);
+  }
+  const f = fixture({ missingReads: true });
+  expect((await f.repo.messages(actor, { conversation_id: clinic })).kind).toBe(
+    "unavailable",
+  );
+});
 test("startup refuses missing messaging storage privileges", async () => {
   await expect(
     assertGeneralMessagingReady({
