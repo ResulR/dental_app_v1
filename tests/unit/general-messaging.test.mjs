@@ -14,6 +14,7 @@ function fixture({
   foreign = false,
   hidden = false,
   missingReads = false,
+  sequence = 1,
 } = {}) {
   const calls = [];
   let lastReadSeq = 0;
@@ -43,11 +44,15 @@ function fixture({
       )
     )
       return {
-        rows: foreign ? [] : [{ clinic_id: clinic, last_message_seq: "1" }],
+        rows: foreign
+          ? []
+          : [{ clinic_id: clinic, last_message_seq: String(sequence) }],
       };
     if (sql.startsWith("SELECT clinic_id FROM public.conversations"))
       return {
-        rows: foreign ? [] : [{ clinic_id: clinic, last_message_seq: "1" }],
+        rows: foreign
+          ? []
+          : [{ clinic_id: clinic, last_message_seq: String(sequence) }],
       };
     if (
       sql.startsWith(
@@ -83,24 +88,34 @@ function fixture({
             id: clinic,
             clinic_id: clinic,
             clinic_name: "Clinic",
-            last_message_seq: "1",
+            last_message_seq: String(sequence),
+            last_read_seq: missingReads ? null : String(lastReadSeq),
+            unread_count: "1",
           },
         ],
       };
-    if (sql.includes("FROM public.messages m JOIN"))
+    if (sql.includes("FROM public.messages m JOIN")) {
+      const numbers = Array.from(
+        { length: sequence },
+        (_, index) => index + 1,
+      ).filter(
+        (number) =>
+          (args[2] === null || number < args[2]) &&
+          (args[3] === null || number > args[3]),
+      );
+      if (sql.includes("DESC")) numbers.reverse();
       return {
-        rows: [
-          {
-            id: clinic,
-            sequence_number: "1",
-            sender_side: "clinic",
-            created_at: new Date("2026-10-21T10:00:00.000Z"),
-            body: hidden ? null : "Synthetic",
-            hidden,
-            edited: false,
-          },
-        ],
+        rows: numbers.slice(0, 51).map((number) => ({
+          id: clinic,
+          sequence_number: String(number),
+          sender_side: "clinic",
+          created_at: new Date("2026-10-21T10:00:00.000Z"),
+          body: hidden ? null : "Synthetic",
+          hidden,
+          edited: false,
+        })),
       };
+    }
     return { rows: [] };
   });
   return {
@@ -163,6 +178,8 @@ test("conversation scope is checked before messages; hidden text stays absent", 
   expect(result.result.messages[0].body).toBeNull();
   expect(result.result.last_read_seq).toBe(0);
   expect(result.result.other_read_seq).toBe(0);
+  expect(result.result.last_message_seq).toBe(1);
+  expect(result.result.next_after_seq).toBeNull();
   expect(
     f.calls.find(([sql]) => sql.includes("FROM public.messages m JOIN"))[1][1],
   ).toBe(clinic);
@@ -210,6 +227,63 @@ test("read rejects foreign scope, invalid sequence, and missing historic markers
   expect((await f.repo.messages(actor, { conversation_id: clinic })).kind).toBe(
     "unavailable",
   );
+});
+test("forward catch-up and backward history each paginate without gaps or duplicates", async () => {
+  const f = fixture({ sequence: 120 });
+  const first = await f.repo.messages(actor, {
+    conversation_id: clinic,
+    after_seq: 0,
+  });
+  expect(
+    first.result.messages.map((message) => message.sequence_number),
+  ).toEqual(Array.from({ length: 50 }, (_, index) => index + 1));
+  expect(first.result.next_after_seq).toBe(50);
+  const second = await f.repo.messages(actor, {
+    conversation_id: clinic,
+    after_seq: 50,
+  });
+  expect(second.result.messages[0].sequence_number).toBe(51);
+  expect(second.result.next_after_seq).toBe(100);
+  const third = await f.repo.messages(actor, {
+    conversation_id: clinic,
+    after_seq: 100,
+  });
+  expect(third.result.messages.at(-1).sequence_number).toBe(120);
+  expect(third.result.next_after_seq).toBeNull();
+  const latest = await f.repo.messages(actor, { conversation_id: clinic });
+  expect(latest.result.messages[0].sequence_number).toBe(71);
+  expect(latest.result.next_before_seq).toBe(71);
+  const older = await f.repo.messages(actor, {
+    conversation_id: clinic,
+    before_seq: 71,
+  });
+  expect(older.result.messages.at(-1).sequence_number).toBe(70);
+  expect(older.result.next_before_seq).toBe(21);
+  expect(
+    (
+      await f.repo.messages(actor, {
+        conversation_id: clinic,
+        before_seq: 71,
+        after_seq: 0,
+      })
+    ).kind,
+  ).toBe("invalid");
+});
+test("conversation list counts only messages from the other side after the own read cursor", async () => {
+  const f = fixture();
+  const result = await f.repo.conversations(actor, {});
+  expect(result.result.items[0].unread_count).toBe(1);
+  const [sql, args] = f.calls.find(([text]) =>
+    text.includes("AS unread_count"),
+  );
+  expect(sql).toContain(
+    "m.sequence_number>r.last_read_seq AND m.sender_side<>$3",
+  );
+  expect(args[2]).toBe("clinic");
+});
+test("conversation list does not present absent historic read markers as zero unread", async () => {
+  const f = fixture({ missingReads: true });
+  expect((await f.repo.conversations(actor, {})).kind).toBe("unavailable");
 });
 test("startup refuses missing messaging storage privileges", async () => {
   await expect(

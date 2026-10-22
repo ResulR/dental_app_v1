@@ -57,21 +57,29 @@ export function createGeneralMessagingRepository(
         )
           return { kind: "denied" as const };
         const rows = await tx.query(
-          `SELECT c.id,c.clinic_id,k.name AS clinic_name,c.last_message_seq::text
+          `SELECT c.id,c.clinic_id,k.name AS clinic_name,c.last_message_seq::text,
+               r.last_read_seq::text,
+               (SELECT count(*)::text FROM public.messages m WHERE m.conversation_id=c.id
+                  AND m.sequence_number>r.last_read_seq AND m.sender_side<>$3) AS unread_count
              FROM public.conversations c JOIN public.clinics k ON k.id=c.clinic_id
+             LEFT JOIN public.conversation_reads r ON r.conversation_id=c.id AND r.side=$3
              WHERE c.kind='general' AND ($1::uuid IS NULL OR c.clinic_id=$1)
                AND ($2::uuid IS NULL OR c.id>$2)
              ORDER BY c.id LIMIT 51`,
           [
             scope.clinicId ?? parsed.data.clinic_id ?? null,
             parsed.data.after ?? null,
+            scope.side,
           ],
         );
+        if (rows.rows.some((row) => row.last_read_seq === null))
+          return { kind: "unavailable" as const };
         const items = rows.rows.slice(0, 50).map((row) => ({
           id: row.id,
           clinic_id: row.clinic_id,
           clinic_name: row.clinic_name,
           last_message_seq: Number(row.last_message_seq),
+          unread_count: Number(row.unread_count),
         }));
         return {
           kind: "result" as const,
@@ -89,7 +97,7 @@ export function createGeneralMessagingRepository(
         const scope = await authority(tx, actor);
         if (!scope) return { kind: "denied" as const };
         const conversation = await tx.query(
-          "SELECT clinic_id FROM public.conversations WHERE id=$1 AND kind='general' AND ($2::uuid IS NULL OR clinic_id=$2) FOR SHARE",
+          "SELECT clinic_id,last_message_seq::text FROM public.conversations WHERE id=$1 AND kind='general' AND ($2::uuid IS NULL OR clinic_id=$2) FOR SHARE",
           [parsed.data.conversation_id, scope.clinicId],
         );
         if (conversation.rows.length !== 1) return { kind: "denied" as const };
@@ -101,6 +109,7 @@ export function createGeneralMessagingRepository(
         const ownRead = reads.rows.find((row) => row.side === scope.side);
         const otherRead = reads.rows.find((row) => row.side !== scope.side);
         if (!ownRead || !otherRead) return { kind: "unavailable" as const };
+        const forward = parsed.data.after_seq !== undefined;
         const rows = await tx.query(
           `SELECT m.id,m.sequence_number::text,m.sender_side,m.created_at,
              CASE WHEN m.hidden_at IS NULL THEN v.body ELSE NULL END AS body,
@@ -108,37 +117,44 @@ export function createGeneralMessagingRepository(
              FROM public.messages m JOIN public.message_versions v ON v.id=m.current_version_id AND v.message_id=m.id
              WHERE m.conversation_id=$1 AND m.clinic_id=$2
                AND ($3::bigint IS NULL OR m.sequence_number<$3)
-             ORDER BY m.sequence_number DESC LIMIT 51`,
+               AND ($4::bigint IS NULL OR m.sequence_number>$4)
+             ORDER BY m.sequence_number ${forward ? "ASC" : "DESC"} LIMIT 51`,
           [
             parsed.data.conversation_id,
             conversation.rows[0]!.clinic_id,
             parsed.data.before_seq ?? null,
+            parsed.data.after_seq ?? null,
           ],
         );
-        const messages = rows.rows
-          .slice(0, 50)
-          .map((row) => ({
-            id: row.id,
-            sequence_number: Number(row.sequence_number),
-            sender_side: row.sender_side,
-            body: row.body,
-            created_at:
-              row.created_at instanceof Date
-                ? row.created_at.toISOString()
-                : row.created_at,
-            hidden: row.hidden,
-            edited: row.edited,
-          }))
-          .reverse();
+        const messages = rows.rows.slice(0, 50).map((row) => ({
+          id: row.id,
+          sequence_number: Number(row.sequence_number),
+          sender_side: row.sender_side,
+          body: row.body,
+          created_at:
+            row.created_at instanceof Date
+              ? row.created_at.toISOString()
+              : row.created_at,
+          hidden: row.hidden,
+          edited: row.edited,
+        }));
+        if (!forward) messages.reverse();
         return {
           kind: "result" as const,
           result: GeneralMessagePageSchema.parse({
             conversation_id: parsed.data.conversation_id,
             last_read_seq: Number(ownRead.last_read_seq),
             other_read_seq: Number(otherRead.last_read_seq),
+            last_message_seq: Number(conversation.rows[0]!.last_message_seq),
             messages,
             next_before_seq:
-              rows.rows.length > 50 ? messages[0]!.sequence_number : null,
+              !forward && rows.rows.length > 50
+                ? messages[0]!.sequence_number
+                : null,
+            next_after_seq:
+              forward && rows.rows.length > 50
+                ? messages.at(-1)!.sequence_number
+                : null,
           }),
         };
       });

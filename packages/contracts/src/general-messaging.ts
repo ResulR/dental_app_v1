@@ -12,15 +12,21 @@ export const GeneralConversationPageSchema = z.strictObject({
         clinic_id: z.uuid(),
         clinic_name: z.string(),
         last_message_seq: z.number().int().nonnegative(),
+        unread_count: z.number().int().nonnegative(),
       }),
     )
     .max(50),
   next_after: z.uuid().nullable(),
 });
-export const GeneralMessageQuerySchema = z.strictObject({
-  conversation_id: z.uuid(),
-  before_seq: z.number().int().positive().optional(),
-});
+export const GeneralMessageQuerySchema = z
+  .strictObject({
+    conversation_id: z.uuid(),
+    before_seq: z.number().int().positive().optional(),
+    after_seq: z.number().int().nonnegative().optional(),
+  })
+  .refine(
+    (query) => query.before_seq === undefined || query.after_seq === undefined,
+  );
 export const GeneralReadCommandSchema = z.strictObject({
   conversation_id: z.uuid(),
   through_seq: z.number().int().positive(),
@@ -33,6 +39,7 @@ export const GeneralMessagePageSchema = z.strictObject({
   conversation_id: z.uuid(),
   last_read_seq: z.number().int().nonnegative(),
   other_read_seq: z.number().int().nonnegative(),
+  last_message_seq: z.number().int().nonnegative(),
   messages: z
     .array(
       z.strictObject({
@@ -47,4 +54,5 @@ export const GeneralMessagePageSchema = z.strictObject({
     )
     .max(50),
   next_before_seq: z.number().int().positive().nullable(),
+  next_after_seq: z.number().int().positive().nullable(),
 });

@@ -5,6 +5,11 @@ import type {
 } from "@dental-lab/contracts";
 import { Button } from "../../shared/Button.js";
 import {
+  catchUpMessages,
+  contiguousReadThrough,
+  mergeMessagePage,
+} from "./message-sync.js";
+import {
   generalConversations,
   generalMessages,
   markGeneralRead,
@@ -26,16 +31,54 @@ export function GeneralMessagingPanel({
   const [messages, setMessages] = useState<Messages | null>(null);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
   const [reading, setReading] = useState(false);
   const [notice, setNotice] = useState("");
+  const [connection, setConnection] = useState<
+    "connected" | "waiting" | "offline"
+  >("waiting");
+  const latestPage = useRef<Messages | null>(null);
+  const latestConversations = useRef<Conversations | null>(null);
   const key = useRef<string | null>(null);
+  const messageList = useRef<HTMLOListElement>(null);
+  const seen = useRef<{
+    conversationId: string;
+    sequences: Set<number>;
+  } | null>(null);
+  const readPending = useRef(false);
+  useEffect(() => {
+    latestPage.current = messages;
+  }, [messages]);
+  useEffect(() => {
+    latestConversations.current = conversations;
+  }, [conversations]);
+  async function loadConversationCounts(
+    conversationId: string,
+    signal?: AbortSignal,
+  ) {
+    const first = await generalConversations({}, signal);
+    const known = latestConversations.current?.items.find(
+      (item) => item.id === conversationId,
+    );
+    if (!known || first.items.some((item) => item.id === conversationId))
+      return first;
+    const scoped = await generalConversations(
+      { clinic_id: known.clinic_id },
+      signal,
+    );
+    return { ...first, items: [...first.items, ...scoped.items] };
+  }
   useEffect(() => {
     const controller = new AbortController();
     void generalConversations({}, controller.signal)
       .then((page) => {
         if (!controller.signal.aborted) {
           setConversations(page);
-          if (clinic && page.items.length === 1) setSelected(page.items[0]!.id);
+          if (clinic && page.items.length === 1) {
+            setLoadingMessages(true);
+            setSelected(page.items[0]!.id);
+          }
         }
       })
       .catch(() => {
@@ -49,10 +92,16 @@ export function GeneralMessagingPanel({
     const controller = new AbortController();
     void generalMessages({ conversation_id: selected }, controller.signal)
       .then((page) => {
-        if (!controller.signal.aborted) setMessages(page);
+        if (!controller.signal.aborted) {
+          setMessages(page);
+          setConnection("connected");
+        }
       })
       .catch(() => {
         if (!controller.signal.aborted) setNotice("Mesazhet nuk u ngarkuan.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadingMessages(false);
       });
     return () => controller.abort();
   }, [selected]);
@@ -83,62 +132,197 @@ export function GeneralMessagingPanel({
   async function refresh() {
     if (!selected) return;
     setNotice("");
+    setLoadingMessages(true);
     try {
-      setMessages(await generalMessages({ conversation_id: selected }));
+      const current = latestPage.current;
+      if (current?.conversation_id === selected) {
+        await catchUpMessages(
+          current,
+          (query) => generalMessages(query),
+          (page) =>
+            setMessages((previous) =>
+              previous?.conversation_id === selected
+                ? mergeMessagePage(previous, page)
+                : previous,
+            ),
+        );
+      } else {
+        setMessages(await generalMessages({ conversation_id: selected }));
+      }
+      setConnection("connected");
     } catch {
       setNotice("Mesazhet nuk u ngarkuan.");
+    } finally {
+      setLoadingMessages(false);
     }
   }
   async function older() {
-    if (!selected || !messages?.next_before_seq) return;
+    if (!selected || !messages?.next_before_seq || loadingOlder) return;
+    setLoadingOlder(true);
     try {
       const page = await generalMessages({
         conversation_id: selected,
         before_seq: messages.next_before_seq,
       });
-      setMessages({
-        ...page,
-        messages: [...page.messages, ...messages.messages],
-      });
-    } catch {
-      setNotice("Mesazhet e mëparshme nuk u ngarkuan.");
-    }
-  }
-  const firstVisible = messages?.messages[0]?.sequence_number;
-  const lastVisible = messages?.messages.at(-1)?.sequence_number;
-  const canMarkRead =
-    messages &&
-    firstVisible !== undefined &&
-    lastVisible !== undefined &&
-    firstVisible <= messages.last_read_seq + 1 &&
-    lastVisible > messages.last_read_seq;
-  async function markVisibleRead() {
-    if (!canMarkRead || !selected || reading || lastVisible === undefined)
-      return;
-    setReading(true);
-    setNotice("");
-    try {
-      const receipt = await markGeneralRead({
-        conversation_id: selected,
-        through_seq: lastVisible,
-      });
       setMessages((previous) =>
-        previous?.conversation_id === receipt.conversation_id
-          ? {
-              ...previous,
-              last_read_seq: Math.max(
-                previous.last_read_seq,
-                receipt.last_read_seq,
-              ),
-            }
+        previous?.conversation_id === page.conversation_id
+          ? mergeMessagePage(previous, page, true)
           : previous,
       );
     } catch {
-      setNotice("Leximi nuk u konfirmua. Rifreskoni bisedën.");
+      setNotice("Mesazhet e mëparshme nuk u ngarkuan.");
     } finally {
-      setReading(false);
+      setLoadingOlder(false);
     }
   }
+  const firstVisible = messages?.messages[0]?.sequence_number;
+  useEffect(() => {
+    if (!selected || !messages || typeof IntersectionObserver === "undefined")
+      return;
+    if (seen.current?.conversationId !== selected)
+      seen.current = { conversationId: selected, sequences: new Set() };
+    let active = true;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (document.hidden || readPending.current || !active) return;
+        for (const entry of entries) {
+          if (entry.isIntersecting && entry.intersectionRatio >= 1) {
+            const sequence = Number(
+              (entry.target as HTMLElement).dataset.sequence,
+            );
+            if (Number.isSafeInteger(sequence))
+              seen.current?.sequences.add(sequence);
+          }
+        }
+        const through = contiguousReadThrough(
+          messages.last_read_seq,
+          seen.current!.sequences,
+        );
+        if (through <= messages.last_read_seq) return;
+        readPending.current = true;
+        setReading(true);
+        void markGeneralRead({
+          conversation_id: selected,
+          through_seq: through,
+        })
+          .then((receipt) => {
+            if (!active) return;
+            setMessages((previous) =>
+              previous?.conversation_id === receipt.conversation_id
+                ? {
+                    ...previous,
+                    last_read_seq: Math.max(
+                      previous.last_read_seq,
+                      receipt.last_read_seq,
+                    ),
+                  }
+                : previous,
+            );
+            void loadConversationCounts(selected)
+              .then((page) => {
+                if (active)
+                  setConversations((previous) =>
+                    previous
+                      ? {
+                          ...previous,
+                          items: previous.items.map(
+                            (item) =>
+                              page.items.find(
+                                (fresh) => fresh.id === item.id,
+                              ) ?? item,
+                          ),
+                        }
+                      : page,
+                  );
+              })
+              .catch(() => {
+                if (active) setConnection("offline");
+              });
+          })
+          .catch(() => {
+            if (active)
+              setNotice("Leximi nuk u konfirmua. Provoni të rilidheni.");
+          })
+          .finally(() => {
+            readPending.current = false;
+            setReading(false);
+          });
+      },
+      { threshold: 1 },
+    );
+    for (const element of messageList.current?.querySelectorAll(
+      "span[data-read-end]",
+    ) ?? [])
+      observer.observe(element);
+    return () => {
+      active = false;
+      observer.disconnect();
+    };
+  }, [selected, messages]);
+  useEffect(() => {
+    if (!selected) return;
+    let active = true;
+    let inFlight = false;
+    const controller = new AbortController();
+    async function sync() {
+      if (!active || inFlight || document.hidden) return;
+      if (!navigator.onLine) {
+        setConnection("offline");
+        return;
+      }
+      const current = latestPage.current;
+      if (!current || current.conversation_id !== selected) return;
+      inFlight = true;
+      try {
+        const list = await loadConversationCounts(selected, controller.signal);
+        await catchUpMessages(
+          current,
+          (query) => generalMessages(query, controller.signal),
+          (page) => {
+            if (active)
+              setMessages((previous) =>
+                previous?.conversation_id === selected
+                  ? mergeMessagePage(previous, page)
+                  : previous,
+              );
+          },
+        );
+        if (!active) return;
+        setConversations((previous) =>
+          previous
+            ? {
+                ...previous,
+                items: previous.items.map(
+                  (item) =>
+                    list.items.find((fresh) => fresh.id === item.id) ?? item,
+                ),
+              }
+            : list,
+        );
+        setConnection("connected");
+      } catch {
+        if (active) setConnection("offline");
+      } finally {
+        inFlight = false;
+      }
+    }
+    const timer = window.setInterval(() => void sync(), 10_000);
+    const resume = () => {
+      if (!document.hidden) void sync();
+    };
+    const disconnected = () => setConnection("offline");
+    document.addEventListener("visibilitychange", resume);
+    window.addEventListener("online", resume);
+    window.addEventListener("offline", disconnected);
+    return () => {
+      active = false;
+      controller.abort();
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", resume);
+      window.removeEventListener("online", resume);
+      window.removeEventListener("offline", disconnected);
+    };
+  }, [selected]);
   async function send() {
     if (!selected || !body.trim() || busy) return;
     setBusy(true);
@@ -190,9 +374,11 @@ export function GeneralMessagingPanel({
           Klinika
           <select
             value={selected}
-            disabled={busy || reading}
+            disabled={busy || reading || loadingMessages || loadingOlder}
             onChange={(e) => {
+              setLoadingMessages(Boolean(e.target.value));
               setSelected(e.target.value);
+              setConnection("waiting");
               setMessages(null);
               setBody("");
               key.current = null;
@@ -202,6 +388,9 @@ export function GeneralMessagingPanel({
             {conversations?.items.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.clinic_name}
+                {item.unread_count > 0
+                  ? ` · ${item.unread_count} të palexuara`
+                  : ""}
               </option>
             ))}
           </select>
@@ -212,25 +401,32 @@ export function GeneralMessagingPanel({
           Më shumë klinika
         </Button>
       )}
+      {clinic && conversations?.items[0] && (
+        <p>{conversations.items[0].unread_count} mesazhe të palexuara</p>
+      )}
       {selected && (
         <>
-          <Button type="button" onClick={() => void refresh()}>
+          <p role="status">
+            {connection === "offline"
+              ? "Pa lidhje. Do të provojmë përsëri."
+              : connection === "waiting"
+                ? "Duke u lidhur..."
+                : "Biseda përditësohet automatikisht."}
+          </p>
+          <Button
+            type="button"
+            disabled={loadingMessages}
+            onClick={() => void refresh()}
+          >
             Përditëso mesazhet
           </Button>
           {messages?.next_before_seq && (
-            <Button type="button" onClick={() => void older()}>
-              Mesazhe më të vjetra
-            </Button>
-          )}
-          {canMarkRead && (
             <Button
               type="button"
-              disabled={reading}
-              onClick={() => void markVisibleRead()}
+              disabled={loadingOlder}
+              onClick={() => void older()}
             >
-              {reading
-                ? "Duke konfirmuar..."
-                : "Shëno mesazhet e hapura si të lexuara"}
+              Mesazhe më të vjetra
             </Button>
           )}
           {messages &&
@@ -238,7 +434,14 @@ export function GeneralMessagingPanel({
             firstVisible > messages.last_read_seq + 1 && (
               <p>Hapni mesazhet më të vjetra para konfirmimit të leximit.</p>
             )}
-          <ol aria-label="Mesazhet">
+          {loadingMessages && <p role="status">Duke ngarkuar mesazhet...</p>}
+          {loadingOlder && (
+            <p role="status">Duke ngarkuar mesazhet e mëparshme...</p>
+          )}
+          {typeof IntersectionObserver === "undefined" && (
+            <p>Konfirmimi automatik i leximit nuk mbështetet këtu.</p>
+          )}
+          <ol aria-label="Mesazhet" ref={messageList}>
             {messages?.messages.map((message) => (
               <li key={message.id}>
                 <strong>
@@ -256,6 +459,12 @@ export function GeneralMessagingPanel({
                   </span>
                 )}
                 <p>{message.hidden ? "Mesazh i fshehur" : message.body}</p>
+                <span
+                  aria-hidden="true"
+                  data-read-end
+                  data-sequence={message.sequence_number}
+                  style={{ display: "inline-block", width: 1, height: 1 }}
+                />
               </li>
             ))}
           </ol>

@@ -2249,7 +2249,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 ### 13.1 — Créer conversation générale par clinique
 - **Statut :** ◐ Création transactionnelle avec les deux marqueurs de lecture intégrée ; lecture/envoi textuels derrière drapeau fermé, réception PostgreSQL et navigateur différées
-- **Preuve code 21/10 :** inscription clinique insère conversation générale et marqueurs `clinic`/`laboratory` dans la même transaction ; index SQL d'unicité par clinique dans 0007. Les conversations créées avant ce correctif nécessitent une vérification et un éventuel rattrapage versionné des marqueurs avant les accusés « Lu ». Aucune migration de production ni activation.
+- **Preuve code 22/10 :** inscription clinique insère conversation générale et marqueurs `clinic`/`laboratory` dans la même transaction ; index SQL d'unicité par clinique dans 0007. Migration 0023 proposée : n'ajoute que les marqueurs absents avec curseur zéro, sans prétendre à une lecture passée ; ni exécutée ni réceptionnée sur PostgreSQL. Aucune migration de production ni activation.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel
@@ -2295,7 +2295,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 13.4 — Implémenter temps réel et reconnexion
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Rattrapage incrémental paginé et interrogation toutes les 10 s pour l'onglet visible, reprise au retour réseau/onglet et déduplication intégrés côté code. Tests avec doubles ; reconnexion navigateur, charge multi-session et PostgreSQL réel non réceptionnés. Aucun nouveau service.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel
@@ -2310,7 +2310,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 13.5 — Implémenter Envoyé et Lu
-- **Statut :** ◐ Messagerie générale textuelle : marqueur de lecture monotone, reçu idempotent et statuts Envoyé/Lu intégrés derrière le flag fermé ; tests unitaires/HTTP avec doubles. Restent : lecture automatique à l'ouverture conforme au CDC, non-lus et synchronisation temps réel, conversations de commande, rattrapage versionné des marqueurs antérieurs, recette PostgreSQL réelle et navigateur. Ne vaut pas réception de 13.5.
+- **Statut :** ◐ Messagerie générale textuelle : marqueur monotone, reçu idempotent, non-lus de l'autre côté, affichage Envoyé/Lu et lecture automatique des seuls messages réellement visibles avec curseur contigu ; code derrière flag fermé, tests de logique et API avec doubles. Migration 0023 pour marqueurs antérieurs préparée, non appliquée. Restent conversations de commande, validation PostgreSQL concurrente et navigateur/IntersectionObserver multi-session ; ne vaut pas réception de 13.5.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel

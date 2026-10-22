@@ -70,6 +70,18 @@ test("general routes forbid foreign origin, anonymous access, files and non-gene
     ).toBe(400);
     expect(send).not.toHaveBeenCalled();
     expect((await post("messages", { conversation_id: id })).status).toBe(403);
+    expect(
+      (await post("messages", { conversation_id: id, after_seq: -1 })).status,
+    ).toBe(400);
+    expect(
+      (
+        await post("messages", {
+          conversation_id: id,
+          after_seq: 0,
+          before_seq: 2,
+        })
+      ).status,
+    ).toBe(400);
     expect((await post("conversations", {})).status).toBe(200);
     expect(conversations).toHaveBeenCalledTimes(1);
     expect(
