@@ -309,3 +309,35 @@ test("text-only general mode rejects order conversations and all file references
   expect(general.transaction).not.toHaveBeenCalled();
   expect((await text.send(actor, command)).result.kind).toBe("sent");
 });
+
+test("text-only order mode rejects general, files and closed orders while preserving replay", async () => {
+  const general = fixture({ kind: "general" });
+  const sender = createMessageSubmissionService(general, undefined, "order");
+  expect((await sender.send(actor, command)).kind).toBe("denied");
+  expect(general.state.writes).toEqual([]);
+  const order = fixture();
+  const text = createMessageSubmissionService(order, undefined, "order");
+  expect((await text.send(actor, { ...command, file_ids: [id] })).kind).toBe(
+    "invalid",
+  );
+  expect(order.transaction).not.toHaveBeenCalled();
+  expect((await text.send(actor, command)).result).toMatchObject({
+    kind: "sent",
+    replayed: false,
+  });
+  expect((await text.send(actor, command)).result).toMatchObject({
+    kind: "sent",
+    replayed: true,
+  });
+  expect(order.state.seq).toBe(1);
+  const closed = fixture({ closed: true });
+  expect(
+    (
+      await createMessageSubmissionService(closed, undefined, "order").send(
+        actor,
+        command,
+      )
+    ).result.kind,
+  ).toBe("conversation_closed");
+  expect(closed.state.writes).toEqual([]);
+});

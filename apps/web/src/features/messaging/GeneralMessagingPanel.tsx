@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   GeneralConversationPageSchema,
   GeneralMessagePageSchema,
@@ -14,20 +14,53 @@ import {
   generalMessages,
   markGeneralRead,
   sendGeneralMessage,
+  orderConversation,
+  orderMessages,
+  markOrderRead,
+  sendOrderMessage,
 } from "./general-api.js";
 type Conversations = ReturnType<typeof GeneralConversationPageSchema.parse>;
 type Messages = ReturnType<typeof GeneralMessagePageSchema.parse>;
 export function GeneralMessagingPanel({
   clinic,
   canReply,
+  orderId,
 }: {
   clinic: boolean;
   canReply: boolean;
+  orderId?: string;
 }) {
   const [conversations, setConversations] = useState<Conversations | null>(
     null,
   );
   const [selected, setSelected] = useState("");
+  const [closed, setClosed] = useState(false);
+  const fetchMessages = orderId ? orderMessages : generalMessages;
+  const acknowledge = orderId ? markOrderRead : markGeneralRead;
+  const submit = orderId ? sendOrderMessage : sendGeneralMessage;
+  const fetchConversations = useCallback(
+    async (
+      raw: unknown,
+      signal?: AbortSignal,
+    ): Promise<Conversations & { closed?: boolean }> => {
+      if (!orderId) return generalConversations(raw, signal);
+      const item = await orderConversation({ order_id: orderId }, signal);
+      return {
+        closed: item.closed,
+        items: [
+          {
+            id: item.id,
+            clinic_id: item.clinic_id,
+            clinic_name: "",
+            last_message_seq: item.last_message_seq,
+            unread_count: item.unread_count,
+          },
+        ],
+        next_after: null,
+      };
+    },
+    [orderId],
+  );
   const [messages, setMessages] = useState<Messages | null>(null);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
@@ -53,30 +86,32 @@ export function GeneralMessagingPanel({
   useEffect(() => {
     latestConversations.current = conversations;
   }, [conversations]);
-  async function loadConversationCounts(
-    conversationId: string,
-    signal?: AbortSignal,
-  ) {
-    const first = await generalConversations({}, signal);
-    const known = latestConversations.current?.items.find(
-      (item) => item.id === conversationId,
-    );
-    if (!known || first.items.some((item) => item.id === conversationId))
-      return first;
-    const scoped = await generalConversations(
-      { clinic_id: known.clinic_id },
-      signal,
-    );
-    return { ...first, items: [...first.items, ...scoped.items] };
-  }
+  const loadConversationCounts = useCallback(
+    async (conversationId: string, signal?: AbortSignal) => {
+      const first = await fetchConversations({}, signal);
+      const known = latestConversations.current?.items.find(
+        (item) => item.id === conversationId,
+      );
+      if (!known || first.items.some((item) => item.id === conversationId))
+        return first;
+      const scoped = await fetchConversations(
+        { clinic_id: known.clinic_id },
+        signal,
+      );
+      return { ...first, items: [...first.items, ...scoped.items] };
+    },
+    [fetchConversations],
+  );
   useEffect(() => {
     const controller = new AbortController();
-    void generalConversations({}, controller.signal)
+    void fetchConversations({}, controller.signal)
       .then((page) => {
         if (!controller.signal.aborted) {
           setConversations(page);
-          if (clinic && page.items.length === 1) {
+          if (page.closed !== undefined) setClosed(page.closed);
+          if ((clinic || orderId) && page.items.length === 1) {
             setLoadingMessages(true);
+            setMessages(null);
             setSelected(page.items[0]!.id);
           }
         }
@@ -86,11 +121,11 @@ export function GeneralMessagingPanel({
           setNotice("Bisedat nuk u ngarkuan. Provoni sërish.");
       });
     return () => controller.abort();
-  }, [clinic]);
+  }, [clinic, orderId, fetchConversations]);
   useEffect(() => {
     if (!selected) return;
     const controller = new AbortController();
-    void generalMessages({ conversation_id: selected }, controller.signal)
+    void fetchMessages({ conversation_id: selected }, controller.signal)
       .then((page) => {
         if (!controller.signal.aborted) {
           setMessages(page);
@@ -104,13 +139,15 @@ export function GeneralMessagingPanel({
         if (!controller.signal.aborted) setLoadingMessages(false);
       });
     return () => controller.abort();
-  }, [selected]);
+  }, [selected, fetchMessages]);
   async function reloadConversations() {
     setNotice("");
     try {
-      const page = await generalConversations({});
+      const page = await fetchConversations({});
       setConversations(page);
-      if (clinic && page.items.length === 1) setSelected(page.items[0]!.id);
+      if (page.closed !== undefined) setClosed(page.closed);
+      if ((clinic || orderId) && page.items.length === 1)
+        setSelected(page.items[0]!.id);
     } catch {
       setNotice("Bisedat nuk u ngarkuan. Provoni sërish.");
     }
@@ -118,7 +155,7 @@ export function GeneralMessagingPanel({
   async function moreConversations() {
     if (!conversations?.next_after) return;
     try {
-      const page = await generalConversations({
+      const page = await fetchConversations({
         after: conversations.next_after,
       });
       setConversations({
@@ -138,7 +175,7 @@ export function GeneralMessagingPanel({
       if (current?.conversation_id === selected) {
         await catchUpMessages(
           current,
-          (query) => generalMessages(query),
+          (query) => fetchMessages(query),
           (page) =>
             setMessages((previous) =>
               previous?.conversation_id === selected
@@ -147,7 +184,7 @@ export function GeneralMessagingPanel({
             ),
         );
       } else {
-        setMessages(await generalMessages({ conversation_id: selected }));
+        setMessages(await fetchMessages({ conversation_id: selected }));
       }
       setConnection("connected");
     } catch {
@@ -160,7 +197,7 @@ export function GeneralMessagingPanel({
     if (!selected || !messages?.next_before_seq || loadingOlder) return;
     setLoadingOlder(true);
     try {
-      const page = await generalMessages({
+      const page = await fetchMessages({
         conversation_id: selected,
         before_seq: messages.next_before_seq,
       });
@@ -201,7 +238,7 @@ export function GeneralMessagingPanel({
         if (through <= messages.last_read_seq) return;
         readPending.current = true;
         setReading(true);
-        void markGeneralRead({
+        void acknowledge({
           conversation_id: selected,
           through_seq: through,
         })
@@ -258,7 +295,7 @@ export function GeneralMessagingPanel({
       active = false;
       observer.disconnect();
     };
-  }, [selected, messages]);
+  }, [selected, messages, acknowledge, loadConversationCounts]);
   useEffect(() => {
     if (!selected) return;
     let active = true;
@@ -277,7 +314,7 @@ export function GeneralMessagingPanel({
         const list = await loadConversationCounts(selected, controller.signal);
         await catchUpMessages(
           current,
-          (query) => generalMessages(query, controller.signal),
+          (query) => fetchMessages(query, controller.signal),
           (page) => {
             if (active)
               setMessages((previous) =>
@@ -288,6 +325,7 @@ export function GeneralMessagingPanel({
           },
         );
         if (!active) return;
+        if (list.closed !== undefined) setClosed(list.closed);
         setConversations((previous) =>
           previous
             ? {
@@ -322,14 +360,14 @@ export function GeneralMessagingPanel({
       window.removeEventListener("online", resume);
       window.removeEventListener("offline", disconnected);
     };
-  }, [selected]);
+  }, [selected, fetchMessages, loadConversationCounts]);
   async function send() {
     if (!selected || !body.trim() || busy) return;
     setBusy(true);
     setNotice("");
     key.current ??= crypto.randomUUID();
     try {
-      const result = await sendGeneralMessage({
+      const result = await submit({
         conversation_id: selected,
         idempotency_key: key.current,
         body: body.trim(),
@@ -337,10 +375,13 @@ export function GeneralMessagingPanel({
       });
       if (result.kind !== "sent") {
         if (result.kind === "conflict") key.current = null;
+        if (result.kind === "conversation_closed") setClosed(true);
         setNotice(
           result.kind === "conflict"
             ? "Mesazhi ndryshoi. Kontrolloni bisedën para një dërgimi të ri."
-            : "Mesazhi nuk u dërgua. Kontrolloni bisedën.",
+            : result.kind === "conversation_closed"
+              ? "Biseda është mbyllur. Mesazhi nuk u dërgua."
+              : "Mesazhi nuk u dërgua. Kontrolloni bisedën.",
         );
         return;
       }
@@ -356,20 +397,29 @@ export function GeneralMessagingPanel({
     }
   }
   return (
-    <section aria-label="Biseda e përgjithshme">
-      <h3>Biseda e përgjithshme</h3>
-      <p>
-        Komunikim me klinikën, i ndarë nga porositë. Kërkesat për të dhënat
-        personale mund t'i shkruani këtu; përgjigjja në bisedë nuk është vendim
-        për ndryshimin e porosisë.
-      </p>
+    <section
+      aria-label={orderId ? "Biseda e porosisë" : "Biseda e përgjithshme"}
+    >
+      <h3>{orderId ? "Biseda e porosisë" : "Biseda e përgjithshme"}</h3>
+      {orderId ? (
+        <p>
+          Bisedë vetëm për këtë porosi ose retushim. Mesazhet nuk ndryshojnë
+          udhëzimet zyrtare.
+        </p>
+      ) : (
+        <p>
+          Komunikim me klinikën, i ndarë nga porositë. Kërkesat për të dhënat
+          personale mund t'i shkruani këtu; përgjigjja në bisedë nuk është
+          vendim për ndryshimin e porosisë.
+        </p>
+      )}
       {conversations && !conversations.items.length && (
         <p>Nuk u gjet bisedë e disponueshme.</p>
       )}
       <Button type="button" onClick={() => void reloadConversations()}>
         Rifresko bisedat
       </Button>
-      {!clinic && (
+      {!clinic && !orderId && (
         <label>
           Klinika
           <select
@@ -396,12 +446,12 @@ export function GeneralMessagingPanel({
           </select>
         </label>
       )}
-      {!clinic && conversations?.next_after && (
+      {!clinic && !orderId && conversations?.next_after && (
         <Button type="button" onClick={() => void moreConversations()}>
           Më shumë klinika
         </Button>
       )}
-      {clinic && conversations?.items[0] && (
+      {(clinic || orderId) && conversations?.items[0] && (
         <p>{conversations.items[0].unread_count} mesazhe të palexuara</p>
       )}
       {selected && (
@@ -468,7 +518,13 @@ export function GeneralMessagingPanel({
               </li>
             ))}
           </ol>
-          {canReply && (
+          {closed && (
+            <p>
+              Porosia është dorëzuar; biseda mund të lexohet, por jo të marrë
+              mesazhe të reja.
+            </p>
+          )}
+          {canReply && !closed && (
             <form
               onSubmit={(event) => {
                 event.preventDefault();

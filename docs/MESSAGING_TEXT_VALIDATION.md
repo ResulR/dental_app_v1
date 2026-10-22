@@ -15,4 +15,11 @@ Le code des conversations générales reste derrière un drapeau fermé. Cette n
 - Débrancher/rebrancher le réseau et suspendre/reprendre l'onglet ; plus de 50 messages manqués doivent être rattrapés dans l'ordre, sans doublons. Vérifier délai de rafraîchissement, erreurs puis récupération et absence de faux succès après réponse incertaine.
 - Mobile et desktop : long message, pagination, chargement, clavier, lecture d'écran et état de reconnexion. Vérifier le cas sans IntersectionObserver : aucun accusé automatique non vérifiable.
 
-Ces scénarios ne sont pas encore exécutés. Les conversations par commande/retouche, leur fermeture et les éditions/masquages requièrent leurs propres scénarios additionnels avant réception du chapitre 13.
+## Conversation de commande et retouche
+
+- Avec deux cliniques et un membre du laboratoire muni seulement de `messaging.general.read`, puis de `messaging.order.read`, vérifier la recherche par identifiant de commande, les refus croisés et la lecture via la liste et la fiche. Une retouche doit utiliser sa propre conversation, jamais celle de sa source.
+- Envois concurrents et répétition de clé : une séquence unique, un seul reçu, aucun doublon. Refuser les fichiers et le corps absent, puis vérifier la fermeture à la livraison et le refus d'un nouvel envoi ; après correction de livraison autorisée, confirmer la réouverture sans mélanger le contenu.
+- Deux sessions sur chaque côté : accusés collectifs, changement de permissions/suspension, pagination et rattrapage après 51+ messages ; comparer l'état des conversations et marqueurs sous PostgreSQL réel. Vérifier le comportement de l'interface en mobile et desktop.
+- La route et l'interface de commande ont un drapeau distinct, fermé par défaut et dépendant du drapeau général côté API. Vérifier les deux configurations avant toute activation.
+
+Ces scénarios ne sont pas encore exécutés. Édition/masquage, fichiers, navigation navigateur et recette PostgreSQL complète restent à recevoir avant clôture du chapitre 13.

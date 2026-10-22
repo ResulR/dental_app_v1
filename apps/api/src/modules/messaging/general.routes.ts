@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import {
   GeneralConversationQuerySchema,
+  OrderConversationQuerySchema,
   GeneralMessageQuerySchema,
   GeneralReadCommandSchema,
   MessageSubmissionSchema,
@@ -11,24 +12,34 @@ import { sendProblem } from "../../shared/problems.js";
 import type { createGeneralMessagingService } from "./general.service.js";
 import type { createMessageSubmissionService } from "./submission.service.js";
 
+type Services = {
+  reader: ReturnType<typeof createGeneralMessagingService>;
+  sender: ReturnType<typeof createMessageSubmissionService>;
+  sessions: Pick<ReturnType<typeof createSessionService>, "authenticate">;
+  origin: string;
+};
 export function registerGeneralMessagingRoutes(
   app: Express,
-  services: {
-    reader: ReturnType<typeof createGeneralMessagingService>;
-    sender: ReturnType<typeof createMessageSubmissionService>;
-    sessions: Pick<ReturnType<typeof createSessionService>, "authenticate">;
-    origin: string;
-  },
+  services: Services,
+) {
+  registerTextMessagingRoutes(app, services, "general");
+}
+export function registerOrderMessagingRoutes(app: Express, services: Services) {
+  registerTextMessagingRoutes(app, services, "order");
+}
+function registerTextMessagingRoutes(
+  app: Express,
+  services: Services,
+  kind: "general" | "order",
 ) {
   if (!mutationOriginAllowed(services.origin, services.origin))
     throw new Error("INVALID_GENERAL_MESSAGING_ORIGIN");
-  for (const action of [
-    "conversations",
-    "messages",
-    "markRead",
-    "send",
-  ] as const) {
-    app.post("/api/v1/messaging/general/" + action, async (req, res) => {
+  const actions =
+    kind === "order"
+      ? (["conversation", "messages", "markRead", "send"] as const)
+      : (["conversations", "messages", "markRead", "send"] as const);
+  for (const action of actions) {
+    app.post("/api/v1/messaging/" + kind + "/" + action, async (req, res) => {
       if (!mutationOriginAllowed(req.headers.origin, services.origin)) {
         sendProblem(res, "FORBIDDEN", 403);
         return;
@@ -36,11 +47,13 @@ export function registerGeneralMessagingRoutes(
       const schema =
         action === "conversations"
           ? GeneralConversationQuerySchema
-          : action === "messages"
-            ? GeneralMessageQuerySchema
-            : action === "markRead"
-              ? GeneralReadCommandSchema
-              : MessageSubmissionSchema;
+          : action === "conversation"
+            ? OrderConversationQuerySchema
+            : action === "messages"
+              ? GeneralMessageQuerySchema
+              : action === "markRead"
+                ? GeneralReadCommandSchema
+                : MessageSubmissionSchema;
       if (
         !req.is("application/json") ||
         Object.keys(req.query).length ||
@@ -60,7 +73,9 @@ export function registerGeneralMessagingRoutes(
       const result =
         action === "send"
           ? await services.sender.send(actor, req.body)
-          : await services.reader[action](actor, req.body);
+          : action === "conversation"
+            ? await services.reader.orderConversation(actor, req.body)
+            : await services.reader[action](actor, req.body);
       if (result.kind !== "result") {
         sendProblem(
           res,

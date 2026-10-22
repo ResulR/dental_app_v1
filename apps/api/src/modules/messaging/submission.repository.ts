@@ -12,14 +12,14 @@ type Actor = { accountId: string; sessionId: string };
 export function createMessageSubmissionRepository(
   db: Pick<ReturnType<typeof createApplicationDatabase>, "transaction">,
   attachmentPolicy?: AttachmentPolicy,
-  generalOnly = false,
+  textKind: false | true | "order" = false,
 ) {
   return {
     async send(actor: Actor, raw: unknown) {
       const parsed = MessageSubmissionSchema.safeParse(raw);
       if (!parsed.success) return { kind: "invalid" as const };
       const input = parsed.data;
-      if (generalOnly && (input.body === null || input.file_ids.length))
+      if (textKind && (input.body === null || input.file_ids.length))
         return { kind: "invalid" as const };
       const fingerprint = createHash("sha256")
         .update(
@@ -61,7 +61,11 @@ export function createMessageSubmissionRepository(
           [input.conversation_id, clinicId],
         );
         const conversation = conversations.rows[0];
-        if (!conversation || (generalOnly && conversation.kind !== "general"))
+        if (
+          !conversation ||
+          (textKind &&
+            conversation.kind !== (textKind === "order" ? "order" : "general"))
+        )
           return { kind: "denied" as const };
         if (identity.profile !== "clinic") {
           const permission =

@@ -63,6 +63,17 @@ export function App() {
                     key={identity.account_id + "-tracking"}
                     clinic={identity.profile === "clinic"}
                     permissions={snapshot.permissions}
+                    renderConversation={(orderId) => (
+                      <GeneralMessagingPanel
+                        key={orderId}
+                        orderId={orderId}
+                        clinic={identity.profile === "clinic"}
+                        canReply={
+                          identity.profile === "clinic" ||
+                          snapshot.permissions.includes("messaging.order.reply")
+                        }
+                      />
+                    )}
                   />
                 )}
               </PermissionBoundary>

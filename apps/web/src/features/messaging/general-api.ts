@@ -1,5 +1,7 @@
 import {
   GeneralConversationQuerySchema,
+  OrderConversationQuerySchema,
+  OrderConversationResultSchema,
   GeneralConversationPageSchema,
   GeneralMessageQuerySchema,
   GeneralMessagePageSchema,
@@ -30,10 +32,28 @@ export async function generalConversations(raw: unknown, signal?: AbortSignal) {
     ),
   );
 }
+export async function orderConversation(raw: unknown, signal?: AbortSignal) {
+  return OrderConversationResultSchema.parse(
+    await post(
+      "/api/v1/messaging/order/conversation",
+      OrderConversationQuerySchema.parse(raw),
+      signal,
+    ),
+  );
+}
 export async function generalMessages(raw: unknown, signal?: AbortSignal) {
   return GeneralMessagePageSchema.parse(
     await post(
       "/api/v1/messaging/general/messages",
+      GeneralMessageQuerySchema.parse(raw),
+      signal,
+    ),
+  );
+}
+export async function orderMessages(raw: unknown, signal?: AbortSignal) {
+  return GeneralMessagePageSchema.parse(
+    await post(
+      "/api/v1/messaging/order/messages",
       GeneralMessageQuerySchema.parse(raw),
       signal,
     ),
@@ -48,11 +68,29 @@ export async function markGeneralRead(raw: unknown, signal?: AbortSignal) {
     ),
   );
 }
+export async function markOrderRead(raw: unknown, signal?: AbortSignal) {
+  return GeneralReadReceiptSchema.parse(
+    await post(
+      "/api/v1/messaging/order/markRead",
+      GeneralReadCommandSchema.parse(raw),
+      signal,
+    ),
+  );
+}
 export async function sendGeneralMessage(raw: unknown, signal?: AbortSignal) {
   const input = MessageSubmissionSchema.parse(raw);
   if (input.body === null || input.file_ids.length)
     throw new Error("FILES_UNAVAILABLE");
   return MessageSubmissionResultSchema.parse(
     await post("/api/v1/messaging/general/send", input, signal),
+  );
+}
+
+export async function sendOrderMessage(raw: unknown, signal?: AbortSignal) {
+  const input = MessageSubmissionSchema.parse(raw);
+  if (input.body === null || input.file_ids.length)
+    throw new Error("FILES_UNAVAILABLE");
+  return MessageSubmissionResultSchema.parse(
+    await post("/api/v1/messaging/order/send", input, signal),
   );
 }

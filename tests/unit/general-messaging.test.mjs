@@ -1,9 +1,11 @@
 import { test, expect, vi } from "vitest";
 import {
   createGeneralMessagingService,
+  createOrderMessagingService,
   assertGeneralMessagingReady,
 } from "../../apps/api/dist/modules/messaging/index.js";
 import { generalMessagingEnabled } from "../../apps/api/dist/app/general-messaging-config.js";
+import { orderMessagingEnabled } from "../../apps/api/dist/app/order-messaging-config.js";
 const clinic = "91000000-0000-4000-8000-000000000001";
 const other = "91000000-0000-4000-8000-000000000002";
 const actor = { accountId: clinic, sessionId: clinic };
@@ -15,6 +17,8 @@ function fixture({
   hidden = false,
   missingReads = false,
   sequence = 1,
+  order = false,
+  closed = false,
 } = {}) {
   const calls = [];
   let lastReadSeq = 0;
@@ -81,6 +85,23 @@ function fixture({
       lastReadSeq = args[2];
       return { rows: [] };
     }
+    if (sql.includes("FROM public.conversations c\n"))
+      return {
+        rows: foreign
+          ? []
+          : [
+              {
+                id: clinic,
+                order_id: clinic,
+                clinic_id: clinic,
+                closed_at: closed ? new Date() : null,
+                last_message_seq: String(sequence),
+                last_read_seq: missingReads ? null : String(lastReadSeq),
+                other_side: missingReads ? null : "laboratory",
+                unread_count: "1",
+              },
+            ],
+      };
     if (sql.includes("FROM public.conversations c JOIN"))
       return {
         rows: [
@@ -119,9 +140,11 @@ function fixture({
     return { rows: [] };
   });
   return {
-    repo: createGeneralMessagingService({
-      transaction: (fn) => fn({ query }),
-    }),
+    repo: (order ? createOrderMessagingService : createGeneralMessagingService)(
+      {
+        transaction: (fn) => fn({ query }),
+      },
+    ),
     calls,
   };
 }
@@ -134,6 +157,18 @@ test("general messaging flag is closed and rejects an incomplete activation", ()
     generalMessagingEnabled({
       DENTAL_LAB_GENERAL_MESSAGING_ENABLED: "true",
       DENTAL_LAB_REGISTRATION_ENABLED: "true",
+    }),
+  ).toBe(true);
+});
+test("order messaging remains closed without its separate flag and rejects incomplete activation", () => {
+  expect(orderMessagingEnabled({})).toBe(false);
+  expect(() =>
+    orderMessagingEnabled({ DENTAL_LAB_ORDER_MESSAGING_ENABLED: "true" }),
+  ).toThrow();
+  expect(
+    orderMessagingEnabled({
+      DENTAL_LAB_ORDER_MESSAGING_ENABLED: "true",
+      DENTAL_LAB_GENERAL_MESSAGING_ENABLED: "true",
     }),
   ).toBe(true);
 });
@@ -284,6 +319,63 @@ test("conversation list counts only messages from the other side after the own r
 test("conversation list does not present absent historic read markers as zero unread", async () => {
   const f = fixture({ missingReads: true });
   expect((await f.repo.conversations(actor, {})).kind).toBe("unavailable");
+});
+test("order conversations are scoped to their order and the order-specific permission", async () => {
+  const f = fixture({ order: true });
+  const result = await f.repo.orderConversation(actor, { order_id: clinic });
+  expect(result).toMatchObject({
+    kind: "result",
+    result: {
+      id: clinic,
+      order_id: clinic,
+      closed: false,
+      unread_count: 1,
+    },
+  });
+  expect((await f.repo.messages(actor, { conversation_id: clinic })).kind).toBe(
+    "result",
+  );
+  const lookup = f.calls.find(([sql]) =>
+    sql.includes("FROM public.conversations c\n"),
+  );
+  expect(lookup[0]).toContain("c.kind='order' AND c.order_id=$1");
+  expect(lookup[1]).toEqual([clinic, clinic, "clinic"]);
+  const readQuery = f.calls.find(([sql]) =>
+    sql.startsWith("SELECT clinic_id,last_message_seq::text"),
+  );
+  expect(readQuery[1][2]).toBe("order");
+  expect((await f.repo.conversations(actor, {})).kind).toBe("invalid");
+  const foreign = fixture({ order: true, foreign: true });
+  expect(
+    (await foreign.repo.orderConversation(actor, { order_id: clinic })).kind,
+  ).toBe("denied");
+  const old = fixture({ order: true, missingReads: true });
+  expect(
+    (await old.repo.orderConversation(actor, { order_id: clinic })).kind,
+  ).toBe("unavailable");
+  const closed = fixture({ order: true, closed: true });
+  expect(
+    (await closed.repo.orderConversation(actor, { order_id: clinic })).result
+      .closed,
+  ).toBe(true);
+});
+test("laboratory order read needs order permission, not general messaging permission", async () => {
+  const wrong = fixture({
+    order: true,
+    profile: "employee",
+    grants: ["messaging.general.read"],
+  });
+  expect(
+    (await wrong.repo.orderConversation(actor, { order_id: clinic })).kind,
+  ).toBe("denied");
+  const right = fixture({
+    order: true,
+    profile: "employee",
+    grants: ["orders.read_logistics", "messaging.order.read"],
+  });
+  expect(
+    (await right.repo.orderConversation(actor, { order_id: clinic })).kind,
+  ).toBe("result");
 });
 test("startup refuses missing messaging storage privileges", async () => {
   await expect(

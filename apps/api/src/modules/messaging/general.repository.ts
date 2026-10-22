@@ -5,6 +5,8 @@ import {
   GeneralMessagePageSchema,
   GeneralReadCommandSchema,
   GeneralReadReceiptSchema,
+  OrderConversationQuerySchema,
+  OrderConversationResultSchema,
 } from "@dental-lab/contracts";
 import type {
   createApplicationDatabase,
@@ -12,7 +14,11 @@ import type {
 } from "../../shared/database.js";
 import { createCurrentPermissionsRepository } from "../permissions/index.js";
 type Actor = { accountId: string; sessionId: string };
-async function authority(tx: DatabaseExecutor, actor: Actor) {
+async function authority(
+  tx: DatabaseExecutor,
+  actor: Actor,
+  kind: "general" | "order",
+) {
   await tx.query("SELECT id FROM public.accounts WHERE id=$1 FOR SHARE", [
     actor.accountId,
   ]);
@@ -28,7 +34,9 @@ async function authority(tx: DatabaseExecutor, actor: Actor) {
   const identity = await createCurrentPermissionsRepository(tx).current(actor);
   if (!identity) return null;
   if (identity.profile !== "clinic") {
-    return identity.permissions.includes("messaging.general.read")
+    return identity.permissions.includes(
+      kind === "general" ? "messaging.general.read" : "messaging.order.read",
+    )
       ? { clinicId: null, side: "laboratory" as const }
       : null;
   }
@@ -42,13 +50,15 @@ async function authority(tx: DatabaseExecutor, actor: Actor) {
 }
 export function createGeneralMessagingRepository(
   db: Pick<ReturnType<typeof createApplicationDatabase>, "transaction">,
+  kind: "general" | "order" = "general",
 ) {
   return {
     async conversations(actor: Actor, raw: unknown) {
       const parsed = GeneralConversationQuerySchema.safeParse(raw);
+      if (kind !== "general") return { kind: "invalid" as const };
       if (!parsed.success) return { kind: "invalid" as const };
       return db.transaction(async (tx) => {
-        const scope = await authority(tx, actor);
+        const scope = await authority(tx, actor, kind);
         if (
           !scope ||
           (scope.clinicId &&
@@ -90,15 +100,51 @@ export function createGeneralMessagingRepository(
         };
       });
     },
+    async orderConversation(actor: Actor, raw: unknown) {
+      const parsed = OrderConversationQuerySchema.safeParse(raw);
+      if (!parsed.success || kind !== "order")
+        return { kind: "invalid" as const };
+      return db.transaction(async (tx) => {
+        const scope = await authority(tx, actor, kind);
+        if (!scope) return { kind: "denied" as const };
+        const rows = await tx.query(
+          `SELECT c.id,c.order_id,c.clinic_id,c.closed_at,c.last_message_seq::text,
+             own.last_read_seq::text,other.side AS other_side,
+             (SELECT count(*)::text FROM public.messages m WHERE m.conversation_id=c.id
+                AND m.sequence_number>own.last_read_seq AND m.sender_side<>$3) AS unread_count
+           FROM public.conversations c
+           LEFT JOIN public.conversation_reads own ON own.conversation_id=c.id AND own.side=$3
+           LEFT JOIN public.conversation_reads other ON other.conversation_id=c.id AND other.side<>$3
+           WHERE c.kind='order' AND c.order_id=$1
+             AND ($2::uuid IS NULL OR c.clinic_id=$2)`,
+          [parsed.data.order_id, scope.clinicId, scope.side],
+        );
+        if (rows.rows.length !== 1) return { kind: "denied" as const };
+        const row = rows.rows[0]!;
+        if (row.last_read_seq === null || row.other_side === null)
+          return { kind: "unavailable" as const };
+        return {
+          kind: "result" as const,
+          result: OrderConversationResultSchema.parse({
+            id: row.id,
+            order_id: row.order_id,
+            clinic_id: row.clinic_id,
+            closed: row.closed_at !== null,
+            last_message_seq: Number(row.last_message_seq),
+            unread_count: Number(row.unread_count),
+          }),
+        };
+      });
+    },
     async messages(actor: Actor, raw: unknown) {
       const parsed = GeneralMessageQuerySchema.safeParse(raw);
       if (!parsed.success) return { kind: "invalid" as const };
       return db.transaction(async (tx) => {
-        const scope = await authority(tx, actor);
+        const scope = await authority(tx, actor, kind);
         if (!scope) return { kind: "denied" as const };
         const conversation = await tx.query(
-          "SELECT clinic_id,last_message_seq::text FROM public.conversations WHERE id=$1 AND kind='general' AND ($2::uuid IS NULL OR clinic_id=$2) FOR SHARE",
-          [parsed.data.conversation_id, scope.clinicId],
+          "SELECT clinic_id,last_message_seq::text FROM public.conversations WHERE id=$1 AND kind=$3 AND ($2::uuid IS NULL OR clinic_id=$2) FOR SHARE",
+          [parsed.data.conversation_id, scope.clinicId, kind],
         );
         if (conversation.rows.length !== 1) return { kind: "denied" as const };
         const reads = await tx.query(
@@ -163,11 +209,11 @@ export function createGeneralMessagingRepository(
       const parsed = GeneralReadCommandSchema.safeParse(raw);
       if (!parsed.success) return { kind: "invalid" as const };
       return db.transaction(async (tx) => {
-        const scope = await authority(tx, actor);
+        const scope = await authority(tx, actor, kind);
         if (!scope) return { kind: "denied" as const };
         const conversation = await tx.query(
-          "SELECT clinic_id,last_message_seq::text FROM public.conversations WHERE id=$1 AND kind='general' AND ($2::uuid IS NULL OR clinic_id=$2) FOR SHARE",
-          [parsed.data.conversation_id, scope.clinicId],
+          "SELECT clinic_id,last_message_seq::text FROM public.conversations WHERE id=$1 AND kind=$3 AND ($2::uuid IS NULL OR clinic_id=$2) FOR SHARE",
+          [parsed.data.conversation_id, scope.clinicId, kind],
         );
         if (conversation.rows.length !== 1) return { kind: "denied" as const };
         const read = await tx.query(

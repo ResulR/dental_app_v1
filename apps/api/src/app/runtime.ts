@@ -1,9 +1,12 @@
 import { auditReadEnabled } from "./audit-read-config.js";
 import { generalMessagingEnabled } from "./general-messaging-config.js";
+import { orderMessagingEnabled } from "./order-messaging-config.js";
 import {
   createGeneralMessagingService,
+  createOrderMessagingService,
   createMessageSubmissionService,
   registerGeneralMessagingRoutes,
+  registerOrderMessagingRoutes,
   assertGeneralMessagingReady,
 } from "../modules/messaging/index.js";
 import {
@@ -162,6 +165,7 @@ import {
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
   const enableGeneralMessaging = generalMessagingEnabled(env);
+  const enableOrderMessaging = orderMessagingEnabled(env);
   const enableAuditRead = auditReadEnabled(env);
   const enableDeliveryBatch = deliveryBatchEnabled(env);
   const enableDeliveryPriority = deliveryPriorityEnabled(env);
@@ -192,7 +196,8 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     // Fail startup, without creating/migrating anything, if required objects or
     // read privileges are absent. Every checkout also enforces runtime identity.
     await assertAuthStorageReady(database);
-    if (enableGeneralMessaging) await assertGeneralMessagingReady(database);
+    if (enableGeneralMessaging || enableOrderMessaging)
+      await assertGeneralMessagingReady(database);
     if (enableAuditRead) await assertAuditReadReady(database);
     if (enableDeliveryPriority) await assertDeliveryPriorityReady(database);
     if (enableDeliveryPlan) await assertDeliveryPlanReady(database);
@@ -250,6 +255,17 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
           registerGeneralMessagingRoutes(app, {
             reader: createGeneralMessagingService(database),
             sender: createMessageSubmissionService(database, undefined, true),
+            sessions,
+            origin: config.origin,
+          });
+        if (enableOrderMessaging)
+          registerOrderMessagingRoutes(app, {
+            reader: createOrderMessagingService(database),
+            sender: createMessageSubmissionService(
+              database,
+              undefined,
+              "order",
+            ),
             sessions,
             origin: config.origin,
           });

@@ -21,16 +21,19 @@ import type {
 import { createOrderTrackingClient } from "./tracking-api.js";
 import { orderStatusLabels } from "./status-labels.js";
 import { Button } from "../../shared/Button.js";
+import type { ReactNode } from "react";
 const api = createOrderTrackingClient();
 type Status = ReturnType<typeof StatusSchema.parse>;
 export function OrderTrackingPanel({
   clinic,
   permissions,
+  renderConversation,
 }: {
   clinic: boolean;
   permissions: ReturnType<
     typeof EffectivePermissionsSchema.parse
   >["permissions"];
+  renderConversation?: (orderId: string) => ReactNode;
 }) {
   const [q, setQ] = useState(""),
     [status, setStatus] = useState(""),
@@ -44,6 +47,13 @@ export function OrderTrackingPanel({
     [readyOnly, setReadyOnly] = useState(false),
     [displayedView, setDisplayedView] = useState("active"),
     [message, setMessage] = useState("");
+  const [chatOrder, setChatOrder] = useState<{
+    id: string;
+    number: string;
+  } | null>(null);
+  const canReadChat =
+    import.meta.env.VITE_DENTAL_LAB_ORDER_MESSAGING_ENABLED === "true" &&
+    (clinic || permissions.includes("messaging.order.read"));
   const [page, setPage] = useState<ReturnType<
       typeof OrderTrackingPageSchema.parse
     > | null>(null),
@@ -121,6 +131,7 @@ export function OrderTrackingPanel({
         setDisplayedView(parsed.data.view);
         setReadyOnly(ready || (!!after && readyOnly && !archive));
         setDetail(null);
+        setChatOrder(null);
         if (archive) {
           setView("archive");
           setStatus("");
@@ -148,7 +159,10 @@ export function OrderTrackingPanel({
         { order_id, ...(before_revision ? { before_revision } : {}) },
         signal,
       );
-      if (!signal.aborted) setDetail(next);
+      if (!signal.aborted) {
+        setDetail(next);
+        setChatOrder(null);
+      }
     });
   }
   return (
@@ -345,6 +359,20 @@ export function OrderTrackingPanel({
                   setMessage(text);
                 }}
               />
+              {canReadChat && (
+                <Button
+                  type="button"
+                  onClick={() =>
+                    setChatOrder((current) =>
+                      current?.id === row.id
+                        ? null
+                        : { id: row.id, number: row.number },
+                    )
+                  }
+                >
+                  {chatOrder?.id === row.id ? "Mbyll bisedën" : "Hap bisedën"}
+                </Button>
+              )}
               {page.can_read_details && (
                 <Button disabled={busy} onClick={() => void open(row.id)}>
                   Hap detajet
@@ -386,6 +414,22 @@ export function OrderTrackingPanel({
             Porosia nr. {detail.order.number} ·{" "}
             {orderStatusLabels[detail.order.status]}
           </h4>
+          {canReadChat && (
+            <Button
+              type="button"
+              onClick={() =>
+                setChatOrder((current) =>
+                  current?.id === detail.order.id
+                    ? null
+                    : { id: detail.order.id, number: detail.order.number },
+                )
+              }
+            >
+              {chatOrder?.id === detail.order.id
+                ? "Mbyll bisedën"
+                : "Hap bisedën e porosisë"}
+            </Button>
+          )}
           <p>
             {detail.order.clinic_name} · Marrë më {detail.order.received_at} ·
             Rishikimi {detail.order.revision}
@@ -486,6 +530,12 @@ export function OrderTrackingPanel({
             Ringarko detajet aktuale
           </Button>
         </article>
+      )}
+      {chatOrder && canReadChat && renderConversation && (
+        <div>
+          <h4>Biseda për porosinë nr. {chatOrder.number}</h4>
+          {renderConversation(chatOrder.id)}
+        </div>
       )}
       {message && <p role="status">{message}</p>}
     </section>

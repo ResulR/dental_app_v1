@@ -18,6 +18,17 @@ export const GeneralConversationPageSchema = z.strictObject({
     .max(50),
   next_after: z.uuid().nullable(),
 });
+export const OrderConversationQuerySchema = z.strictObject({
+  order_id: z.uuid(),
+});
+export const OrderConversationResultSchema = z.strictObject({
+  id: z.uuid(),
+  order_id: z.uuid(),
+  clinic_id: z.uuid(),
+  closed: z.boolean(),
+  last_message_seq: z.number().int().nonnegative(),
+  unread_count: z.number().int().nonnegative(),
+});
 export const GeneralMessageQuerySchema = z
   .strictObject({
     conversation_id: z.uuid(),

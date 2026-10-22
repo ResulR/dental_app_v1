@@ -2264,7 +2264,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 13.2 — Créer conversation liée à chaque commande
-- **Statut :** ◐ Création transactionnelle intégrée, lecture/réception différées
+- **Statut :** ◐ Création transactionnelle existante, lecture/envoi textuels, interface depuis liste/détail et permissions serveur intégrés derrière drapeau distinct fermé ; recettes PostgreSQL et navigateur différées.
 - **Preuve code 20/10 :** soumission clinique, retouche et création laboratoire insèrent conversation et marqueurs de lecture avec la commande ; clôture/réouverture sur livraison corrigée. Réception PostgreSQL et interface de messagerie restent ouvertes.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
@@ -2280,7 +2280,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 13.3 — Implémenter réception/envoi des messages
-- **Statut :** ◐ Réception paginée et envoi idempotent de la conversation générale textuelle intégrés derrière drapeau fermé ; conversation de commande, fichiers, tests PostgreSQL et navigateur restent ouverts.
+- **Statut :** ◐ Réception paginée et envoi idempotent textuels intégrés pour conversations générales, commandes et retouches ; fichiers refusés, drapeaux fermés. Tests PostgreSQL réel, navigateur, éditions et fichiers restent ouverts.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel
@@ -2295,7 +2295,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 13.4 — Implémenter temps réel et reconnexion
-- **Statut :** ◐ Rattrapage incrémental paginé et interrogation toutes les 10 s pour l'onglet visible, reprise au retour réseau/onglet et déduplication intégrés côté code. Tests avec doubles ; reconnexion navigateur, charge multi-session et PostgreSQL réel non réceptionnés. Aucun nouveau service.
+- **Statut :** ◐ Rattrapage incrémental paginé et interrogation toutes les 10 s pour l'onglet visible sur conversations générales et de commande, reprise au retour réseau/onglet et déduplication intégrés côté code. Tests avec doubles ; reconnexion navigateur, charge multi-session et PostgreSQL réel non réceptionnés. Aucun nouveau service.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel
@@ -2310,7 +2310,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 13.5 — Implémenter Envoyé et Lu
-- **Statut :** ◐ Messagerie générale textuelle : marqueur monotone, reçu idempotent, non-lus de l'autre côté, affichage Envoyé/Lu et lecture automatique des seuls messages réellement visibles avec curseur contigu ; code derrière flag fermé, tests de logique et API avec doubles. Migration 0023 pour marqueurs antérieurs préparée, non appliquée. Restent conversations de commande, validation PostgreSQL concurrente et navigateur/IntersectionObserver multi-session ; ne vaut pas réception de 13.5.
+- **Statut :** ◐ Conversations générales et de commande textuelles : marqueur monotone, reçu idempotent, non-lus de l'autre côté, Envoyé/Lu et lecture automatique des seuls messages visibles avec curseur contigu ; drapeaux fermés, tests avec doubles. Migration 0023 pour marqueurs antérieurs préparée, non appliquée. Validation PostgreSQL concurrente et navigateur/IntersectionObserver multi-session restent ouvertes ; ne vaut pas réception de 13.5.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel
@@ -2340,7 +2340,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 13.7 — Clôturer conversation lors de livraison
-- **Statut :** ◐ Clôture/réouverture transactionnelle intégrée — réceptions différées
+- **Statut :** ◐ Clôture/réouverture transactionnelle existante, envoi textuel serveur refusé si close et interface lecture seule, hors activation. Concurrence PostgreSQL et navigateur non réceptionnés.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel
