@@ -1,0 +1,7 @@
+# Nginx — constat de PID en lecture seule (23 octobre 2026)
+
+La preuve v5 `.local/delivery-batch-v5/services-after` (21 octobre 2026, 17:52 UTC) indique `nginx.service` actif, PID principal 895970. La lecture de `systemctl show` le 23 octobre 2026 indique service actif, PID principal 2541146, `ExecMainStartTimestamp=Fri 2026-10-23 06:02:03 UTC`, `ActiveEnterTimestamp` identique, `Result=success`, `NRestarts=0` pour l'unité courante. Le PID de PostgreSQL de production reste 246009 dans les instantanés disponibles.
+
+Cela **établit un changement de processus Nginx entre les deux constats**, pas sa cause. `journalctl -u nginx.service` n'affiche aucune entrée à l'utilisateur `dental-ai` : le journal système d'autres utilisateurs n'est pas accessible, donc ni opération de maintenance, ni redémarrage externe, ni lien avec Dental Lab ne peuvent être conclus. Le runner v6 prendra son propre instantané avant/après ; le PID historique v5 n'est pas utilisé comme référence v6.
+
+Vérification administrateur future, **lecture seule et sans intervention sur le service**, si une attribution est nécessaire : `sudo journalctl -u nginx.service --since '2026-10-21 17:52:00 UTC' --until '2026-10-23 06:05:00 UTC' --no-pager -o short-iso` et `sudo systemctl show nginx.service -p MainPID -p ExecMainStartTimestamp -p ActiveEnterTimestamp -p Result -p NRestarts`. Ne pas exécuter de redémarrage/reload, ne pas modifier Nginx pour cette enquête.
