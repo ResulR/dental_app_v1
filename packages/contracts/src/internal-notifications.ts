@@ -12,7 +12,9 @@ export const InternalNoticePageSchema = z.strictObject({
     .array(
       z.strictObject({
         id: z.uuid(),
+        kind: z.enum(["clinic_registered", "order_submitted"]),
         clinic_id: z.uuid(),
+        order_id: z.uuid().nullable(),
         clinic_name: z.string(),
         clinic_revision: z.number().int().positive(),
         created_at: z.iso.datetime(),

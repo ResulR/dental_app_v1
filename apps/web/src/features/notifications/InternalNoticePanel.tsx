@@ -4,6 +4,8 @@ import {
   InternalNoticeReadResultSchema,
 } from "@dental-lab/contracts";
 import { ClinicReviewPanel } from "../clinics/index.js";
+import { OrderReviewPanel } from "../orders/index.js";
+import type { EffectivePermissionsSchema } from "@dental-lab/contracts";
 import { Button } from "../../shared/Button.js";
 type Page = ReturnType<typeof InternalNoticePageSchema.parse>;
 type Item = Page["items"][number];
@@ -20,7 +22,13 @@ async function post(path: string, body: unknown, signal?: AbortSignal) {
   if (!response.ok) throw new Error("NOTICES_UNAVAILABLE");
   return response.json();
 }
-export function InternalNoticePanel() {
+export function InternalNoticePanel({
+  permissions,
+}: {
+  permissions: ReturnType<
+    typeof EffectivePermissionsSchema.parse
+  >["permissions"];
+}) {
   const [page, setPage] = useState<Page | null>(null);
   const [selected, setSelected] = useState<Item | null>(null);
   const [notice, setNotice] = useState("");
@@ -125,7 +133,10 @@ export function InternalNoticePanel() {
       <ul>
         {page?.items.map((item) => (
           <li key={item.id}>
-            Kërkesë regjistrimi · {item.clinic_name} ·{" "}
+            {item.kind === "clinic_registered"
+              ? "Kërkesë regjistrimi"
+              : "Porosi e re"}{" "}
+            · {item.clinic_name} ·{" "}
             <time dateTime={item.created_at}>{item.created_at}</time>
             {item.read_at ? " · Lexuar" : " · I palexuar"}
             <Button
@@ -133,7 +144,9 @@ export function InternalNoticePanel() {
               disabled={busy}
               onClick={() => void open(item)}
             >
-              Shqyrto klinikën
+              {item.kind === "clinic_registered"
+                ? "Shqyrto klinikën"
+                : "Shqyrto porosinë"}
             </Button>
           </li>
         ))}
@@ -148,14 +161,24 @@ export function InternalNoticePanel() {
           <Button type="button" onClick={() => setSelected(null)}>
             Mbyll
           </Button>
-          <ClinicReviewPanel
-            key={selected.id}
-            initialClinic={{
-              id: selected.clinic_id,
-              name: selected.clinic_name,
-              revision: selected.clinic_revision,
-            }}
-          />
+          {selected.kind === "clinic_registered" ? (
+            <ClinicReviewPanel
+              key={selected.id}
+              initialClinic={{
+                id: selected.clinic_id,
+                name: selected.clinic_name,
+                revision: selected.clinic_revision,
+              }}
+            />
+          ) : selected.order_id ? (
+            <OrderReviewPanel
+              key={selected.id}
+              orderId={selected.order_id}
+              permissions={permissions}
+            />
+          ) : (
+            <p role="alert">Porosia nuk u verifikua.</p>
+          )}
         </div>
       )}
     </section>

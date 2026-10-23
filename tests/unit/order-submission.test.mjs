@@ -98,6 +98,8 @@ function fixture(patch = {}) {
             };
             return { rows: [draft.order] };
           }
+          if (sql.startsWith("INSERT INTO public.internal_notifications"))
+            return { rows: patch.noOwnerNotice ? [] : [{ id }] };
           if (sql.startsWith("INSERT INTO public.submission_receipts"))
             draft.receipt = values[2];
         }
@@ -415,5 +417,49 @@ test("attachment, audit and later aggregate failures roll back all writes in tra
     ).rejects.toThrow();
     expect(db.state.writes).toEqual([]);
     expect(db.state.receipt).toBeNull();
+  }
+});
+
+test("closed notice flag leaves submission unchanged; enabled owner notice is transactional and idempotent", async () => {
+  const disabled = fixture();
+  await createOrderSubmissionService(disabled).submit(actor, command);
+  expect(
+    disabled.state.writes.some(([sql]) =>
+      sql.includes("internal_notifications"),
+    ),
+  ).toBe(false);
+  const db = fixture();
+  const service = createOrderSubmissionService(db, undefined, true);
+  const first = await service.submit(actor, command);
+  expect(first.result.kind).toBe("submitted");
+  const notices = db.state.writes.filter(([sql]) =>
+    sql.startsWith("INSERT INTO public.internal_notifications"),
+  );
+  expect(notices).toHaveLength(1);
+  const event = db.state.writes.find(([sql]) =>
+    sql.startsWith("INSERT INTO public.outbox_events"),
+  );
+  expect(notices[0][1]).toEqual([event[1][0]]);
+  expect(notices[0][0]).toContain("a.profile='owner'");
+  expect(notices[0][0]).toContain("NOT a.security_locked");
+  expect((await service.submit(actor, command)).result.replayed).toBe(true);
+  expect(
+    db.state.writes.filter(([sql]) =>
+      sql.startsWith("INSERT INTO public.internal_notifications"),
+    ),
+  ).toHaveLength(1);
+  for (const patch of [
+    { noOwnerNotice: true },
+    { failAt: "public.internal_notifications(" },
+  ]) {
+    const failed = fixture(patch);
+    await expect(
+      createOrderSubmissionService(failed, undefined, true).submit(
+        actor,
+        command,
+      ),
+    ).rejects.toThrow();
+    expect(failed.state.writes).toEqual([]);
+    expect(failed.state.receipt).toBeNull();
   }
 });

@@ -391,7 +391,11 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
           });
         if (enableOrderSubmission)
           registerOrderSubmissionRoutes(app, {
-            service: createOrderSubmissionService(database),
+            service: createOrderSubmissionService(
+              database,
+              undefined,
+              enableInternalNotices,
+            ),
             sessions,
             origin: config.origin,
           });

@@ -44,7 +44,18 @@ export function App() {
               {identity.profile === "owner" &&
                 import.meta.env.VITE_DENTAL_LAB_INTERNAL_NOTICES_ENABLED ===
                   "true" && (
-                  <InternalNoticePanel key={identity.account_id + "-notices"} />
+                  <PermissionBoundary
+                    identity={identity}
+                    permission="orders.read_details"
+                    allowClinic={false}
+                  >
+                    {(snapshot) => (
+                      <InternalNoticePanel
+                        key={identity.account_id + "-notices"}
+                        permissions={snapshot.permissions}
+                      />
+                    )}
+                  </PermissionBoundary>
                 )}
               {identity.profile !== "clinic" && (
                 <PermissionBoundary

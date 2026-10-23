@@ -9,6 +9,7 @@ function fixture({
   missing = false,
   fail = false,
   alreadyRead = false,
+  kind = "clinic_registered",
 } = {}) {
   const calls = [];
   const readAt = new Date("2026-10-22T12:00:00.000Z");
@@ -34,12 +35,14 @@ function fixture({
       };
     if (sql.startsWith("SELECT count(*)::text AS unread"))
       return { rows: [{ unread: "1" }] };
-    if (sql.startsWith("SELECT n.id,e.clinic_id"))
+    if (sql.startsWith("SELECT n.id,e.type AS kind"))
       return {
         rows: [
           {
             id,
+            kind,
             clinic_id: clinic,
+            order_id: kind === "order_submitted" ? id : null,
             clinic_name: "Klinika",
             clinic_revision: "2",
             created_at: readAt,
@@ -82,6 +85,22 @@ test("internal notices remain disabled unless explicitly enabled with registrati
       DENTAL_LAB_REGISTRATION_ENABLED: "true",
     }),
   ).toBe(true);
+  expect(() =>
+    internalNoticesEnabled({
+      DENTAL_LAB_INTERNAL_NOTICES_ENABLED: "true",
+      DENTAL_LAB_REGISTRATION_ENABLED: "true",
+      DENTAL_LAB_ORDER_SUBMISSION_ENABLED: "true",
+    }),
+  ).toThrow("ORDER_NOTICES_DESTINATION_UNAVAILABLE");
+  expect(
+    internalNoticesEnabled({
+      DENTAL_LAB_INTERNAL_NOTICES_ENABLED: "true",
+      DENTAL_LAB_REGISTRATION_ENABLED: "true",
+      DENTAL_LAB_ORDER_SUBMISSION_ENABLED: "true",
+      DENTAL_LAB_ORDER_TRACKING_ENABLED: "true",
+      DENTAL_LAB_ORDER_DECISION_ENABLED: "true",
+    }),
+  ).toBe(true);
 });
 test("owner list is scoped to recipient and registration event with unread count and cursor", async () => {
   const f = fixture();
@@ -90,10 +109,19 @@ test("owner list is scoped to recipient and registration event with unread count
   expect(result.result.unread_count).toBe(1);
   expect(result.result.items[0].clinic_id).toBe(clinic);
   const select = f.calls.find(([sql]) =>
-    sql.startsWith("SELECT n.id,e.clinic_id"),
+    sql.startsWith("SELECT n.id,e.type AS kind"),
   );
   expect(select[0]).toContain("n.target_account_id=$1");
   expect(select[0]).toContain("e.type='clinic_registered'");
+  expect(select[0]).toContain("e.type='order_submitted'");
+  const orderNotice = await fixture({ kind: "order_submitted" }).service.list(
+    actor,
+    {},
+  );
+  expect(orderNotice.result.items[0]).toMatchObject({
+    kind: "order_submitted",
+    order_id: id,
+  });
   expect(select[0]).toContain("ORDER BY n.created_at DESC,n.id DESC LIMIT 51");
   expect(select[1][0]).toBe(id);
   expect((await f.service.list(actor, { before_id: id })).kind).toBe("invalid");

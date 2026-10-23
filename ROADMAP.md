@@ -2390,7 +2390,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 14 — Notifications, e-mails et alertes
 
 ### 14.1 — Définir événements et notifications internes
-- **Statut :** ◐ Matrice e-mail testable ; notification interne d'inscription au propriétaire ajoutée dans la transaction métier, API de consultation/lecture et interface albanaise derrière drapeau fermé. Les autres événements, destinataires, PostgreSQL réel et navigateur restent à recevoir ; aucun e-mail livré.
+- **Statut :** ◐ Matrice e-mail testable ; notifications internes d'inscription et de nouvelle commande clinique au propriétaire ajoutées dans leurs transactions métier, API de consultation/lecture et interface albanaise derrière drapeau fermé. Demandes, corrections, retouches, messages et autres destinataires restent à intégrer ; PostgreSQL réel et navigateur non réceptionnés, aucun e-mail livré.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Notifications, e-mails et alertes
