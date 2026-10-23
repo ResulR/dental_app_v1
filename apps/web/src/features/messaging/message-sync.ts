@@ -56,7 +56,7 @@ export async function catchUpMessages(
   const loaded = current.messages.at(-1)?.sequence_number ?? 0;
   if (!newest.messages[0] || newest.messages[0].sequence_number <= loaded + 1) {
     accept(newest);
-    return;
+    return true;
   }
   let cursor = loaded;
   for (let batch = 0; batch < maxBatches; batch++) {
@@ -69,6 +69,7 @@ export async function catchUpMessages(
       throw new Error("MESSAGE_CATCH_UP_STALLED");
     accept(page);
     cursor = next;
-    if (!page.next_after_seq) return;
+    if (!page.next_after_seq) return true;
   }
+  return false;
 }

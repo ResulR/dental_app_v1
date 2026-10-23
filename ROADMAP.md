@@ -2295,7 +2295,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 13.4 — Implémenter temps réel et reconnexion
-- **Statut :** ◐ Rattrapage incrémental paginé et interrogation toutes les 10 s pour l'onglet visible sur conversations générales et de commande, reprise au retour réseau/onglet et déduplication intégrés côté code. Tests avec doubles ; reconnexion navigateur, charge multi-session et PostgreSQL réel non réceptionnés. Aucun nouveau service.
+- **Statut :** ◐ Rattrapage incrémental borné, interrogation toutes les 10 s en onglet visible, reprise réseau et déduplication intégrés. Un cycle limité à cinq pages reste signalé comme incomplet jusqu'au cycle suivant ; relecture refusée efface le contenu local. Tests avec doubles (43 ciblés) ; PostgreSQL réel et navigateur multi-session non réceptionnés. Voir docs/MESSAGING_RECEPTION_V6_PROPOSAL.md. Aucun nouveau service.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel
@@ -2372,7 +2372,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 13.9 — Tester pièces jointes des conversations
-- **Statut :** ☐ À faire
+- **Statut :** ⚠ Bloqué : stockage privé, réservation de capacité et analyseur réel non validés. Routes de transfert non activées ; aucune preuve de réception de fichiers.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel

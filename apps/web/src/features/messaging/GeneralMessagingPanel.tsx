@@ -176,7 +176,12 @@ export function GeneralMessagingPanel({
       if ((clinic || orderId || generalClinicId) && page.items.length === 1)
         setSelected(page.items[0]!.id);
     } catch {
-      setNotice("Bisedat nuk u ngarkuan. Provoni sërish.");
+      setConversations(null);
+      setMessages(null);
+      setHistory(null);
+      setEditing(null);
+      setConnection("offline");
+      setNotice("Bisedat nuk u ngarkuan ose lejet ndryshuan.");
     }
   }
   async function moreConversations() {
@@ -200,7 +205,7 @@ export function GeneralMessagingPanel({
     try {
       const current = latestPage.current;
       if (current?.conversation_id === selected) {
-        await catchUpMessages(
+        const caughtUp = await catchUpMessages(
           current,
           (query) => fetchMessages(query),
           (page) =>
@@ -210,12 +215,15 @@ export function GeneralMessagingPanel({
                 : previous,
             ),
         );
+        setConnection(caughtUp ? "connected" : "waiting");
       } else {
         setMessages(await fetchMessages({ conversation_id: selected }));
+        setConnection("connected");
       }
-      setConnection("connected");
     } catch {
       setMessages(null);
+      setHistory(null);
+      setEditing(null);
       setNotice("Mesazhet nuk u ngarkuan ose lejet ndryshuan.");
     } finally {
       setLoadingMessages(false);
@@ -340,7 +348,7 @@ export function GeneralMessagingPanel({
       inFlight = true;
       try {
         const list = await loadConversationCounts(selected, controller.signal);
-        await catchUpMessages(
+        const caughtUp = await catchUpMessages(
           current,
           (query) => fetchMessages(query, controller.signal),
           (page) => {
@@ -365,12 +373,14 @@ export function GeneralMessagingPanel({
               }
             : list,
         );
-        setConnection("connected");
+        setConnection(caughtUp ? "connected" : "waiting");
       } catch {
         if (active) {
           setConnection("offline");
           setMessages(null);
           setConversations(null);
+          setHistory(null);
+          setEditing(null);
         }
       } finally {
         inFlight = false;

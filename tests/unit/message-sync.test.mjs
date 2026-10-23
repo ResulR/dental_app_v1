@@ -63,9 +63,11 @@ test("catch-up fetches every bounded forward page before considering newest sequ
     const to = Math.min(from + 49, 150);
     return page(from, to, { next_after_seq: to < 150 ? to : null });
   };
-  await catchUpMessages(current, fetchPage, (received) => {
-    current = mergeMessagePage(current, received);
-  });
+  expect(
+    await catchUpMessages(current, fetchPage, (received) => {
+      current = mergeMessagePage(current, received);
+    }),
+  ).toBe(true);
   expect(calls.map((query) => query.after_seq)).toEqual([
     undefined,
     10,
@@ -83,6 +85,24 @@ test("catch-up fetches every bounded forward page before considering newest sequ
       () => {},
     ),
   ).rejects.toThrow("MESSAGE_CATCH_UP_STALLED");
+});
+test("large reconnection backlog remains visibly incomplete until subsequent bounded catch-up", async () => {
+  let current = page(1, 10);
+  const fetchPage = async (query) => {
+    if (query.after_seq === undefined) return page(502, 551);
+    const from = query.after_seq + 1;
+    const to = Math.min(from + 49, 551);
+    return page(from, to, { next_after_seq: to < 551 ? to : null });
+  };
+  const accept = (received) => {
+    current = mergeMessagePage(current, received);
+  };
+  expect(await catchUpMessages(current, fetchPage, accept)).toBe(false);
+  expect(current.messages.at(-1).sequence_number).toBe(260);
+  expect(await catchUpMessages(current, fetchPage, accept)).toBe(false);
+  expect(current.messages.at(-1).sequence_number).toBe(510);
+  expect(await catchUpMessages(current, fetchPage, accept)).toBe(true);
+  expect(current.messages.at(-1).sequence_number).toBe(551);
 });
 test("versioned backfill adds missing sides with zero cursor without rewriting existing reads", () => {
   const sql = readFileSync(
