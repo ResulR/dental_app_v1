@@ -2390,7 +2390,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 14 — Notifications, e-mails et alertes
 
 ### 14.1 — Définir événements et notifications internes
-- **Statut :** ◐ Matrice de décision e-mail testable sur les six catégories labo et les événements cliniques ; aucune notification interne consommable ni livraison e-mail activée. Réception métier/SQL et destinataires restant à traiter.
+- **Statut :** ◐ Matrice e-mail testable ; notification interne d'inscription au propriétaire ajoutée dans la transaction métier, API de consultation/lecture et interface albanaise derrière drapeau fermé. Les autres événements, destinataires, PostgreSQL réel et navigateur restent à recevoir ; aucun e-mail livré.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Notifications, e-mails et alertes

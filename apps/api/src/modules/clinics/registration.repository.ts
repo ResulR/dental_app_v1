@@ -12,7 +12,10 @@ JOIN public.accounts a ON a.id=s.account_id AND a.profile='owner'
 WHERE s.singleton=1 AND a.lifecycle='active'`;
 const termsSql = `SELECT version_id FROM public.registration_current_terms WHERE singleton=1`;
 
-export function createClinicRegistrationRepository(database: Database) {
+export function createClinicRegistrationRepository(
+  database: Database,
+  internalNotices = false,
+) {
   return {
     async currentTermsVersion(): Promise<string | undefined> {
       return (await database.query<{ version_id: string }>(termsSql)).rows[0]
@@ -90,6 +93,14 @@ export function createClinicRegistrationRepository(database: Database) {
             "INSERT INTO public.outbox_dispatches(event_id) VALUES($1)",
             [event],
           );
+          if (internalNotices) {
+            const notice = await tx.query(
+              "INSERT INTO public.internal_notifications(event_id,target_account_id) SELECT $1,a.id FROM public.owner_slot s JOIN public.accounts a ON a.id=s.account_id WHERE s.singleton=1 AND a.profile='owner' AND a.lifecycle='active' AND NOT a.security_locked AND NOT a.credential_reset_required RETURNING id",
+              [event],
+            );
+            if (notice.rows.length !== 1)
+              throw new Error("REGISTRATION_OWNER_NOTIFICATION_UNAVAILABLE");
+          }
           return "created";
         });
       } catch (error) {

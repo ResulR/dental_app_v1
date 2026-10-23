@@ -1,4 +1,5 @@
 import { AuditLogPanel } from "../features/audit/AuditLogPanel.js";
+import { InternalNoticePanel } from "../features/notifications/InternalNoticePanel.js";
 import { GeneralMessagingPanel } from "../features/messaging/GeneralMessagingPanel.js";
 import { MessagingInboxPanel } from "../features/messaging/MessagingInboxPanel.js";
 import { ActionInboxPanel } from "../features/orders/index.js";
@@ -40,6 +41,11 @@ export function App() {
               {identity.profile !== "clinic" && (
                 <ActionInboxPanel key={identity.account_id + "-action-inbox"} />
               )}
+              {identity.profile === "owner" &&
+                import.meta.env.VITE_DENTAL_LAB_INTERNAL_NOTICES_ENABLED ===
+                  "true" && (
+                  <InternalNoticePanel key={identity.account_id + "-notices"} />
+                )}
               {identity.profile !== "clinic" && (
                 <PermissionBoundary
                   identity={identity}

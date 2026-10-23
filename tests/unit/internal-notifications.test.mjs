@@ -1,0 +1,129 @@
+import { expect, test, vi } from "vitest";
+import { createInternalNoticeService } from "../../apps/api/dist/modules/notifications/index.js";
+import { internalNoticesEnabled } from "../../apps/api/dist/app/internal-notices-config.js";
+const id = "91000000-0000-4000-8000-000000000001";
+const clinic = "91000000-0000-4000-8000-000000000002";
+const actor = { accountId: id, sessionId: id };
+function fixture({
+  profile = "owner",
+  missing = false,
+  fail = false,
+  alreadyRead = false,
+} = {}) {
+  const calls = [];
+  const readAt = new Date("2026-10-22T12:00:00.000Z");
+  const query = vi.fn(async (sql, args = []) => {
+    calls.push([sql, args]);
+    if (fail && sql.includes("UPDATE public.internal_notifications"))
+      throw new Error("database failure");
+    if (sql.startsWith("SELECT a.profile"))
+      return {
+        rows: [
+          {
+            profile,
+            lifecycle: "active",
+            securityLocked: false,
+            resetRequired: false,
+            sessionValid: true,
+            ownerCurrent: profile === "owner",
+            clinicId: profile === "clinic" ? clinic : null,
+            clinicSuspended: false,
+            grants: [],
+          },
+        ],
+      };
+    if (sql.startsWith("SELECT count(*)::text AS unread"))
+      return { rows: [{ unread: "1" }] };
+    if (sql.startsWith("SELECT n.id,e.clinic_id"))
+      return {
+        rows: [
+          {
+            id,
+            clinic_id: clinic,
+            clinic_name: "Klinika",
+            clinic_revision: "2",
+            created_at: readAt,
+            read_at: null,
+          },
+        ],
+      };
+    if (sql.startsWith("SELECT n.read_at FROM"))
+      return {
+        rows: missing ? [] : [{ read_at: alreadyRead ? readAt : null }],
+      };
+    if (sql.startsWith("UPDATE public.internal_notifications"))
+      return { rows: [{ read_at: readAt }] };
+    return { rows: [] };
+  });
+  return {
+    service: createInternalNoticeService({
+      transaction: async (work) => work({ query }),
+    }),
+    calls,
+  };
+}
+test("internal notices remain disabled unless explicitly enabled with registration", () => {
+  expect(internalNoticesEnabled({})).toBe(false);
+  expect(
+    internalNoticesEnabled({ DENTAL_LAB_INTERNAL_NOTICES_ENABLED: "false" }),
+  ).toBe(false);
+  expect(() =>
+    internalNoticesEnabled({ DENTAL_LAB_INTERNAL_NOTICES_ENABLED: "true" }),
+  ).toThrow();
+  expect(() =>
+    internalNoticesEnabled({
+      DENTAL_LAB_INTERNAL_NOTICES_ENABLED: "yes",
+      DENTAL_LAB_REGISTRATION_ENABLED: "true",
+    }),
+  ).toThrow();
+  expect(
+    internalNoticesEnabled({
+      DENTAL_LAB_INTERNAL_NOTICES_ENABLED: "true",
+      DENTAL_LAB_REGISTRATION_ENABLED: "true",
+    }),
+  ).toBe(true);
+});
+test("owner list is scoped to recipient and registration event with unread count and cursor", async () => {
+  const f = fixture();
+  const result = await f.service.list(actor, {});
+  expect(result.kind).toBe("result");
+  expect(result.result.unread_count).toBe(1);
+  expect(result.result.items[0].clinic_id).toBe(clinic);
+  const select = f.calls.find(([sql]) =>
+    sql.startsWith("SELECT n.id,e.clinic_id"),
+  );
+  expect(select[0]).toContain("n.target_account_id=$1");
+  expect(select[0]).toContain("e.type='clinic_registered'");
+  expect(select[0]).toContain("ORDER BY n.created_at DESC,n.id DESC LIMIT 51");
+  expect(select[1][0]).toBe(id);
+  expect((await f.service.list(actor, { before_id: id })).kind).toBe("invalid");
+});
+test("owner read is idempotently scoped; clinic and foreign notification denied", async () => {
+  const f = fixture();
+  expect((await f.service.markRead(actor, { id })).result.read_at).toBe(
+    "2026-10-22T12:00:00.000Z",
+  );
+  const update = f.calls.find(([sql]) =>
+    sql.startsWith("UPDATE public.internal_notifications"),
+  );
+  expect(update[0]).toContain("target_account_id=$2 AND read_at IS NULL");
+  expect(update[1]).toEqual([id, id]);
+  const replay = fixture({ alreadyRead: true });
+  expect((await replay.service.markRead(actor, { id })).result.read_at).toBe(
+    "2026-10-22T12:00:00.000Z",
+  );
+  expect(
+    replay.calls.some(([sql]) =>
+      sql.startsWith("UPDATE public.internal_notifications"),
+    ),
+  ).toBe(false);
+  expect(
+    (await fixture({ profile: "clinic" }).service.list(actor, {})).kind,
+  ).toBe("denied");
+  expect(
+    (await fixture({ missing: true }).service.markRead(actor, { id })).kind,
+  ).toBe("denied");
+  await expect(
+    fixture({ fail: true }).service.markRead(actor, { id }),
+  ).rejects.toThrow("database failure");
+});

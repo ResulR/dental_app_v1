@@ -1,4 +1,10 @@
 import { auditReadEnabled } from "./audit-read-config.js";
+import { internalNoticesEnabled } from "./internal-notices-config.js";
+import {
+  createInternalNoticeService,
+  registerInternalNoticeRoutes,
+  assertInternalNoticeReady,
+} from "../modules/notifications/index.js";
 import { generalMessagingEnabled } from "./general-messaging-config.js";
 import { orderMessagingEnabled } from "./order-messaging-config.js";
 import {
@@ -166,6 +172,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableInternalNotices = internalNoticesEnabled(env);
   const enableGeneralMessaging = generalMessagingEnabled(env);
   const enableOrderMessaging = orderMessagingEnabled(env);
   const enableAuditRead = auditReadEnabled(env);
@@ -198,6 +205,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     // Fail startup, without creating/migrating anything, if required objects or
     // read privileges are absent. Every checkout also enforces runtime identity.
     await assertAuthStorageReady(database);
+    if (enableInternalNotices) await assertInternalNoticeReady(database);
     if (enableGeneralMessaging || enableOrderMessaging)
       await assertGeneralMessagingReady(database);
     if (enableAuditRead) await assertAuditReadReady(database);
@@ -234,7 +242,10 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     const terms = createRegistrationTermsRepository(database);
     if (enableRegistration) {
       await assertRegistrationStorageReady(database);
-      const store = createClinicRegistrationRepository(database);
+      const store = createClinicRegistrationRepository(
+        database,
+        enableInternalNotices,
+      );
       registration = createClinicRegistrationService({
         currentTermsVersion: async () => (await terms.current())?.version_id,
         ownerInitialized: store.ownerInitialized,
@@ -253,6 +264,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
           sessions,
           origin: config.origin,
         });
+        if (enableInternalNotices)
+          registerInternalNoticeRoutes(app, {
+            notices: createInternalNoticeService(database),
+            sessions,
+            origin: config.origin,
+          });
         if (enableGeneralMessaging)
           registerGeneralMessagingRoutes(app, {
             reader: createGeneralMessagingService(database),

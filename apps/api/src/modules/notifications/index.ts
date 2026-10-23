@@ -1,4 +1,7 @@
 export { createRegistrationNotificationRepository } from "./registration-notification.repository.js";
+export { createInternalNoticeService } from "./internal.service.js";
+export { registerInternalNoticeRoutes } from "./internal.routes.js";
+export { assertInternalNoticeReady } from "./internal.repository.js";
 
 export { registrationEmail } from "./registration-email.js";
 export {

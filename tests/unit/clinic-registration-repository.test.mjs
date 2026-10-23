@@ -28,6 +28,11 @@ function fixture(options = {}) {
       };
     if (sql.startsWith("SELECT a.id"))
       return { rows: options.noOwner ? [] : [{ id: "owner-fixture" }] };
+    if (sql.startsWith("INSERT INTO public.internal_notifications"))
+      return {
+        rows: options.noNotification ? [] : [{ id: version }],
+        rowCount: 1,
+      };
     if (sql.startsWith("INSERT INTO public.conversations"))
       return {
         rows: options.noConversation ? [] : [{ id: version }],
@@ -42,7 +47,10 @@ function fixture(options = {}) {
     return result;
   });
   return {
-    repository: createClinicRegistrationRepository({ query, transaction }),
+    repository: createClinicRegistrationRepository(
+      { query, transaction },
+      options.internalNotices ?? true,
+    ),
     statements,
     query,
     transaction,
@@ -55,8 +63,10 @@ test("registration composes conversation and paired read markers in one transact
   expect(f.transaction).toHaveBeenCalledTimes(1);
   expect(f.statements[0].sql).toContain("FOR SHARE");
   expect(f.committed().filter((s) => s.sql.startsWith("INSERT"))).toHaveLength(
-    9,
+    10,
   );
+  expect(f.statements[11].sql).toContain("public.internal_notifications");
+  expect(f.statements[11].values).toEqual([f.statements[9].values[0]]);
   const values = f.statements.map((s) => s.values);
   const account = values[2][0],
     clinic = values[3][0],
@@ -74,6 +84,13 @@ test("registration composes conversation and paired read markers in one transact
   expect(f.statements[2].sql).toContain("'clinic'");
   expect(f.statements[3].sql).toContain("'pending'");
   expect(f.statements.every((s) => !s.sql.includes(data.email))).toBe(true);
+});
+test("disabled internal notices leave the prior registration writes unchanged", async () => {
+  const f = fixture({ internalNotices: false });
+  expect(await f.repository.registerAtomic(data)).toBe("created");
+  expect(
+    f.statements.some((s) => s.sql.includes("public.internal_notifications")),
+  ).toBe(false);
 });
 test("missing owner, missing terms and version race cannot write", async () => {
   for (const [options, expected] of [
@@ -97,6 +114,7 @@ test("failure at every write aborts the callback; no committed result or retry",
     "audit_events",
     "outbox_events",
     "outbox_dispatches",
+    "internal_notifications",
   ]) {
     const error = new Error("injected failure");
     const f = fixture({ failAt: "INSERT INTO public." + table + "(", error });
@@ -133,6 +151,13 @@ test("preflight reads report absence without creating an owner or publishing ter
   expect(f.statements.every((s) => s.sql.startsWith("SELECT"))).toBe(true);
 });
 
+test("missing owner notification receipt aborts registration and outbox atomically", async () => {
+  const f = fixture({ noNotification: true });
+  await expect(f.repository.registerAtomic(data)).rejects.toThrow(
+    "REGISTRATION_OWNER_NOTIFICATION_UNAVAILABLE",
+  );
+  expect(f.committed()).toEqual([]);
+});
 test("missing conversation receipt aborts registration before read markers and audit", async () => {
   const f = fixture({ noConversation: true });
   await expect(f.repository.registerAtomic(data)).rejects.toThrow(

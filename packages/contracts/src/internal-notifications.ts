@@ -1,0 +1,30 @@
+import { z } from "zod";
+
+export const InternalNoticeQuerySchema = z
+  .strictObject({
+    before_at: z.iso.datetime().optional(),
+    before_id: z.uuid().optional(),
+  })
+  .refine((q) => (q.before_at === undefined) === (q.before_id === undefined));
+export const InternalNoticePageSchema = z.strictObject({
+  unread_count: z.number().int().nonnegative(),
+  items: z
+    .array(
+      z.strictObject({
+        id: z.uuid(),
+        clinic_id: z.uuid(),
+        clinic_name: z.string(),
+        clinic_revision: z.number().int().positive(),
+        created_at: z.iso.datetime(),
+        read_at: z.iso.datetime().nullable(),
+      }),
+    )
+    .max(50),
+  next_before_at: z.iso.datetime().nullable(),
+  next_before_id: z.uuid().nullable(),
+});
+export const InternalNoticeReadSchema = z.strictObject({ id: z.uuid() });
+export const InternalNoticeReadResultSchema = z.strictObject({
+  id: z.uuid(),
+  read_at: z.iso.datetime(),
+});

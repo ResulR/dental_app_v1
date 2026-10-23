@@ -38,6 +38,7 @@ export * from "./order-lifecycle.js";
 export * from "./delivery-batch.js";
 export * from "./audit-log.js";
 export * from "./general-messaging.js";
+export * from "./internal-notifications.js";
 
 export * from "./order-cancellation-request.js";
 
