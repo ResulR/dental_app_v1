@@ -453,6 +453,45 @@ test("history scoped to order and snapshot labels preserved; client does not ret
   expect(fetcher).toHaveBeenCalledTimes(1);
 });
 
+test("clinical modification proposal creates one owner notice with the event; missing owner rolls back", async () => {
+  const { createOrderModificationService } =
+    await import("../../apps/api/dist/modules/orders/index.js");
+  const proposal = { ...command, action: "propose_modification" };
+  const db = fixture({ status: "accepted" });
+  expect(
+    (await createOrderModificationService(db, true).propose(actor, proposal))
+      .result.kind,
+  ).toBe("updated");
+  const notice = db.state.writes.filter(([sql]) =>
+    sql.startsWith("INSERT INTO public.internal_notifications"),
+  );
+  expect(notice).toHaveLength(1);
+  expect(notice[0][1][0]).toBe(
+    db.state.writes.find(([sql]) =>
+      sql.startsWith("INSERT INTO public.outbox_events"),
+    )[1][0],
+  );
+  const concurrent = fixture({ status: "accepted" });
+  const service = createOrderModificationService(concurrent, true);
+  const pair = await Promise.all([
+    service.propose(actor, proposal),
+    service.propose(actor, proposal),
+  ]);
+  expect(pair.map((r) => r.result.kind).sort()).toEqual([
+    "conflict",
+    "updated",
+  ]);
+  expect(
+    concurrent.state.writes.filter(([sql]) =>
+      sql.startsWith("INSERT INTO public.internal_notifications"),
+    ),
+  ).toHaveLength(1);
+  const failed = fixture({ status: "accepted", ownerMissing: true });
+  await expect(
+    createOrderModificationService(failed, true).propose(actor, proposal),
+  ).rejects.toThrow("ORDER_OWNER_NOTIFICATION_UNAVAILABLE");
+  expect(failed.state.writes).toEqual([]);
+});
 test("clinical accepted proposal appends a separate version without changing official instructions; pending and stale submissions fail", async () => {
   const { createOrderModificationService } =
     await import("../../apps/api/dist/modules/orders/index.js");

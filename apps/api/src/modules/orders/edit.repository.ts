@@ -298,7 +298,11 @@ export function createOrderEditRepository(
           "INSERT INTO public.outbox_dispatches(event_id) VALUES($1)",
           [eventId],
         );
-        if (internalNotices && event === "correction_resubmitted") {
+        if (
+          internalNotices &&
+          (event === "correction_resubmitted" ||
+            event === "modification_requested")
+        ) {
           const notice = await tx.query(
             "INSERT INTO public.internal_notifications(event_id,target_account_id) SELECT $1,a.id FROM public.owner_slot s JOIN public.accounts a ON a.id=s.account_id WHERE s.singleton=1 AND a.profile='owner' AND a.lifecycle='active' AND NOT a.security_locked AND NOT a.credential_reset_required RETURNING id",
             [eventId],

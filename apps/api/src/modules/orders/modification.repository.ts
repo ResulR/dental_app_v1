@@ -14,6 +14,7 @@ import { createOrderEditRepository } from "./edit.repository.js";
 type Actor = { accountId: string; sessionId: string };
 export function createOrderModificationRepository(
   db: Pick<ReturnType<typeof createApplicationDatabase>, "transaction">,
+  internalNotices = false,
 ) {
   const result = (value: unknown) => ({
     kind: "result" as const,
@@ -22,7 +23,11 @@ export function createOrderModificationRepository(
   return {
     async propose(actor: Actor, raw: unknown) {
       try {
-        return await createOrderEditRepository(db).decide(actor, raw, true);
+        return await createOrderEditRepository(db, internalNotices).decide(
+          actor,
+          raw,
+          true,
+        );
       } catch (error) {
         if (
           error &&

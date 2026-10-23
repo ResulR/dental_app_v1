@@ -342,7 +342,10 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
           });
         if (enableOrderModification)
           registerOrderModificationRoutes(app, {
-            service: createOrderModificationService(database),
+            service: createOrderModificationService(
+              database,
+              enableInternalNotices,
+            ),
             sessions,
             origin: config.origin,
           });

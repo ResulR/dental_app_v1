@@ -101,7 +101,12 @@ test("internal notices remain disabled unless explicitly enabled with registrati
       DENTAL_LAB_ORDER_DECISION_ENABLED: "true",
     }),
   ).toBe(true);
-  for (const feature of ["ORDER_REQUEST", "ORDER_EDIT", "RETOUCH"]) {
+  for (const feature of [
+    "ORDER_REQUEST",
+    "ORDER_EDIT",
+    "ORDER_MODIFICATION",
+    "RETOUCH",
+  ]) {
     expect(() =>
       internalNoticesEnabled({
         DENTAL_LAB_INTERNAL_NOTICES_ENABLED: "true",
@@ -126,6 +131,7 @@ test("owner list is scoped to recipient and registration event with unread count
     "order_submitted",
     "correction_resubmitted",
     "cancellation_requested",
+    "modification_requested",
     "retouch_requested",
   ])
     expect(select[0]).toContain(kind);
@@ -140,6 +146,7 @@ test("owner list is scoped to recipient and registration event with unread count
   for (const kind of [
     "correction_resubmitted",
     "cancellation_requested",
+    "modification_requested",
     "retouch_requested",
   ]) {
     const related = await fixture({ kind }).service.list(actor, {});

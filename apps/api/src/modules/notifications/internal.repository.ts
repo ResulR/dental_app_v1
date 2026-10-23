@@ -45,20 +45,20 @@ export function createInternalNoticeRepository(
           `SELECT count(*)::text AS unread FROM public.internal_notifications n
            JOIN public.outbox_events e ON e.id=n.event_id
            JOIN public.clinics c ON c.id=e.clinic_id
-           LEFT JOIN public.orders o ON o.id=e.aggregate_id AND o.clinic_id=c.id AND e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','retouch_requested')
+           LEFT JOIN public.orders o ON o.id=e.aggregate_id AND o.clinic_id=c.id AND e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','modification_requested','retouch_requested')
            WHERE n.target_account_id=$1 AND n.read_at IS NULL
              AND ((e.type='clinic_registered' AND e.aggregate_type='clinic' AND e.aggregate_id=c.id)
-               OR (e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','retouch_requested') AND e.aggregate_type='order' AND o.id IS NOT NULL))`,
+               OR (e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','modification_requested','retouch_requested') AND e.aggregate_type='order' AND o.id IS NOT NULL))`,
           [actor.accountId],
         );
         const rows = await tx.query(
           `SELECT n.id,e.type AS kind,e.clinic_id,o.id AS order_id,c.name AS clinic_name,c.revision::text AS clinic_revision,n.created_at,n.read_at
            FROM public.internal_notifications n JOIN public.outbox_events e ON e.id=n.event_id
            JOIN public.clinics c ON c.id=e.clinic_id
-           LEFT JOIN public.orders o ON o.id=e.aggregate_id AND o.clinic_id=c.id AND e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','retouch_requested')
+           LEFT JOIN public.orders o ON o.id=e.aggregate_id AND o.clinic_id=c.id AND e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','modification_requested','retouch_requested')
            WHERE n.target_account_id=$1
              AND ((e.type='clinic_registered' AND e.aggregate_type='clinic' AND e.aggregate_id=c.id)
-               OR (e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','retouch_requested') AND e.aggregate_type='order' AND o.id IS NOT NULL))
+               OR (e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','modification_requested','retouch_requested') AND e.aggregate_type='order' AND o.id IS NOT NULL))
              AND ($2::timestamptz IS NULL OR (n.created_at,n.id)<($2::timestamptz,$3::uuid))
            ORDER BY n.created_at DESC,n.id DESC LIMIT 51`,
           [
@@ -104,10 +104,10 @@ export function createInternalNoticeRepository(
           `SELECT n.read_at FROM public.internal_notifications n
            JOIN public.outbox_events e ON e.id=n.event_id
            JOIN public.clinics c ON c.id=e.clinic_id
-           LEFT JOIN public.orders o ON o.id=e.aggregate_id AND o.clinic_id=c.id AND e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','retouch_requested')
+           LEFT JOIN public.orders o ON o.id=e.aggregate_id AND o.clinic_id=c.id AND e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','modification_requested','retouch_requested')
            WHERE n.id=$1 AND n.target_account_id=$2
              AND ((e.type='clinic_registered' AND e.aggregate_type='clinic' AND e.aggregate_id=c.id)
-               OR (e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','retouch_requested') AND e.aggregate_type='order' AND o.id IS NOT NULL))
+               OR (e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','modification_requested','retouch_requested') AND e.aggregate_type='order' AND o.id IS NOT NULL))
            FOR UPDATE OF n`,
           [parsed.data.id, actor.accountId],
         );

@@ -17,6 +17,7 @@ export const InternalNoticePageSchema = z.strictObject({
           "order_submitted",
           "correction_resubmitted",
           "cancellation_requested",
+          "modification_requested",
           "retouch_requested",
         ]),
         clinic_id: z.uuid(),

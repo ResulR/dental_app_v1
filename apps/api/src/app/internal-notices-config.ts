@@ -7,6 +7,7 @@ export function internalNoticesEnabled(env: NodeJS.ProcessEnv) {
     (env.DENTAL_LAB_ORDER_SUBMISSION_ENABLED === "true" ||
       env.DENTAL_LAB_ORDER_REQUEST_ENABLED === "true" ||
       env.DENTAL_LAB_ORDER_EDIT_ENABLED === "true" ||
+      env.DENTAL_LAB_ORDER_MODIFICATION_ENABLED === "true" ||
       env.DENTAL_LAB_RETOUCH_ENABLED === "true") &&
     (env.DENTAL_LAB_ORDER_TRACKING_ENABLED !== "true" ||
       env.DENTAL_LAB_ORDER_DECISION_ENABLED !== "true")

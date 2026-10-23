@@ -4,7 +4,11 @@ import {
   InternalNoticeReadResultSchema,
 } from "@dental-lab/contracts";
 import { ClinicReviewPanel } from "../clinics/index.js";
-import { OrderReviewPanel, OrderRequestActions } from "../orders/index.js";
+import {
+  OrderReviewPanel,
+  OrderRequestActions,
+  OrderModificationReview,
+} from "../orders/index.js";
 import type { EffectivePermissionsSchema } from "@dental-lab/contracts";
 import { Button } from "../../shared/Button.js";
 type Page = ReturnType<typeof InternalNoticePageSchema.parse>;
@@ -139,6 +143,7 @@ export function InternalNoticePanel({
                 order_submitted: "Porosi e re",
                 correction_resubmitted: "Korrigjim i ridërguar",
                 cancellation_requested: "Kërkesë anulimi",
+                modification_requested: "Kërkesë ndryshimi",
                 retouch_requested: "Retushim i kërkuar",
               }[item.kind]
             }{" "}
@@ -183,6 +188,16 @@ export function InternalNoticePanel({
                   orderId={selected.order_id}
                   clinic={false}
                   permissions={permissions}
+                  onFinished={() =>
+                    void refresh().catch(() =>
+                      setNotice("Njoftimet nuk u verifikuan."),
+                    )
+                  }
+                />
+              ) : selected.kind === "modification_requested" ? (
+                <OrderModificationReview
+                  orderId={selected.order_id}
+                  clinic={false}
                   onFinished={() =>
                     void refresh().catch(() =>
                       setNotice("Njoftimet nuk u verifikuan."),
