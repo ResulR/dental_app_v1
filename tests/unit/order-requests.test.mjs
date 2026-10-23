@@ -143,6 +143,8 @@ function fixture(patch = {}) {
           if (patch.failAt && sql.includes(patch.failAt))
             throw new Error("SYNTHETIC_FAILURE");
           draft.writes.push([sql, values]);
+          if (sql.startsWith("INSERT INTO public.internal_notifications"))
+            return { rows: patch.ownerMissing ? [] : [{ id }] };
           if (sql.startsWith("INSERT INTO public.order_requests")) {
             draft.pending = {
               id: values[0],
@@ -189,6 +191,26 @@ const decision = (action) => ({
   request_id: other,
   expected_request_revision: 1,
   ...(action === "withdraw" ? {} : { reason: "Synthetic decision" }),
+});
+test("cancellation request owner notice shares outbox transaction and rolls back if recipient is absent", async () => {
+  const db = fixture();
+  expect(
+    (await createCancellationRequestService(db, true).decide(actor, command))
+      .result.state,
+  ).toBe("pending");
+  const notice = db.state.writes.find(([sql]) =>
+    sql.startsWith("INSERT INTO public.internal_notifications"),
+  );
+  expect(notice[1][0]).toBe(
+    db.state.writes.find(([sql]) =>
+      sql.startsWith("INSERT INTO public.outbox_events"),
+    )[1][0],
+  );
+  const failed = fixture({ ownerMissing: true });
+  await expect(
+    createCancellationRequestService(failed, true).decide(actor, command),
+  ).rejects.toThrow("ORDER_OWNER_NOTIFICATION_UNAVAILABLE");
+  expect(failed.state.writes).toEqual([]);
 });
 test("clinic creates one pending request without cancelling or rewriting instructions, replay is a conflict", async () => {
   const db = fixture(),

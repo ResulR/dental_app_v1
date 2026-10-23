@@ -14,6 +14,7 @@ import { trackingAuthority } from "./tracking-auth.js";
 type Actor = { accountId: string; sessionId: string };
 export function createCancellationRequestRepository(
   db: Pick<ReturnType<typeof createApplicationDatabase>, "transaction">,
+  internalNotices = false,
 ) {
   return {
     async context(actor: Actor, raw: unknown) {
@@ -204,6 +205,14 @@ export function createCancellationRequestRepository(
             "INSERT INTO public.outbox_dispatches(event_id) VALUES($1)",
             [eventId],
           );
+          if (internalNotices && event === "cancellation_requested") {
+            const notice = await tx.query(
+              "INSERT INTO public.internal_notifications(event_id,target_account_id) SELECT $1,a.id FROM public.owner_slot s JOIN public.accounts a ON a.id=s.account_id WHERE s.singleton=1 AND a.profile='owner' AND a.lifecycle='active' AND NOT a.security_locked AND NOT a.credential_reset_required RETURNING id",
+              [eventId],
+            );
+            if (notice.rows.length !== 1)
+              throw new Error("ORDER_OWNER_NOTIFICATION_UNAVAILABLE");
+          }
           await tx.query(
             "INSERT INTO public.audit_events(actor_id,action,object_type,object_id,request_id,aggregate_revision,changed_fields) VALUES($1,$2,'order',$3,$4,$5,ARRAY['status'])",
             [

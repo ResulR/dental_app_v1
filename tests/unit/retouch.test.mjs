@@ -134,6 +134,8 @@ function fixture(patch = {}) {
           if (patch.failAt && sql.includes(patch.failAt))
             throw new Error("SYNTHETIC_FAILURE");
           draft.writes.push([sql, values]);
+          if (sql.startsWith("INSERT INTO public.internal_notifications"))
+            return { rows: patch.ownerMissing ? [] : [{ id }] };
           if (sql.startsWith("INSERT INTO public.orders(")) {
             draft.order = {
               order_id: values[0],
@@ -165,6 +167,26 @@ function fixture(patch = {}) {
   return { transaction, state, calls };
 }
 
+test("retouch owner notice is emitted once on creation, not replay, and rolls back on missing owner", async () => {
+  const db = fixture();
+  const service = createRetouchService(db, undefined, true);
+  expect((await service.submit(actor, command)).result.kind).toBe("submitted");
+  expect((await service.submit(actor, command)).result.replayed).toBe(true);
+  const notices = db.state.writes.filter(([sql]) =>
+    sql.startsWith("INSERT INTO public.internal_notifications"),
+  );
+  expect(notices).toHaveLength(1);
+  expect(notices[0][1][0]).toBe(
+    db.state.writes.find(([sql]) =>
+      sql.startsWith("INSERT INTO public.outbox_events"),
+    )[1][0],
+  );
+  const failed = fixture({ ownerMissing: true });
+  await expect(
+    createRetouchService(failed, undefined, true).submit(actor, command),
+  ).rejects.toThrow("ORDER_OWNER_NOTIFICATION_UNAVAILABLE");
+  expect(failed.state.writes).toEqual([]);
+});
 test("creates a distinct numbered child and conversation linked to the actual delivered source, never mutates source", async () => {
   const db = fixture(),
     r = await createRetouchService(db).submit(actor, command);

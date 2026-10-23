@@ -42,7 +42,7 @@ function fixture({
             id,
             kind,
             clinic_id: clinic,
-            order_id: kind === "order_submitted" ? id : null,
+            order_id: kind === "clinic_registered" ? null : id,
             clinic_name: "Klinika",
             clinic_revision: "2",
             created_at: readAt,
@@ -101,6 +101,15 @@ test("internal notices remain disabled unless explicitly enabled with registrati
       DENTAL_LAB_ORDER_DECISION_ENABLED: "true",
     }),
   ).toBe(true);
+  for (const feature of ["ORDER_REQUEST", "ORDER_EDIT", "RETOUCH"]) {
+    expect(() =>
+      internalNoticesEnabled({
+        DENTAL_LAB_INTERNAL_NOTICES_ENABLED: "true",
+        DENTAL_LAB_REGISTRATION_ENABLED: "true",
+        [`DENTAL_LAB_${feature}_ENABLED`]: "true",
+      }),
+    ).toThrow("ORDER_NOTICES_DESTINATION_UNAVAILABLE");
+  }
 });
 test("owner list is scoped to recipient and registration event with unread count and cursor", async () => {
   const f = fixture();
@@ -113,7 +122,13 @@ test("owner list is scoped to recipient and registration event with unread count
   );
   expect(select[0]).toContain("n.target_account_id=$1");
   expect(select[0]).toContain("e.type='clinic_registered'");
-  expect(select[0]).toContain("e.type='order_submitted'");
+  for (const kind of [
+    "order_submitted",
+    "correction_resubmitted",
+    "cancellation_requested",
+    "retouch_requested",
+  ])
+    expect(select[0]).toContain(kind);
   const orderNotice = await fixture({ kind: "order_submitted" }).service.list(
     actor,
     {},
@@ -122,6 +137,14 @@ test("owner list is scoped to recipient and registration event with unread count
     kind: "order_submitted",
     order_id: id,
   });
+  for (const kind of [
+    "correction_resubmitted",
+    "cancellation_requested",
+    "retouch_requested",
+  ]) {
+    const related = await fixture({ kind }).service.list(actor, {});
+    expect(related.result.items[0]).toMatchObject({ kind, order_id: id });
+  }
   expect(select[0]).toContain("ORDER BY n.created_at DESC,n.id DESC LIMIT 51");
   expect(select[1][0]).toBe(id);
   expect((await f.service.list(actor, { before_id: id })).kind).toBe("invalid");

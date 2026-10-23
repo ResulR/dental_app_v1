@@ -4,7 +4,7 @@ import {
   InternalNoticeReadResultSchema,
 } from "@dental-lab/contracts";
 import { ClinicReviewPanel } from "../clinics/index.js";
-import { OrderReviewPanel } from "../orders/index.js";
+import { OrderReviewPanel, OrderRequestActions } from "../orders/index.js";
 import type { EffectivePermissionsSchema } from "@dental-lab/contracts";
 import { Button } from "../../shared/Button.js";
 type Page = ReturnType<typeof InternalNoticePageSchema.parse>;
@@ -133,9 +133,15 @@ export function InternalNoticePanel({
       <ul>
         {page?.items.map((item) => (
           <li key={item.id}>
-            {item.kind === "clinic_registered"
-              ? "Kërkesë regjistrimi"
-              : "Porosi e re"}{" "}
+            {
+              {
+                clinic_registered: "Kërkesë regjistrimi",
+                order_submitted: "Porosi e re",
+                correction_resubmitted: "Korrigjim i ridërguar",
+                cancellation_requested: "Kërkesë anulimi",
+                retouch_requested: "Retushim i kërkuar",
+              }[item.kind]
+            }{" "}
             · {item.clinic_name} ·{" "}
             <time dateTime={item.created_at}>{item.created_at}</time>
             {item.read_at ? " · Lexuar" : " · I palexuar"}
@@ -171,11 +177,25 @@ export function InternalNoticePanel({
               }}
             />
           ) : selected.order_id ? (
-            <OrderReviewPanel
-              key={selected.id}
-              orderId={selected.order_id}
-              permissions={permissions}
-            />
+            <div key={selected.id}>
+              {selected.kind === "cancellation_requested" ? (
+                <OrderRequestActions
+                  orderId={selected.order_id}
+                  clinic={false}
+                  permissions={permissions}
+                  onFinished={() =>
+                    void refresh().catch(() =>
+                      setNotice("Njoftimet nuk u verifikuan."),
+                    )
+                  }
+                />
+              ) : (
+                <OrderReviewPanel
+                  orderId={selected.order_id}
+                  permissions={permissions}
+                />
+              )}
+            </div>
           ) : (
             <p role="alert">Porosia nuk u verifikua.</p>
           )}

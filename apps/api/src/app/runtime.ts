@@ -332,7 +332,11 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
           });
         if (enableRetouch)
           registerRetouchRoutes(app, {
-            service: createRetouchService(database),
+            service: createRetouchService(
+              database,
+              undefined,
+              enableInternalNotices,
+            ),
             sessions,
             origin: config.origin,
           });
@@ -344,13 +348,16 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
           });
         if (enableOrderEdit)
           registerOrderEditRoutes(app, {
-            service: createOrderEditService(database),
+            service: createOrderEditService(database, enableInternalNotices),
             sessions,
             origin: config.origin,
           });
         if (enableOrderRequest)
           registerCancellationRequestRoutes(app, {
-            service: createCancellationRequestService(database),
+            service: createCancellationRequestService(
+              database,
+              enableInternalNotices,
+            ),
             sessions,
             origin: config.origin,
           });

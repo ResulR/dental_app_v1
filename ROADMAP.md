@@ -2390,7 +2390,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 14 — Notifications, e-mails et alertes
 
 ### 14.1 — Définir événements et notifications internes
-- **Statut :** ◐ Matrice e-mail testable ; notifications internes d'inscription et de nouvelle commande clinique au propriétaire ajoutées dans leurs transactions métier, API de consultation/lecture et interface albanaise derrière drapeau fermé. Demandes, corrections, retouches, messages et autres destinataires restent à intégrer ; PostgreSQL réel et navigateur non réceptionnés, aucun e-mail livré.
+- **Statut :** ◐ Matrice e-mail testable ; notifications internes au propriétaire pour inscription, nouvelle commande, renvoi de correction, demande d'annulation et retouche ajoutées dans les transactions métier, avec compteurs, lecture idempotente, vérification de session/propriétaire et destination commande revalidée par API. Les actions albanaises ouvrent la commande ou la demande d'annulation ; drapeau fermé par défaut. Proposition de modification venant du laboratoire, demande initiale de correction, messages et autres destinataires restent à concevoir/intégrer ; PostgreSQL réel et navigateur non réceptionnés, aucun e-mail livré.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Notifications, e-mails et alertes
@@ -2420,7 +2420,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 14.3 — Implémenter outbox et file de relance e-mail
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Tables transactionnelles outbox_events/outbox_dispatches et notification_deliveries disponibles, contraintes de dédoublonnage et préparation des intentions d'inscription ; pas de worker, de retry/backoff éprouvé, de fournisseur configuré ni d'envoi. Les nouveaux avis internes n'activent aucune livraison e-mail.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Notifications, e-mails et alertes

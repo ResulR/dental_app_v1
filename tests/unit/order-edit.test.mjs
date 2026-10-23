@@ -149,6 +149,8 @@ function fixture(patch = {}) {
           if (patch.failAt && sql.includes(patch.failAt))
             throw new Error("SYNTHETIC_FAILURE");
           draft.writes.push([sql, values]);
+          if (sql.startsWith("INSERT INTO public.internal_notifications"))
+            return { rows: patch.ownerMissing ? [] : [{ id }] };
           if (sql.startsWith("UPDATE public.orders")) {
             draft.version = values[1];
             draft.status = values[2];
@@ -167,6 +169,47 @@ function fixture(patch = {}) {
   });
   return { state, calls, transaction };
 }
+test("correction resubmission plans one owner notice atomically, while ordinary saves do not", async () => {
+  const corrected = fixture({ status: "correction_requested" });
+  const result = await createOrderEditService(corrected, true).decide(actor, {
+    order_id: id,
+    expected_version_id: id,
+    expected_revision: 1,
+    action: "resubmit_correction",
+    confirmed_warnings: false,
+  });
+  expect(result.result.kind).toBe("updated");
+  const notice = corrected.state.writes.filter(([sql]) =>
+    sql.startsWith("INSERT INTO public.internal_notifications"),
+  );
+  expect(notice).toHaveLength(1);
+  expect(notice[0][1][0]).toBe(
+    corrected.state.writes.find(([sql]) =>
+      sql.startsWith("INSERT INTO public.outbox_events"),
+    )[1][0],
+  );
+  const saved = fixture();
+  await createOrderEditService(saved, true).decide(actor, command);
+  expect(
+    saved.state.writes.some(([sql]) =>
+      sql.includes("public.internal_notifications"),
+    ),
+  ).toBe(false);
+  const failed = fixture({
+    status: "correction_requested",
+    ownerMissing: true,
+  });
+  await expect(
+    createOrderEditService(failed, true).decide(actor, {
+      order_id: id,
+      expected_version_id: id,
+      expected_revision: 1,
+      action: "resubmit_correction",
+      confirmed_warnings: false,
+    }),
+  ).rejects.toThrow("ORDER_OWNER_NOTIFICATION_UNAVAILABLE");
+  expect(failed.state.writes).toEqual([]);
+});
 test("save appends version and teeth, preserves prior snapshots and status, uses max version including proposals", async () => {
   const db = fixture();
   const r = await createOrderEditService(db).decide(actor, command);
