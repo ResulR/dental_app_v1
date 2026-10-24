@@ -31,7 +31,7 @@ export async function appendLaboratoryOrderMailIntent(
      JOIN public.orders o ON o.id=e.aggregate_id AND o.clinic_id=e.clinic_id
        AND o.revision=e.aggregate_revision
      JOIN public.clinics sender ON sender.id=e.clinic_id AND sender.account_id=e.actor_id
-     WHERE e.id=$1`,
+     WHERE e.id=$1 FOR SHARE OF o,sender`,
     [eventId],
   );
   if (current.rows.length === 0) return "skipped";
@@ -40,10 +40,26 @@ export async function appendLaboratoryOrderMailIntent(
     `SELECT a.id FROM public.owner_slot s
      JOIN public.accounts a ON a.id=s.account_id
      WHERE s.singleton=1 AND a.profile='owner' AND a.lifecycle='active'
-       AND NOT a.security_locked AND NOT a.credential_reset_required`,
+       AND NOT a.security_locked AND NOT a.credential_reset_required
+     FOR SHARE OF a`,
   );
   if (owner.rows.length !== 1)
     throw new Error("LABORATORY_MAIL_OWNER_UNAVAILABLE");
+  // Lock selected accounts; grants/configuration have no UPDATE privilege and
+  // cannot be row-locked by this role. Restrict insertion to the selected IDs
+  // and recheck SQL predicates, but a sender must recheck after commit.
+  const admins = await tx.query<{ id: string }>(
+    `SELECT a.id FROM public.email_category_recipients r
+     JOIN public.accounts a ON a.id=r.account_id AND a.profile='admin'
+     JOIN public.account_grants detail ON detail.account_id=a.id
+       AND detail.permission_code='orders.read_details'
+     JOIN public.account_grants logistics ON logistics.account_id=a.id
+       AND logistics.permission_code='orders.read_logistics'
+     WHERE r.category=$1 AND a.lifecycle='active'
+       AND NOT a.security_locked AND NOT a.credential_reset_required
+     FOR SHARE OF a`,
+    [category],
+  );
   const inserted = await tx.query(
     `INSERT INTO public.notification_deliveries
      (event_id,target_account_id,channel,purpose)
@@ -53,7 +69,7 @@ export async function appendLaboratoryOrderMailIntent(
      JOIN public.clinics sender ON sender.id=e.clinic_id AND sender.account_id=e.actor_id
      JOIN public.accounts a ON a.lifecycle='active'
        AND NOT a.security_locked AND NOT a.credential_reset_required
-     WHERE e.id=$1 AND (
+     WHERE e.id=$1 AND a.id=ANY($3::uuid[]) AND (
        (a.profile='owner' AND EXISTS(SELECT 1 FROM public.owner_slot s
          WHERE s.singleton=1 AND s.account_id=a.id))
        OR (a.profile='admin' AND EXISTS(
@@ -66,7 +82,7 @@ export async function appendLaboratoryOrderMailIntent(
      )
      ON CONFLICT(event_id,target_account_id,channel,purpose) DO NOTHING
      RETURNING id`,
-    [eventId, category],
+    [eventId, category, [owner.rows[0]!.id, ...admins.rows.map((a) => a.id)]],
   );
   return inserted.rows.length > 0 ? "prepared" : "skipped";
 }

@@ -26,6 +26,8 @@ function fixture({
       return { rows: current && senderMatched ? [{ id: eventId }] : [] };
     if (sql.startsWith("SELECT a.id FROM public.owner_slot"))
       return { rows: owner ? [{ id: eventId }] : [] };
+    if (sql.startsWith("SELECT a.id FROM public.email_category_recipients"))
+      return { rows: recipient ? [{ id: eventId }] : [] };
     if (sql.startsWith("INSERT INTO public.notification_deliveries")) {
       if (fail || pendingFailure) {
         pendingFailure = false;
@@ -73,7 +75,7 @@ test("five configured order categories prepare owner and eligible admin intents 
     const insert = f.calls.find(([sql]) =>
       sql.startsWith("INSERT INTO public.notification_deliveries"),
     );
-    expect(insert[1]).toEqual([eventId, type]);
+    expect(insert[1]).toEqual([eventId, type, [eventId, eventId]]);
     expect(insert[0]).toContain("o.revision=e.aggregate_revision");
     expect(insert[0]).toContain("sender.account_id=e.actor_id");
     expect(insert[0]).toContain("r.category=$2 AND r.account_id=a.id");

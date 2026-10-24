@@ -22,8 +22,29 @@ export async function appendClinicalMailIntent(
     businessMailIntent(event.rows[0]!.type)?.audience !== "clinic"
   )
     return "skipped";
-  // A newer order revision makes this delayed intent obsolete. Never copy an
-  // address, body, patient or file metadata into the delivery row.
+  // Serialize with order revisions. A decision that commits after this check
+  // must wait for this transaction; a decision that committed first is stale.
+  const order = await tx.query(
+    `SELECT o.id FROM public.outbox_events e
+     JOIN public.orders o ON o.id=e.aggregate_id AND o.clinic_id=e.clinic_id
+     WHERE e.id=$1 AND o.revision=e.aggregate_revision FOR SHARE OF o`,
+    [eventId],
+  );
+  if (order.rows.length !== 1) return "skipped";
+  // Keep a concurrent clinic suspension/account revocation behind preparation.
+  // The eventual sender must check again before using any address.
+  const recipient = await tx.query(
+    `SELECT a.id FROM public.outbox_events e
+     JOIN public.clinics c ON c.id=e.clinic_id
+     JOIN public.accounts a ON a.id=c.account_id
+     WHERE e.id=$1 AND c.review_state='approved' AND NOT c.suspended
+       AND a.profile='clinic' AND a.lifecycle='active'
+       AND NOT a.security_locked AND NOT a.credential_reset_required
+     FOR SHARE OF c,a`,
+    [eventId],
+  );
+  if (recipient.rows.length !== 1) return "skipped";
+  // No address, body, patient or file metadata is copied into the delivery row.
   const delivery = await tx.query(
     `INSERT INTO public.notification_deliveries
      (event_id,target_account_id,channel,purpose)

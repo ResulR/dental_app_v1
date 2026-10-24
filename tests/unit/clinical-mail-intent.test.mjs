@@ -17,6 +17,10 @@ function fixture({
     calls.push([sql, args]);
     if (sql.startsWith("SELECT e.type,d.state"))
       return { rows: type ? [{ type, state }] : [] };
+    if (sql.startsWith("SELECT o.id FROM public.outbox_events"))
+      return { rows: orderMatched ? [{ id }] : [] };
+    if (sql.startsWith("SELECT a.id FROM public.outbox_events"))
+      return { rows: recipient ? [{ id }] : [] };
     if (sql.startsWith("INSERT INTO public.notification_deliveries")) {
       if (fail) throw Error("INTENT_FAILURE");
       if (recipient && orderMatched && !writes.length) {

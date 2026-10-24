@@ -2405,7 +2405,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 14.2 — Implémenter destinataires configurables par catégorie
-- **Statut :** ◐ Structure `email_category_recipients` et cinq intentions de catégories commande préparées hors runtime : auteur clinique lié à la commande, propriétaire par défaut, admins explicitement configurés avec grants détaillés/logistiques courants ; inscription clinique conserve son adaptateur. Contrôle de révocation avant livraison, gestion des catégories et réception PostgreSQL v7 restent à faire. Aucune intention livrée.
+- **Statut :** ◐ Structure `email_category_recipients` et cinq intentions de catégories commande préparées hors runtime : auteur clinique lié à la commande, propriétaire par défaut, admins explicitement configurés avec grants détaillés/logistiques courants ; inscription clinique conserve son adaptateur. Verrouillage des comptes admissibles et de la commande proposé ; une suppression concurrente de grant/configuration peut encore laisser une intention obsolète, à refuser impérativement avant livraison. Gestion des catégories et réception PostgreSQL v8 restent à faire. Aucune intention livrée.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Notifications, e-mails et alertes
@@ -2420,7 +2420,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 14.3 — Implémenter outbox et file de relance e-mail
-- **Statut :** ◐ Tables outbox et deliveries, unicité et intentions d'inscription disponibles. Appendices transactionnels préparés hors runtime pour décisions cliniques et cinq catégories labo : verrou dispatch, révision courante, destinataires actifs/grants configurés, reprise et dédoublonnage. Tests avec doubles (pas preuve SQL réelle) ; bundle v7 isolé préparé sans exécution. Aucun worker, recontrôle avant livraison, retry/backoff éprouvé, fournisseur ou envoi. Avis personnels distincts des lectures de conversation et des intentions e-mail.
+- **Statut :** ◐ Tables outbox et deliveries, unicité et intentions d'inscription disponibles. Appendices transactionnels préparés hors runtime pour décisions cliniques et cinq catégories labo : verrou dispatch et commande, contrôle de révision, compte/cliniques admissibles, reprise après erreur et dédoublonnage. Tests avec doubles (pas preuve SQL réelle) ; v7 figé et inchangé mais ses dépendances ont évolué, v8 distinct préparé sans exécution. Aucun worker, recontrôle des grants et de l'état métier avant livraison, retry/backoff éprouvé, fournisseur ou envoi. Avis personnels distincts des lectures de conversation et des intentions e-mail.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Notifications, e-mails et alertes
