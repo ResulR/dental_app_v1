@@ -11,7 +11,7 @@ export function createClinicalMailIntentRepository(
         const event = await tx.query<{ type: string; state: string }>(
           `SELECT e.type,d.state FROM public.outbox_dispatches d
            JOIN public.outbox_events e ON e.id=d.event_id
-           WHERE e.id=$1 AND e.clinic_id IS NOT NULL AND e.aggregate_type IN ('order','clinic')
+           WHERE e.id=$1 AND e.clinic_id IS NOT NULL AND e.aggregate_type='order'
            FOR UPDATE OF d`,
           [eventId],
         );
@@ -26,7 +26,8 @@ export function createClinicalMailIntentRepository(
           `INSERT INTO public.notification_deliveries
            (event_id,target_account_id,channel,purpose)
            SELECT $1,a.id,'email','business' FROM public.outbox_events e
-           JOIN public.clinics c ON c.id=e.clinic_id
+           JOIN public.orders o ON o.id=e.aggregate_id AND o.clinic_id=e.clinic_id
+           JOIN public.clinics c ON c.id=o.clinic_id
            JOIN public.accounts a ON a.id=c.account_id
            WHERE e.id=$1 AND c.review_state='approved' AND NOT c.suspended
              AND a.profile='clinic' AND a.lifecycle='active'

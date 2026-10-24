@@ -5,6 +5,7 @@ function fixture({
   type = "order_accepted",
   state = "pending",
   recipient = true,
+  orderMatched = true,
   fail = false,
 } = {}) {
   const writes = [],
@@ -15,7 +16,7 @@ function fixture({
       return { rows: type ? [{ type, state }] : [] };
     if (sql.startsWith("INSERT INTO public.notification_deliveries")) {
       if (fail) throw Error("INTENT_FAILURE");
-      if (recipient && !writes.length) {
+      if (recipient && orderMatched && !writes.length) {
         writes.push(args);
         return { rows: [{ id }] };
       }
@@ -49,6 +50,7 @@ test("only listed clinic decisions prepare one durable, private, deduplicated in
   expect(insert).toContain(
     "ON CONFLICT(event_id,target_account_id,channel,purpose) DO NOTHING",
   );
+  expect(insert).toContain("o.id=e.aggregate_id AND o.clinic_id=e.clinic_id");
   expect(insert).toContain("c.review_state='approved' AND NOT c.suspended");
   expect(insert).not.toMatch(/email_original|patient_reference|body/);
   for (const type of [
@@ -61,7 +63,11 @@ test("only listed clinic decisions prepare one durable, private, deduplicated in
     expect(await rejected.repository.prepare(id)).toBe("skipped");
     expect(rejected.writes).toEqual([]);
   }
-  for (const patch of [{ state: "failed" }, { recipient: false }])
+  for (const patch of [
+    { state: "failed" },
+    { recipient: false },
+    { orderMatched: false },
+  ])
     expect(await fixture(patch).repository.prepare(id)).toBe("skipped");
 });
 test("intent error aborts the transaction; transport is absent", async () => {
