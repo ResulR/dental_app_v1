@@ -8,6 +8,7 @@ import {
   createMessageSubmissionService,
   createMessagingInboxService,
 } from "../../apps/api/dist/modules/messaging/index.js";
+import { createInternalNoticeService } from "../../apps/api/dist/modules/notifications/index.js";
 const root = "/srv/dental-lab/.local/messaging-v6";
 const port = 55436;
 const id = (p, n) => p + "000000-0000-4000-8000-" + String(n).padStart(12, "0");
@@ -77,9 +78,15 @@ function db(client, hook = async () => {}) {
 const general = (client, hook) =>
   createGeneralMessagingService(db(client, hook));
 const linked = (client, hook) => createOrderMessagingService(db(client, hook));
-const submit = (client, kind, hook) =>
-  createMessageSubmissionService(db(client, hook), undefined, kind);
+const submit = (client, kind, hook, internalNotices = false) =>
+  createMessageSubmissionService(
+    db(client, hook),
+    undefined,
+    kind,
+    internalNotices,
+  );
 const inbox = (client) => createMessagingInboxService(db(client), true);
+const notices = (client) => createInternalNoticeService(db(client));
 const send = (service, actor, conversation, n, body = "Synthetic text") =>
   service.send(actor, {
     conversation_id: conversation,
@@ -193,9 +200,44 @@ try {
     ),
     true,
   );
-  const first = await send(submit(a, true), clinic, conv(1), 1);
+  const first = await send(
+    submit(a, true, undefined, true),
+    clinic,
+    conv(1),
+    1,
+  );
   equal([first.result.kind, first.result.sequence_number], ["sent", 2]);
-  const replay = await send(submit(a, true), clinic, conv(1), 1);
+  for (const recipient of [account(1), generalOnly, both]) {
+    const page = (await notices(a).list(recipient, {})).result;
+    equal(
+      [page.unread_count, page.items[0].kind, page.items[0].conversation_id],
+      [1, "message_created", conv(1)],
+    );
+  }
+  equal((await notices(a).list(clinic, {})).result.unread_count, 0);
+  equal((await notices(a).list(other, {})).result.unread_count, 0);
+  const staffNotice = (await notices(a).list(generalOnly, {})).result.items[0];
+  equal(
+    (await notices(a).markRead(generalOnly, { id: staffNotice.id })).kind,
+    "result",
+  );
+  equal(
+    (await notices(a).markRead(generalOnly, { id: staffNotice.id })).kind,
+    "result",
+  );
+  equal((await notices(a).list(generalOnly, {})).result.unread_count, 0);
+  equal((await notices(a).list(account(1), {})).result.unread_count, 1);
+  equal(
+    (await general(a).messages(generalOnly, { conversation_id: conv(1) }))
+      .result.last_read_seq,
+    0,
+  );
+  const replay = await send(
+    submit(a, true, undefined, true),
+    clinic,
+    conv(1),
+    1,
+  );
   equal(
     [replay.result.message_id, replay.result.replayed],
     [first.result.message_id, true],
@@ -206,11 +248,43 @@ try {
   );
   equal((await send(submit(a, true), other, conv(1), 2)).kind, "denied");
   equal(
-    (await send(submit(a, "order"), clinic, conv(3), 3)).result.kind,
+    (await send(submit(a, "order", undefined, true), clinic, conv(3), 3)).result
+      .kind,
     "sent",
   );
-  const retouchSent = await send(submit(a, "order"), clinic, conv(4), 4);
+  const retouchSent = await send(
+    submit(a, "order", undefined, true),
+    clinic,
+    conv(4),
+    4,
+  );
   equal(retouchSent.result.kind, "sent");
+  equal(
+    (await notices(a).list(generalOnly, {})).result.items.some(
+      (n) => n.order_id !== null,
+    ),
+    false,
+  );
+  const linkedNotices = (await notices(a).list(both, {})).result.items;
+  equal(
+    linkedNotices.some(
+      (n) => n.order_id === order(1) && n.conversation_id === conv(3),
+    ),
+    true,
+  );
+  equal(
+    linkedNotices.some(
+      (n) => n.order_id === order(4) && n.conversation_id === conv(4),
+    ),
+    true,
+  );
+  const {
+    rows: [initialRecipients],
+  } = await observer.query(
+    "SELECT count(*)::int n FROM public.internal_notifications n JOIN public.outbox_events e ON e.id=n.event_id WHERE e.aggregate_id=$1",
+    [first.result.message_id],
+  );
+  equal(initialRecipients.n, 3);
   equal(
     (await send(submit(a, "order"), other, conv(5), 5)).result.kind,
     "sent",
@@ -227,14 +301,21 @@ try {
     "denied",
   );
   const [sim1, sim2] = await Promise.all([
-    send(submit(a, true), clinic, conv(1), 7),
-    send(submit(b, true), clinicAgain, conv(1), 7),
+    send(submit(a, true, undefined, true), clinic, conv(1), 7),
+    send(submit(b, true, undefined, true), clinicAgain, conv(1), 7),
   ]);
   equal(
     [sim1.result.message_id, sim2.result.message_id],
     [sim1.result.message_id, sim1.result.message_id],
   );
   equal([sim1.result.replayed, sim2.result.replayed].sort(), [false, true]);
+  const {
+    rows: [concurrentRecipients],
+  } = await observer.query(
+    "SELECT count(*)::int n FROM public.internal_notifications n JOIN public.outbox_events e ON e.id=n.event_id WHERE e.aggregate_id=$1",
+    [sim1.result.message_id],
+  );
+  equal(concurrentRecipients.n, 3);
   const beforeRollback = await count(observer, "messages");
   await assert.rejects(
     send(
@@ -256,13 +337,14 @@ try {
   );
   for (let n = 9; n <= 64; n++) {
     const result = await send(
-      submit(a, true),
+      submit(a, true, undefined, n === 10),
       n % 2 ? clinic : both,
       conv(1),
       n,
     );
     equal(result.result.kind, "sent");
   }
+  equal((await notices(a).list(clinic, {})).result.unread_count, 1);
   const newest = (
     await general(a).messages(clinic, { conversation_id: conv(1) })
   ).result;
@@ -443,6 +525,19 @@ try {
     (await general(a).messages(both, { conversation_id: conv(1) })).kind,
     "denied",
   );
+  const revokedNotices = (await notices(a).list(both, {})).result;
+  equal(
+    revokedNotices.items.every((n) => n.conversation_id !== conv(1)),
+    true,
+  );
+  equal(
+    (
+      await notices(a).markRead(both, {
+        id: linkedNotices.find((n) => n.conversation_id === conv(1)).id,
+      })
+    ).kind,
+    "denied",
+  );
   equal(
     (await linked(a).orderConversation(both, { order_id: order(4) })).kind,
     "result",
@@ -458,6 +553,7 @@ try {
     (await general(a).messages(clinic, { conversation_id: conv(1) })).kind,
     "denied",
   );
+  equal((await notices(a).list(clinic, {})).kind, "denied");
   equal(
     (await linked(a).messages(clinicAgain, { conversation_id: conv(4) })).kind,
     "denied",
