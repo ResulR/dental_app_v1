@@ -2420,7 +2420,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 14.3 — Implémenter outbox et file de relance e-mail
-- **Statut :** ◐ Tables transactionnelles outbox_events/outbox_dispatches et notification_deliveries disponibles, contraintes de dédoublonnage et préparation des intentions d'inscription ; pas de worker, de retry/backoff éprouvé, de fournisseur configuré ni d'envoi. Les nouveaux avis internes n'activent aucune livraison e-mail.
+- **Statut :** ◐ Tables transactionnelles outbox_events/outbox_dispatches et notification_deliveries disponibles, contraintes de dédoublonnage et préparation des intentions d'inscription. Adaptateur indépendant préparé pour les intentions cliniques de la matrice métier : verrou du dispatch, destinataire courant, insertion unique et reprise idempotente, sans branchement runtime. Tests avec doubles seulement. Pas de worker, de retry/backoff éprouvé, de fournisseur configuré ni d'envoi. Les avis de messages personnels n'activent aucune livraison e-mail.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Notifications, e-mails et alertes

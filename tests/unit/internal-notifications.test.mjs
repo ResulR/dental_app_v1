@@ -179,6 +179,15 @@ test("owner list is scoped to recipient and registration event with unread count
   expect(select[0]).toContain("ORDER BY n.created_at DESC,n.id DESC LIMIT 51");
   expect(select[1][0]).toBe(id);
   expect((await f.service.list(actor, { before_id: id })).kind).toBe("invalid");
+  await f.service.list(actor, {
+    before_at: "2026-10-22T12:00:00.000Z",
+    before_id: id,
+  });
+  const paged = f.calls
+    .filter(([sql]) => sql.startsWith("SELECT n.id,e.type AS kind"))
+    .at(-1);
+  expect(paged[1].slice(-2)).toEqual(["2026-10-22T12:00:00.000Z", id]);
+  expect(paged[0]).toContain("(n.created_at,n.id)<($6::timestamptz,$7::uuid)");
 });
 test("owner read is idempotently scoped; clinic and foreign notification denied", async () => {
   const f = fixture();
