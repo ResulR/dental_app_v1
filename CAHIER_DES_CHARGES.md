@@ -215,7 +215,8 @@ Destinataires choisis par le propriétaire **par événement**, parmi administra
 
 ### 10.3 Messagerie non lue
 
-- Notification temps réel si connecté.
+- Notification temps réel si connecté. Pour chaque nouveau message pertinent (conversation générale, commande ou retouche), chaque compte laboratoire actuellement autorisé à consulter cette conversation reçoit sa propre notification interne ; le compte clinique destinataire reçoit la sienne pour un message du laboratoire. L'auteur ne reçoit jamais de notification pour son propre message.
+- La lecture d'une notification est individuelle et n'affecte ni les notifications des autres ni le marqueur de lecture de la conversation. Compteurs, pages, ouverture et navigation réévaluent les permissions actuelles : révocation ou suspension empêche immédiatement l'accès au contenu. Un événement crée au plus une notification par destinataire, dans la transaction métier et sous contrôle d'idempotence. Une notification personnelle non lue n'altère pas l'état réel d'une demande déjà traitée.
 - Rappel e-mail si conversation contient toujours des messages non lus **30 minutes** après réception.
 - Pour la même période continue de non-lecture, rappel supplémentaire **au moins 24 heures après le précédent**, seulement si **de nouveaux messages** sont arrivés depuis le précédent rappel et sont restés non lus 30 minutes.
 - Lecture complète réinitialise le cycle ; regrouper les arrivées proches dans un seul e-mail. Aucune donnée patient sensible dans le contenu du rappel. Appliquer les droits et destinataires pertinents pour les boîtes de messagerie partagées.

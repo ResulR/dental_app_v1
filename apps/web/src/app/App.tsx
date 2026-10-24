@@ -41,17 +41,23 @@ export function App() {
               {identity.profile !== "clinic" && (
                 <ActionInboxPanel key={identity.account_id + "-action-inbox"} />
               )}
-              {identity.profile === "owner" &&
-                import.meta.env.VITE_DENTAL_LAB_INTERNAL_NOTICES_ENABLED ===
-                  "true" && (
+              {import.meta.env.VITE_DENTAL_LAB_INTERNAL_NOTICES_ENABLED ===
+                "true" &&
+                (identity.profile === "owner" ||
+                  import.meta.env.VITE_DENTAL_LAB_GENERAL_MESSAGING_ENABLED ===
+                    "true" ||
+                  import.meta.env.VITE_DENTAL_LAB_ORDER_MESSAGING_ENABLED ===
+                    "true") && (
                   <PermissionBoundary
                     identity={identity}
-                    permission="orders.read_details"
-                    allowClinic={false}
+                    permission="messaging.general.read"
+                    alternatives={["messaging.order.read"]}
+                    allowClinic
                   >
                     {(snapshot) => (
                       <InternalNoticePanel
                         key={identity.account_id + "-notices"}
+                        clinic={identity.profile === "clinic"}
                         permissions={snapshot.permissions}
                       />
                     )}

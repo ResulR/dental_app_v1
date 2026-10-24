@@ -273,7 +273,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
         if (enableGeneralMessaging)
           registerGeneralMessagingRoutes(app, {
             reader: createGeneralMessagingService(database),
-            sender: createMessageSubmissionService(database, undefined, true),
+            sender: createMessageSubmissionService(
+              database,
+              undefined,
+              true,
+              enableInternalNotices,
+            ),
             sessions,
             origin: config.origin,
           });
@@ -290,6 +295,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
               database,
               undefined,
               "order",
+              enableInternalNotices,
             ),
             sessions,
             origin: config.origin,

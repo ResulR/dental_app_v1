@@ -18,20 +18,56 @@ export async function assertInternalNoticeReady(db: DatabaseExecutor) {
   if (result.rows[0]?.ready !== true)
     throw new Error("INTERNAL_NOTICES_UNAVAILABLE");
 }
-async function owner(tx: DatabaseExecutor, actor: Actor) {
+async function viewer(tx: DatabaseExecutor, actor: Actor) {
   await tx.query("SELECT id FROM public.accounts WHERE id=$1 FOR SHARE", [
     actor.accountId,
   ]);
   await tx.query(
     "SELECT singleton FROM public.owner_slot WHERE singleton=1 FOR SHARE",
   );
+  await tx.query("LOCK TABLE public.account_grants IN SHARE MODE");
   await tx.query(
     "SELECT id FROM public.sessions WHERE id=$1 AND account_id=$2 FOR SHARE",
     [actor.sessionId, actor.accountId],
   );
+  await tx.query(
+    "SELECT id FROM public.clinics WHERE account_id=$1 FOR SHARE",
+    [actor.accountId],
+  );
   const current = await createCurrentPermissionsRepository(tx).current(actor);
-  return current?.profile === "owner";
+  if (!current) return null;
+  if (current.profile === "clinic") {
+    const clinic = await tx.query(
+      "SELECT id FROM public.clinics WHERE account_id=$1 AND review_state='approved' AND NOT suspended",
+      [actor.accountId],
+    );
+    if (clinic.rows.length !== 1) return null;
+  }
+  return [
+    actor.accountId,
+    current.profile === "owner",
+    current.profile !== "clinic",
+    current.permissions.includes("messaging.general.read"),
+    current.permissions.includes("messaging.order.read"),
+  ] as const;
 }
+const joins = `JOIN public.outbox_events e ON e.id=n.event_id
+  JOIN public.clinics c ON c.id=e.clinic_id
+  LEFT JOIN public.orders o ON o.id=e.aggregate_id AND o.clinic_id=c.id AND e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','modification_requested','retouch_requested')
+  LEFT JOIN public.messages m ON m.id=e.aggregate_id AND m.clinic_id=c.id AND e.type='message_created'
+  LEFT JOIN public.conversations v ON v.id=m.conversation_id AND v.clinic_id=c.id
+  LEFT JOIN public.orders mo ON mo.id=v.order_id AND mo.clinic_id=c.id AND v.kind='order'`;
+const visible = `(
+  ($2::boolean AND ((e.type='clinic_registered' AND e.aggregate_type='clinic' AND e.aggregate_id=c.id)
+    OR (e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','modification_requested','retouch_requested') AND e.aggregate_type='order' AND o.id IS NOT NULL)))
+  OR (e.type='message_created' AND e.aggregate_type='message' AND m.id IS NOT NULL
+    AND v.id IS NOT NULL AND m.sender_id<>$1 AND
+    ((v.kind='general' AND v.order_id IS NULL) OR (v.kind='order' AND mo.id IS NOT NULL))
+    AND (($3::boolean AND m.sender_side='clinic' AND
+      ((v.kind='general' AND $4::boolean) OR (v.kind='order' AND $5::boolean)))
+      OR (NOT $3::boolean AND m.sender_side='laboratory' AND c.account_id=$1
+        AND c.review_state='approved' AND NOT c.suspended))))
+)`;
 export function createInternalNoticeRepository(
   db: Pick<ReturnType<typeof createApplicationDatabase>, "transaction">,
 ) {
@@ -40,29 +76,22 @@ export function createInternalNoticeRepository(
       const parsed = InternalNoticeQuerySchema.safeParse(raw);
       if (!parsed.success) return { kind: "invalid" as const };
       return db.transaction(async (tx) => {
-        if (!(await owner(tx, actor))) return { kind: "denied" as const };
+        const scope = await viewer(tx, actor);
+        if (!scope) return { kind: "denied" as const };
         const counts = await tx.query(
           `SELECT count(*)::text AS unread FROM public.internal_notifications n
-           JOIN public.outbox_events e ON e.id=n.event_id
-           JOIN public.clinics c ON c.id=e.clinic_id
-           LEFT JOIN public.orders o ON o.id=e.aggregate_id AND o.clinic_id=c.id AND e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','modification_requested','retouch_requested')
-           WHERE n.target_account_id=$1 AND n.read_at IS NULL
-             AND ((e.type='clinic_registered' AND e.aggregate_type='clinic' AND e.aggregate_id=c.id)
-               OR (e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','modification_requested','retouch_requested') AND e.aggregate_type='order' AND o.id IS NOT NULL))`,
-          [actor.accountId],
+           ${joins} WHERE n.target_account_id=$1 AND n.read_at IS NULL AND ${visible}`,
+          [...scope],
         );
         const rows = await tx.query(
-          `SELECT n.id,e.type AS kind,e.clinic_id,o.id AS order_id,c.name AS clinic_name,c.revision::text AS clinic_revision,n.created_at,n.read_at
-           FROM public.internal_notifications n JOIN public.outbox_events e ON e.id=n.event_id
-           JOIN public.clinics c ON c.id=e.clinic_id
-           LEFT JOIN public.orders o ON o.id=e.aggregate_id AND o.clinic_id=c.id AND e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','modification_requested','retouch_requested')
-           WHERE n.target_account_id=$1
-             AND ((e.type='clinic_registered' AND e.aggregate_type='clinic' AND e.aggregate_id=c.id)
-               OR (e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','modification_requested','retouch_requested') AND e.aggregate_type='order' AND o.id IS NOT NULL))
-             AND ($2::timestamptz IS NULL OR (n.created_at,n.id)<($2::timestamptz,$3::uuid))
+          `SELECT n.id,e.type AS kind,e.clinic_id,COALESCE(o.id,mo.id) AS order_id,
+           v.id AS conversation_id,c.name AS clinic_name,c.revision::text AS clinic_revision,n.created_at,n.read_at
+           FROM public.internal_notifications n ${joins}
+           WHERE n.target_account_id=$1 AND ${visible}
+             AND ($6::timestamptz IS NULL OR (n.created_at,n.id)<($6::timestamptz,$7::uuid))
            ORDER BY n.created_at DESC,n.id DESC LIMIT 51`,
           [
-            actor.accountId,
+            ...scope,
             parsed.data.before_at ?? null,
             parsed.data.before_id ?? null,
           ],
@@ -72,6 +101,7 @@ export function createInternalNoticeRepository(
           kind: row.kind,
           clinic_id: row.clinic_id,
           order_id: row.order_id,
+          conversation_id: row.conversation_id,
           clinic_name: row.clinic_name,
           clinic_revision: Number(row.clinic_revision),
           created_at:
@@ -99,17 +129,13 @@ export function createInternalNoticeRepository(
       const parsed = InternalNoticeReadSchema.safeParse(raw);
       if (!parsed.success) return { kind: "invalid" as const };
       return db.transaction(async (tx) => {
-        if (!(await owner(tx, actor))) return { kind: "denied" as const };
+        const scope = await viewer(tx, actor);
+        if (!scope) return { kind: "denied" as const };
         const rows = await tx.query(
-          `SELECT n.read_at FROM public.internal_notifications n
-           JOIN public.outbox_events e ON e.id=n.event_id
-           JOIN public.clinics c ON c.id=e.clinic_id
-           LEFT JOIN public.orders o ON o.id=e.aggregate_id AND o.clinic_id=c.id AND e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','modification_requested','retouch_requested')
-           WHERE n.id=$1 AND n.target_account_id=$2
-             AND ((e.type='clinic_registered' AND e.aggregate_type='clinic' AND e.aggregate_id=c.id)
-               OR (e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','modification_requested','retouch_requested') AND e.aggregate_type='order' AND o.id IS NOT NULL))
+          `SELECT n.read_at FROM public.internal_notifications n ${joins}
+           WHERE n.target_account_id=$1 AND ${visible} AND n.id=$6
            FOR UPDATE OF n`,
-          [parsed.data.id, actor.accountId],
+          [...scope, parsed.data.id],
         );
         if (rows.rows.length !== 1) return { kind: "denied" as const };
         const readAt =

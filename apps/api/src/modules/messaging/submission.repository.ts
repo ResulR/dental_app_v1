@@ -13,6 +13,7 @@ export function createMessageSubmissionRepository(
   db: Pick<ReturnType<typeof createApplicationDatabase>, "transaction">,
   attachmentPolicy?: AttachmentPolicy,
   textKind: false | true | "order" = false,
+  internalNotices = false,
 ) {
   return {
     async send(actor: Actor, raw: unknown) {
@@ -194,6 +195,41 @@ export function createMessageSubmissionRepository(
           "INSERT INTO public.outbox_dispatches(event_id) VALUES($1)",
           [eventId],
         );
+        if (internalNotices) {
+          if (identity.profile === "clinic") {
+            // One row per currently eligible laboratory account; grants and their
+            // prerequisites are serialized by the account_grants table lock above.
+            await tx.query(
+              `INSERT INTO public.internal_notifications(event_id,target_account_id)
+               SELECT $1,a.id FROM public.accounts a
+               WHERE a.id<>$2 AND a.lifecycle='active' AND NOT a.security_locked
+                 AND NOT a.credential_reset_required AND (
+                   (a.profile='owner' AND EXISTS(SELECT 1 FROM public.owner_slot s WHERE s.singleton=1 AND s.account_id=a.id))
+                   OR (a.profile IN ('admin','employee')
+                     AND EXISTS(SELECT 1 FROM public.account_grants g WHERE g.account_id=a.id AND g.permission_code=$3)
+                     AND (NOT $4::boolean OR EXISTS(SELECT 1 FROM public.account_grants parent WHERE parent.account_id=a.id AND parent.permission_code='orders.read_logistics'))))
+               ON CONFLICT(event_id,target_account_id) DO NOTHING`,
+              [
+                eventId,
+                actor.accountId,
+                conversation.kind === "general"
+                  ? "messaging.general.read"
+                  : "messaging.order.read",
+                conversation.kind === "order",
+              ],
+            );
+          } else {
+            await tx.query(
+              `INSERT INTO public.internal_notifications(event_id,target_account_id)
+               SELECT $1,a.id FROM public.clinics c JOIN public.accounts a ON a.id=c.account_id
+               WHERE c.id=$2 AND c.review_state='approved' AND NOT c.suspended
+                 AND a.profile='clinic' AND a.id<>$3 AND a.lifecycle='active'
+                 AND NOT a.security_locked AND NOT a.credential_reset_required
+               ON CONFLICT(event_id,target_account_id) DO NOTHING`,
+              [eventId, conversation.clinic_id, actor.accountId],
+            );
+          }
+        }
         await tx.query(
           "INSERT INTO public.audit_events(actor_id,action,object_type,object_id,request_id,aggregate_revision,changed_fields) VALUES($1,'MESSAGE_CREATED','message',$2,$3,1,ARRAY['version'])",
           [actor.accountId, messageId, requestId],

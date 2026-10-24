@@ -13,5 +13,11 @@ export function internalNoticesEnabled(env: NodeJS.ProcessEnv) {
       env.DENTAL_LAB_ORDER_DECISION_ENABLED !== "true")
   )
     throw new Error("ORDER_NOTICES_DESTINATION_UNAVAILABLE");
+  if (
+    env.DENTAL_LAB_GENERAL_MESSAGING_ENABLED === "true" &&
+    env.DENTAL_LAB_ORDER_MESSAGING_ENABLED === "true" &&
+    env.DENTAL_LAB_ORDER_TRACKING_ENABLED !== "true"
+  )
+    throw new Error("MESSAGE_NOTICES_DESTINATION_UNAVAILABLE");
   return true;
 }

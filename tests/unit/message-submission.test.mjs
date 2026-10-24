@@ -341,3 +341,53 @@ test("text-only order mode rejects general, files and closed orders while preser
   ).toBe("conversation_closed");
   expect(closed.state.writes).toEqual([]);
 });
+
+test("message event inserts per-recipient notices in the same transaction, once per idempotency key", async () => {
+  for (const kind of ["general", "order"]) {
+    const db = fixture({ kind });
+    const service = createMessageSubmissionService(
+      db,
+      undefined,
+      kind === "order" ? "order" : true,
+      true,
+    );
+    const sent = await service.send(actor, command);
+    expect(sent.result.kind).toBe("sent");
+    const notices = db.state.writes.filter(([sql]) =>
+      sql.startsWith("INSERT INTO public.internal_notifications"),
+    );
+    expect(notices).toHaveLength(1);
+    expect(notices[0][0]).toContain(
+      "ON CONFLICT(event_id,target_account_id) DO NOTHING",
+    );
+    expect(notices[0][0]).toContain("a.id<>$2");
+    expect(notices[0][0]).toContain("account_grants");
+    expect(
+      db.state.writes.some(([sql]) => sql.includes("notification_deliveries")),
+    ).toBe(false);
+    expect(notices[0][1][2]).toBe(
+      kind === "general" ? "messaging.general.read" : "messaging.order.read",
+    );
+    const before = db.state.writes.length;
+    expect((await service.send(actor, command)).result.replayed).toBe(true);
+    expect(db.state.writes).toHaveLength(before);
+  }
+  const lab = fixture({ profile: "owner", kind: "general" });
+  await createMessageSubmissionService(lab, undefined, true, true).send(
+    actor,
+    command,
+  );
+  const insert = lab.state.writes.find(([sql]) =>
+    sql.startsWith("INSERT INTO public.internal_notifications"),
+  );
+  expect(insert[0]).toContain("c.review_state='approved'");
+  expect(insert[0]).toContain("a.id<>$3");
+  const failed = fixture({ kind: "general", failAt: "internal_notifications" });
+  await expect(
+    createMessageSubmissionService(failed, undefined, true, true).send(
+      actor,
+      command,
+    ),
+  ).rejects.toThrow("SYNTHETIC_FAILURE");
+  expect(failed.state.writes).toEqual([]);
+});

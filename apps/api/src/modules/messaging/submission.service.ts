@@ -3,6 +3,12 @@ export function createMessageSubmissionService(
   db: Parameters<typeof createMessageSubmissionRepository>[0],
   attachmentPolicy?: Parameters<typeof createMessageSubmissionRepository>[1],
   textKind: false | true | "order" = false,
+  internalNotices = false,
 ) {
-  return createMessageSubmissionRepository(db, attachmentPolicy, textKind);
+  return createMessageSubmissionRepository(
+    db,
+    attachmentPolicy,
+    textKind,
+    internalNotices,
+  );
 }

@@ -4,6 +4,7 @@ import {
   InternalNoticeReadResultSchema,
 } from "@dental-lab/contracts";
 import { ClinicReviewPanel } from "../clinics/index.js";
+import { GeneralMessagingPanel } from "../messaging/index.js";
 import {
   OrderReviewPanel,
   OrderRequestActions,
@@ -28,27 +29,31 @@ async function post(path: string, body: unknown, signal?: AbortSignal) {
 }
 export function InternalNoticePanel({
   permissions,
+  clinic,
 }: {
+  clinic: boolean;
   permissions: ReturnType<
     typeof EffectivePermissionsSchema.parse
   >["permissions"];
 }) {
   const [page, setPage] = useState<Page | null>(null);
   const [selected, setSelected] = useState<Item | null>(null);
+  const [conversationOpen, setConversationOpen] = useState(false);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const refresh = useCallback(async (signal?: AbortSignal) => {
     const result = InternalNoticePageSchema.parse(
       await post("/api/v1/notifications/internal/list", {}, signal),
     );
-    if (signal?.aborted) return;
+    if (signal?.aborted) return null;
     setPage(result);
     setNotice("");
     setSelected((previous) =>
       previous
-        ? (result.items.find((item) => item.id === previous.id) ?? previous)
+        ? (result.items.find((item) => item.id === previous.id) ?? null)
         : null,
     );
+    return result;
   }, []);
   useEffect(() => {
     const controller = new AbortController();
@@ -81,13 +86,25 @@ export function InternalNoticePanel({
     if (!page?.next_before_at || !page.next_before_id || busy) return;
     setBusy(true);
     try {
-      const result = InternalNoticePageSchema.parse(
-        await post("/api/v1/notifications/internal/list", {
-          before_at: page.next_before_at,
-          before_id: page.next_before_id,
-        }),
-      );
-      setPage({ ...result, items: [...page.items, ...result.items] });
+      const current = await refresh();
+      if (!current) return;
+      let cursor = current;
+      const items = [...current.items];
+      const target = page.items.length + 50;
+      while (
+        items.length < target &&
+        cursor.next_before_at &&
+        cursor.next_before_id
+      ) {
+        cursor = InternalNoticePageSchema.parse(
+          await post("/api/v1/notifications/internal/list", {
+            before_at: cursor.next_before_at,
+            before_id: cursor.next_before_id,
+          }),
+        );
+        items.push(...cursor.items);
+      }
+      setPage({ ...cursor, unread_count: current.unread_count, items });
     } catch {
       setPage(null);
       setSelected(null);
@@ -104,8 +121,13 @@ export function InternalNoticePanel({
         await post("/api/v1/notifications/internal/read", { id: item.id }),
       );
       // Refresh rechecks the current owner session and destination.
-      await refresh();
-      setSelected(item);
+      const current = await refresh();
+      const verified = current?.items.find(
+        (candidate) => candidate.id === item.id,
+      );
+      if (!verified) throw new Error("NOTICES_UNAVAILABLE");
+      setSelected(verified);
+      setConversationOpen(false);
     } catch {
       setPage(null);
       setSelected(null);
@@ -145,6 +167,7 @@ export function InternalNoticePanel({
                 cancellation_requested: "Kërkesë anulimi",
                 modification_requested: "Kërkesë ndryshimi",
                 retouch_requested: "Retushim i kërkuar",
+                message_created: "Mesazh i ri",
               }[item.kind]
             }{" "}
             · {item.clinic_name} ·{" "}
@@ -157,7 +180,9 @@ export function InternalNoticePanel({
             >
               {item.kind === "clinic_registered"
                 ? "Shqyrto klinikën"
-                : "Shqyrto porosinë"}
+                : item.kind === "message_created"
+                  ? "Shiko njoftimin"
+                  : "Shqyrto porosinë"}
             </Button>
           </li>
         ))}
@@ -172,7 +197,40 @@ export function InternalNoticePanel({
           <Button type="button" onClick={() => setSelected(null)}>
             Mbyll
           </Button>
-          {selected.kind === "clinic_registered" ? (
+          {selected.kind === "message_created" ? (
+            selected.conversation_id ? (
+              <div>
+                <p>
+                  Leximi i këtij njoftimi nuk i shënon mesazhet e bisedës si të
+                  lexuara.
+                </p>
+                <Button type="button" onClick={() => setConversationOpen(true)}>
+                  Hap bisedën
+                </Button>
+                {conversationOpen && (
+                  <GeneralMessagingPanel
+                    key={selected.conversation_id}
+                    clinic={clinic}
+                    canReply={
+                      clinic ||
+                      permissions.includes(
+                        selected.order_id
+                          ? "messaging.order.reply"
+                          : "messaging.general.reply",
+                      )
+                    }
+                    {...(selected.order_id
+                      ? { orderId: selected.order_id }
+                      : clinic
+                        ? {}
+                        : { generalClinicId: selected.clinic_id })}
+                  />
+                )}
+              </div>
+            ) : (
+              <p role="alert">Biseda nuk u verifikua.</p>
+            )
+          ) : selected.kind === "clinic_registered" ? (
             <ClinicReviewPanel
               key={selected.id}
               initialClinic={{
