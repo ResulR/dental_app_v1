@@ -37,6 +37,13 @@ class ProposedValidatorTests(unittest.TestCase):
                 proposal.validate("0024_plain.sql", hashlib.sha256(sql).hexdigest(),
                                   sql, legacy.validate)
 
+    def test_lookalike_names_do_not_inherit_the_exception(self):
+        for name in proposal.EXCEPTIONS:
+            data = (ROOT / "migrations" / name).read_bytes()
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                proposal.validate(name.replace(".sql", "_copy.sql"),
+                                  hashlib.sha256(data).hexdigest(), data, legacy.validate)
+
     def test_exception_rejects_changed_bytes_even_when_expected_hash_is_changed(self):
         for name in proposal.EXCEPTIONS:
             original = (ROOT / "migrations" / name).read_bytes()
@@ -80,6 +87,37 @@ class ProposedValidatorTests(unittest.TestCase):
                         proposal.validate_exception(name, digest, changed)
                 finally:
                     proposal.EXCEPTIONS[name] = saved
+
+    def test_all_historical_migrations_match_the_installed_gate(self):
+        for path in sorted((ROOT / "migrations").glob("*.sql")):
+            data = path.read_bytes()
+            digest = hashlib.sha256(data).hexdigest()
+            with self.subTest(name=path.name):
+                self.assertEqual(proposal.validate(path.name, digest, data, legacy.validate),
+                                 None if path.name not in proposal.EXCEPTIONS else True)
+        self.assertEqual(hashlib.sha256((ROOT / "docs/admin-proposals/dental-lab-migrate.py")
+                                        .read_bytes()).hexdigest(), catalog.GATE_SHA)
+
+    def test_adversarial_repin_cannot_extend_exception_statements(self):
+        original22 = (ROOT / "migrations/0022_delivery_batch_receipts.sql").read_bytes()
+        original23 = (ROOT / "migrations/0023_conversation_read_markers_backfill.sql").read_bytes()
+        changes = (
+            ("0022_delivery_batch_receipts.sql", original22, b"\nGRANT ALL ON public.accounts TO PUBLIC;", "UNREVIEWED_STATEMENT_SHAPE"),
+            ("0022_delivery_batch_receipts.sql", original22, b"\nSELECT set_config('search_path','evil',false);", "FORBIDDEN_TOP_LEVEL_TOKEN"),
+            ("0022_delivery_batch_receipts.sql", original22, b"\nCOPY public.accounts TO STDOUT;", "FORBIDDEN_TOP_LEVEL_TOKEN"),
+            ("0023_conversation_read_markers_backfill.sql", original23, b"\nINSERT INTO public.accounts DEFAULT VALUES;", "UNREVIEWED_BACKFILL_SHAPE"),
+            ("0023_conversation_read_markers_backfill.sql", original23, b"\nCOMMIT;", "FORBIDDEN_TOP_LEVEL_TOKEN"),
+        )
+        for name, original, suffix, reason in changes:
+            changed = original + suffix
+            digest = hashlib.sha256(changed).hexdigest()
+            previous = proposal.EXCEPTIONS[name]
+            try:
+                proposal.EXCEPTIONS[name] = digest
+                with self.subTest(suffix=suffix), self.assertRaisesRegex(ValueError, reason):
+                    proposal.validate_exception(name, digest, changed)
+            finally:
+                proposal.EXCEPTIONS[name] = previous
 
     def test_lexer_keeps_quoted_bodies_opaque_and_rejects_truncation(self):
         self.assertEqual(proposal.statements(
