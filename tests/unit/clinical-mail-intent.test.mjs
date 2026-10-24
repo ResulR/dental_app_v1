@@ -1,5 +1,8 @@
 import { expect, test, vi } from "vitest";
-import { createClinicalMailIntentRepository } from "../../apps/api/dist/modules/notifications/clinical-mail-intent.repository.js";
+import {
+  appendClinicalMailIntent,
+  createClinicalMailIntentRepository,
+} from "../../apps/api/dist/modules/notifications/clinical-mail-intent.repository.js";
 const id = "91000000-0000-4000-8000-000000000001";
 function fixture({
   type = "order_accepted",
@@ -35,6 +38,7 @@ function fixture({
   };
   return {
     repository: createClinicalMailIntentRepository({ transaction }),
+    transaction,
     calls,
     writes,
   };
@@ -51,6 +55,7 @@ test("only listed clinic decisions prepare one durable, private, deduplicated in
     "ON CONFLICT(event_id,target_account_id,channel,purpose) DO NOTHING",
   );
   expect(insert).toContain("o.id=e.aggregate_id AND o.clinic_id=e.clinic_id");
+  expect(insert).toContain("o.revision=e.aggregate_revision");
   expect(insert).toContain("c.review_state='approved' AND NOT c.suspended");
   expect(insert).not.toMatch(/email_original|patient_reference|body/);
   for (const type of [
@@ -69,6 +74,18 @@ test("only listed clinic decisions prepare one durable, private, deduplicated in
     { orderMatched: false },
   ])
     expect(await fixture(patch).repository.prepare(id)).toBe("skipped");
+});
+test("producer transaction rolls back its intent; later preparation can retry", async () => {
+  const f = fixture();
+  await expect(
+    f.transaction(async (tx) => {
+      expect(await appendClinicalMailIntent(tx, id)).toBe("prepared");
+      throw Error("PRODUCER_ABORT");
+    }),
+  ).rejects.toThrow("PRODUCER_ABORT");
+  expect(f.writes).toEqual([]);
+  expect(await f.repository.prepare(id)).toBe("prepared");
+  expect(f.writes).toEqual([[id]]);
 });
 test("intent error aborts the transaction; transport is absent", async () => {
   const f = fixture({ fail: true });
