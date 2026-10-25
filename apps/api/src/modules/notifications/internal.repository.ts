@@ -22,9 +22,9 @@ async function viewer(tx: DatabaseExecutor, actor: Actor) {
   await tx.query("SELECT id FROM public.accounts WHERE id=$1 FOR SHARE", [
     actor.accountId,
   ]);
-  await tx.query(
-    "SELECT singleton FROM public.owner_slot WHERE singleton=1 FOR SHARE",
-  );
+  // owner_slot is SELECT-only for the app role and has no runtime writer.
+  // The actor account lock serializes suspension; the grant table lock
+  // serializes permission revocation. current() reads owner_slot afterward.
   await tx.query("LOCK TABLE public.account_grants IN SHARE MODE");
   await tx.query(
     "SELECT id FROM public.sessions WHERE id=$1 AND account_id=$2 FOR SHARE",

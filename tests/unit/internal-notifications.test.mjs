@@ -269,3 +269,23 @@ test("message notices remain per recipient, scoped by current permission and con
     general.calls.find(([sql]) => sql.startsWith("SELECT n.read_at"))[1],
   ).toEqual([id, false, true, true, false, id]);
 });
+
+test("viewer locks mutable authorization state without locking the SELECT-only owner slot", async () => {
+  const f = fixture();
+  expect((await f.service.list(actor, {})).kind).toBe("result");
+  const statements = f.calls.map(([sql]) => sql);
+  expect(statements).not.toContain(
+    "SELECT singleton FROM public.owner_slot WHERE singleton=1 FOR SHARE",
+  );
+  expect(statements).toContain(
+    "LOCK TABLE public.account_grants IN SHARE MODE",
+  );
+  expect(statements).toContain(
+    "SELECT id FROM public.sessions WHERE id=$1 AND account_id=$2 FOR SHARE",
+  );
+  expect(
+    statements.indexOf("LOCK TABLE public.account_grants IN SHARE MODE"),
+  ).toBeLessThan(
+    statements.findIndex((sql) => sql.startsWith("SELECT a.profile")),
+  );
+});
