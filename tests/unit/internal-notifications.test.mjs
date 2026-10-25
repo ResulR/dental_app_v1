@@ -289,3 +289,47 @@ test("viewer locks mutable authorization state without locking the SELECT-only o
     statements.findIndex((sql) => sql.startsWith("SELECT a.profile")),
   );
 });
+
+// Structural SQL guard for the assembled list/count/read statements. This
+// catches unmatched parentheses before a PostgreSQL receipt; it is not a SQL parser.
+function balancedSql(sql) {
+  let depth = 0;
+  let quoted = false;
+  for (let i = 0; i < sql.length; i++) {
+    if (sql[i] === "'") {
+      if (quoted && sql[i + 1] === "'") i++;
+      else quoted = !quoted;
+    } else if (!quoted && sql[i] === "(") depth++;
+    else if (!quoted && sql[i] === ")" && --depth < 0)
+      throw Error("UNBALANCED_SQL");
+  }
+  if (quoted || depth !== 0) throw Error("UNBALANCED_SQL");
+}
+test("assembled notice SQL is balanced and visibility gates stay scoped", async () => {
+  const f = fixture({
+    profile: "employee",
+    grants: ["messaging.general.read"],
+  });
+  await f.service.list(actor, {});
+  await f.service.markRead(actor, { id });
+  const statements = f.calls
+    .map(([sql]) => sql)
+    .filter((sql) => sql.includes("FROM public.internal_notifications n"));
+  expect(statements).toHaveLength(3);
+  for (const sql of statements) {
+    expect(() => balancedSql(sql)).not.toThrow();
+    expect(() =>
+      balancedSql(sql.replace("NOT c.suspended)))", "NOT c.suspended))))")),
+    ).toThrow("UNBALANCED_SQL");
+    expect(sql).toContain("n.target_account_id=$1");
+    expect(sql).toContain("m.sender_id<>$1");
+    expect(sql).toContain("m.clinic_id=c.id");
+    expect(sql).toContain("v.clinic_id=c.id");
+    expect(sql).toContain("mo.clinic_id=c.id");
+    expect(sql).toContain("v.kind='general' AND $4::boolean");
+    expect(sql).toContain("v.kind='order' AND $5::boolean");
+    expect(sql).toContain("m.sender_side='clinic'");
+    expect(sql).toContain("m.sender_side='laboratory' AND c.account_id=$1");
+    expect(sql).toContain("c.review_state='approved' AND NOT c.suspended");
+  }
+});

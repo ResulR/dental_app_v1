@@ -66,7 +66,7 @@ const visible = `(
     AND (($3::boolean AND m.sender_side='clinic' AND
       ((v.kind='general' AND $4::boolean) OR (v.kind='order' AND $5::boolean)))
       OR (NOT $3::boolean AND m.sender_side='laboratory' AND c.account_id=$1
-        AND c.review_state='approved' AND NOT c.suspended))))
+        AND c.review_state='approved' AND NOT c.suspended)))
 )`;
 export function createInternalNoticeRepository(
   db: Pick<ReturnType<typeof createApplicationDatabase>, "transaction">,
