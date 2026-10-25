@@ -9,10 +9,8 @@ Contrôle initial `sha256sum -c`, deux tests statiques, `bash -n` et
 `apps/api/dist/modules/notifications/dormant-delivery.worker.js`.
 Empreinte attendue `e64a81bf8ac753c1ebbbf9df2736e432c980257819483863fcff46a75b064c3d`,
 actuelle `99b2dd78553c036fcf75476e7bf25da194979a0ffc647673c2ad39ce8998f74a`.
-La source versionnée de ce module est identique à f0badf7 ; la cause de
-l'écart du fichier généré n'est pas établie. Aucun fichier du bundle n'a été
-modifié. **v14 est bloquée : ne pas exécuter avec ce manifeste.** Préparer une
-version distincte après revue du build et des dépendances, sans réécrire v14.
+La source versionnée de ce module est identique à f0badf7. Cause démontrée : le build v14 avait conservé l'ancien commentaire compilé « closes the interval between », alors que le commit 10f0a08 a corrigé la source en « narrows the interval after » après le build. Substituer uniquement cette phrase dans une copie en mémoire du JS actuel redonne exactement l'empreinte attendue e64a81b…064c3d. Le code exécuté est identique ; les octets vérifiés ne le sont pas. Aucun fichier du bundle n'a été
+modifié. **v14 est bloquée : ne pas exécuter avec ce manifeste.** La version v15 distincte est préparée avec le build actuel, sans réécrire v14.
 
 La fixture v14 charge un cluster neuf dans le répertoire v14, port 55444 sur
 socket Unix privée, sans écoute TCP. Le runner exige UID/cgroup/limites

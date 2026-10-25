@@ -46,3 +46,16 @@ test("only verified acceptance of the exact attempt can resolve ambiguity", () =
     }),
   ).toThrow();
 });
+
+test("key rotation must preserve the original attempt key", () => {
+  const original = providerAttemptKey(secret, id, 1);
+  const rotated = providerAttemptKey(new Uint8Array(32).fill(9), id, 1);
+  expect(rotated).not.toBe(original);
+  expect(() =>
+    reconcileAmbiguous(original, {
+      kind: "verified_acceptance",
+      idempotencyKey: rotated,
+      providerId: "fake:2",
+    }),
+  ).toThrow("PROVIDER_EVIDENCE_INVALID");
+});
