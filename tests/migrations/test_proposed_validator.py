@@ -17,9 +17,19 @@ def load(path, name):
 proposal = load("scripts/proposed-migration-validator.py", "proposal")
 catalog = load("scripts/migration-catalog.py", "catalog")
 legacy = catalog.load_gate()
+candidate = load("scripts/check-proposed-migrations.py", "candidate_inventory")
 
 
 class ProposedValidatorTests(unittest.TestCase):
+    def test_candidate_inventory_uses_exact_gate_and_exception_bytes(self):
+        rows = candidate.candidate_inventory()
+        versions = {row['version']: row for row in rows}
+        self.assertEqual(set(proposal.EXCEPTIONS) & versions.keys(), set(proposal.EXCEPTIONS))
+        for name, pinned in proposal.EXCEPTIONS.items():
+            self.assertEqual(versions[name]['sha256'], pinned)
+            self.assertEqual(versions[name]['purpose'], 'requires_admin_review')
+        self.assertEqual(hashlib.sha256((ROOT / 'docs/admin-proposals/dental-lab-migrate.py').read_bytes()).hexdigest(), catalog.GATE_SHA)
+
     def test_exact_reviewed_migrations_only(self):
         for name in proposal.EXCEPTIONS:
             data = (ROOT / "migrations" / name).read_bytes()
