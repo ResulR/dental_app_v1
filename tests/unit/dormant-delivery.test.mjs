@@ -141,6 +141,7 @@ test("synthetic worker handles success, errors, timeout and revalidation failure
       recoverExpired: async () => false,
       claim: async () => lease,
       preflight: async () => "eligible",
+      authorize: async () => "eligible",
       settle: settled,
     };
     expect(await runOneSyntheticDelivery(queue, provider)).toBe(expected);
@@ -159,6 +160,7 @@ test("synthetic worker handles success, errors, timeout and revalidation failure
     recoverExpired: async () => false,
     claim: async () => lease,
     preflight: async () => "eligible",
+    authorize: async () => "eligible",
     settle: settled,
   };
   expect(await runOneSyntheticDelivery(queue, provider)).toBe("ambiguous");
@@ -179,6 +181,7 @@ test("failed preflight or attempt persistence does not report a delivered messag
     preflight: async () => {
       throw new Error("SQL_ROLLBACK");
     },
+    authorize: async () => "eligible",
     settle: vi.fn(),
   };
   await expect(runOneSyntheticDelivery(queue, provider)).rejects.toThrow(
@@ -217,6 +220,7 @@ test("two synthetic workers compete for one claim without duplicate provider cal
     recoverExpired: async () => false,
     claim,
     preflight: async () => "eligible",
+    authorize: async () => "eligible",
     settle: async () => true,
   };
   expect(
@@ -236,6 +240,7 @@ test("an actual synthetic deadline settles as ambiguous; invalid deadlines fail 
     recoverExpired: async () => false,
     claim: async () => lease,
     preflight: async () => "eligible",
+    authorize: async () => "eligible",
     settle,
   };
   expect(await runOneSyntheticDelivery(queue, provider, 5)).toBe("ambiguous");
@@ -244,4 +249,45 @@ test("an actual synthetic deadline settles as ambiguous; invalid deadlines fail 
     "SYNTHETIC_TIMEOUT_INVALID",
   );
   expect(provider).toHaveBeenCalledTimes(1);
+});
+
+test("revocation between preliminary preflight and final authorization blocks handoff", async () => {
+  const provider = vi.fn(async () => ({
+    outcome: "provider_accepted",
+    providerId: "fake",
+  }));
+  let permitted = true;
+  const queue = {
+    recoverExpired: async () => false,
+    claim: async () => lease,
+    preflight: async () => {
+      permitted = false;
+      return "eligible";
+    },
+    authorize: vi.fn(async () => (permitted ? "eligible" : "cancelled")),
+    settle: vi.fn(),
+  };
+  expect(await runOneSyntheticDelivery(queue, provider)).toBe("cancelled");
+  expect(queue.authorize).toHaveBeenCalledWith(lease);
+  expect(provider).not.toHaveBeenCalled();
+  expect(queue.settle).not.toHaveBeenCalled();
+});
+
+test("revocation after final authorization exposes the unavoidable external gap", async () => {
+  let permitted = true;
+  const provider = vi.fn(async () => {
+    permitted = false;
+    throw new Error("transport acceptance unknown");
+  });
+  const settle = vi.fn(async () => true);
+  const queue = {
+    recoverExpired: async () => false,
+    claim: async () => lease,
+    preflight: async () => "eligible",
+    authorize: async () => (permitted ? "eligible" : "cancelled"),
+    settle,
+  };
+  expect(await runOneSyntheticDelivery(queue, provider)).toBe("ambiguous");
+  expect(permitted).toBe(false);
+  expect(settle).toHaveBeenCalledWith(lease, "ambiguous", undefined);
 });

@@ -204,7 +204,13 @@ export function createDormantDeliveryRepository(database: Database) {
     });
   }
 
-  return { recoverExpired, claim, preflight, settle };
+  // Fresh transaction immediately before the synthetic handoff. This cannot
+  // make a later external network request atomic with revocation commits.
+  async function authorize(lease: DeliveryLease): Promise<DeliveryDecision> {
+    return preflight(lease);
+  }
+
+  return { recoverExpired, claim, preflight, authorize, settle };
 }
 
 async function finish(

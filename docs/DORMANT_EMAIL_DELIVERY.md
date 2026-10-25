@@ -65,3 +65,31 @@ avec fixture synthétique, doit vérifier :
 Cette recette n'est ni figée ni exécutée. Aucun cluster PostgreSQL nouveau
 n'est autorisé par ce document. La réception v12 (107 assertions) ne couvre
 pas cette implémentation.
+
+## Autorisation finale et course de révocation
+
+Le harnais dormant effectue maintenant une deuxième transaction `authorize`, qui
+réexécute le contrôle SQL complet du bail, de la commande, du compte, de la
+clinique, des grants et de la catégorie après le prévol initial et juste avant
+l'appel fictif. Une révocation validée entre ces deux transactions bloque
+l'appel. La vérification ne lit toujours aucune adresse et une expiration de
+bail refuse l'envoi. Les tentatives ambiguës et expirées ne sont pas relancées.
+
+Cette autorisation est un instantané au commit. Une suspension, suppression de
+grant/configuration ou révision qui commit **après** cette transaction peut
+précéder l'arrivée d'un appel externe. PostgreSQL et un fournisseur indépendant
+ne partagent pas de transaction atomique ; maintenir un verrou SQL pendant
+l'appel réseau violerait la limite transactionnelle actuelle, accroîtrait les
+blocages sur le VPS partagé et ne résoudrait pas une réponse ambiguë après
+crash. Aucun transport réel ne doit être branché sur ce harnais. Une activation
+future exige une décision sur la borne de révocation, la coordination de tous
+les writers concernés, le délai fournisseur, une éventuelle clé d'idempotence
+reconnue et la réconciliation manuelle des ambiguïtés. Le propriétaire doit
+pouvoir constater qu'une révocation postérieure à l'autorisation n'annule pas
+une requête déjà remise au fournisseur.
+
+La recette v13 réussie (39 assertions) est historique et ne teste pas ce
+nouvel appel `authorize` du harnais. Son manifeste figé n'est pas recalculé.
+Les tests ajoutés utilisent des doubles ; une nouvelle recette PostgreSQL
+isolée distincte serait nécessaire pour valider ce protocole modifié sous
+concurrence, sans relancer v13.

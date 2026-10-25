@@ -12,6 +12,7 @@ type Queue = {
   recoverExpired(): Promise<boolean>;
   claim(): Promise<DeliveryLease | null>;
   preflight(lease: DeliveryLease): Promise<"eligible" | "cancelled" | "lost">;
+  authorize(lease: DeliveryLease): Promise<"eligible" | "cancelled" | "lost">;
   settle(
     lease: DeliveryLease,
     outcome: DeliveryOutcome | "provider_accepted",
@@ -32,6 +33,10 @@ export async function runOneSyntheticDelivery(
   if (!lease) return "idle" as const;
   const decision = await queue.preflight(lease);
   if (decision !== "eligible") return decision;
+  // A fresh transaction narrows the interval after initial preparation and
+  // the handoff. Revocation after this commit remains a documented gap.
+  const authorization = await queue.authorize(lease);
+  if (authorization !== "eligible") return authorization;
   let result: Awaited<ReturnType<SyntheticProvider>>;
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
