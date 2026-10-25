@@ -2421,6 +2421,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 ### 14.3 — Implémenter outbox et file de relance e-mail
 
+- **Préflight v14 et contrat fictif :** manifeste figé 248 empreintes initialement vérifié, puis une empreinte générée divergente après build API ; v14 bloquée et jamais exécutée. Deux tests statiques et syntaxes initialement vérifiés. Clé d’idempotence HMAC par tentative et politique pure de réconciliation ajoutées, sans fournisseur ni persistance. Une absence chez le fournisseur ne déclenche jamais de réessai automatique. Voir `docs/admin-proposals/DORMANT_DELIVERY_V14_PREFLIGHT.md`.
 - **Réception v13 (2026-10-25) :** recette PostgreSQL isolée exécutée une seule fois, réussie (39 assertions, exit 0, `V13_SQL_OK_STOPPED`). Cluster arrêté, socket absente, journal d'erreurs vide, captures services/production/sockets identiques ; preuves conservées dans `.local/notifications-v13`. Détails : `docs/POSTGRES_DORMANT_DELIVERY_V13_RECEPTION_2026-10-25.md`. Ne pas relancer.
 - **Suite v14 préparée, non exécutée :** nouveau bundle isolé de courses de révocation après prévol et de la seconde validation `authorize` (contrôles statiques seulement). Voir `docs/admin-proposals/DORMANT_DELIVERY_V14_RECEPTION.md`. Contrat fournisseur et bornes de révocation à décider : `docs/EMAIL_PROVIDER_CONTRACT_PROPOSAL.md`. Aucune garantie de révocation instantanée ou de livraison exactement une fois ; aucune activation.
 

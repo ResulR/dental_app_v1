@@ -93,3 +93,20 @@ nouvel appel `authorize` du harnais. Son manifeste figé n'est pas recalculé.
 Les tests ajoutés utilisent des doubles ; une nouvelle recette PostgreSQL
 isolée distincte serait nécessaire pour valider ce protocole modifié sous
 concurrence, sans relancer v13.
+
+## Contrat fournisseur envisagé, sans transport
+
+Le noyau pur `provider-reconciliation.ts` dérive une clé HMAC distincte pour
+chaque livraison et numéro de tentative à partir d'un secret injecté. Aucun
+identifiant interne, adresse ou donnée clinique ne figure en clair dans la clé.
+Le fournisseur futur devrait garantir l'idempotence par cette clé et permettre
+une recherche authentifiée du résultat. Une preuve d'acceptation liée à la
+bonne clé peut être distinguée ; absence de résultat, rejet et indisponibilité
+restent soumis à examen manuel. La sortie pure ne modifie aucune ligne SQL,
+ne réactive aucune intention échouée et ne lance jamais de retry.
+
+Avant tout fournisseur réel : gestion protégée du secret et de sa rotation,
+authenticité et consistance de la consultation, politique de rétention des
+preuves, modèle de destinataire/template, seuil de révocation et procédure
+d'arbitrage manuel. Une recherche `not_found` n'est pas une preuve définitive
+de non-acceptation chez un fournisseur éventuellement consistant.

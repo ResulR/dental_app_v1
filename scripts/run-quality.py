@@ -159,6 +159,7 @@ def plan(name):
     commands["test:catalog"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/catalog-runtime.test.mjs", "tests/integration/catalog-http.test.mjs", "tests/integration/auth-runtime-composition.test.mjs"), "targeted catalogue read integration")]
     commands["test:private-invitation-mail"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/private-invitation-mail.test.mjs"), "targeted private invitation persistence")]
     commands["test:private-mail"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/private-mail-codec.test.mjs", "tests/unit/account-email.test.mjs"), "private account mail codec and templates")]
+    commands["test:provider-reconciliation"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/provider-reconciliation.test.mjs"), "pure fake-provider evidence policy")]
     commands["test:dormant-delivery"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/dormant-delivery.test.mjs", "tests/unit/delivery-retry.test.mjs"), "dormant synthetic delivery and retry")]
     commands["test:delivery-retry"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/delivery-retry.test.mjs"), "dormant delivery retry policy")]
     commands["test:business-mail-policy"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/business-event-policy.test.mjs", "tests/unit/clinical-mail-intent.test.mjs", "tests/unit/laboratory-mail-intent.test.mjs", "tests/unit/mail-intent-locks.test.mjs"), "closed business mail intent matrix") ]
