@@ -117,3 +117,14 @@ une autre clé et peut permettre un doublon externe. Le type
 `verified_acceptance` n'authentifie pas une réponse à lui seul : seule une
 intégration fournisseur approuvée pourra établir cette preuve. Le noyau pur
 ne doit jamais être exposé comme API permettant de fabriquer de tels avis.
+
+
+## Clés de tentative versionnées
+
+Le helper pur versionné refuse une version invalide, associe le secret
+historique à la clé enregistrée et compare en temps constant la clé dérivée.
+Les tests fictifs couvrent rotation, secret historique absent, mauvaise
+tentative/livraison et version substituée. Aucun schéma SQL ni fournisseur
+ne consomme encore ce helper. Il ne prouve pas la provenance d'une preuve
+d'acceptation ; l'adaptateur authentifié, la persistance privée et les
+décisions métier de révocation/réconciliation restent nécessaires.

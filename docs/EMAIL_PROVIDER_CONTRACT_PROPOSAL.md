@@ -31,8 +31,9 @@
 
 - Réserver et contrôler en transactions courtes avec bail et numéro de
   tentative, puis refaire le contrôle immédiatement avant la remise.
-- Produire une clé stable indépendante des tentatives pour la livraison
-  logique ; elle ne doit pas contenir d'identifiant patient.
+- Produire une clé HMAC versionnée stable pour chaque tentative ; la même
+  tentative garde sa clé pendant toute réconciliation, y compris après rotation.
+  Une tentative nouvelle a une clé distincte. Elle ne contient aucune donnée patient.
 - Enregistrer l'état de remise/ambiguïté, et réconcilier toute issue
   incertaine **avant** un éventuel nouvel appel.
 - En cas de révocation après acceptation fournisseur, journaliser l'incident
@@ -55,3 +56,26 @@
   conformité des données.
 
 **Aucun fournisseur ni worker réel n'est ajouté par cette proposition.**
+
+## Rotation et provenance des preuves — préparation hors production
+
+Le noyau pur expose `versionedProviderAttemptKey` et
+`verifyRecordedAttemptKey` : une version bornée accompagne la clé
+d'idempotence originale. Le vérificateur utilise exclusivement le secret de
+cette version ; son absence ou une discordance échoue sans dériver une nouvelle
+clé avec le secret courant. La version, la clé et le numéro de tentative doivent
+être conservés ensemble dans un stockage transactionnel privé avant tout appel.
+La migration, le chiffrement, la politique de rétention et l'adaptateur réel
+restent à concevoir/valider. Ce helper ne persiste rien et ne signe pas une
+réponse du fournisseur.
+
+Un simple objet `verified_acceptance` dans le noyau est forgeable par un
+appelant : aucune authentification n'en découle. Une future intégration devra
+vérifier l'origine par un canal authentifié lié au fournisseur choisi, la
+correspondance exacte du compte, de la clé et de la tentative, l'identifiant
+fournisseur et le statut confirmé, puis conserver la preuve brute sensible
+hors journaux généraux avec accès et durée approuvés. Une assertion obtenue
+par un fournisseur fictif est seulement un test du protocole local. Si la
+provenance, la version du secret ou la consistance du résultat ne peuvent
+être vérifiées, garder la livraison en revue manuelle, sans renvoi. Une
+acceptation tardive après révocation demeure possible.

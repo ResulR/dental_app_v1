@@ -4,7 +4,7 @@
 
 Bundle autonome, distinct de v1–v15, basé sur une copie distincte de la fixture synthétique v15.
 Manifeste : 248 empreintes SHA-256 ; SHA-256 du manifeste :
-`809a1d1bd793ad64af9d884f939c5d79fdf168e60c3cb041c9bff4441acb9b2d`.
+`83cba08558fc5d9c20b25f8c21374539bbf511eee72cfc4248786968fd08c9ee`.
 
 ## Portée proposée
 
@@ -20,7 +20,7 @@ Manifeste : 248 empreintes SHA-256 ; SHA-256 du manifeste :
   finale empêche effectivement tout appel au fournisseur fictif.
 - Conserver le fournisseur exclusivement fictif, sans adresse ni contenu.
 
-Le test de verrou attend et observe explicitement wait_event_type=Lock dans pg_stat_activity pour le backend concurrent avant le commit. Un délai maximal de 2,5 s échoue si cette preuve est absente. Aucune assertion v16 n'est encore réceptionnée.
+Le test observe wait_event_type=Lock pour le backend concurrent avant le commit, mais ne lie pas ce verrou au PID de la transaction administrateur. Il ne suffit donc pas à prouver la course précise revendiquée ; v16 est bloquée pour cette réception. Le délai maximal de 2,5 s évite une attente infinie. Aucune assertion v16 n'est encore réceptionnée.
 
 ## Isolement et garde-fous
 
