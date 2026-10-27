@@ -19,11 +19,15 @@ test("domain-separated stable keys bind each delivery attempt without exposing i
 test("only verified acceptance of the exact attempt can resolve ambiguity", () => {
   const key = providerAttemptKey(secret, id, 1);
   expect(
-    reconcileAmbiguous(key, {
-      kind: "verified_acceptance",
-      idempotencyKey: key,
-      providerId: "fake:1",
-    }),
+    reconcileAmbiguous(
+      key,
+      {
+        kind: "verified_acceptance",
+        idempotencyKey: key,
+        providerId: "fake:1",
+      },
+      () => true,
+    ), // synthetic trusted-adapter double, not provider authentication
   ).toEqual({ decision: "accepted", providerId: "fake:1" });
   for (const evidence of [
     { kind: "not_found", idempotencyKey: key },
@@ -115,4 +119,81 @@ test("rotation retains the original version and refuses missing or mismatched ke
       2,
     ),
   ).toThrow();
+});
+
+// These are boundary tests of the local protocol, not provider authentication.
+test("each versioned attempt has a distinct, stable key and historical secret is mandatory", () => {
+  const secondId = "75000000-0000-4000-8000-000000000002";
+  const first = versionedProviderAttemptKey("old", secret, id, 1);
+  expect(versionedProviderAttemptKey("old", secret, id, 1)).toEqual(first);
+  expect(
+    versionedProviderAttemptKey("old", secret, id, 2).idempotencyKey,
+  ).not.toBe(first.idempotencyKey);
+  expect(
+    versionedProviderAttemptKey("old", secret, secondId, 1).idempotencyKey,
+  ).not.toBe(first.idempotencyKey);
+  expect(
+    versionedProviderAttemptKey("new", secret, id, 1).idempotencyKey,
+  ).not.toBe(first.idempotencyKey);
+  let requestedVersion;
+  expect(
+    verifyRecordedAttemptKey(
+      first,
+      (version) => {
+        requestedVersion = version;
+        return undefined;
+      },
+      id,
+      1,
+    ),
+  ).toBe(false);
+  expect(requestedVersion).toBe("old");
+  expect(
+    verifyRecordedAttemptKey(first, () => new Uint8Array(32).fill(9), id, 1),
+  ).toBe(false);
+});
+
+test("raw acceptance assertions fail closed without a trusted verifier", () => {
+  const recorded = versionedProviderAttemptKey("old", secret, id, 1);
+  const untrusted = JSON.parse(
+    JSON.stringify({
+      kind: "verified_acceptance",
+      idempotencyKey: recorded.idempotencyKey,
+      providerId: "fabricated:receipt",
+    }),
+  );
+  expect(reconcileAmbiguous(recorded.idempotencyKey, untrusted)).toEqual({
+    decision: "manual_review",
+  });
+  expect(
+    reconcileAmbiguous(recorded.idempotencyKey, untrusted, () => false),
+  ).toEqual({
+    decision: "manual_review",
+  });
+  expect(() =>
+    reconcileAmbiguous(recorded.idempotencyKey, untrusted, () => {
+      throw new Error("AUTHENTICATION_UNAVAILABLE");
+    }),
+  ).toThrow("AUTHENTICATION_UNAVAILABLE");
+  expect(
+    reconcileAmbiguous(recorded.idempotencyKey, {
+      kind: "not_found",
+      idempotencyKey: recorded.idempotencyKey,
+    }),
+  ).toEqual({ decision: "manual_review" });
+});
+
+test("an asynchronous verifier is not treated as an authenticated result", () => {
+  const key = providerAttemptKey(secret, id, 1);
+  expect(
+    reconcileAmbiguous(
+      key,
+      {
+        kind: "verified_acceptance",
+        idempotencyKey: key,
+        providerId: "fake:1",
+      },
+      () => Promise.resolve(true),
+    ),
+  ).toEqual({ decision: "manual_review" });
 });

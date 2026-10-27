@@ -70,7 +70,10 @@ restent à concevoir/valider. Ce helper ne persiste rien et ne signe pas une
 réponse du fournisseur.
 
 Un simple objet `verified_acceptance` dans le noyau est forgeable par un
-appelant : aucune authentification n'en découle. Une future intégration devra
+appelant : aucune authentification n'en découle. Le noyau refuse désormais
+de le classer `accepted` sans callback de vérification injecté ; ce callback
+n'authentifie rien par lui-même et doit provenir d'un adaptateur fournisseur
+audité, lié à la bonne tentative. Une future intégration devra
 vérifier l'origine par un canal authentifié lié au fournisseur choisi, la
 correspondance exacte du compte, de la clé et de la tentative, l'identifiant
 fournisseur et le statut confirmé, puis conserver la preuve brute sensible

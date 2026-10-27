@@ -92,6 +92,11 @@ export function verifyRecordedAttemptKey(
 export function reconcileAmbiguous(
   expectedKey: string,
   evidence: ProviderEvidence,
+  // Supplied only by a trusted adapter after authenticating provider provenance.
+  // A raw `verified_acceptance` object is never sufficient by itself.
+  verifyAcceptance?: (
+    evidence: Extract<ProviderEvidence, { kind: "verified_acceptance" }>,
+  ) => boolean,
 ): { decision: "accepted" | "manual_review"; providerId?: string } {
   if (!/^[0-9a-f]{64}$/.test(expectedKey))
     throw new Error("PROVIDER_EVIDENCE_INVALID");
@@ -101,6 +106,8 @@ export function reconcileAmbiguous(
       !/^[A-Za-z0-9._:-]{1,128}$/.test(evidence.providerId)
     )
       throw new Error("PROVIDER_EVIDENCE_INVALID");
+    if (!verifyAcceptance || verifyAcceptance(evidence) !== true)
+      return { decision: "manual_review" };
     return { decision: "accepted", providerId: evidence.providerId };
   }
   if (evidence.kind === "verified_rejection" || evidence.kind === "not_found") {

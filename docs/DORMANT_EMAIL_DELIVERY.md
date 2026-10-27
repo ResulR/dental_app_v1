@@ -114,9 +114,11 @@ de non-acceptation chez un fournisseur éventuellement consistant.
 La clé HMAC doit rester stable pour toute la durée de la tentative, y compris
 pendant une rotation de clé ; changer de secret pour la même tentative produit
 une autre clé et peut permettre un doublon externe. Le type
-`verified_acceptance` n'authentifie pas une réponse à lui seul : seule une
-intégration fournisseur approuvée pourra établir cette preuve. Le noyau pur
-ne doit jamais être exposé comme API permettant de fabriquer de tels avis.
+`verified_acceptance` n'authentifie pas une réponse à lui seul :
+`reconcileAmbiguous` exige maintenant un vérificateur injecté avant de classer
+une acceptation. Les tests n'utilisent qu'un double ; seule une intégration
+fournisseur approuvée pourra établir cette preuve. Le noyau pur ne doit jamais
+être exposé comme API permettant de fabriquer de tels avis.
 
 
 ## Clés de tentative versionnées
