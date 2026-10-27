@@ -1562,6 +1562,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Travail attendu :** Recherche uniquement clinique courante, preuve de similarité et option continuer.
 - **Validation :** Faux positif jamais bloquant.
 - **Implémentation 27/10 :** Route de similarité sous drapeau de précontrôle, requête bornée à la clinique actuelle et à la version courante, indice non bloquant affiché avec accès à la liste et possibilité de poursuivre. Voir docs/ORDER_SIMILARITY.md et docs/ROADMAP_PROGRESS_2026-10-27.md. Tests hors ligne ciblés ; réception PostgreSQL spécifique et navigateur encore ouverts, donc point non clos.
+- **Complément 27/10 :** Recette PostgreSQL indépendante order-similarity-v1 préparée avec 250 empreintes, non exécutée en attente d'autorisation dédiée. Harnais navigateur synthétique préparé ; Chromium bloqué par la limite de processus du VPS avant les scénarios, sans réception. Numéro de correspondance prérempli dans le suivi, test de rendu réussi. Suite hors PostgreSQL 572/572 sur 129 fichiers ; statut ◐ maintenu ; voir docs/ORDER_SIMILARITY.md.
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
@@ -1602,6 +1603,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Validation hors ligne :** buildAPI réussi après patch heap256Mio autorisé, tests ciblés avec doubles SQL/HTTP, typesweb, lint, architecture, buildweb et contrats additifs vérifiés. Résultats détaillés dans le journal.
 - **Application PostgreSQL :** aucune ; runtime désactivé par défaut, aucun nouveau DDL.
 - **Réception finale :** différée SQL/navigateur ; ne clôture ni les transitions restantes ni l'historique comparé de toutes les versions.
+- **Complément 27/10 :** Le numéro d'une correspondance 9.6 préremplit le champ de recherche de la clinique ; le serveur de suivi conserve ses contrôles de portée et permissions. Test de rendu et régressions ciblées réussis ; navigateur et PostgreSQL non reçus, statut ◐ maintenu.
 
 ### 9.9 — Implémenter création au nom de la clinique par le labo
 - **Statut :** ☐ À faire

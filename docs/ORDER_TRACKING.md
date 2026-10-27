@@ -10,6 +10,13 @@ Fiche : version officielle courante, libellés des snapshots historiques, patien
 
 Interface albanaise branchée sur ces routes : filtres, pages, fiche et historique. Aucun succès simulé, stockage local patient, retry automatique ou accès aux fichiers. Échec : données affichées effacées, relecture explicite nécessaire. Requêtes annulées après huit secondes ou démontage. Les contrôles serveur restent nécessaires malgré les permissions d'affichage.
 
+Depuis le formulaire clinique, une correspondance de similarité 9.6 peut
+préremplir le numéro dans la recherche de suivi, sans déclencher une lecture
+automatique. Le lien reste accessible au clavier ; chaque clic prépare une
+nouvelle recherche. Ce numéro n'est réutilisé que pour le compte authentifié
+qui l'a sélectionné. Le test de rendu vérifie le préremplissage ; la réception
+navigateur et PostgreSQL reste ouverte.
+
 ## Dépendances et réception
 
 `DENTAL_LAB_ORDER_TRACKING_ENABLED` est désactivé par défaut ; toute activation exige explicitement le dépôt de commandes activé, lui-même soumis aux dépendances runtime existantes. Aucun flag n'a été changé, aucun service relancé, aucun SQL appliqué. Schémas existants0003/0004/0007/0008/0010 utilisés ; aucun nouveau DDL pour ce lot.

@@ -178,4 +178,4 @@ test("configured entry-point runtime connects HTTP login to credential, limiter,
     connect.mockRestore();
     end.mockRestore();
   }
-});
+}, 15_000); // Real scrypt plus HTTP can exceed the generic 5 s limit under the VPS CPU quota.

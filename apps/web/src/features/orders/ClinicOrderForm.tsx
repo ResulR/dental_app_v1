@@ -37,7 +37,11 @@ const issues = {
     "Referencë e padisponueshme: pranimi përjashtimor kërkon arsyetim dhe konfirmim nga laboratori.",
   low_detail: "Nuk janë zgjedhur dhëmbë dhe përshkrimi është bosh.",
 };
-export function ClinicOrderForm() {
+export function ClinicOrderForm({
+  onInspectSimilar,
+}: {
+  onInspectSimilar?: (number: string) => void;
+}) {
   const [first, setFirst] = useState(""),
     [last, setLast] = useState(""),
     [reference, setReference] = useState(""),
@@ -472,7 +476,13 @@ export function ClinicOrderForm() {
                     {item.signal === "same_reference_and_work"
                       ? "referencë, datë, material dhe ngjyrë të njëjta"
                       : "emër, datë, material dhe ngjyrë të njëjta"}
-                    . <a href="#order-tracking">Shikoni porosinë në listë</a>
+                    .{" "}
+                    <a
+                      href="#order-tracking"
+                      onClick={() => onInspectSimilar?.(item.number)}
+                    >
+                      Shikoni porosinë në listë
+                    </a>
                   </li>
                 ))}
               </ul>

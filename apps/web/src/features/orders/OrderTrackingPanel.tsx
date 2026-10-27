@@ -28,14 +28,16 @@ export function OrderTrackingPanel({
   clinic,
   permissions,
   renderConversation,
+  initialSearchNumber,
 }: {
   clinic: boolean;
+  initialSearchNumber?: string;
   permissions: ReturnType<
     typeof EffectivePermissionsSchema.parse
   >["permissions"];
   renderConversation?: (orderId: string) => ReactNode;
 }) {
-  const [q, setQ] = useState(""),
+  const [q, setQ] = useState(initialSearchNumber ?? ""),
     [status, setStatus] = useState(""),
     [kind, setKind] = useState(""),
     [from, setFrom] = useState(""),

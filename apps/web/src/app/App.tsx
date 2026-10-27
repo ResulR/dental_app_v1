@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { AuditLogPanel } from "../features/audit/AuditLogPanel.js";
 import { InternalNoticePanel } from "../features/notifications/InternalNoticePanel.js";
 import { GeneralMessagingPanel } from "../features/messaging/GeneralMessagingPanel.js";
@@ -27,6 +28,11 @@ import {
   PermissionBoundary,
 } from "../features/authentication/index.js";
 export function App() {
+  const [similarSelection, setSimilarSelection] = useState<{
+    accountId: string;
+    number: string;
+    sequence: number;
+  } | null>(null);
   return (
     <AppShell navigation={[]}>
       <div className="welcome">
@@ -84,8 +90,19 @@ export function App() {
               >
                 {(snapshot) => (
                   <OrderTrackingPanel
-                    key={identity.account_id + "-tracking"}
+                    key={
+                      identity.account_id +
+                      "-tracking-" +
+                      (similarSelection?.accountId === identity.account_id
+                        ? similarSelection.sequence
+                        : "")
+                    }
                     clinic={identity.profile === "clinic"}
+                    initialSearchNumber={
+                      similarSelection?.accountId === identity.account_id
+                        ? similarSelection.number
+                        : ""
+                    }
                     permissions={snapshot.permissions}
                     renderConversation={(orderId) => (
                       <GeneralMessagingPanel
@@ -102,7 +119,16 @@ export function App() {
                 )}
               </PermissionBoundary>
               {identity.profile === "clinic" && (
-                <ClinicOrderForm key={identity.account_id + "-order-form"} />
+                <ClinicOrderForm
+                  key={identity.account_id + "-order-form"}
+                  onInspectSimilar={(number) =>
+                    setSimilarSelection((previous) => ({
+                      accountId: identity.account_id,
+                      number,
+                      sequence: (previous?.sequence ?? 0) + 1,
+                    }))
+                  }
+                />
               )}
               {identity.profile !== "clinic" &&
                 import.meta.env.VITE_DENTAL_LAB_GENERAL_MESSAGING_ENABLED ===
