@@ -24,3 +24,8 @@ navigateur et PostgreSQL reste ouverte.
 Tests ciblés : doubles SQL, HTTP local et client réel de validation ; ils ne démontrent pas la validité des requêtes, privilèges ou verrous sur PostgreSQL réel. Réception SQL séparée toujours nécessaire, ainsi que navigation/ergonomie/accessibilité sur navigateur réel. Les verrous partagés garantissent le modèle de lecture prévu mais leur contention et leur compatibilité avec les writers devront être mesurées dans l'environnement isolé autorisé.
 
 Restent indépendamment : transitions fin de fabrication/livraison, corrections et demandes pendantes, versions comparées, création laboratoire, retouches, pièces jointes réelles. Les événements affichés proviennent de la base ; aucune de ces écritures manquantes n'est simulée par ce panneau. Aucune preuve historique v1/v2/v3 rejouée ou modifiée.
+
+Le reçu d'un dépôt confirmé propose maintenant un lien direct vers le suivi.
+Le numéro attribué par le serveur préremplit le champ de recherche, qui doit
+être déclenchée explicitement ; les permissions et le périmètre de clinique
+restent contrôlés par le serveur. Le rendu est testé hors navigateur.

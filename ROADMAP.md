@@ -1586,6 +1586,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Implémentation16/10 :** Dépôt transactionnel, reçu idempotent et snapshots serveur reliés au formulaire ; docs/ORDER_SUBMISSION.md. Hors ligne testé, aucune application PostgreSQL ni réception finale.
 
 - **Complément 28/10 :** Test de réponse perdue après COMMIT dans le double transactionnel : reprise même clé sans seconde commande. PostgreSQL réel et navigateur non reçus ; statut ◐ maintenu.
+- **Interface 28/10 :** Le reçu de dépôt confirmé mène au suivi, numéro serveur prérempli ; recherche explicite, test de rendu réussi. Statut ◐ maintenu.
 
 ### 9.8 — Implémenter interface récap et suivi clinique
 - **Statut :** ◐ Suivi intégré et testé hors ligne — réceptions SQL/navigateur différées
@@ -1607,6 +1608,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Application PostgreSQL :** aucune ; runtime désactivé par défaut, aucun nouveau DDL.
 - **Réception finale :** différée SQL/navigateur ; ne clôture ni les transitions restantes ni l'historique comparé de toutes les versions.
 - **Complément 27/10 :** Le numéro d'une correspondance 9.6 préremplit le champ de recherche de la clinique ; le serveur de suivi conserve ses contrôles de portée et permissions. Test de rendu et régressions ciblées réussis ; navigateur et PostgreSQL non reçus, statut ◐ maintenu.
+
+- **Complément 28/10 :** Le reçu de dépôt 9.7 contient un lien vers le suivi, avec le numéro serveur prérempli sous le compte courant. Test de rendu et régressions ciblées réussis ; réception navigateur et SQL de suivi toujours ouvertes.
 
 ### 9.9 — Implémenter création au nom de la clinique par le labo
 - **Statut :** ☐ À faire

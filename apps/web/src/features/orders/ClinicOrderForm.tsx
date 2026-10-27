@@ -38,9 +38,9 @@ const issues = {
   low_detail: "Nuk janë zgjedhur dhëmbë dhe përshkrimi është bosh.",
 };
 export function ClinicOrderForm({
-  onInspectSimilar,
+  onInspectOrder,
 }: {
-  onInspectSimilar?: (number: string) => void;
+  onInspectOrder?: (number: string) => void;
 }) {
   const [first, setFirst] = useState(""),
     [last, setLast] = useState(""),
@@ -405,10 +405,11 @@ export function ClinicOrderForm({
         </Button>
       )}
       {submission?.kind === "submitted" && (
-        <p role="status">
-          Porosia nr. {submission.number} u regjistrua. Marrë më{" "}
-          {submission.received_at}. Statusi fillestar: Në pritje.
-        </p>
+        <SubmittedOrderReceipt
+          number={submission.number}
+          receivedAt={submission.received_at}
+          onInspectOrder={onInspectOrder}
+        />
       )}
       {submission?.kind === "blocked" && (
         <ul role="alert">
@@ -479,7 +480,7 @@ export function ClinicOrderForm({
                     .{" "}
                     <a
                       href="#order-tracking"
-                      onClick={() => onInspectSimilar?.(item.number)}
+                      onClick={() => onInspectOrder?.(item.number)}
                     >
                       Shikoni porosinë në listë
                     </a>
@@ -516,5 +517,25 @@ export function ClinicOrderForm({
         </div>
       )}
     </section>
+  );
+}
+
+export function SubmittedOrderReceipt({
+  number,
+  receivedAt,
+  onInspectOrder,
+}: {
+  number: string;
+  receivedAt: string;
+  onInspectOrder?: ((number: string) => void) | undefined;
+}) {
+  return (
+    <p role="status">
+      Porosia nr. {number} u regjistrua. Marrë më {receivedAt}. Statusi
+      fillestar: Në pritje.{" "}
+      <a href="#order-tracking" onClick={() => onInspectOrder?.(number)}>
+        Shikoni porosinë në listë
+      </a>
+    </p>
   );
 }

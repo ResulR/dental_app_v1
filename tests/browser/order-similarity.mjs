@@ -50,7 +50,7 @@ function Harness() {
   return <>
     <OrderTrackingPanel key={number ?? ""} clinic={true}
       permissions={["orders.read_logistics"]} initialSearchNumber={number ?? ""} />
-    <ClinicOrderForm onInspectSimilar={setNumber} />
+    <ClinicOrderForm onInspectOrder={setNumber} />
   </>;
 }
 createRoot(document.getElementById("root")!).render(<Harness />);`,

@@ -121,7 +121,7 @@ export function App() {
               {identity.profile === "clinic" && (
                 <ClinicOrderForm
                   key={identity.account_id + "-order-form"}
-                  onInspectSimilar={(number) =>
+                  onInspectOrder={(number) =>
                     setSimilarSelection((previous) => ({
                       accountId: identity.account_id,
                       number,

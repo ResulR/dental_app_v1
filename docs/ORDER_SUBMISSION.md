@@ -16,3 +16,8 @@ perdue ; la reprise explicite avec la même clé relit le reçu et ne crée pas
 de seconde commande dans le double transactionnel. Cela ne démontre pas
 encore les verrous, contraintes et rollback sur PostgreSQL réel. Le point 9.7
 reste en cours et demande une recette isolée dédiée avant réception.
+
+Le reçu visible dans le formulaire contient maintenant un lien vers le suivi
+clinique prérempli avec son numéro serveur. La recherche est volontaire et
+reste sous la portée de la session clinique courante ; le parcours navigateur
+complet reste à recevoir.
