@@ -82,3 +82,8 @@ par un fournisseur fictif est seulement un test du protocole local. Si la
 provenance, la version du secret ou la consistance du résultat ne peuvent
 être vérifiées, garder la livraison en revue manuelle, sans renvoi. Une
 acceptation tardive après révocation demeure possible.
+
+Le contrat pur additionnel et le schéma candidat de preuve sont décrits dans
+`docs/PROVIDER_EVIDENCE.md`. Leur verdict `acceptance_candidate` exige encore
+une persistance et une transition atomique sous verrou ; aucun fournisseur
+réel n'est authentifié par les tests synthétiques.
