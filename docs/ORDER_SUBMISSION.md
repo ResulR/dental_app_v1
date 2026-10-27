@@ -9,3 +9,10 @@ La clé UUID est liée au compte/intent et au SHA-256 canonique du contenu valid
 Interdit bloque ; indisponible avertit et demande confirmation explicite ; dents/description restent facultatives. Une entrée supprimée sans libellé serveur refuse : la reprise d’une référence historique devra utiliser un snapshot autorisé, jamais un libellé fourni librement. Les pièces jointes non vides refusent tant que le pipeline privé n’existe pas. Aucun fichier abandonné silencieusement. Détection de similarité9.6, liste/suivi9.8, fichiers et workflows suivants restent ouverts.
 
 Tests ciblés : dépôt complet et snapshots, replay/conflit, appels concurrents dans double transactionnel, injection d’échec à chaque table et COMMIT incertain, permissions/validation/fichiers/interdiction, avertissements, client/readiness et HTTP local. Ils ne prouvent pas les verrous, contraintes différées ou rollback PostgreSQL réels : réception séparée requise avant activation. Aucun script historique ni migration existante modifié.
+
+
+Complément du 28 octobre : un test simule un COMMIT réussi dont la réponse est
+perdue ; la reprise explicite avec la même clé relit le reçu et ne crée pas
+de seconde commande dans le double transactionnel. Cela ne démontre pas
+encore les verrous, contraintes et rollback sur PostgreSQL réel. Le point 9.7
+reste en cours et demande une recette isolée dédiée avant réception.

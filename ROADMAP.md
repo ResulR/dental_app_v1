@@ -1563,6 +1563,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Validation :** Faux positif jamais bloquant.
 - **Implémentation 27/10 :** Route de similarité sous drapeau de précontrôle, requête bornée à la clinique actuelle et à la version courante, indice non bloquant affiché avec accès à la liste et possibilité de poursuivre. Voir docs/ORDER_SIMILARITY.md et docs/ROADMAP_PROGRESS_2026-10-27.md. Tests hors ligne ciblés ; réception PostgreSQL spécifique et navigateur encore ouverts, donc point non clos.
 - **Complément 27/10 :** Recette PostgreSQL indépendante order-similarity-v1 préparée avec 250 empreintes, non exécutée en attente d'autorisation dédiée. Harnais navigateur synthétique préparé ; Chromium bloqué par la limite de processus du VPS avant les scénarios, sans réception. Numéro de correspondance prérempli dans le suivi, test de rendu réussi. Suite hors PostgreSQL 572/572 sur 129 fichiers ; statut ◐ maintenu ; voir docs/ORDER_SIMILARITY.md.
+- **Réception SQL 28/10 :** Recette order-similarity-v1 exécutée une fois : 16 assertions PostgreSQL réelles réussies, cluster arrêté, services inchangés. Navigateur non reçu (marge de tâches insuffisante) ; statut ◐ maintenu. Voir docs/ORDER_SIMILARITY.md.
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
@@ -1583,6 +1584,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 - **Implémentation16/10 :** Dépôt transactionnel, reçu idempotent et snapshots serveur reliés au formulaire ; docs/ORDER_SUBMISSION.md. Hors ligne testé, aucune application PostgreSQL ni réception finale.
+
+- **Complément 28/10 :** Test de réponse perdue après COMMIT dans le double transactionnel : reprise même clé sans seconde commande. PostgreSQL réel et navigateur non reçus ; statut ◐ maintenu.
 
 ### 9.8 — Implémenter interface récap et suivi clinique
 - **Statut :** ◐ Suivi intégré et testé hors ligne — réceptions SQL/navigateur différées

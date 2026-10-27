@@ -108,6 +108,10 @@ function fixture(patch = {}) {
       const result = await fn({ query });
       if (patch.commitFailure) throw new Error("COMMIT_UNCERTAIN");
       Object.assign(state, draft);
+      if (patch.lostResponseAfterCommit && !draft.receiptReported) {
+        state.receiptReported = true;
+        throw new Error("SYNTHETIC_RESPONSE_LOST_AFTER_COMMIT");
+      }
       return result;
     });
     queue = task.catch(() => {});
@@ -186,6 +190,27 @@ test("same receipt replays without writes or catalogue checks; mismatched payloa
   ).toBe("conflict");
   expect(db.state.writes).toHaveLength(count);
 });
+test("lost response after commit is reconciled with the same key without a second order", async () => {
+  const db = fixture({ lostResponseAfterCommit: true });
+  const service = createOrderSubmissionService(db);
+  await expect(service.submit(actor, command)).rejects.toThrow(
+    "SYNTHETIC_RESPONSE_LOST_AFTER_COMMIT",
+  );
+  const before = db.state.writes.length;
+  const replay = await service.submit(actor, command);
+  expect(replay.result).toMatchObject({
+    kind: "submitted",
+    persisted: true,
+    replayed: true,
+  });
+  expect(db.state.writes).toHaveLength(before);
+  expect(
+    db.state.writes.filter(([sql]) =>
+      sql.startsWith("INSERT INTO public.orders("),
+    ),
+  ).toHaveLength(1);
+});
+
 test("two concurrent intents with same key serialize and yield one aggregate in transactional double", async () => {
   const db = fixture(),
     service = createOrderSubmissionService(db);

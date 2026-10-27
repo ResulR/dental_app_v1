@@ -58,12 +58,12 @@ Une exécution sur un environnement de test dédié, doté d'une marge suffisant
 reste nécessaire. Aucun processus Chromium résiduel n'a été constaté et les
 services surveillés sont restés actifs.
 
-## Recette PostgreSQL préparée, jamais lancée
+## Recette PostgreSQL préparée et reçue le 28 octobre
 
 `tests/postgres/run-order-similarity-v1.sh`, sa fixture et son scénario
 sont indépendants des bundles v12–v17. Le nouveau répertoire privé est
 `.local/order-similarity-v1`, le port/socket privé 55448 ; l'absence de ce
-répertoire est une garde de lancement et une preuve actuelle de non-exécution.
+répertoire était une garde de lancement ; il est conservé après l'exécution comme preuve.
 La recette exige un drapeau d'approbation dédié, Git propre, identité
 UID/hostname/cgroup, son propre manifeste de 250 empreintes,
 marges CPU/mémoire/tâches/disque et PostgreSQL 5432 disponible. Elle crée
@@ -79,10 +79,28 @@ dans le cluster neuf.
 Audit statique : concordance des chemins, port et rôles, absence de TCP,
 préconditions, arrêts ciblés et syntaxe Bash/Node examinées ; manifeste
 SHA-256 `3039598e47cc41142a5ca26a0e7975c04b012830cda1cab747581f5d50fa59e5`
-(250/250 à la préparation). Le SQL et les assertions réelles ne sont **pas**
-validés tant que cette recette n'est pas exécutée. Un administrateur doit
-autoriser explicitement **une seule exécution** après un nouveau préflight
-complet, avec le commit et le manifeste exacts. L'autorisation de v17 ne
-s'applique pas ici. En cas d'échec, conserver `.local/order-similarity-v1`,
-identifier son PID avant tout arrêt ciblé et vérifier les services voisins ;
-aucune relance automatique.
+(250/250 à la préparation). Le préflight et l'exécution unique sont détaillés
+ci-dessous. Toute recette ultérieure exigerait sa propre autorisation. Le
+répertoire `.local/order-similarity-v1` est conservé pour audit, sans relance.
+
+## Réception PostgreSQL du 28 octobre
+
+La recette `order-similarity-v1` a été exécutée une seule fois au commit
+`e001367e48d3aa946cac4cbb5a9b2b0f74087b65`, après contrôle des 250
+empreintes et du SHA-256 du manifeste
+`3039598e47cc41142a5ca26a0e7975c04b012830cda1cab747581f5d50fa59e5`.
+Résultat : 16 assertions réussies sur PostgreSQL 17 isolé, portant sur les
+cliniques distinctes, versions courantes, signaux, limite de trois, absence
+de patient dans la réponse, refus d'acteur/session révoquée/suspension,
+privilèges et absence d'écriture de commandes par la recherche. Les preuves
+sont conservées sous `.local/order-similarity-v1` : `result.json`, `fixture.log`,
+`server.log`, `sha256-check.log`, `services-before/after`, `sockets-before/after`,
+`production-before/after`, `stop.log` et `ok`. Le runner a quitté avec code 0,
+`pg_ctl` constate le cluster arrêté, aucune socket ni processus privé résiduel ;
+les services surveillés et PostgreSQL 5432 répondent comme avant.
+
+La réception navigateur manque toujours : le cgroup limité à 100 tâches en
+occupait 48 au préflight, donc la marge minimale de 64 du harnais n'était pas
+disponible. Aucun service de production n'a été arrêté ni limite privilégiée
+modifiée. Le point 9.6 reste en cours jusqu'au parcours réel sur un hôte de
+test suffisamment doté, avec les seuls jeux synthétiques.
