@@ -1551,7 +1551,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Implémentation16/10 :** Dépôt transactionnel, reçu idempotent et snapshots serveur reliés au formulaire ; docs/ORDER_SUBMISSION.md. Hors ligne testé, aucune application PostgreSQL ni réception finale.
 
 ### 9.6 — Implémenter détecteur non bloquant de doublons
-- **Statut :** ☐ À faire
+- **Statut :** ◐ En cours
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Commande clinique : saisie et dépôt
@@ -1561,6 +1561,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Préconditions / à vérifier :** état réel du code et des privilèges, documents de référence, dépendances ; aucune hypothèse sur les éléments non décidés.
 - **Travail attendu :** Recherche uniquement clinique courante, preuve de similarité et option continuer.
 - **Validation :** Faux positif jamais bloquant.
+- **Implémentation 27/10 :** Route de similarité sous drapeau de précontrôle, requête bornée à la clinique actuelle et à la version courante, indice non bloquant affiché avec accès à la liste et possibilité de poursuivre. Voir docs/ORDER_SIMILARITY.md et docs/ROADMAP_PROGRESS_2026-10-27.md. Tests hors ligne ciblés ; réception PostgreSQL spécifique et navigateur encore ouverts, donc point non clos.
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.

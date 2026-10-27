@@ -9,16 +9,19 @@ import type {
   ActiveCatalogItemSchema,
   CatalogKindSchema,
   OrderPreflightResultSchema,
+  OrderSimilarityResultSchema,
   ToothSchema,
 } from "@dental-lab/contracts";
 import { createCatalogClient } from "../catalog/index.js";
 import { createOrderPreflightClient } from "./preflight-api.js";
+import { createOrderSimilarityClient } from "./similarity-api.js";
 import { Button } from "../../shared/Button.js";
 type Kind = ReturnType<typeof CatalogKindSchema.parse>;
 type Item = ReturnType<typeof ActiveCatalogItemSchema.parse>;
 type Tooth = ReturnType<typeof ToothSchema.parse>;
 const catalog = createCatalogClient(),
   api = createOrderPreflightClient(),
+  similarityApi = createOrderSimilarityClient(),
   submissionApi = createOrderSubmissionClient();
 const kinds: Kind[] = ["material", "shade", "work_type"];
 const labels: Record<Kind, string> = {
@@ -57,6 +60,10 @@ export function ClinicOrderForm() {
     [result, setResult] = useState<ReturnType<
       typeof OrderPreflightResultSchema.parse
     > | null>(null);
+  const [similar, setSimilar] = useState<ReturnType<
+    typeof OrderSimilarityResultSchema.parse
+  > | null>(null);
+  const [similarityUnavailable, setSimilarityUnavailable] = useState(false);
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   const [submission, setSubmission] = useState<ReturnType<
@@ -79,6 +86,8 @@ export function ClinicOrderForm() {
     setSubmission(null);
     setAck(false);
     setResult(null);
+    setSimilar(null);
+    setSimilarityUnavailable(false);
     setMessage("");
   }
   async function run(work: (signal: AbortSignal) => Promise<void>) {
@@ -182,8 +191,18 @@ export function ClinicOrderForm() {
       return;
     }
     await run(async (signal) => {
-      const checked = await api.check(input(), signal);
-      if (!signal.aborted) setResult(checked);
+      const requested = input();
+      const checked = await api.check(requested, signal);
+      if (signal.aborted) return;
+      setResult(checked);
+      setSimilar(null);
+      setSimilarityUnavailable(false);
+      try {
+        const found = await similarityApi.check(requested, signal);
+        if (!signal.aborted) setSimilar(found);
+      } catch {
+        if (pending.current) setSimilarityUnavailable(true);
+      }
     });
   }
   function cycle(fdi: Tooth["fdi"]) {
@@ -433,6 +452,33 @@ export function ClinicOrderForm() {
               </li>
             ))}
           </ul>
+          {similarityUnavailable && (
+            <p role="status">
+              Kontrolli i ngjashmërisë nuk u përfundua. Mund të vazhdoni;
+              kontrolloni listën e porosive nëse keni dyshim.
+            </p>
+          )}
+          {similar && similar.matches.length > 0 && (
+            <div role="alert">
+              <p>
+                Mund të ekzistojë një porosi e ngjashme në klinikën tuaj. Kjo
+                nuk e ndalon dërgimin; emri i njëjtë nuk provon se është i
+                njëjti pacient.
+              </p>
+              <ul>
+                {similar.matches.map((item) => (
+                  <li key={item.order_id}>
+                    Nr. {item.number} ·{" "}
+                    {item.signal === "same_reference_and_work"
+                      ? "referencë, datë, material dhe ngjyrë të njëjta"
+                      : "emër, datë, material dhe ngjyrë të njëjta"}
+                    . <a href="#order-tracking">Shikoni porosinë në listë</a>
+                  </li>
+                ))}
+              </ul>
+              <p>Mund të vazhdoni me një porosi të re nëse është e saktë.</p>
+            </div>
+          )}
           {result.status === "checked" && !frozen && (
             <>
               {result.warnings.length > 0 && (

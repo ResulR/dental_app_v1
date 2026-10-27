@@ -107,6 +107,8 @@ import { orderPreflightEnabled } from "./order-preflight-config.js";
 import {
   createOrderPreflightService,
   registerOrderPreflightRoutes,
+  createOrderSimilarityService,
+  registerOrderSimilarityRoutes,
 } from "../modules/orders/index.js";
 import { laboratorySettingsEnabled } from "./laboratory-settings-config.js";
 import {
@@ -415,12 +417,18 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
             sessions,
             origin: config.origin,
           });
-        if (enableOrderPreflight)
+        if (enableOrderPreflight) {
           registerOrderPreflightRoutes(app, {
             service: createOrderPreflightService(database),
             sessions,
             origin: config.origin,
           });
+          registerOrderSimilarityRoutes(app, {
+            service: createOrderSimilarityService(database),
+            sessions,
+            origin: config.origin,
+          });
+        }
         if (enableCatalogManagement)
           registerCatalogManagementRoutes(app, {
             service: createCatalogManagementService(database),

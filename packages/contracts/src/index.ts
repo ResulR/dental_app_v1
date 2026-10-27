@@ -25,6 +25,7 @@ export * from "./catalog-management.js";
 export * from "./laboratory-settings.js";
 
 export * from "./order-preflight.js";
+export * from "./order-similarity.js";
 
 export * from "./order-submission.js";
 

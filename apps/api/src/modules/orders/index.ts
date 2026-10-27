@@ -1,5 +1,7 @@
 export { createOrderPreflightService } from "./preflight.service.js";
 export { registerOrderPreflightRoutes } from "./preflight.routes.js";
+export { createOrderSimilarityService } from "./similarity.service.js";
+export { registerOrderSimilarityRoutes } from "./similarity.routes.js";
 
 export { createOrderSubmissionService } from "./submission.service.js";
 export { registerOrderSubmissionRoutes } from "./submission.routes.js";

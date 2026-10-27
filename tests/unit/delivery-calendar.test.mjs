@@ -69,6 +69,7 @@ test("effective calendar search is scoped and asks SQL to prefer planned date", 
     "effective",
     "2026-10-19",
     "2026-10-25",
+    "active",
   ]);
   expect(
     sql.match(

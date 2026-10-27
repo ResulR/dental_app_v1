@@ -166,7 +166,7 @@ export function OrderTrackingPanel({
     });
   }
   return (
-    <section aria-label="Ndjekja e porosive">
+    <section id="order-tracking" aria-label="Ndjekja e porosive">
       <h3>Ndjekja e porosive</h3>
       <DeliveryCalendar
         onOpen={(id) => void open(id)}
