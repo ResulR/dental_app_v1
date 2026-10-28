@@ -159,3 +159,9 @@ ready vérifiés sont paginés. Aucun chemin, hash ni octet n'est retourné et
 `download_available` vaut toujours false. Sans API de lecture des conversations
 réceptionnée, aucun panneau albanais de messagerie ou téléchargement n'est
 annoncé actif.
+
+## Fondation du stockage privé et filtrage — 28 octobre 2026
+
+`private-object-store.ts` est une primitive de stockage locale non composée : exige une racine absolue préprovisionnée, ses sous-répertoires privés `quarantine`/`objects` et des frontières publiques explicites. Elle refuse les répertoires permissifs ou symboliques, crée un nom UUID exclusivement et écrit des fragments copiés, sans charger l’objet entier. Le scellement synchronise les octets, interdit l’écriture, crée exclusivement le lien final privé et conserve les traces en cas d’échec incertain. L’abandon ne supprime que le temporaire du même inode avant scellement. Tests en répertoires synthétiques privés du projet. Aucun chemin de stockage de production n’a été créé.
+
+`format-probe.ts` est un filtre préliminaire borné à 4 Kio en tête/fin, pour STL, PLY, OBJ, JPG, PNG, HEIC et PDF. `candidate` signifie seulement que quelques marqueurs correspondent ; ce n’est pas une validation structurelle complète, une garantie d’innocuité, une analyse anti-malware ou une autorisation de publier. Le pipeline exige toujours un inspecteur indépendant avec parser complet et scanner qualifié. Ni le filtre ni l’adaptateur ne sont composés avec `createUploadPipeline` dans le runtime. Le stockage ne dispose pas encore de réservation de capacité durable, de réconciliation après crash, de route d’upload ou de téléchargement autorisé, ni d’ACL binaire. Les associations de correction, d’édition et de proposition restent donc bloquées pour les fichiers. Les limites 12.3/12.4 existantes continuent à rejeter les dépassements sur flux réels dans leurs tests, mais aucun transfert HTTP n’est activé.

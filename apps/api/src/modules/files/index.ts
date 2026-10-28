@@ -16,3 +16,5 @@ export type { AttachmentPolicy } from "./attachment.repository.js";
 export { readOrderFileMetadata } from "./metadata.repository.js";
 export { prepareMessageFiles } from "./message-attachments.repository.js";
 export { readMessageFileMetadata } from "./message-metadata.repository.js";
+export { createPrivateObjectStore } from "./private-object-store.js";
+export { probeFileFormat } from "./format-probe.js";

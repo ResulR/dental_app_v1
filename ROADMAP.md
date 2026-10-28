@@ -2055,7 +2055,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 12 — Fichiers privés et transferts
 
 ### 12.1 — Implémenter stockage privé des fichiers
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Adaptateur de quarantaine privé testé — composition et téléchargement différés
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fichiers privés et transferts
@@ -2069,8 +2069,10 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
+- **Complément 28/10 :** adaptateur filesystem non composé : répertoires privés préprovisionnés, noms UUID internes, création exclusive sans suivi de symlink, écriture en flux, scellement en lecture seule, abandon ciblé des temporaires non publiés. Tests synthétiques ; capacité, réconciliation durable, ACL binaire et téléchargement restent ouverts.
+
 ### 12.2 — Implémenter validation des formats fichiers
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Filtre préliminaire de contenu — parsing complet et scan différés
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fichiers privés et transferts
@@ -2083,6 +2085,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Complément 28/10 :** filtre de contenu borné pour sept familles, refuse les signatures incohérentes et les troncatures simples ; ne donne jamais un verdict de validation complète ou d’analyse anti-malware. Parser robuste par format et scanner opérationnel restent nécessaires.
 
 ### 12.3 — Implémenter limites 200 Mo / 1 Go par commande
 - **Statut :** ◐ Contrôles préparés — branchement transferts différé
