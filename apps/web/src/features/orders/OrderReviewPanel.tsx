@@ -9,6 +9,7 @@ import type {
 import { createOrderDecisionClient } from "./decision-api.js";
 import { Button } from "../../shared/Button.js";
 import { orderStatusLabels } from "./status-labels.js";
+import { LinkedWorkPanel } from "./LinkedWorkPanel.js";
 type Page = ReturnType<typeof OrderReviewPageSchema.parse>;
 const api = createOrderDecisionClient();
 const tracking = createOrderTrackingClient();
@@ -45,6 +46,9 @@ export function OrderReviewPanel({
     number: string;
   } | null>(null);
   const [verified, setVerified] = useState<ReturnType<
+    typeof OrderTrackingDetailSchema.parse
+  > | null>(null);
+  const [linkedDetail, setLinkedDetail] = useState<ReturnType<
     typeof OrderTrackingDetailSchema.parse
   > | null>(null);
   const pending = useRef<AbortController | null>(null);
@@ -104,6 +108,7 @@ export function OrderReviewPanel({
       if (!signal.aborted) {
         setPage(next);
         setSelected(orderId ?? null);
+        setLinkedDetail(null);
         setReason("");
         setConfirm(false);
       }
@@ -164,6 +169,16 @@ export function OrderReviewPanel({
       setMessage("Gjendja aktuale u rilexua nga serveri.");
     });
   }
+  async function openLinked(id: string) {
+    setLinkedDetail(null);
+    await run(async (signal) => {
+      const detail = await tracking.detail({ order_id: id }, signal);
+      if (signal.aborted) return;
+      if (detail.order.id !== id)
+        throw new Error("LINKED_WORK_VERIFICATION_MISMATCH");
+      setLinkedDetail(detail);
+    });
+  }
   return (
     <section aria-label="Shqyrtimi i porosive">
       <h3>Shqyrtimi i porosive</h3>
@@ -192,6 +207,7 @@ export function OrderReviewPanel({
                 disabled={busy}
                 onClick={() => {
                   setSelected(row.id);
+                  setLinkedDetail(null);
                   setReason("");
                   setConfirm(false);
                   setMessage("");
@@ -216,6 +232,13 @@ export function OrderReviewPanel({
               ? "Nga klinika"
               : "Krijuar nga laboratori"}
           </p>
+          {item.kind === "retouch" && (
+            <LinkedWorkPanel
+              key={item.id}
+              orderId={item.id}
+              onOpen={(id) => void openLinked(id)}
+            />
+          )}
           <p>
             Pacienti:{" "}
             {[item.patient.first_name, item.patient.last_name]
@@ -292,6 +315,25 @@ export function OrderReviewPanel({
               </Button>
             )}
         </fieldset>
+      )}
+      {linkedDetail && item && (
+        <section aria-label="Puna e lidhur e verifikuar">
+          <h4>
+            Puna e lidhur Nr. {linkedDetail.order.number} ·{" "}
+            {orderStatusLabels[linkedDetail.order.status]}
+          </h4>
+          <p>
+            Materiali: {linkedDetail.order.material} · Ngjyra:{" "}
+            {linkedDetail.order.shade}
+          </p>
+          <p style={{ whiteSpace: "pre-wrap" }}>
+            Përshkrimi: {linkedDetail.order.description || "—"}
+          </p>
+          <p>
+            Rishikimi {linkedDetail.order.revision}. Vendimi për retushimin
+            mbështetet te versioni i tij aktual; puna burim ruhet veçmas.
+          </p>
+        </section>
       )}
       {toVerify && (
         <Button disabled={busy} onClick={() => void verifyDecision()}>

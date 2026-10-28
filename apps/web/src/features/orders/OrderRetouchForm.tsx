@@ -19,7 +19,11 @@ export function OrderRetouchForm({
   onFinished,
 }: {
   sourceId: string;
-  onFinished: (text: string) => void;
+  onFinished: (receipt: {
+    id: string;
+    number: string;
+    sourceNumber: string;
+  }) => void;
 }) {
   const [source, setSource] = useState<OrderEditView | null>(null),
     [material, setMaterial] = useState(""),
@@ -143,13 +147,11 @@ export function OrderRetouchForm({
       setUncertain(false);
       if (r.kind === "submitted") {
         setSource(null);
-        onFinished(
-          "Retushimi Nr. " +
-            r.number +
-            " u regjistrua për porosinë Nr. " +
-            source.number +
-            ". Në pritje të vendimit të laboratorit. Ringarkoni listën.",
-        );
+        onFinished({
+          id: r.order_id,
+          number: r.number,
+          sourceNumber: source.number,
+        });
         return;
       }
       const labels = {

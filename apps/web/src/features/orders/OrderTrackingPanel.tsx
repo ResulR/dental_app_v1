@@ -53,6 +53,11 @@ export function OrderTrackingPanel({
     id: string;
     number: string;
   } | null>(null);
+  const [retouchReceipt, setRetouchReceipt] = useState<{
+    id: string;
+    number: string;
+    sourceNumber: string;
+  } | null>(null);
   const canReadChat =
     import.meta.env.VITE_DENTAL_LAB_ORDER_MESSAGING_ENABLED === "true" &&
     (clinic || permissions.includes("messaging.order.read"));
@@ -307,6 +312,18 @@ export function OrderTrackingPanel({
       >
         Hap arkivin
       </Button>
+      {clinic && retouchReceipt && (
+        <div>
+          <p role="status">
+            Retushimi Nr. {retouchReceipt.number} për porosinë Nr.{" "}
+            {retouchReceipt.sourceNumber} u regjistrua si punë më vete. Në
+            pritje të vendimit të laboratorit.
+          </p>
+          <Button disabled={busy} onClick={() => void open(retouchReceipt.id)}>
+            Hap ndjekjen e retushimit Nr. {retouchReceipt.number}
+          </Button>
+        </div>
+      )}
       {page &&
         readyOnly &&
         !clinic &&
@@ -360,10 +377,11 @@ export function OrderTrackingPanel({
               {clinic && row.status === "delivered" && (
                 <OrderRetouchForm
                   sourceId={row.id}
-                  onFinished={(text) => {
+                  onFinished={(receipt) => {
                     setPage(null);
                     setDetail(null);
-                    setMessage(text);
+                    setRetouchReceipt(receipt);
+                    setMessage("");
                   }}
                 />
               )}
@@ -456,6 +474,11 @@ export function OrderTrackingPanel({
             Porosia nr. {detail.order.number} ·{" "}
             {orderStatusLabels[detail.order.status]}
           </h4>
+          <LinkedWorkPanel
+            key={detail.order.id}
+            orderId={detail.order.id}
+            onOpen={(id) => void open(id)}
+          />
           {canReadChat && (
             <Button
               type="button"

@@ -2051,6 +2051,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Validation hors ligne :** tests ciblés de cloisonnement, droits logistiques/détails, curseur et HTTP ; voir docs/RETOUCH_SUBMISSION.md.
 - **Application PostgreSQL :** aucune ; même activation différée que les retouches.
 - **Réception finale :** PostgreSQL et navigation navigateur à réceptionner.
+- **Complément 29/10 :** reçu de retouche conservé dans le suivi clinique avec accès direct au détail autorisé du nouvel enfant ; navigation des travaux liés aussi disponible depuis ce détail. La revue laboratoire ouvre les liens et relit le détail autorisé du travail source pour comparer avant décision, sans changer la version cible. Le serveur recontrôle les droits lors de chaque lecture. Recette navigateur et PostgreSQL toujours différées ; statut ◐.
 
 ## Chapitre 12 — Fichiers privés et transferts
 
@@ -2092,7 +2093,9 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Complément 28/10 :** STL ASCII de petite taille (4 Mio maximum) contrôlé avec grammaire des facettes, trois sommets par face, nombres finis et plafond de 10 000 faces ; en cas de complexité supérieure, rejet conservateur. Toujours candidat seulement et sans scanner.
 
-- **Complément 28/10 :** frontière de validation injectée côté serveur : parser complet et scanner qualifiés obligatoires, version de politique, références et concordance objet/taille/hash vérifiées avant et après analyse. Composition avec inspection de session ; résultat uniquement interne et quarantined. Aucune preuve durable ni adaptateur réel : ready reste interdit.
+- **Complément 28/10 :** frontière de validation injectée côté serveur : parser complet et scanner qualifiés obligatoires, version de politique, références et concordance objet/taille/hash vérifiées avant et après analyse. Composition avec inspection de session ; résultat uniquement interne et quarantined.
+
+- **Complément 29/10 :** migration 0024 non exécutée et insertion transactionnelle des tentatives candidates/bloquées après relecture de session et objet scellé ; hash, taille, politique, versions et références liés à l'objet. Aucun grant ni adaptateur réel, transition ready ou association autorisée. Réception PostgreSQL et analyses qualifiées restent ouvertes ; statut ◐.
 
 ### 12.3 — Implémenter limites 200 Mo / 1 Go par commande
 - **Statut :** ◐ Contrôles préparés — branchement transferts différé
