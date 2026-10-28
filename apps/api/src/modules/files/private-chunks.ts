@@ -64,6 +64,7 @@ export async function createPrivateChunkStore(
   )
     throw new Error("PRIVATE_STORAGE_UNSAFE");
   return {
+    verifyObject: objects.verifySealed,
     async put(
       uploadId: string,
       part: Part,

@@ -2143,6 +2143,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Complément 28/10 :** fragments synthétiques écrits en flux dans la quarantaine privée, hash de chaque segment vérifié sur disque, doublon identique reconnu sans retransmission, conflit refusé ; plan de reprise borné depuis reçus serveur. Session SQL, permissions, réserve, expiration et route non composées ; statut ◐.
 
+- **Complément 28/10 :** contrôleur SQL préparé pour sessions cliniques de dépôt initial : admission sous capacité sérialisée, vérification des droits courants, reçus de fragments avec CAS et progression persistante. Tests avec doubles et stockage privé synthétique ; aucune route ou réception PostgreSQL.
+
 ### 12.6 — Implémenter idempotence et finalisation fichiers
 - **Statut :** ◐ Orchestration en flux et associations initiales intégrées — activation différée
 - **Associations 20/10/2026 :** commandes/retouches raccordées transactionnellement à `prepareNewOrderFiles`, avec contrôles de périmètre, état, taille et expiration, événements et rollback. Politique absente du runtime : fichiers toujours refusés en exploitation. Messages raccordés dans un chemin préparé distinct sans route runtime ; réutilisation historique reste à intégrer ; réception SQL indépendante requise.
@@ -2162,6 +2164,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Complément 28/10 :** assemblage ordonné borné et vérification SHA-256 du fichier entier ; relecture d’un objet scellé sur reçu autoritatif pour reprise sans doublon. L’objet reste privé et non distribuable ; finalisation transactionnelle SQL et scanner restent à brancher.
 
+- **Complément 28/10 :** après reçus complets, transition transactionnelle vers verifying, assemblage privé puis objet file_objects verifying et file_id en transaction ; répétition avec reçu durable revérifie le binaire. Crash intermédiaire retourne reconciliation_required, aucun état ready ou téléchargement. Tests avec doubles, SQL réel non réceptionné.
+
 ### 12.7 — Implémenter pauses pour saturation disque
 - **Statut :** ◐ Garde de capacité explicite — réservation durable différée
 - **Priorité :** Haute
@@ -2178,6 +2182,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 - **Complément 28/10 :** garde de préadmission mesurant l’espace disponible et une marge minimale explicitement fournie ; saturation simulée en test. Une mesure ne réserve rien : admission transactionnelle de capacité et suspension effective des routes restent ouvertes.
+
+- **Complément 28/10 :** admission initiale réserve deux fois la taille déclarée dans upload_sessions sous verrou de table et plafond de politique explicite, après garde de disque libre. Tests de deux admissions concurrentes par double sérialisé ; ni mesure disque ni double ne prouvent l’isolation PostgreSQL réelle. Libération/récupération de capacité et saturation runtime restent ouvertes.
 
 ### 12.8 — Implémenter nettoyage des fragments expirés
 - **Statut :** ☐ À faire
