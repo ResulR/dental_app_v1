@@ -19,3 +19,11 @@ Flag DENTAL_LAB_ORDER_LIFECYCLE_ENABLED désactivé par défaut, dépend de ORDE
 Onze tests ciblés réussis avec doubles transactionnels, client et HTTP local : permissions/prérequis, transitions, isolation clinique, révisions, répétition/concurrence simulée, rollback sur chaque écriture critique, blocages et refus HTTP. Compilation contrats/API réussie à256Mio pour tsc seulement. Ce n'est PAS une validation PostgreSQL réelle, ni une preuve navigateur.
 
 Les modifications d'instructions/propositions, le renvoi clinique de correction, décisions/retraits de demandes et création des retouches restent distincts et non implémentés par ces cinq actions. Réception SQL requise pour privilèges, verrous, FK cascade, unicité réelle et atomicité. Réception navigateur requise pour confirmations, clavier/tablette et parcours de permissions. Les fichiers restent bloqués tant que le pipeline réel n'est pas intégré. Aucun e-mail envoyé, preuve historique modifiée ou service redémarré.
+
+
+Le suivi laboratoire propose deux vues de travail : commandes Acceptées pour
+les titulaires de `orders.start_manufacturing`, commandes En fabrication pour
+les titulaires de `orders.change_status`. Elles utilisent la recherche privée
+existante avec filtre serveur, pagination et relecture explicite ; elles ne
+modifient aucune commande. Le démarrage et la finalisation conservent les
+contrôles de version, statut, permissions et transaction de leurs API.

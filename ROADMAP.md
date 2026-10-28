@@ -1663,6 +1663,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Implémentation16/10 :** voir docs/ORDER_LIFECYCLE.md : cinq actions versionnées, audit/outbox et fermeture/réouverture atomiques. Validation hors ligne avec doublesSQL ; aucune application PostgreSQL ni réception finale.
 
+- **Complément 28/10 :** Vues de travail laboratoire pour commandes Acceptées et En fabrication, selon permissions respectives, reliées à la recherche privée et aux actions de démarrage/finalisation existantes. Tests ciblés hors navigateur ; statut ◐ maintenu.
+
 ### 10.2 — Implémenter acceptation/refus initial
 - **Statut :** ◐ API et revue albanaise intégrées — réceptions différées
 - **Priorité :** Critique

@@ -104,22 +104,29 @@ export function OrderTrackingPanel({
       }
     }
   }
-  async function search(after?: string, ready = false, archive = false) {
+  async function search(
+    after?: string,
+    ready = false,
+    archive = false,
+    production?: "accepted" | "manufacturing",
+  ) {
     const raw = archive
       ? { view: "archive", date_kind: "requested" }
       : ready
         ? { status: "completed", view: "active", date_kind: "requested" }
-        : after
-          ? { ...lastQuery.current, after }
-          : {
-              ...(q.trim() ? { q: q.trim() } : {}),
-              ...(status ? { status } : {}),
-              ...(kind ? { kind } : {}),
-              date_kind: dateKind,
-              view,
-              ...(from ? { from } : {}),
-              ...(to ? { to } : {}),
-            };
+        : production
+          ? { status: production, view: "active", date_kind: "requested" }
+          : after
+            ? { ...lastQuery.current, after }
+            : {
+                ...(q.trim() ? { q: q.trim() } : {}),
+                ...(status ? { status } : {}),
+                ...(kind ? { kind } : {}),
+                date_kind: dateKind,
+                view,
+                ...(from ? { from } : {}),
+                ...(to ? { to } : {}),
+              };
     const parsed = OrderSearchSchema.safeParse(raw);
     if (!parsed.success) {
       setMessage("Kontrolloni filtrat dhe intervalin e datave.");
@@ -137,6 +144,15 @@ export function OrderTrackingPanel({
         if (archive) {
           setView("archive");
           setStatus("");
+          setQ("");
+          setKind("");
+          setFrom("");
+          setTo("");
+          setDateKind("requested");
+        }
+        if (production) {
+          setView("active");
+          setStatus(production);
           setQ("");
           setKind("");
           setFrom("");
@@ -250,6 +266,30 @@ export function OrderTrackingPanel({
           <Button type="submit">Kërko</Button>
         </fieldset>
       </form>
+      {!clinic &&
+        (permissions.includes("orders.start_manufacturing") ||
+          permissions.includes("orders.change_status")) && (
+          <div>
+            {permissions.includes("orders.start_manufacturing") && (
+              <Button
+                disabled={busy}
+                onClick={() => void search(undefined, false, false, "accepted")}
+              >
+                Punët e pranuara për fillim
+              </Button>
+            )}
+            {permissions.includes("orders.change_status") && (
+              <Button
+                disabled={busy}
+                onClick={() =>
+                  void search(undefined, false, false, "manufacturing")
+                }
+              >
+                Punët në prodhim
+              </Button>
+            )}
+          </div>
+        )}
       {!clinic && permissions.includes("delivery.mark_delivered") && (
         <div>
           <Button disabled={busy} onClick={() => void search(undefined, true)}>
