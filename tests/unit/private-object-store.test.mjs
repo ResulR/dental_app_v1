@@ -38,7 +38,7 @@ test("sealed object uses opaque key outside public roots; writer owns bytes and 
     await writer.write(bytes);
     bytes.fill(0);
     const sealed = await writer.seal();
-    expect(sealed.objectKey).toMatch(/^[0-9a-f-]{36}$/);
+    expect(sealed.objectKey).toMatch(/^[0-9a-f]{64}$/);
     expect(sealed.sizeBytes).toBe(14);
     expect(sealed.sha256).toBe(
       createHash("sha256").update("synthetic-only").digest("hex"),

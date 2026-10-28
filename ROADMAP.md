@@ -2127,7 +2127,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 12.5 — Implémenter téléversement par fragments
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Stockage et plan de reprise privés préparés — contrôle SQL/runtime différé
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fichiers privés et transferts
@@ -2140,6 +2140,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Complément 28/10 :** fragments synthétiques écrits en flux dans la quarantaine privée, hash de chaque segment vérifié sur disque, doublon identique reconnu sans retransmission, conflit refusé ; plan de reprise borné depuis reçus serveur. Session SQL, permissions, réserve, expiration et route non composées ; statut ◐.
 
 ### 12.6 — Implémenter idempotence et finalisation fichiers
 - **Statut :** ◐ Orchestration en flux et associations initiales intégrées — activation différée
@@ -2158,8 +2160,10 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
+- **Complément 28/10 :** assemblage ordonné borné et vérification SHA-256 du fichier entier ; relecture d’un objet scellé sur reçu autoritatif pour reprise sans doublon. L’objet reste privé et non distribuable ; finalisation transactionnelle SQL et scanner restent à brancher.
+
 ### 12.7 — Implémenter pauses pour saturation disque
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Garde de capacité explicite — réservation durable différée
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fichiers privés et transferts
@@ -2172,6 +2176,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Complément 28/10 :** garde de préadmission mesurant l’espace disponible et une marge minimale explicitement fournie ; saturation simulée en test. Une mesure ne réserve rien : admission transactionnelle de capacité et suspension effective des routes restent ouvertes.
 
 ### 12.8 — Implémenter nettoyage des fragments expirés
 - **Statut :** ☐ À faire
