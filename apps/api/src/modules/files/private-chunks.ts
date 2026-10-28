@@ -65,6 +65,46 @@ export async function createPrivateChunkStore(
     throw new Error("PRIVATE_STORAGE_UNSAFE");
   return {
     verifyObject: objects.verifySealed,
+    // Only call after a durable, terminal cleanup claim. Never delete objects.
+    async discard(uploadId: string, count: number) {
+      if (!Number.isSafeInteger(count) || count < 1 || count > 10000)
+        throw new Error("PRIVATE_CHUNK_BUDGET");
+      for (let index = 0; index < count; index++) {
+        const name = path.join(directory, partName(uploadId, index));
+        const current = await lstat(name).catch(
+          (error: NodeJS.ErrnoException) => {
+            if (error.code === "ENOENT") return null;
+            throw error;
+          },
+        );
+        if (!current) continue;
+        if (!current.isFile() || current.isSymbolicLink())
+          throw new Error("PRIVATE_CHUNK_CONFLICT");
+        // The private directory is owned by this process identity and mode 0700.
+        // Recheck the inode on an O_NOFOLLOW descriptor before removal.
+        const handle = await open(
+          name,
+          constants.O_RDONLY | constants.O_NOFOLLOW,
+        );
+        try {
+          const stat = await handle.stat();
+          if (!stat.isFile() || stat.ino !== current.ino)
+            throw new Error("PRIVATE_CHUNK_CONFLICT");
+          await unlink(name);
+        } finally {
+          await handle.close();
+        }
+      }
+      const dir = await open(
+        directory,
+        constants.O_RDONLY | constants.O_DIRECTORY,
+      );
+      try {
+        await dir.sync();
+      } finally {
+        await dir.close();
+      }
+    },
     async put(
       uploadId: string,
       part: Part,

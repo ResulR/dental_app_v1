@@ -21,7 +21,7 @@ const source = async function* (v) {
   yield Buffer.from(v);
 };
 function database(patch = {}) {
-  let state = { session: null, chunks: new Map(), file: null };
+  let state = { session: null, chunks: new Map(), file: null, events: [] };
   let queue = Promise.resolve();
   const transaction = (fn) => {
     const task = queue.then(async () => {
@@ -29,8 +29,52 @@ function database(patch = {}) {
         session: state.session && { ...state.session },
         chunks: new Map(state.chunks),
         file: state.file && { ...state.file },
+        events: [...state.events],
       };
       const query = async (sql, v = []) => {
+        if (sql.startsWith("SELECT s.id,s.declared_size::text"))
+          return {
+            rows:
+              draft.session &&
+              draft.session.file_id === null &&
+              ((patch.expired &&
+                ["initialized", "receiving"].includes(draft.session.state)) ||
+                (draft.session.state === "aborted" &&
+                  draft.events.includes("cleanup_claimed") &&
+                  !draft.events.includes("cleanup_completed")))
+                ? [draft.session]
+                : [],
+          };
+        if (sql.includes("SET state='aborted',reserved_bytes=0")) {
+          draft.session.state = "aborted";
+          draft.session.reserved_bytes = "0";
+          return { rows: [{ id: draft.session.id }] };
+        }
+        if (sql.startsWith("INSERT INTO public.file_events")) {
+          const action = sql.includes("cleanup_claimed")
+            ? "cleanup_claimed"
+            : sql.includes("cleanup_completed")
+              ? "cleanup_completed"
+              : sql.includes("'aborted'")
+                ? "aborted"
+                : "assembled_private";
+          draft.events.push(action);
+          return { rows: [] };
+        }
+        if (sql.startsWith("SELECT action FROM public.file_events"))
+          return { rows: draft.events.map((action) => ({ action })) };
+        if (
+          sql.startsWith(
+            "SELECT id FROM public.upload_sessions WHERE id=$1 AND state='aborted'",
+          )
+        )
+          return {
+            rows:
+              draft.session?.state === "aborted" &&
+              draft.session?.file_id === null
+                ? [{ id: v[0] }]
+                : [],
+          };
         if (sql.startsWith("SELECT a.profile"))
           return {
             rows: [
@@ -54,7 +98,19 @@ function database(patch = {}) {
         )
           return { rows: patch.foreign ? [] : [{ id: clinicId }] };
         if (sql.startsWith("SELECT COALESCE(sum(reserved_bytes)"))
-          return { rows: [{ total: "0" }] };
+          return {
+            rows: [
+              {
+                total:
+                  draft.session &&
+                  ["initialized", "receiving", "verifying", "ready"].includes(
+                    draft.session.state,
+                  )
+                    ? draft.session.reserved_bytes
+                    : "0",
+              },
+            ],
+          };
         if (sql.startsWith("SELECT clinic_id,declared_size::text"))
           return {
             rows:
@@ -97,6 +153,7 @@ function database(patch = {}) {
             chunk_size: String(v[4]),
             received_bytes: "0",
             revision: "1",
+            reserved_bytes: String(v[3] * 2),
             state: "initialized",
             file_id: null,
           };
@@ -173,6 +230,7 @@ async function fixture(run, patch = {}) {
       root,
       db,
       controller: createUploadSessionController(db, store, policy(root)),
+      store,
     });
   } finally {
     await rm(root, { recursive: true, force: true });
@@ -389,3 +447,102 @@ test("serialized admission double accepts at most one reservation within explici
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("expired unfinished upload is claimed and cleaned once; failed removal resumes", async () => {
+  const flags = { expired: false };
+  return fixture(async ({ root, db, store, controller }) => {
+    const id = (await controller.open(actor, 3)).uploadId;
+    await controller.receive(
+      actor,
+      id,
+      0,
+      hash("abc"),
+      source("abc"),
+      new globalThis.AbortController().signal,
+    );
+    expect(await readdir(path.join(root, "chunks"))).toHaveLength(1);
+    flags.expired = true;
+    const constrained = createUploadSessionController(db, store, {
+      ...policy(root),
+      maxReservedBytes: 6,
+    });
+    expect((await constrained.open(actor, 3)).kind).toBe("capacity");
+    let fail = true;
+    const interrupted = createUploadSessionController(
+      db,
+      {
+        ...store,
+        discard: async (...args) => {
+          if (fail) {
+            fail = false;
+            throw new Error("interrupted");
+          }
+          return store.discard(...args);
+        },
+      },
+      policy(root),
+    );
+    expect(await interrupted.cleanupExpired(1)).toEqual([
+      { uploadId: id, kind: "retry" },
+    ]);
+    expect(db.state.session.state).toBe("aborted");
+    expect(db.state.session.reserved_bytes).toBe("0");
+    expect(db.state.events).toContain("cleanup_claimed");
+    expect(db.state.events).not.toContain("cleanup_completed");
+    expect(
+      (
+        await Promise.all([
+          controller.cleanupExpired(1),
+          controller.cleanupExpired(1),
+        ])
+      ).flat(),
+    ).toEqual([{ uploadId: id, kind: "cleaned" }]);
+    expect(await readdir(path.join(root, "chunks"))).toHaveLength(0);
+    expect(db.state.chunks.size).toBe(1); // audit receipt is retained
+    expect(await controller.cleanupExpired(1)).toEqual([]);
+    expect(
+      db.state.events.filter((e) => e === "cleanup_completed"),
+    ).toHaveLength(1);
+  }, flags);
+});
+
+test("owner abort releases reservation once and retains receipt audit until targeted removal", async () =>
+  fixture(async ({ root, db, controller }) => {
+    const id = (await controller.open(actor, 3)).uploadId;
+    await controller.receive(
+      actor,
+      id,
+      0,
+      hash("abc"),
+      source("abc"),
+      new globalThis.AbortController().signal,
+    );
+    expect(await controller.abort(actor, id)).toEqual({
+      kind: "aborted",
+      repeated: false,
+    });
+    expect(await controller.abort(actor, id)).toEqual({
+      kind: "aborted",
+      repeated: true,
+    });
+    expect(db.state.session.reserved_bytes).toBe("0");
+    expect(db.state.events.filter((e) => e === "cleanup_claimed")).toHaveLength(
+      1,
+    );
+    expect(
+      (
+        await controller.receive(
+          actor,
+          id,
+          0,
+          hash("abc"),
+          source("abc"),
+          new globalThis.AbortController().signal,
+        )
+      ).kind,
+    ).toBe("conflict");
+    expect(await controller.cleanupExpired(1)).toEqual([
+      { uploadId: id, kind: "cleaned" },
+    ]);
+    expect(await readdir(path.join(root, "chunks"))).toHaveLength(0);
+  }));

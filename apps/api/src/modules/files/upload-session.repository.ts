@@ -40,6 +40,7 @@ function assertPolicy(p: Policy) {
       p.maxReservedBytes,
       p.minimumFreeBytes,
     ].every((n) => Number.isSafeInteger(n) && n > 0) ||
+    p.maxSegments > 10000 ||
     !p.privateRoot ||
     !p.capacityPolicyVersion?.trim() ||
     !p.storagePolicyVersion?.trim()
@@ -92,6 +93,97 @@ export function createUploadSessionController(
   )
     throw new Error("UPLOAD_STORAGE_REQUIRED");
   return {
+    // Operator-only entry point: no route or automatic worker. A claim is terminal
+    // for the upload, so a concurrent receive can no longer publish a receipt.
+    async cleanupExpired(limit: number) {
+      if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100)
+        throw new Error("UPLOAD_CLEANUP_LIMIT");
+      const results: Array<{ uploadId: string; kind: "cleaned" | "retry" }> =
+        [];
+      for (let iteration = 0; iteration < limit; iteration++) {
+        const claim = await db.transaction(async (tx) => {
+          const found = await tx.query<{
+            id: string;
+            declared_size: string;
+            chunk_size: string;
+            state: string;
+          }>(
+            `SELECT s.id,s.declared_size::text,s.chunk_size::text,s.state
+             FROM public.upload_sessions s
+             WHERE s.intended_kind='initial_order' AND s.file_id IS NULL
+               AND s.intended_order_id IS NULL AND s.intended_conversation_id IS NULL
+               AND ((s.state IN ('initialized','receiving') AND s.expires_at<=statement_timestamp())
+                 OR (s.state='aborted' AND EXISTS (
+                   SELECT 1 FROM public.file_events e WHERE e.upload_id=s.id
+                     AND e.process_code='upload_cleanup' AND e.action='cleanup_claimed')
+                   AND NOT EXISTS (
+                   SELECT 1 FROM public.file_events e WHERE e.upload_id=s.id
+                     AND e.process_code='upload_cleanup' AND e.action='cleanup_completed')))
+             ORDER BY s.created_at,s.id FOR UPDATE OF s SKIP LOCKED LIMIT 1`,
+          );
+          const row = found.rows[0];
+          if (!row) return null;
+          const count = Math.ceil(
+            Number(row.declared_size) / Number(row.chunk_size),
+          );
+          if (
+            !Number.isSafeInteger(count) ||
+            count < 1 ||
+            count > policy.maxSegments
+          )
+            throw new Error("UPLOAD_CLEANUP_INCONSISTENT");
+          if (row.state !== "aborted") {
+            await tx.query(
+              `UPDATE public.upload_sessions SET state='aborted',reserved_bytes=0,
+               revision=revision+1 WHERE id=$1 AND state IN ('initialized','receiving')
+               AND file_id IS NULL AND expires_at<=statement_timestamp()`,
+              [row.id],
+            );
+            await tx.query(
+              "INSERT INTO public.file_events(upload_id,process_code,action) VALUES($1,'upload_cleanup','cleanup_claimed')",
+              [row.id],
+            );
+          }
+          return { uploadId: row.id, count };
+        });
+        if (!claim) break;
+        try {
+          const completed = await db.transaction(async (tx) => {
+            const row = await tx.query(
+              `SELECT id FROM public.upload_sessions WHERE id=$1 AND state='aborted'
+               AND file_id IS NULL AND reserved_bytes=0 FOR UPDATE`,
+              [claim.uploadId],
+            );
+            if (row.rows.length !== 1)
+              throw new Error("UPLOAD_CLEANUP_CONFLICT");
+            const audit = await tx.query(
+              `SELECT action FROM public.file_events WHERE upload_id=$1
+               AND process_code='upload_cleanup' AND action IN ('cleanup_claimed','cleanup_completed')`,
+              [claim.uploadId],
+            );
+            const actions = new Set(audit.rows.map((event) => event.action));
+            if (!actions.has("cleanup_claimed"))
+              throw new Error("UPLOAD_CLEANUP_CONFLICT");
+            if (actions.has("cleanup_completed")) return false;
+            // Hold the terminal session row lock through physical removal so
+            // another cleaner cannot record a second completion.
+            await store.discard(claim.uploadId, claim.count);
+            await tx.query(
+              "INSERT INTO public.file_events(upload_id,process_code,action) VALUES($1,'upload_cleanup','cleanup_completed')",
+              [claim.uploadId],
+            );
+            return true;
+          });
+          if (completed)
+            results.push({ uploadId: claim.uploadId, kind: "cleaned" });
+        } catch {
+          // The claim and audit remain durable for an explicit subsequent retry.
+          results.push({ uploadId: claim.uploadId, kind: "retry" });
+          break;
+        }
+      }
+      return results;
+    },
     async open(actor: Actor, declaredSize: number) {
       assertFileSize(declaredSize);
       // Authorization precedes even the disk-capacity response.
@@ -122,7 +214,7 @@ export function createUploadSessionController(
           "LOCK TABLE public.upload_sessions IN SHARE ROW EXCLUSIVE MODE",
         );
         const used = await tx.query(
-          "SELECT COALESCE(sum(reserved_bytes),0)::text AS total FROM public.upload_sessions WHERE state IN ('initialized','receiving','verifying','ready') AND expires_at>statement_timestamp()",
+          "SELECT COALESCE(sum(reserved_bytes),0)::text AS total FROM public.upload_sessions WHERE state IN ('initialized','receiving','verifying','ready')",
         );
         const total = Number(used.rows[0]?.total);
         if (
@@ -152,6 +244,33 @@ export function createUploadSessionController(
           chunkSize: policy.chunkSize,
           segments: count,
         };
+      });
+    },
+    async abort(actor: Actor, id: string) {
+      return db.transaction(async (tx) => {
+        const row = await load(tx, actor, id, "FOR UPDATE");
+        if (!row) return { kind: "denied" as const };
+        if (row.state === "aborted")
+          return { kind: "aborted" as const, repeated: true };
+        if (!["initialized", "receiving"].includes(row.state) || row.file_id)
+          return { kind: "conflict" as const };
+        const updated = await tx.query(
+          `UPDATE public.upload_sessions SET state='aborted',reserved_bytes=0,
+           revision=revision+1 WHERE id=$1 AND revision=$2
+           AND state IN ('initialized','receiving') AND file_id IS NULL
+           AND expires_at>statement_timestamp() RETURNING id`,
+          [id, row.revision],
+        );
+        if (updated.rows.length !== 1) throw new Error("UPLOAD_ABORT_CONFLICT");
+        await tx.query(
+          "INSERT INTO public.file_events(upload_id,actor_id,action) VALUES($1,$2,'aborted')",
+          [id, actor.accountId],
+        );
+        await tx.query(
+          "INSERT INTO public.file_events(upload_id,process_code,action) VALUES($1,'upload_cleanup','cleanup_claimed')",
+          [id],
+        );
+        return { kind: "aborted" as const, repeated: false };
       });
     },
     async progress(actor: Actor, id: string) {

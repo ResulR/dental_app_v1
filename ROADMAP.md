@@ -2183,10 +2183,10 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Complément 28/10 :** garde de préadmission mesurant l’espace disponible et une marge minimale explicitement fournie ; saturation simulée en test. Une mesure ne réserve rien : admission transactionnelle de capacité et suspension effective des routes restent ouvertes.
 
-- **Complément 28/10 :** admission initiale réserve deux fois la taille déclarée dans upload_sessions sous verrou de table et plafond de politique explicite, après garde de disque libre. Tests de deux admissions concurrentes par double sérialisé ; ni mesure disque ni double ne prouvent l’isolation PostgreSQL réelle. Libération/récupération de capacité et saturation runtime restent ouvertes.
+- **Complément 28/10 :** admission initiale réserve deux fois la taille déclarée dans upload_sessions sous verrou de table et plafond de politique explicite, après garde de disque libre. La réserve reste comptée après expiration jusqu’au marquage terminal ; abandon explicite du propriétaire ou nettoyage admissible remet la réserve à zéro une seule fois. Tests avec double SQL sérialisé ; isolation PostgreSQL, saturation runtime et rétention restent ouvertes.
 
 ### 12.8 — Implémenter nettoyage des fragments expirés
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Marquage et suppression ciblée préparés — réception SQL et politique de rétention ouvertes
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Fichiers privés et transferts
@@ -2199,6 +2199,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Complément 28/10 :** sélection SQL des seules sessions initiales expirées et sans fichier, marquage terminal `aborted` par expiration ou abandon autorisé avec reçu d’audit et libération de la réserve ; suppression bornée des seuls fragments de cette session puis événement de fin, reprise explicite sur interruption. `verifying`/`ready` exclus. Tests avec stockage privé et double SQL ; aucun job automatique ni réception PostgreSQL réelle, politique de rétention des reçus et brouillons locaux encore ouverte.
 
 ### 12.9 — Implémenter aperçus protégés et permissions fichier
 - **Statut :** ◐ Consultation des métadonnées intégrée — aperçus et réception différés
