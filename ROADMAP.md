@@ -2092,6 +2092,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Complément 28/10 :** STL ASCII de petite taille (4 Mio maximum) contrôlé avec grammaire des facettes, trois sommets par face, nombres finis et plafond de 10 000 faces ; en cas de complexité supérieure, rejet conservateur. Toujours candidat seulement et sans scanner.
 
+- **Complément 28/10 :** frontière de validation injectée côté serveur : parser complet et scanner qualifiés obligatoires, version de politique, références et concordance objet/taille/hash vérifiées avant et après analyse. Composition avec inspection de session ; résultat uniquement interne et quarantined. Aucune preuve durable ni adaptateur réel : ready reste interdit.
+
 ### 12.3 — Implémenter limites 200 Mo / 1 Go par commande
 - **Statut :** ◐ Contrôles préparés — branchement transferts différé
 - **Implémentation20/10 :** limites décimales, tailles réelles en flux, doublons et erreurs fermées dans files/transfer-limits ; voir docs/TRANSFER_LIMITS.md. Aucun upload activé.

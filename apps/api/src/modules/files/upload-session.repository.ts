@@ -9,6 +9,7 @@ import { uploadProgress } from "./upload-progress.js";
 import { requireDiskHeadroom } from "./disk-headroom.js";
 import type { createPrivateChunkStore } from "./private-chunks.js";
 import type { FileFormat } from "./format-probe.js";
+import type { createValidationEvidence } from "./validation-evidence.js";
 
 type Actor = { accountId: string; sessionId: string };
 type Store = Awaited<ReturnType<typeof createPrivateChunkStore>>;
@@ -85,6 +86,7 @@ export function createUploadSessionController(
   db: Pick<ReturnType<typeof createApplicationDatabase>, "transaction">,
   store: Store,
   policy: Policy,
+  validation?: ReturnType<typeof createValidationEvidence>,
 ) {
   assertPolicy(policy);
   if (
@@ -488,7 +490,25 @@ export function createUploadSessionController(
           [receipt.fileId, verdict],
         );
       });
-      return { kind: "quarantined" as const, structure: verdict };
+      // A candidate from the preliminary parser is not a publication proof.
+      // Full parser and malware ports are absent from runtime by default.
+      const evidence =
+        verdict === "candidate" && validation
+          ? await validation.inspect(
+              {
+                objectKey: receipt.object_key,
+                sizeBytes: Number(receipt.size_bytes),
+                sha256: receipt.sha256,
+                format: receipt.format,
+              },
+              new AbortController().signal,
+            )
+          : { kind: "blocked" as const };
+      return {
+        kind: "quarantined" as const,
+        structure: verdict,
+        validation: evidence.kind,
+      };
     },
     async finalize(
       actor: Actor,

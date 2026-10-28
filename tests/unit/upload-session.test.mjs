@@ -673,6 +673,7 @@ test("real private transfer assembles, inspects STL and refuses business attachm
     expect(await controller.inspect(actor, id)).toEqual({
       kind: "quarantined",
       structure: "candidate",
+      validation: "blocked",
     });
     expect(db.state.session.state).toBe("verifying");
     expect(db.state.file.state).toBe("verifying");

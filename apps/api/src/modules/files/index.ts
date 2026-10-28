@@ -22,3 +22,4 @@ export { createPrivateChunkStore } from "./private-chunks.js";
 export { uploadProgress } from "./upload-progress.js";
 export { requireDiskHeadroom } from "./disk-headroom.js";
 export { createUploadSessionController } from "./upload-session.repository.js";
+export { createValidationEvidence } from "./validation-evidence.js";
