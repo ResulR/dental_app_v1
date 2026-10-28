@@ -11,3 +11,9 @@ POST /api/v1/orders/modification-decide : acceptation ou refus par laboratoire h
 DENTAL_LAB_ORDER_MODIFICATION_ENABLED désactivé par défaut ; exige les activations édition et demandes, elles-mêmes dépendantes du cycle de vie et de ses readiness. Aucune activation ni migration exécutée. Fichiers non vides bloqués jusqu’au pipeline sécurisé réel. Le formulaire de proposition partage les validations de l’édition ; la réponse de succès provient exclusivement de l’API.
 
 Tests ciblés : 10 tests édition/proposition, 8 décision/revue/concurrence/rollback/client/configuration, 1 HTTP origine/session/contrat/no-store. Les courses sont sérialisées par un double transactionnel, pas une preuve de verrouillage PostgreSQL réel. Validation réelle PostgreSQL et recette navigateur restent nécessaires, ainsi que livraison des notifications par les consommateurs d’outbox.
+
+## Consultation des décisions — 28 octobre 2026
+
+Le suivi des demandes de modification inclut désormais une page de 20 demandes, avec curseur vers les plus anciennes. Chaque demande conserve son état, ses deux identifiants de version, les horodatages et le motif de décision. L'API de comparaison accepte l'identifiant d'une demande historique et relit les snapshots immuables avant/après dans une même transaction. L'interface albanaise rend les décisions passées consultables par la clinique autorisée et le laboratoire habilité ; les boutons de décision n'apparaissent que pour une demande encore pendante. L'autorisation de l'agrégat précède la lecture des demandes et des données patient. Les lectures ne modifient ni l'état ni la version officielle.
+
+Cette extension reste soumise aux activations existantes. Les fichiers privés, la livraison des notifications et les réceptions PostgreSQL/navigateur restent différés ; les tests à doubles SQL ne constituent pas une réception PostgreSQL.

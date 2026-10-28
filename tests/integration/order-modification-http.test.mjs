@@ -20,6 +20,7 @@ test("modification HTTP enforces origin current session strict command and no-st
           decide,
           propose: decide,
           context: async () => ({ kind: "denied" }),
+          history: async () => ({ kind: "denied" }),
         },
         sessions: { authenticate: async () => actor },
         origin: "https://dental.example.test",
@@ -93,6 +94,24 @@ test("modification HTTP enforces origin current session strict command and no-st
         })
       ).status,
     ).toBe(400);
+    expect(
+      (
+        await fetch(url.replace("-decide", "-history"), {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ order_id: id, before_request_id: "invalid" }),
+        })
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await fetch(url.replace("-decide", "-history"), {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ order_id: id }),
+        })
+      ).status,
+    ).toBe(403);
     expect(decide).not.toHaveBeenCalled();
     const response = await fetch(url, { method: "POST", headers, body });
     expect(response.status).toBe(200);

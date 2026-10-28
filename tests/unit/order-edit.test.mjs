@@ -108,6 +108,8 @@ function fixture(patch = {}) {
               },
             ],
           };
+        if (sql.startsWith("SELECT reason FROM public.order_status_events"))
+          return { rows: [{ reason: "Synthetic correction motive" }] };
         if (sql.startsWith("SELECT id,kind,label"))
           return {
             rows: [
@@ -546,4 +548,22 @@ test("clinical accepted proposal appends a separate version without changing off
     createOrderModificationService(failing).propose(actor, proposed),
   ).rejects.toThrow("SYNTHETIC_FAILURE");
   expect(failing.state.writes).toEqual([]);
+});
+
+test("authorized clinic reads the current correction motive while an unrelated clinic cannot", async () => {
+  const own = fixture({ status: "correction_requested" });
+  const context = await createOrderEditService(own).context(actor, {
+    order_id: id,
+  });
+  expect(context.result.correction_reason).toBe("Synthetic correction motive");
+  const foreign = fixture({ status: "correction_requested", foreign: true });
+  expect(
+    (await createOrderEditService(foreign).context(actor, { order_id: id }))
+      .kind,
+  ).toBe("denied");
+  expect(
+    foreign.calls.some(([sql]) =>
+      sql.startsWith("SELECT reason FROM public.order_status_events"),
+    ),
+  ).toBe(false);
 });

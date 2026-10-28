@@ -2,7 +2,9 @@ import {
   OrderModificationProposalSchema,
   OrderModificationDecisionSchema,
   OrderModificationContextSchema,
-  OrderLifecycleContextQuerySchema,
+  OrderModificationContextQuerySchema,
+  OrderModificationHistoryQuerySchema,
+  OrderModificationHistorySchema,
   OrderEditResultSchema,
 } from "@dental-lab/contracts";
 export function createOrderModificationClient(transport: typeof fetch = fetch) {
@@ -40,11 +42,27 @@ export function createOrderModificationClient(transport: typeof fetch = fetch) {
         ),
       );
     },
-    async context(order_id: string, signal: AbortSignal) {
+    async history(
+      order_id: string,
+      signal: AbortSignal,
+      before_request_id?: string,
+    ) {
+      return OrderModificationHistorySchema.parse(
+        await post(
+          "history",
+          OrderModificationHistoryQuerySchema.parse({
+            order_id,
+            before_request_id,
+          }),
+          signal,
+        ),
+      );
+    },
+    async context(order_id: string, signal: AbortSignal, request_id?: string) {
       return OrderModificationContextSchema.parse(
         await post(
           "context",
-          OrderLifecycleContextQuerySchema.parse({ order_id }),
+          OrderModificationContextQuerySchema.parse({ order_id, request_id }),
           signal,
         ),
       );

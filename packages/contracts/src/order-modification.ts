@@ -34,11 +34,37 @@ const Decision = z.discriminatedUnion("action", [
 export type OrderModificationDecision = z.output<typeof Decision>;
 export const OrderModificationDecisionSchema: z.ZodType<OrderModificationDecision> =
   Decision;
+export const OrderModificationHistoryQuerySchema = z.strictObject({
+  order_id: z.uuid(),
+  before_request_id: z.uuid().optional(),
+});
+export const OrderModificationContextQuerySchema = z.strictObject({
+  order_id: z.uuid(),
+  request_id: z.uuid().optional(),
+});
+const HistoryItem = z.strictObject({
+  id: z.uuid(),
+  state: z.enum(["pending", "accepted", "rejected", "withdrawn", "closed"]),
+  requested_at: z.iso.datetime(),
+  decided_at: z.iso.datetime().nullable(),
+  decision_reason: z.string().nullable(),
+  base_version_id: z.uuid(),
+  proposed_version_id: z.uuid(),
+});
+export const OrderModificationHistorySchema = z.strictObject({
+  items: z.array(HistoryItem).max(20),
+  next_before_request_id: z.uuid().nullable(),
+});
+export type OrderModificationHistory = z.output<
+  typeof OrderModificationHistorySchema
+>;
 const Context = z.strictObject({
   base: OrderEditViewSchema,
   proposal: OrderEditViewSchema,
   request_id: z.uuid(),
   request_revision: RevisionSchema.min(1),
+  state: HistoryItem.shape.state,
+  decision_reason: z.string().nullable(),
 });
 export type OrderModificationContext = z.output<typeof Context>;
 export const OrderModificationContextSchema: z.ZodType<OrderModificationContext> =

@@ -1706,6 +1706,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Implémentation17/10 :** API et interface albanaise, versions immuables, snapshots conservés, permissions actuelles, CAS et demandes pendantes ; voir docs/ORDER_EDIT.md.
 - **Validation hors ligne :** 10 tests ciblés avec doubles SQL/HTTP ; builds, types web, lint, contrats et architecture réussis.
 - **Application PostgreSQL :** aucune ; activation désactivée par défaut.
+- **Complément 28/10 :** motif de correction affiché dans l’édition à la clinique autorisée ; renvoi explicite et nouvelle décision restent obligatoires. Tests ciblés hors PostgreSQL, statut ◐ maintenu.
 - **Réception finale :** différée (PostgreSQL réel, navigateur, pipeline fichiers et livraison des notifications).
 
 ### 10.4 — Implémenter modification directe En attente
@@ -1726,6 +1727,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Implémentation17/10 :** API et interface albanaise, versions immuables, snapshots conservés, permissions actuelles, CAS et demandes pendantes ; voir docs/ORDER_EDIT.md.
 - **Validation hors ligne :** 10 tests ciblés avec doubles SQL/HTTP ; builds, types web, lint, contrats et architecture réussis.
 - **Application PostgreSQL :** aucune ; activation désactivée par défaut.
+- **Complément 28/10 :** comparaison des champs et du nombre de fichiers entre version historique et version officielle courante dans le formulaire autorisé ; tests de typage, réception navigateur différée. Statut ◐ maintenu.
 - **Réception finale :** différée (PostgreSQL réel, navigateur, pipeline fichiers et livraison des notifications).
 
 ### 10.5 — Implémenter demandes de modification Acceptée
@@ -1746,6 +1748,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Implémentation19/10 :** proposition clinique séparée, comparaison avant/après albanaise, acceptation/refus laboratoire avec permissions et CAS ; retrait existant réutilisé. Voir docs/ORDER_MODIFICATIONS.md.
 - **Validation hors ligne :** 19 tests ciblés (édition incluse), doubles transactionnels et HTTP.
 - **Application PostgreSQL :** aucune, nouvelle activation désactivée par défaut.
+- **Complément 28/10 :** historique paginé des demandes de modification, décisions motivées et comparatif des deux versions historiques accessibles aux acteurs autorisés ; tests ciblés hors PostgreSQL. Statut ◐ maintenu.
 - **Réception finale :** PostgreSQL réel, navigateur, fichiers et notifications différés.
 
 ### 10.6 — Implémenter retrait des demandes pendantes

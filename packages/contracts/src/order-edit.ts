@@ -41,6 +41,7 @@ const View = z.strictObject({
     work_type_id: z.uuid().nullable().optional(),
   }),
   file_count: z.number().int().min(0),
+  correction_reason: z.string().nullable(),
   labels: z.strictObject({
     material: z.string(),
     shade: z.string(),

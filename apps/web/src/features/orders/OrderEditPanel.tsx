@@ -43,6 +43,9 @@ export function OrderEditPanel({
   onFinished: (text: string) => void;
 }) {
   const [view, setView] = useState<OrderEditView | null>(null),
+    [currentSnapshot, setCurrentSnapshot] = useState<OrderEditView | null>(
+      null,
+    ),
     [input, setInput] = useState<OrderEditView["input"] | null>(null),
     [reason, setReason] = useState(""),
     [ack, setAck] = useState(false),
@@ -75,6 +78,7 @@ export function OrderEditPanel({
       if (pending.current === c) {
         setInput(null);
         setView(null);
+        setCurrentSnapshot(null);
         onFinished(
           "Rezultati nuk u verifikua. Ringarkoni porosinë përpara një veprimi tjetër.",
         );
@@ -99,6 +103,7 @@ export function OrderEditPanel({
       );
       if (!signal.aborted) {
         setView(next);
+        if (!version_id) setCurrentSnapshot(next);
         setInput(next.input);
         setReason("");
         setAck(false);
@@ -168,6 +173,7 @@ export function OrderEditPanel({
         return;
       }
       setView(null);
+      setCurrentSnapshot(null);
       setInput(null);
       onFinished(
         r.kind === "updated"
@@ -207,6 +213,11 @@ export function OrderEditPanel({
             Etiketat e ruajtura: {view.labels.material} · {view.labels.shade} ·{" "}
             {view.labels.work_type ?? "—"}
           </p>
+          {view.status === "correction_requested" && view.correction_reason && (
+            <p role="note">
+              Korrigjimi i kërkuar nga laboratori: {view.correction_reason}
+            </p>
+          )}
           {view.file_count > 0 && (
             <p>
               Ka skedarë historikë. Ndryshimi bllokohet deri në integrimin e
@@ -413,6 +424,85 @@ export function OrderEditPanel({
               </>
             )}
           </fieldset>
+          {currentSnapshot && !current && (
+            <section>
+              <h4>Krahasim me versionin zyrtar aktual</h4>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fusha</th>
+                    <th>Historik</th>
+                    <th>Aktual</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(
+                    [
+                      [
+                        "Emri",
+                        view.input.patient.first_name,
+                        currentSnapshot.input.patient.first_name,
+                      ],
+                      [
+                        "Mbiemri",
+                        view.input.patient.last_name,
+                        currentSnapshot.input.patient.last_name,
+                      ],
+                      [
+                        "Referenca",
+                        view.input.patient.internal_reference,
+                        currentSnapshot.input.patient.internal_reference,
+                      ],
+                      [
+                        "Materiali",
+                        view.labels.material,
+                        currentSnapshot.labels.material,
+                      ],
+                      [
+                        "Ngjyra",
+                        view.labels.shade,
+                        currentSnapshot.labels.shade,
+                      ],
+                      [
+                        "Lloji",
+                        view.labels.work_type,
+                        currentSnapshot.labels.work_type,
+                      ],
+                      [
+                        "Data e dëshiruar",
+                        view.input.requested_delivery_date,
+                        currentSnapshot.input.requested_delivery_date,
+                      ],
+                      [
+                        "Përshkrimi",
+                        view.input.description,
+                        currentSnapshot.input.description,
+                      ],
+                      [
+                        "Dhëmbët",
+                        JSON.stringify(view.input.teeth),
+                        JSON.stringify(currentSnapshot.input.teeth),
+                      ],
+                      [
+                        "Skedarët",
+                        String(view.file_count),
+                        String(currentSnapshot.file_count),
+                      ],
+                    ] as const
+                  ).map(([label, past, present]) => (
+                    <tr key={label}>
+                      <th>{label}</th>
+                      <td>{past || "—"}</td>
+                      <td>
+                        {present || "—"}
+                        {past !== present ? " (ndryshuar)" : ""}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          )}
           <h4>Historiku i versioneve</h4>
           <ul>
             {view.history.map((v) => (

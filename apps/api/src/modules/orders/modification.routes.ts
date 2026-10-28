@@ -2,7 +2,8 @@ import type { Express } from "express";
 import {
   OrderModificationProposalSchema,
   OrderModificationDecisionSchema,
-  OrderLifecycleContextQuerySchema,
+  OrderModificationContextQuerySchema,
+  OrderModificationHistoryQuerySchema,
 } from "@dental-lab/contracts";
 import { readSessionCookie, mutationOriginAllowed } from "../identity/index.js";
 import type { createSessionService } from "../identity/index.js";
@@ -18,7 +19,7 @@ export function registerOrderModificationRoutes(
 ) {
   if (!mutationOriginAllowed(services.origin, services.origin))
     throw new Error("INVALID_REQUEST_ORIGIN");
-  for (const action of ["propose", "context", "decide"] as const)
+  for (const action of ["propose", "context", "decide", "history"] as const)
     app.post("/api/v1/orders/modification-" + action, async (req, res) => {
       if (!mutationOriginAllowed(req.headers.origin, services.origin)) {
         sendProblem(res, "FORBIDDEN", 403);
@@ -29,7 +30,9 @@ export function registerOrderModificationRoutes(
           ? OrderModificationProposalSchema
           : action === "decide"
             ? OrderModificationDecisionSchema
-            : OrderLifecycleContextQuerySchema
+            : action === "context"
+              ? OrderModificationContextQuerySchema
+              : OrderModificationHistoryQuerySchema
       ).safeParse(req.body);
       if (
         !req.is("application/json") ||

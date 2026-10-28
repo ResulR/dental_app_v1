@@ -39,6 +39,13 @@ export function createOrderEditRepository(
           input.version_id ?? order.current_version_id,
         );
         if (!version) return { kind: "denied" as const };
+        const correction =
+          order.status === "correction_requested"
+            ? await tx.query(
+                "SELECT reason FROM public.order_status_events WHERE order_id=$1 AND next_status='correction_requested' ORDER BY aggregate_revision DESC LIMIT 1",
+                [order.id],
+              )
+            : { rows: [] };
         const history = await tx.query(
           "SELECT id,version_number::text,created_at,created_by,reason FROM public.order_versions WHERE order_id=$1 AND ($2::bigint IS NULL OR version_number<$2) ORDER BY version_number DESC LIMIT 21",
           [order.id, input.before_version ?? null],
@@ -56,6 +63,7 @@ export function createOrderEditRepository(
             version_id: version.id,
             input: editableInput(version),
             file_count: version.file_count,
+            correction_reason: correction.rows[0]?.reason ?? null,
             labels: {
               material: version.material,
               shade: version.shade,

@@ -1,11 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import type {
   OrderModificationContext,
+  OrderModificationHistory,
   OrderEditView,
 } from "@dental-lab/contracts";
 import { createOrderModificationClient } from "./modification-api.js";
 import { Button } from "../../shared/Button.js";
 const api = createOrderModificationClient();
+const stateLabel = {
+  pending: "Në pritje",
+  accepted: "Pranuar",
+  rejected: "Refuzuar",
+  withdrawn: "Tërhequr",
+  closed: "Mbyllur",
+};
 function values(v: OrderEditView) {
   return {
     Emri: v.input.patient.first_name ?? "—",
@@ -32,6 +40,7 @@ export function OrderModificationReview({
   onFinished: (text: string) => void;
 }) {
   const [context, setContext] = useState<OrderModificationContext | null>(null),
+    [history, setHistory] = useState<OrderModificationHistory | null>(null),
     [busy, setBusy] = useState(false),
     [reason, setReason] = useState(""),
     [ack, setAck] = useState(false),
@@ -67,13 +76,27 @@ export function OrderModificationReview({
       }
     }
   }
-  async function load() {
+  async function load(requestId?: string) {
     await run(async (signal) => {
-      const next = await api.context(orderId, signal);
+      const next = await api.context(orderId, signal, requestId);
       if (!signal.aborted) {
         setContext(next);
         setReason("");
         setAck(false);
+        setMessage("");
+      }
+    });
+  }
+  async function loadHistory(before?: string) {
+    await run(async (signal) => {
+      const page = await api.history(orderId, signal, before);
+      if (!signal.aborted) {
+        setHistory((previous) => ({
+          items: before
+            ? [...(previous?.items ?? []), ...page.items]
+            : page.items,
+          next_before_request_id: page.next_before_request_id,
+        }));
         setMessage("");
       }
     });
@@ -103,6 +126,7 @@ export function OrderModificationReview({
         return;
       }
       setContext(null);
+      setHistory(null);
       onFinished(
         r.kind === "updated"
           ? (action === "accept_modification"
@@ -120,11 +144,45 @@ export function OrderModificationReview({
   return (
     <div>
       <Button disabled={busy} onClick={() => void load()}>
-        Shqyrto kërkesën e ndryshimit
+        Shqyrto kërkesën në pritje
       </Button>
+      <Button disabled={busy} onClick={() => void loadHistory()}>
+        Historiku i kërkesave të ndryshimit
+      </Button>
+      {history && (
+        <section>
+          <h4>Kërkesat e ndryshimit</h4>
+          <ul>
+            {history.items.map((item) => (
+              <li key={item.id}>
+                <Button disabled={busy} onClick={() => void load(item.id)}>
+                  {item.requested_at} · {stateLabel[item.state]} — krahaso
+                  versionet
+                </Button>
+                {item.decision_reason && <p>Arsyeja: {item.decision_reason}</p>}
+              </li>
+            ))}
+          </ul>
+          {history.next_before_request_id && (
+            <Button
+              disabled={busy}
+              onClick={() =>
+                void loadHistory(history.next_before_request_id ?? undefined)
+              }
+            >
+              Kërkesa më të vjetra
+            </Button>
+          )}
+        </section>
+      )}
       {context && before && after && (
         <fieldset disabled={busy}>
-          <legend>Propozimi — Nr. {context.base.number}</legend>
+          <legend>
+            Propozimi — Nr. {context.base.number} · {stateLabel[context.state]}
+          </legend>
+          {context.decision_reason && (
+            <p>Arsyeja e vendimit: {context.decision_reason}</p>
+          )}
           <p>
             Versioni zyrtar mbetet i pandryshuar deri në pranimin nga
             laboratori.
@@ -150,7 +208,7 @@ export function OrderModificationReview({
               ))}
             </tbody>
           </table>
-          {!clinic && (
+          {!clinic && context.state === "pending" && (
             <>
               <label>
                 Arsyeja e refuzimit

@@ -65,6 +65,48 @@ function fixture(patch = {}) {
                   },
                 ],
           };
+        if (sql.startsWith("SELECT id FROM public.orders WHERE id=$1"))
+          return { rows: patch.foreign ? [] : [{ id }] };
+        if (sql.startsWith("SELECT id,state,requested_at"))
+          return {
+            rows: patch.foreign
+              ? []
+              : [
+                  {
+                    id,
+                    state: draft.pending ? "pending" : "rejected",
+                    requested_at: new Date("2026-10-19T12:00:00.000Z"),
+                    decided_at: draft.pending
+                      ? null
+                      : new Date("2026-10-19T13:00:00.000Z"),
+                    decision_reason: draft.pending ? null : "Synthetic refusal",
+                    base_version_id: id,
+                    proposed_version_id: proposed,
+                  },
+                ],
+          };
+        if (
+          sql.startsWith(
+            "SELECT id,base_version_id,proposed_version_id,revision::text,state",
+          )
+        )
+          return {
+            rows:
+              draft.pending || v[1]
+                ? [
+                    {
+                      id,
+                      base_version_id: id,
+                      proposed_version_id: proposed,
+                      revision: draft.pending ? "1" : "2",
+                      state: draft.pending ? "pending" : "rejected",
+                      decision_reason: draft.pending
+                        ? null
+                        : "Synthetic refusal",
+                    },
+                  ]
+                : [],
+          };
         if (sql.startsWith("SELECT id,proposed_version_id"))
           return {
             rows: draft.pending
@@ -348,6 +390,7 @@ test("pending review exposes two scoped immutable versions in one transaction", 
   expect(r.result.base.version_id).toBe(id);
   expect(r.result.proposal.version_id).toBe(proposed);
   expect(r.result.proposal.current_version_id).toBe(id);
+  expect(r.result.state).toBe("pending");
   expect(db.transaction).toHaveBeenCalledTimes(1);
   expect(db.state.writes).toEqual([]);
   const foreign = fixture({ foreign: true });
@@ -392,4 +435,54 @@ test("clinical withdrawal and laboratory decision serialize against the same req
     expect(db.state.version).toBe(withdrawFirst ? id : proposed);
     expect(db.state.pending).toBe(false);
   }
+});
+
+test("decided modification remains comparable by authorized clinic, foreign scope fails before request read", async () => {
+  const db = fixture();
+  const reject = {
+    ...command,
+    action: "reject_modification",
+    reason: "Synthetic refusal",
+  };
+  delete reject.confirmed_warnings;
+  expect(
+    (await createOrderModificationService(db).decide(actor, reject)).result
+      .kind,
+  ).toBe("updated");
+  const repo = createOrderModificationService(db);
+  const history = await repo.history(
+    { accountId: shade, sessionId: shade },
+    { order_id: id },
+  );
+  expect(history.result.items[0]).toMatchObject({
+    state: "rejected",
+    decision_reason: "Synthetic refusal",
+  });
+  const comparison = await repo.context(
+    { accountId: shade, sessionId: shade },
+    { order_id: id, request_id: id },
+  );
+  expect({ comparison, tail: db.calls.slice(-25) }).toMatchObject({
+    comparison: { kind: "result" },
+  });
+  expect(comparison.result).toMatchObject({
+    state: "rejected",
+    decision_reason: "Synthetic refusal",
+    base: { version_id: id },
+    proposal: { version_id: proposed },
+  });
+  const foreign = fixture({ foreign: true });
+  expect(
+    (
+      await createOrderModificationService(foreign).history(
+        { accountId: shade, sessionId: shade },
+        { order_id: id },
+      )
+    ).kind,
+  ).toBe("denied");
+  expect(
+    foreign.calls.some(([sql]) =>
+      sql.startsWith("SELECT id,state,requested_at"),
+    ),
+  ).toBe(false);
 });

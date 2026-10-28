@@ -2,7 +2,9 @@ import { randomUUID } from "node:crypto";
 import {
   OrderModificationDecisionSchema,
   OrderModificationContextSchema,
-  OrderLifecycleContextQuerySchema,
+  OrderModificationContextQuerySchema,
+  OrderModificationHistoryQuerySchema,
+  OrderModificationHistorySchema,
   OrderEditResultSchema,
   OrderInstructionsSchema,
 } from "@dental-lab/contracts";
@@ -41,33 +43,82 @@ export function createOrderModificationRepository(
         throw error;
       }
     },
+    async history(actor: Actor, raw: unknown) {
+      const parsed = OrderModificationHistoryQuerySchema.safeParse(raw);
+      if (!parsed.success) return { kind: "invalid" as const };
+      const input = parsed.data;
+      return db.transaction(async (tx) => {
+        const auth = await editAuthority(tx, actor);
+        if (!auth) return { kind: "denied" as const };
+        const order = await tx.query(
+          "SELECT id FROM public.orders WHERE id=$1 AND ($2::uuid IS NULL OR clinic_id=$2) FOR SHARE",
+          [input.order_id, auth.clinicId],
+        );
+        if (order.rows.length !== 1) return { kind: "denied" as const };
+        const rows = await tx.query(
+          `SELECT id,state,requested_at,decided_at,decision_reason,base_version_id,proposed_version_id
+           FROM public.order_requests WHERE order_id=$1 AND kind='modification'
+           AND ($2::uuid IS NULL OR (requested_at,id)<(SELECT requested_at,id FROM public.order_requests WHERE id=$2 AND order_id=$1 AND kind='modification'))
+           ORDER BY requested_at DESC,id DESC LIMIT 21`,
+          [input.order_id, input.before_request_id ?? null],
+        );
+        const items = rows.rows.slice(0, 20).map((row) => ({
+          ...row,
+          requested_at:
+            row.requested_at instanceof Date
+              ? row.requested_at.toISOString()
+              : row.requested_at,
+          decided_at:
+            row.decided_at instanceof Date
+              ? row.decided_at.toISOString()
+              : row.decided_at,
+        }));
+        return {
+          kind: "result" as const,
+          result: OrderModificationHistorySchema.parse({
+            items,
+            next_before_request_id:
+              rows.rows.length > 20 ? rows.rows[19]!.id : null,
+          }),
+        };
+      });
+    },
     async context(actor: Actor, raw: unknown) {
-      const parsed = OrderLifecycleContextQuerySchema.safeParse(raw);
+      const parsed = OrderModificationContextQuerySchema.safeParse(raw);
       if (!parsed.success) return { kind: "invalid" as const };
       return db.transaction(async (tx) => {
         const editor = createOrderEditRepository({
           transaction: async (fn) => fn(tx),
         });
-        const base = await editor.context(actor, parsed.data);
-        if (base.kind !== "result") return base;
+        const scope = await editor.context(actor, {
+          order_id: parsed.data.order_id,
+        });
+        if (scope.kind !== "result") return scope;
         const rows = await tx.query(
-          "SELECT id,proposed_version_id,revision::text FROM public.order_requests WHERE order_id=$1 AND kind='modification' AND state='pending'",
-          [parsed.data.order_id],
+          "SELECT id,base_version_id,proposed_version_id,revision::text,state,decision_reason FROM public.order_requests WHERE order_id=$1 AND kind='modification' AND ($2::uuid IS NULL AND state='pending' OR id=$2)",
+          [parsed.data.order_id, parsed.data.request_id ?? null],
         );
         if (rows.rows.length !== 1) return { kind: "denied" as const };
         const request = rows.rows[0]!;
+        const historicalBase = await editor.context(actor, {
+          order_id: parsed.data.order_id,
+          version_id: request.base_version_id,
+        });
+        if (historicalBase.kind !== "result") return historicalBase;
         const proposal = await editor.context(actor, {
-          ...parsed.data,
+          order_id: parsed.data.order_id,
           version_id: request.proposed_version_id,
         });
         if (proposal.kind !== "result") return proposal;
         return {
           kind: "result" as const,
           result: OrderModificationContextSchema.parse({
-            base: base.result,
+            base: historicalBase.result,
             proposal: proposal.result,
             request_id: request.id,
             request_revision: Number(request.revision),
+            state: request.state,
+            decision_reason: request.decision_reason,
           }),
         };
       });
