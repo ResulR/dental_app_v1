@@ -8,6 +8,7 @@ import { assertFileSize } from "./transfer-limits.js";
 import { uploadProgress } from "./upload-progress.js";
 import { requireDiskHeadroom } from "./disk-headroom.js";
 import type { createPrivateChunkStore } from "./private-chunks.js";
+import type { FileFormat } from "./format-probe.js";
 
 type Actor = { accountId: string; sessionId: string };
 type Store = Awaited<ReturnType<typeof createPrivateChunkStore>>;
@@ -93,6 +94,51 @@ export function createUploadSessionController(
   )
     throw new Error("UPLOAD_STORAGE_REQUIRED");
   return {
+    // Explicit operator reconciliation for bytes linked after a cleanup finished
+    // but before an interrupted receiver could obtain its terminal SQL verdict.
+    async reconcileCleaned(id: string) {
+      if (
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          id,
+        )
+      )
+        return { kind: "denied" as const };
+      return db.transaction(async (tx) => {
+        const rows = await tx.query<{
+          declared_size: string;
+          chunk_size: string;
+        }>(
+          `SELECT declared_size::text,chunk_size::text FROM public.upload_sessions
+           WHERE id=$1 AND intended_kind='initial_order' AND state='aborted'
+             AND file_id IS NULL AND intended_order_id IS NULL
+             AND intended_conversation_id IS NULL AND reserved_bytes=0 FOR UPDATE`,
+          [id],
+        );
+        if (rows.rows.length !== 1) return { kind: "denied" as const };
+        const audit = await tx.query(
+          "SELECT action FROM public.file_events WHERE upload_id=$1 AND process_code='upload_cleanup' AND action IN ('cleanup_claimed','cleanup_completed')",
+          [id],
+        );
+        const actions = new Set(audit.rows.map((event) => event.action));
+        if (
+          !actions.has("cleanup_claimed") ||
+          !actions.has("cleanup_completed")
+        )
+          return { kind: "denied" as const };
+        const count = Math.ceil(
+          Number(rows.rows[0]!.declared_size) /
+            Number(rows.rows[0]!.chunk_size),
+        );
+        if (
+          !Number.isSafeInteger(count) ||
+          count < 1 ||
+          count > policy.maxSegments
+        )
+          throw new Error("UPLOAD_CLEANUP_INCONSISTENT");
+        await store.discard(id, count);
+        return { kind: "rechecked" as const };
+      });
+    },
     // Operator-only entry point: no route or automatic worker. A claim is terminal
     // for the upload, so a concurrent receive can no longer publish a receipt.
     async cleanupExpired(limit: number) {
@@ -387,6 +433,62 @@ export function createUploadSessionController(
           throw new Error("UPLOAD_RECEIPT_CONFLICT");
         return { kind: "received" as const, repeated: false };
       });
+    },
+    async inspect(actor: Actor, id: string) {
+      const receipt = await db.transaction(async (tx) => {
+        const row = await load(tx, actor, id, "FOR SHARE");
+        if (!row || row.state !== "verifying" || !row.file_id) return null;
+        const result = await tx.query<{
+          object_key: string;
+          size_bytes: string;
+          sha256: string;
+          format: FileFormat;
+        }>(
+          `SELECT object_key,size_bytes::text,encode(content_sha256,'hex') AS sha256,format
+           FROM public.file_objects WHERE id=$1 AND clinic_id=$2 AND state='verifying' FOR SHARE`,
+          [row.file_id, row.clinic_id],
+        );
+        if (result.rows.length !== 1) return null;
+        return {
+          fileId: row.file_id,
+          clinicId: row.clinic_id,
+          ...result.rows[0]!,
+        };
+      });
+      if (!receipt || !sha.test(receipt.sha256))
+        return { kind: "denied" as const };
+      const verdict = await store.inspectObject(
+        receipt.object_key,
+        Number(receipt.size_bytes),
+        receipt.sha256,
+        receipt.format,
+      );
+      await db.transaction(async (tx) => {
+        const row = await load(tx, actor, id, "FOR UPDATE");
+        if (
+          !row ||
+          row.state !== "verifying" ||
+          row.file_id !== receipt.fileId ||
+          row.clinic_id !== receipt.clinicId
+        )
+          throw new Error("UPLOAD_INSPECTION_CONFLICT");
+        const current = await tx.query(
+          "SELECT id FROM public.file_objects WHERE id=$1 AND clinic_id=$2 AND state='verifying' AND object_key=$3 AND content_sha256=decode($4,'hex') FOR SHARE",
+          [
+            receipt.fileId,
+            receipt.clinicId,
+            receipt.object_key,
+            receipt.sha256,
+          ],
+        );
+        if (current.rows.length !== 1)
+          throw new Error("UPLOAD_INSPECTION_CONFLICT");
+        await tx.query(
+          "INSERT INTO public.file_events(file_id,process_code,action) VALUES($1,'structure_probe',$2)",
+          [receipt.fileId, verdict],
+        );
+      });
+      return { kind: "quarantined" as const, structure: verdict };
     },
     async finalize(
       actor: Actor,

@@ -2168,6 +2168,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Complément 28/10 :** après reçus complets, transition transactionnelle vers verifying, assemblage privé puis objet file_objects verifying et file_id en transaction ; répétition avec reçu durable revérifie le binaire. Crash intermédiaire retourne reconciliation_required, aucun état ready ou téléchargement. Tests avec doubles, SQL réel non réceptionné.
 
+- **Complément 28/10 :** parcours technique synthétique du contrôleur réel à l’inspection du binaire scellé puis refus d’association : ouverture, reçu, progression, assemblage, verdict structurel et état verifying. L’absence de scanner qualifié maintient le fichier hors état ready ; aucune route activée. Réception PostgreSQL et association effective restent ouvertes.
+
 ### 12.7 — Implémenter pauses pour saturation disque
 - **Statut :** ◐ Garde de capacité explicite — réservation durable différée
 - **Priorité :** Haute
@@ -2205,6 +2207,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Complément 28/10 :** sélection SQL des seules sessions initiales expirées et sans fichier, marquage terminal `aborted` par expiration ou abandon autorisé avec reçu d’audit et libération de la réserve ; suppression bornée des seuls fragments de cette session puis événement de fin, reprise explicite sur interruption. `verifying`/`ready` exclus. Tests avec stockage privé et double SQL ; aucun job automatique ni réception PostgreSQL réelle, politique de rétention des reçus et brouillons locaux encore ouverte.
 
 - **Complément 28/10 :** nettoyage d’un fragment scellé sans reçu SQL démontré avec stockage synthétique ; suppression seulement après marquage durable de la session. Une écriture tardive dont le contrôle final aboutit est retirée sous verrou ; un crash avant ce contrôle reste à réconcilier ; aucun job ni politique de rétention inventée.
+
+- **Complément 28/10 :** réconciliation manuelle d’un fragment arrivé après la fin du nettoyage : exige l’état terminal et les deux événements d’audit sous verrou avant de retirer les seuls indices de cette session. Test synthétique avec fragment tardif ; crash d’un flux encore actif et réception SQL réelle restent ouverts.
 
 ### 12.9 — Implémenter aperçus protégés et permissions fichier
 - **Statut :** ◐ Consultation des métadonnées intégrée — aperçus et réception différés

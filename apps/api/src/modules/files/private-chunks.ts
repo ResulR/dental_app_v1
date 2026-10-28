@@ -65,6 +65,8 @@ export async function createPrivateChunkStore(
     throw new Error("PRIVATE_STORAGE_UNSAFE");
   return {
     verifyObject: objects.verifySealed,
+    inspectObject: (...args: Parameters<typeof objects.inspectSealed>) =>
+      objects.inspectSealed(...args),
     // Only call after a durable, terminal cleanup claim. Never delete objects.
     async discard(uploadId: string, count: number) {
       if (!Number.isSafeInteger(count) || count < 1 || count > 10000)

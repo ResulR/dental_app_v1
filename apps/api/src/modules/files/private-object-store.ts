@@ -3,6 +3,7 @@ import { constants } from "node:fs";
 import { lstat, open, realpath, unlink, link } from "node:fs/promises";
 import path from "node:path";
 import { assertFileSize, FILE_MAX_BYTES } from "./transfer-limits.js";
+import { inspectFileStructure, type FileFormat } from "./format-probe.js";
 
 function within(parent: string, child: string) {
   const relative = path.relative(parent, child);
@@ -84,6 +85,49 @@ export async function createPrivateObjectStore(
         if (hash.digest("hex") !== sha256)
           throw new Error("PRIVATE_OBJECT_INTEGRITY");
         return true;
+      } finally {
+        await handle.close();
+      }
+    },
+    // Structure-only inspection of an authoritative private receipt. No scan,
+    // publication or untrusted path is accepted from a web client.
+    async inspectSealed(
+      objectKey: string,
+      sizeBytes: number,
+      sha256: string,
+      format: FileFormat,
+    ) {
+      if (!/^[0-9a-f]{64}$/.test(objectKey) || !/^[0-9a-f]{64}$/.test(sha256))
+        throw new Error("PRIVATE_OBJECT_IDENTIFIER");
+      assertFileSize(sizeBytes);
+      const handle = await open(
+        path.join(objects, objectKey),
+        constants.O_RDONLY | constants.O_NOFOLLOW,
+      );
+      try {
+        const stat = await handle.stat();
+        if (
+          !stat.isFile() ||
+          stat.size !== sizeBytes ||
+          (stat.mode & 0o222) !== 0
+        )
+          throw new Error("PRIVATE_OBJECT_INTEGRITY");
+        const hash = createHash("sha256");
+        const buffer = Buffer.alloc(64 * 1024);
+        for (let offset = 0; offset < sizeBytes;) {
+          const { bytesRead } = await handle.read(
+            buffer,
+            0,
+            Math.min(buffer.length, sizeBytes - offset),
+            offset,
+          );
+          if (!bytesRead) throw new Error("PRIVATE_OBJECT_INTEGRITY");
+          hash.update(buffer.subarray(0, bytesRead));
+          offset += bytesRead;
+        }
+        if (hash.digest("hex") !== sha256)
+          throw new Error("PRIVATE_OBJECT_INTEGRITY");
+        return await inspectFileStructure(handle, sizeBytes, format);
       } finally {
         await handle.close();
       }

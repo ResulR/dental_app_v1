@@ -4,6 +4,7 @@ import { mkdtemp, mkdir, chmod, readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import { createPrivateChunkStore } from "../../apps/api/src/modules/files/private-chunks.ts";
 import { createUploadSessionController } from "../../apps/api/src/modules/files/upload-session.repository.ts";
+import { prepareNewOrderFiles } from "../../apps/api/src/modules/files/attachment.repository.ts";
 const hash = (v) => createHash("sha256").update(v).digest("hex");
 const actor = { accountId: randomUUID(), sessionId: randomUUID() };
 const clinicId = randomUUID();
@@ -55,9 +56,11 @@ function database(patch = {}) {
             ? "cleanup_claimed"
             : sql.includes("cleanup_completed")
               ? "cleanup_completed"
-              : sql.includes("'aborted'")
-                ? "aborted"
-                : "assembled_private";
+              : sql.includes("'structure_probe'")
+                ? v[1]
+                : sql.includes("'aborted'")
+                  ? "aborted"
+                  : "assembled_private";
           draft.events.push(action);
           return { rows: [] };
         }
@@ -68,6 +71,19 @@ function database(patch = {}) {
             rows: draft.events.includes("cleanup_claimed")
               ? [{ id: randomUUID() }]
               : [],
+          };
+        if (
+          sql.startsWith(
+            "SELECT declared_size::text,chunk_size::text FROM public.upload_sessions",
+          )
+        )
+          return {
+            rows:
+              draft.session?.state === "aborted" &&
+              draft.session.file_id === null &&
+              draft.events.includes("cleanup_completed")
+                ? [draft.session]
+                : [],
           };
         if (sql.startsWith("SELECT action FROM public.file_events"))
           return { rows: draft.events.map((action) => ({ action })) };
@@ -153,6 +169,35 @@ function database(patch = {}) {
           };
         if (sql.startsWith("SELECT object_key"))
           return { rows: draft.file ? [draft.file] : [] };
+        if (sql.startsWith("SELECT id FROM public.file_objects WHERE id=$1"))
+          return {
+            rows:
+              draft.file?.state === "verifying" &&
+              draft.file?.object_key === v[2]
+                ? [{ id: v[0] }]
+                : [],
+          };
+        if (
+          sql.startsWith(
+            "SELECT id,clinic_id,created_by,state,size_bytes::text",
+          )
+        )
+          return {
+            rows: draft.file
+              ? [
+                  {
+                    ...draft.file,
+                    id: draft.session.file_id,
+                    clinic_id: clinicId,
+                    created_by: actor.accountId,
+                    content_sha256: Buffer.from(draft.file.sha256, "hex"),
+                    storage_policy_version: "synthetic-1",
+                    verified_at: null,
+                    media_type_verified: null,
+                  },
+                ]
+              : [],
+          };
         if (sql.startsWith("INSERT INTO public.upload_sessions")) {
           draft.session = {
             id: v[0],
@@ -593,4 +638,60 @@ test("a fragment sealed after a concurrent cleanup claim is removed before rejec
     ).toBe("conflict");
     expect(await readdir(path.join(root, "chunks"))).toHaveLength(0);
     expect(db.state.chunks.size).toBe(0);
+  }));
+
+test("real private transfer assembles, inspects STL and refuses business attachment without qualified scan", async () =>
+  fixture(async ({ db, store, root }) => {
+    const controller = createUploadSessionController(db, store, {
+      ...policy(root),
+      chunkSize: 134,
+      maxSegments: 2,
+    });
+    const stl = Buffer.alloc(134);
+    stl.writeUInt32LE(1, 80);
+    stl.writeFloatLE(1, 96);
+    stl.writeFloatLE(1, 108);
+    const id = (await controller.open(actor, stl.length)).uploadId;
+    expect((await controller.progress(actor, id)).missing).toEqual([0]);
+    expect(
+      (
+        await controller.receive(
+          actor,
+          id,
+          0,
+          hash(stl),
+          source(stl),
+          new globalThis.AbortController().signal,
+        )
+      ).kind,
+    ).toBe("received");
+    expect((await controller.progress(actor, id)).complete).toBe(true);
+    expect(
+      (await controller.finalize(actor, id, hash(stl), "synthetic.stl", "stl"))
+        .kind,
+    ).toBe("awaiting_inspection");
+    expect(await controller.inspect(actor, id)).toEqual({
+      kind: "quarantined",
+      structure: "candidate",
+    });
+    expect(db.state.session.state).toBe("verifying");
+    expect(db.state.file.state).toBe("verifying");
+    expect(db.state.events).toContain("candidate");
+    const attachment = await prepareNewOrderFiles(
+      {
+        query: async (sql, args) => db.transaction((tx) => tx.query(sql, args)),
+      },
+      {
+        actorId: actor.accountId,
+        clinicId,
+        fileIds: [db.state.session.file_id],
+        purpose: "initial_order",
+        sourceOrderId: null,
+      },
+      {
+        storagePolicyVersion: "synthetic-1",
+        capacityPolicyVersion: "synthetic-1",
+      },
+    );
+    expect(attachment).toBeNull();
   }));
