@@ -126,3 +126,22 @@ test("bounded PNG chunk CRC and STL triangle checks reject plausible corruption"
     "unsupported",
   );
 });
+test("bounded ASCII STL validates facet grammar and finite vertices", async () => {
+  const stl = Buffer.from(
+    "solid model\nfacet normal 0 0 1\nouter loop\nvertex 0 0 0\nvertex 1 0 0\nvertex 0 1 0\nendloop\nendfacet\nendsolid model\n",
+  );
+  expect(await probe(stl, "stl")).toBe("candidate");
+  expect(await inspect(stl, "stl")).toBe("candidate");
+  expect(
+    await inspect(
+      Buffer.from(stl.toString().replace("vertex 0 1 0", "vertex NaN 1 0")),
+      "stl",
+    ),
+  ).toBe("rejected");
+  expect(
+    await inspect(
+      Buffer.from(stl.toString().replace("endfacet", "endfaket")),
+      "stl",
+    ),
+  ).toBe("rejected");
+});

@@ -87,9 +87,13 @@ export async function probeFileFormat(
         ? "candidate"
         : "rejected";
     case "stl": {
-      if (sizeBytes < 84) return "rejected";
-      const faces = head.readUInt32LE(80);
-      return 84 + faces * 50 === sizeBytes && faces > 0
+      if (sizeBytes >= 84) {
+        const faces = head.readUInt32LE(80);
+        if (84 + faces * 50 === sizeBytes && faces > 0) return "candidate";
+      }
+      return sizeBytes <= 4 * 1024 * 1024 &&
+        /^solid(?:[ \t][^\r\n]*)?\r?\n/i.test(text) &&
+        /\r?\nendsolid(?:[ \t][^\r\n]*)?\s*$/i.test(tail.toString("utf8"))
         ? "candidate"
         : "rejected";
     }
@@ -120,6 +124,56 @@ export async function inspectFileStructure(
   if (sizeBytes > 16 * 1024 * 1024) return "unsupported";
   if (expected === "stl") {
     const header = await bytesAt(file, 84, 0);
+    const facesBinary = header.length === 84 ? header.readUInt32LE(80) : 0;
+    if (84 + facesBinary * 50 !== sizeBytes || facesBinary === 0) {
+      if (sizeBytes > 4 * 1024 * 1024) return "unsupported";
+      const content = await bytesAt(file, sizeBytes, 0);
+      if (content.length !== sizeBytes) return "rejected";
+      let text: string;
+      try {
+        text = new TextDecoder("utf-8", { fatal: true }).decode(content);
+      } catch {
+        return "rejected";
+      }
+      const lines = text
+        .trim()
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+      if (
+        lines.length < 9 ||
+        !/^solid(?:\s+.*)?$/i.test(lines[0]!) ||
+        !/^endsolid(?:\s+.*)?$/i.test(lines.at(-1)!) ||
+        (lines.length - 2) % 7 !== 0 ||
+        (lines.length - 2) / 7 > 10000
+      )
+        return "rejected";
+      const number = "[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?";
+      const triple = new RegExp(
+        "^(" + number + ")\\s+(" + number + ")\\s+(" + number + ")$",
+        "i",
+      );
+      const vector = (line: string, prefix: string) => {
+        const match = triple.exec(line.slice(prefix.length));
+        return (
+          line.toLowerCase().startsWith(prefix) &&
+          match !== null &&
+          match.slice(1).every((value) => Number.isFinite(Number(value)))
+        );
+      };
+      for (let i = 1; i < lines.length - 1; i += 7)
+        if (
+          !vector(lines[i]!, "facet normal ") ||
+          lines[i + 1]!.toLowerCase() !== "outer loop" ||
+          !vector(lines[i + 2]!, "vertex ") ||
+          !vector(lines[i + 3]!, "vertex ") ||
+          !vector(lines[i + 4]!, "vertex ") ||
+          lines[i + 5]!.toLowerCase() !== "endloop" ||
+          lines[i + 6]!.toLowerCase() !== "endfacet"
+        )
+          return "rejected";
+      return "candidate";
+    }
     if (header.length !== 84) return "rejected";
     const faces = header.readUInt32LE(80);
     if (faces > 100_000) return "unsupported";
