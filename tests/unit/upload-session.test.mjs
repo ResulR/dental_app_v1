@@ -61,6 +61,14 @@ function database(patch = {}) {
           draft.events.push(action);
           return { rows: [] };
         }
+        if (
+          sql.startsWith("SELECT id FROM public.file_events WHERE upload_id=$1")
+        )
+          return {
+            rows: draft.events.includes("cleanup_claimed")
+              ? [{ id: randomUUID() }]
+              : [],
+          };
         if (sql.startsWith("SELECT action FROM public.file_events"))
           return { rows: draft.events.map((action) => ({ action })) };
         if (
@@ -451,7 +459,7 @@ test("serialized admission double accepts at most one reservation within explici
 test("expired unfinished upload is claimed and cleaned once; failed removal resumes", async () => {
   const flags = { expired: false };
   return fixture(async ({ root, db, store, controller }) => {
-    const id = (await controller.open(actor, 3)).uploadId;
+    const id = (await controller.open(actor, 6)).uploadId;
     await controller.receive(
       actor,
       id,
@@ -460,13 +468,22 @@ test("expired unfinished upload is claimed and cleaned once; failed removal resu
       source("abc"),
       new globalThis.AbortController().signal,
     );
-    expect(await readdir(path.join(root, "chunks"))).toHaveLength(1);
+    // Deliberately sealed without a SQL receipt: interrupted request.
+    await store.put(
+      id,
+      { index: 1, sizeBytes: 3, sha256: hash("def") },
+      source("def"),
+      new globalThis.AbortController().signal,
+      3,
+    );
+    expect(db.state.chunks.size).toBe(1);
+    expect(await readdir(path.join(root, "chunks"))).toHaveLength(2);
     flags.expired = true;
     const constrained = createUploadSessionController(db, store, {
       ...policy(root),
-      maxReservedBytes: 6,
+      maxReservedBytes: 12,
     });
-    expect((await constrained.open(actor, 3)).kind).toBe("capacity");
+    expect((await constrained.open(actor, 6)).kind).toBe("capacity");
     let fail = true;
     const interrupted = createUploadSessionController(
       db,
@@ -545,4 +562,35 @@ test("owner abort releases reservation once and retains receipt audit until targ
       { uploadId: id, kind: "cleaned" },
     ]);
     expect(await readdir(path.join(root, "chunks"))).toHaveLength(0);
+  }));
+
+test("a fragment sealed after a concurrent cleanup claim is removed before rejecting its receipt", async () =>
+  fixture(async ({ root, db, store, controller }) => {
+    const id = (await controller.open(actor, 3)).uploadId;
+    const racing = createUploadSessionController(
+      db,
+      {
+        ...store,
+        put: async (...args) => {
+          await controller.abort(actor, id);
+          await controller.cleanupExpired(1);
+          await store.put(...args);
+        },
+      },
+      policy(root),
+    );
+    expect(
+      (
+        await racing.receive(
+          actor,
+          id,
+          0,
+          hash("abc"),
+          source("abc"),
+          new globalThis.AbortController().signal,
+        )
+      ).kind,
+    ).toBe("conflict");
+    expect(await readdir(path.join(root, "chunks"))).toHaveLength(0);
+    expect(db.state.chunks.size).toBe(0);
   }));

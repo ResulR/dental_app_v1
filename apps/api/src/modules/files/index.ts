@@ -17,7 +17,7 @@ export { readOrderFileMetadata } from "./metadata.repository.js";
 export { prepareMessageFiles } from "./message-attachments.repository.js";
 export { readMessageFileMetadata } from "./message-metadata.repository.js";
 export { createPrivateObjectStore } from "./private-object-store.js";
-export { probeFileFormat } from "./format-probe.js";
+export { probeFileFormat, inspectFileStructure } from "./format-probe.js";
 export { createPrivateChunkStore } from "./private-chunks.js";
 export { uploadProgress } from "./upload-progress.js";
 export { requireDiskHeadroom } from "./disk-headroom.js";

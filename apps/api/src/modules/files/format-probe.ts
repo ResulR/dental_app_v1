@@ -107,3 +107,115 @@ export async function probeFileFormat(
         : "rejected";
   }
 }
+
+// Stronger bounded structural checks for two formats. A candidate is still
+// quarantined: neither malware safety nor full decoding is established here.
+export async function inspectFileStructure(
+  file: FileHandle,
+  sizeBytes: number,
+  expected: FileFormat,
+): Promise<"candidate" | "rejected" | "unsupported"> {
+  if ((await probeFileFormat(file, sizeBytes, expected)) !== "candidate")
+    return "rejected";
+  if (sizeBytes > 16 * 1024 * 1024) return "unsupported";
+  if (expected === "stl") {
+    const header = await bytesAt(file, 84, 0);
+    if (header.length !== 84) return "rejected";
+    const faces = header.readUInt32LE(80);
+    if (faces > 100_000) return "unsupported";
+    if (faces < 1 || 84 + faces * 50 !== sizeBytes) return "rejected";
+    for (let index = 0; index < faces; index++) {
+      const face = await bytesAt(file, 50, 84 + index * 50);
+      if (face.length !== 50 || face.readUInt16LE(48) !== 0) return "rejected";
+      for (let coordinate = 0; coordinate < 12; coordinate++)
+        if (!Number.isFinite(face.readFloatLE(coordinate * 4)))
+          return "rejected";
+    }
+    return "candidate";
+  }
+  if (expected !== "png") return "unsupported";
+  let offset = 8,
+    chunks = 0,
+    image = false,
+    data = false,
+    ended = false;
+  while (offset + 12 <= sizeBytes && ++chunks <= 512) {
+    const header = await bytesAt(file, 8, offset);
+    if (header.length !== 8) return "rejected";
+    const length = header.readUInt32BE(0);
+    const type = header.subarray(4, 8).toString("ascii");
+    if (
+      length > 16 * 1024 * 1024 ||
+      !/^[A-Za-z]{4}$/.test(type) ||
+      offset + 12 + length > sizeBytes
+    )
+      return "rejected";
+    if (!image && (type !== "IHDR" || length !== 13)) return "rejected";
+    if (image && type === "IHDR") return "rejected";
+    if (
+      !["IHDR", "PLTE", "IDAT", "IEND"].includes(type) &&
+      type[0] === type[0]!.toUpperCase()
+    )
+      return "rejected";
+    const crc = await bytesAt(file, 4, offset + 8 + length);
+    if (crc.length !== 4) return "rejected";
+    let checksum = 0xffffffff;
+    const buffer = Buffer.alloc(64 * 1024);
+    for (let cursor = offset + 4; cursor < offset + 8 + length;) {
+      const { bytesRead } = await file.read(
+        buffer,
+        0,
+        Math.min(buffer.length, offset + 8 + length - cursor),
+        cursor,
+      );
+      if (!bytesRead) return "rejected";
+      // Incremental CRC avoids retaining a large IDAT chunk.
+      for (let i = 0; i < bytesRead; i++) {
+        checksum ^= buffer[i]!;
+        for (let bit = 0; bit < 8; bit++)
+          checksum = (checksum >>> 1) ^ (checksum & 1 ? 0xedb88320 : 0);
+      }
+      cursor += bytesRead;
+    }
+    if ((checksum ^ 0xffffffff) >>> 0 !== crc.readUInt32BE(0))
+      return "rejected";
+    if (type === "IHDR") {
+      const ihdr = await bytesAt(file, 13, offset + 8);
+      const width = ihdr.readUInt32BE(0),
+        height = ihdr.readUInt32BE(4);
+      if (
+        !width ||
+        !height ||
+        width > 10000 ||
+        height > 10000 ||
+        width * height > 50_000_000 ||
+        ihdr[10] !== 0 ||
+        ihdr[11] !== 0 ||
+        ihdr[12] !== 0 ||
+        !(
+          {
+            0: [1, 2, 4, 8, 16],
+            2: [8, 16],
+            3: [1, 2, 4, 8],
+            4: [8, 16],
+            6: [8, 16],
+          } as Record<number, number[]>
+        )[ihdr[9]!]?.includes(ihdr[8]!)
+      )
+        return "rejected";
+      image = true;
+    }
+    if (type === "IDAT") {
+      if (!length) return "rejected";
+      data = true;
+    }
+    if (type === "IEND") {
+      if (length || !data || offset + 12 !== sizeBytes) return "rejected";
+      ended = true;
+      break;
+    }
+    offset += 12 + length;
+  }
+  if (chunks > 512) return "unsupported";
+  return ended && image ? "candidate" : "rejected";
+}

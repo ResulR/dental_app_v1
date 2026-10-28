@@ -69,3 +69,60 @@ test("truncation, spoofed headers, impossible STL counts and unknown format are 
   expect(await probe(Buffer.from("hello"), "obj")).toBe("rejected");
   expect(await probe(Buffer.from("hello"), "zip")).toBe("rejected");
 });
+import { inspectFileStructure } from "../../apps/api/src/modules/files/format-probe.ts";
+async function inspect(bytes, format) {
+  const dir = await mkdtemp(
+    path.join(process.cwd(), ".local", "dental-structure-synthetic-"),
+  );
+  try {
+    const name = path.join(dir, "private-object");
+    await writeFile(name, bytes);
+    const handle = await open(name, "r");
+    try {
+      return await inspectFileStructure(handle, bytes.length, format);
+    } finally {
+      await handle.close();
+    }
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+}
+function pngChunk(type, data) {
+  const name = Buffer.from(type);
+  const length = Buffer.alloc(4);
+  length.writeUInt32BE(data.length);
+  let crc = 0xffffffff;
+  for (const byte of Buffer.concat([name, data])) {
+    crc ^= byte;
+    for (let i = 0; i < 8; i++) crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
+  }
+  const check = Buffer.alloc(4);
+  check.writeUInt32BE((crc ^ 0xffffffff) >>> 0);
+  return Buffer.concat([length, name, data, check]);
+}
+test("bounded PNG chunk CRC and STL triangle checks reject plausible corruption", async () => {
+  const ihdr = Buffer.from([0, 0, 0, 1, 0, 0, 0, 1, 8, 2, 0, 0, 0]);
+  const png = Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    pngChunk("IHDR", ihdr),
+    pngChunk("IDAT", Buffer.from([1, 2, 3])),
+    pngChunk("IEND", Buffer.alloc(0)),
+  ]);
+  expect(await inspect(png, "png")).toBe("candidate");
+  const altered = Buffer.from(png);
+  altered[42] ^= 1;
+  expect(await inspect(altered, "png")).toBe("rejected");
+  const stl = Buffer.alloc(134);
+  stl.writeUInt32LE(1, 80);
+  for (const [offset, value] of [
+    [96, 1],
+    [108, 1],
+  ])
+    stl.writeFloatLE(value, offset);
+  expect(await inspect(stl, "stl")).toBe("candidate");
+  stl.writeFloatLE(Infinity, 96);
+  expect(await inspect(stl, "stl")).toBe("rejected");
+  expect(await inspect(Buffer.from("%PDF-1.7\n%%EOF\n"), "pdf")).toBe(
+    "unsupported",
+  );
+});

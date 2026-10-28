@@ -63,7 +63,7 @@ async function load(
     received_bytes::text,revision::text,state,file_id FROM public.upload_sessions
     WHERE id=$1 AND account_id=$2 AND clinic_id=$3 AND intended_kind='initial_order'
       AND intended_order_id IS NULL AND intended_conversation_id IS NULL
-      AND (expires_at>statement_timestamp() OR state='verifying') ${lock}`,
+      AND (expires_at>statement_timestamp() OR state IN ('verifying','aborted')) ${lock}`,
     [id, actor.accountId, clinicId],
   );
   return r.rows.length === 1 ? r.rows[0]! : null;
@@ -334,6 +334,18 @@ export function createUploadSessionController(
       return db.transaction(async (tx) => {
         const row = await load(tx, actor, id, "FOR UPDATE");
         if (!row) return { kind: "denied" as const };
+        if (row.state === "aborted" && row.file_id === null) {
+          const marked = await tx.query(
+            "SELECT id FROM public.file_events WHERE upload_id=$1 AND process_code='upload_cleanup' AND action='cleanup_claimed' LIMIT 1",
+            [id],
+          );
+          if (marked.rows.length === 1)
+            await store.discard(
+              id,
+              Math.ceil(Number(row.declared_size) / before.chunkSize),
+            );
+          return { kind: "conflict" as const };
+        }
         if (
           !["initialized", "receiving"].includes(row.state) ||
           Number(row.chunk_size) !== before.chunkSize ||

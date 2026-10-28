@@ -2088,6 +2088,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Complément 28/10 :** filtre de contenu borné pour sept familles, refuse les signatures incohérentes et les troncatures simples ; ne donne jamais un verdict de validation complète ou d’analyse anti-malware. Parser robuste par format et scanner opérationnel restent nécessaires.
 
+- **Complément 28/10 :** inspection structurelle bornée ajoutée pour STL binaire (faces et nombres finis) et PNG (chunks, dimensions, CRC) ; tests de corruptions synthétiques. JPG, HEIC, PDF, PLY et OBJ restent sans parseur complet. Même un candidat structurel reste en quarantaine sans scan anti-malware qualifié ; statut ◐.
+
 ### 12.3 — Implémenter limites 200 Mo / 1 Go par commande
 - **Statut :** ◐ Contrôles préparés — branchement transferts différé
 - **Implémentation20/10 :** limites décimales, tailles réelles en flux, doublons et erreurs fermées dans files/transfer-limits ; voir docs/TRANSFER_LIMITS.md. Aucun upload activé.
@@ -2202,6 +2204,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Complément 28/10 :** sélection SQL des seules sessions initiales expirées et sans fichier, marquage terminal `aborted` par expiration ou abandon autorisé avec reçu d’audit et libération de la réserve ; suppression bornée des seuls fragments de cette session puis événement de fin, reprise explicite sur interruption. `verifying`/`ready` exclus. Tests avec stockage privé et double SQL ; aucun job automatique ni réception PostgreSQL réelle, politique de rétention des reçus et brouillons locaux encore ouverte.
 
+- **Complément 28/10 :** nettoyage d’un fragment scellé sans reçu SQL démontré avec stockage synthétique ; suppression seulement après marquage durable de la session. Une écriture tardive dont le contrôle final aboutit est retirée sous verrou ; un crash avant ce contrôle reste à réconcilier ; aucun job ni politique de rétention inventée.
+
 ### 12.9 — Implémenter aperçus protégés et permissions fichier
 - **Statut :** ◐ Consultation des métadonnées intégrée — aperçus et réception différés
 - **Avancement 20/10/2026 :** API privée paginée `/api/v1/orders/files`, version courante et clinique vérifiées, droits détaillés + files.view côté laboratoire. Panneau albanais branché à la fiche commande/retouche. Aucun binaire, hash ou chemin exposé ; téléchargement explicitement indisponible. Tests unitaires/HTTP avec doubles, aucune recette PostgreSQL ou navigateur réelle.
@@ -2217,6 +2221,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Complément 28/10 :** dépôt interne de décision de téléchargement pour une commande et sa version courante, association SQL, fichier/session ready, identité actuelle et permission files.download distincte pour le personnel. Port de lecture scellée en blocs avec vérification préalable SHA-256 testé sur fichiers synthétiques. Aucune route binaire ni accès public : scanner, parseurs complets, révocation durant flux et réception SQL restent ouverts ; statut ◐.
 
 ### 12.10 — Implémenter fichiers de suivi internes
 - **Statut :** ☐ À faire
