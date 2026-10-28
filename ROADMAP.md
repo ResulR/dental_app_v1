@@ -1682,6 +1682,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Interface16/10 :** File paginée pending/accepted, instructions/snapshots historiques, permissions détaillées et décisions versionnées ; relecture imposée après toute décision ou résultat incertain. Les autres files et le suivi clinique restent ouverts.
 
+- **Complément 28/10 :** Après une décision ou une réponse incertaine, la revue conserve l’identifiant et propose une relecture autorisée de la fiche : statut et historique des événements visibles sans rejouer l’action. Tests ciblés hors navigateur ; réception SQL/navigateur toujours ouverte, statut ◐ maintenu.
+
 ### 10.3 — Implémenter demande et renvoi de correction
 - **Statut :** ◐ Correction et renvoi intégrés — fichiers et réceptions différés
 - **Priorité :** Critique

@@ -4,11 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import type {
   EffectivePermissionsSchema,
   OrderReviewPageSchema,
+  OrderTrackingDetailSchema,
 } from "@dental-lab/contracts";
 import { createOrderDecisionClient } from "./decision-api.js";
 import { Button } from "../../shared/Button.js";
+import { orderStatusLabels } from "./status-labels.js";
 type Page = ReturnType<typeof OrderReviewPageSchema.parse>;
 const api = createOrderDecisionClient();
+const tracking = createOrderTrackingClient();
 const statusLabels = {
   pending: "Në pritje",
   accepted: "E pranuar",
@@ -37,6 +40,13 @@ export function OrderReviewPanel({
     [confirm, setConfirm] = useState(false),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
+  const [toVerify, setToVerify] = useState<{
+    id: string;
+    number: string;
+  } | null>(null);
+  const [verified, setVerified] = useState<ReturnType<
+    typeof OrderTrackingDetailSchema.parse
+  > | null>(null);
   const pending = useRef<AbortController | null>(null);
   useEffect(
     () => () => {
@@ -117,6 +127,8 @@ export function OrderReviewPanel({
         : action === "reject"
           ? { ...base, action, reason: reason.trim() }
           : { ...base, action };
+    setToVerify({ id: item.id, number: item.number });
+    setVerified(null);
     await run(async (signal) => {
       const result = await api.decide(command, signal);
       if (signal.aborted) return;
@@ -137,6 +149,19 @@ export function OrderReviewPanel({
               ? "Pranimi i referencës së padisponueshme kërkon konfirmim dhe arsyetim. Ringarkoni dhe shqyrtoni porosinë."
               : "Versioni ose statusi ndryshoi. Ringarkoni përpara vendimit.",
       );
+    });
+  }
+  async function verifyDecision() {
+    if (!toVerify) return;
+    const target = toVerify;
+    setVerified(null);
+    await run(async (signal) => {
+      const detail = await tracking.detail({ order_id: target.id }, signal);
+      if (signal.aborted) return;
+      if (detail.order.id !== target.id)
+        throw new Error("ORDER_DECISION_VERIFICATION_MISMATCH");
+      setVerified(detail);
+      setMessage("Gjendja aktuale u rilexua nga serveri.");
     });
   }
   return (
@@ -268,7 +293,41 @@ export function OrderReviewPanel({
             )}
         </fieldset>
       )}
+      {toVerify && (
+        <Button disabled={busy} onClick={() => void verifyDecision()}>
+          Verifiko gjendjen e porosisë nr. {toVerify.number}
+        </Button>
+      )}
+      {verified && <DecisionVerification detail={verified} />}
       {message && <p role="status">{message}</p>}
+    </section>
+  );
+}
+
+export function DecisionVerification({
+  detail,
+}: {
+  detail: ReturnType<typeof OrderTrackingDetailSchema.parse>;
+}) {
+  return (
+    <section aria-label="Rezultati i verifikuar i vendimit">
+      <p role="status">
+        Porosia nr. {detail.order.number}:{" "}
+        {orderStatusLabels[detail.order.status]}.
+      </p>
+      <h4>Historiku i statuseve</h4>
+      <ol>
+        {detail.history.map((event) => (
+          <li key={event.aggregate_revision}>
+            {event.occurred_at} · {orderStatusLabels[event.next_status]} · r
+            {event.aggregate_revision}
+            {event.reason && <p>{event.reason}</p>}
+          </li>
+        ))}
+      </ol>
+      {detail.next_before_revision && (
+        <p>Historiku më i vjetër gjendet në ndjekjen e porosive.</p>
+      )}
     </section>
   );
 }

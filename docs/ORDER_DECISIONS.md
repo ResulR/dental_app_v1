@@ -17,3 +17,15 @@ GET /api/v1/orders/review retourne au plus50commandes pending/accepted par curse
 Interface albanaise reliée aux API : sélection de la version, motif de refus/exception, confirmation d’exception commerciale, acceptation/refus/démarrage selon permissions effectives. Toute décision envoie version ET révision affichées. Résultat incertain, conflit, refus ou succès invalident la liste ; une relecture explicite est nécessaire. Aucun retry automatique, cache patient ou stockage local. PermissionBoundary transmet seulement le snapshot courant déjà vérifié ; aucune permission n’est déduite de la seule identité de session.
 
 La file ne remplace pas le suivi clinique9.8, l’historique consultable complet ni toutes les actions10.14. Recette navigateur différée ; aucune affirmation de validation tactile/clavier/lecteur.
+
+## Vérification après décision
+
+La revue conserve l'identifiant de la commande avant l'appel de décision.
+Après succès, conflit ou réponse réseau incertaine, le laboratoire peut relire
+explicitement la fiche via le suivi privé ; le statut courant et l'historique
+des événements sont alors affichés, y compris si un refus retire la commande
+de la file pending/accepted. Cette lecture exige toujours les permissions
+serveur du suivi et ne répète jamais la mutation. Un échec de lecture ne
+présume pas que la décision a échoué. Le rendu et les routes sont testés hors
+navigateur ; réception navigateur et PostgreSQL propre à ces décisions restent
+ouvertes.
