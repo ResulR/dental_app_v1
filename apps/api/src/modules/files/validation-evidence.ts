@@ -50,6 +50,7 @@ export function createValidationEvidence(
   )
     throw new Error("FILE_VALIDATION_POLICY_REQUIRED");
   return {
+    policyVersion: policy.version,
     async inspect(object: ObjectReceipt, signal: AbortSignal) {
       if (
         !keyPattern.test(object.objectKey) ||

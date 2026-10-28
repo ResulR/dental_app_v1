@@ -5,6 +5,7 @@ import path from "node:path";
 import { createPrivateChunkStore } from "../../apps/api/src/modules/files/private-chunks.ts";
 import { createUploadSessionController } from "../../apps/api/src/modules/files/upload-session.repository.ts";
 import { prepareNewOrderFiles } from "../../apps/api/src/modules/files/attachment.repository.ts";
+import { createValidationEvidence } from "../../apps/api/src/modules/files/validation-evidence.ts";
 const hash = (v) => createHash("sha256").update(v).digest("hex");
 const actor = { accountId: randomUUID(), sessionId: randomUUID() };
 const clinicId = randomUUID();
@@ -22,7 +23,13 @@ const source = async function* (v) {
   yield Buffer.from(v);
 };
 function database(patch = {}) {
-  let state = { session: null, chunks: new Map(), file: null, events: [] };
+  let state = {
+    session: null,
+    chunks: new Map(),
+    file: null,
+    events: [],
+    attempts: [],
+  };
   let queue = Promise.resolve();
   const transaction = (fn) => {
     const task = queue.then(async () => {
@@ -31,6 +38,7 @@ function database(patch = {}) {
         chunks: new Map(state.chunks),
         file: state.file && { ...state.file },
         events: [...state.events],
+        attempts: [...state.attempts],
       };
       const query = async (sql, v = []) => {
         if (sql.startsWith("SELECT s.id,s.declared_size::text"))
@@ -173,10 +181,18 @@ function database(patch = {}) {
           return {
             rows:
               draft.file?.state === "verifying" &&
-              draft.file?.object_key === v[2]
+              draft.file?.object_key === v[2] &&
+              (!sql.includes("size_bytes=$4") ||
+                (draft.file.size_bytes === String(v[3]) &&
+                  draft.file.sha256 === v[4] &&
+                  draft.file.format === v[5]))
                 ? [{ id: v[0] }]
                 : [],
           };
+        if (sql.startsWith("INSERT INTO public.file_validation_attempts")) {
+          draft.attempts.push(v);
+          return { rows: [] };
+        }
         if (
           sql.startsWith(
             "SELECT id,clinic_id,created_by,state,size_bytes::text",
@@ -695,4 +711,94 @@ test("real private transfer assembles, inspects STL and refuses business attachm
       },
     );
     expect(attachment).toBeNull();
+  }));
+
+test("inspection persists only matched synthetic evidence against the locked object and stays private", async () =>
+  fixture(async ({ db, store, root }) => {
+    const stl = Buffer.alloc(134);
+    stl.writeUInt32LE(1, 80);
+    stl.writeFloatLE(1, 96);
+    stl.writeFloatLE(1, 108);
+    const settings = { ...policy(root), chunkSize: stl.length, maxSegments: 2 };
+    const checks = {
+      version: "p1",
+      parserVersion: "parser1",
+      scannerVersion: "scanner1",
+    };
+    const check =
+      (version, mutate = {}) =>
+      async (receipt) => ({
+        ...receipt,
+        verdict: "clean",
+        version,
+        reference: "synthetic:only",
+        ...mutate,
+      });
+    const validation = createValidationEvidence(
+      store.verifyObject,
+      check("parser1"),
+      check("scanner1"),
+      checks,
+    );
+    const controller = createUploadSessionController(
+      db,
+      store,
+      settings,
+      validation,
+    );
+    const id = (await controller.open(actor, stl.length)).uploadId;
+    await controller.receive(
+      actor,
+      id,
+      0,
+      hash(stl),
+      source(stl),
+      new globalThis.AbortController().signal,
+    );
+    await controller.finalize(actor, id, hash(stl), "synthetic.stl", "stl");
+    expect(await controller.inspect(actor, id)).toEqual({
+      kind: "quarantined",
+      structure: "candidate",
+      validation: "evidence",
+    });
+    const attempt = db.state.attempts[0];
+    expect(attempt.slice(0, 7)).toEqual([
+      id,
+      db.state.session.file_id,
+      clinicId,
+      db.state.file.object_key,
+      String(stl.length),
+      hash(stl),
+      "p1",
+    ]);
+    expect(attempt.slice(7)).toEqual([
+      "parser1",
+      "synthetic:only",
+      "scanner1",
+      "synthetic:only",
+      "candidate",
+      "checks_matched",
+    ]);
+    const stale = createUploadSessionController(
+      db,
+      store,
+      settings,
+      createValidationEvidence(
+        store.verifyObject,
+        check("parser1", { objectKey: "f".repeat(64) }),
+        check("scanner1"),
+        checks,
+      ),
+    );
+    expect((await stale.inspect(actor, id)).validation).toBe("blocked");
+    expect(db.state.attempts[1].slice(7)).toEqual([
+      null,
+      null,
+      null,
+      null,
+      "blocked",
+      "checks_incomplete",
+    ]);
+    expect(db.state.session.state).toBe("verifying");
+    expect(db.state.file.state).toBe("verifying");
   }));

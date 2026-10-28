@@ -504,10 +504,67 @@ export function createUploadSessionController(
               new AbortController().signal,
             )
           : { kind: "blocked" as const };
+      const persisted = validation
+        ? await db.transaction(async (tx) => {
+            const row = await load(tx, actor, id, "FOR UPDATE");
+            if (
+              !row ||
+              row.state !== "verifying" ||
+              row.file_id !== receipt.fileId ||
+              row.clinic_id !== receipt.clinicId
+            )
+              throw new Error("UPLOAD_INSPECTION_CONFLICT");
+            const current = await tx.query(
+              `SELECT id FROM public.file_objects WHERE id=$1 AND clinic_id=$2
+             AND state='verifying' AND object_key=$3 AND size_bytes=$4
+             AND content_sha256=decode($5,'hex') AND format=$6 FOR SHARE`,
+              [
+                receipt.fileId,
+                receipt.clinicId,
+                receipt.object_key,
+                receipt.size_bytes,
+                receipt.sha256,
+                receipt.format,
+              ],
+            );
+            if (current.rows.length !== 1)
+              throw new Error("UPLOAD_INSPECTION_CONFLICT");
+            const matched =
+              evidence.kind === "evidence" &&
+              evidence.policyVersion === validation.policyVersion &&
+              evidence.object.objectKey === receipt.object_key &&
+              evidence.object.sizeBytes === Number(receipt.size_bytes) &&
+              evidence.object.sha256 === receipt.sha256 &&
+              evidence.object.format === receipt.format;
+            await tx.query(
+              `INSERT INTO public.file_validation_attempts
+             (upload_id,file_id,clinic_id,object_key,size_bytes,content_sha256,
+              policy_version,parser_version,parser_reference,scanner_version,
+              scanner_reference,verdict,reason)
+             VALUES($1,$2,$3,$4,$5,decode($6,'hex'),$7,$8,$9,$10,$11,$12,$13)`,
+              [
+                id,
+                receipt.fileId,
+                receipt.clinicId,
+                receipt.object_key,
+                receipt.size_bytes,
+                receipt.sha256,
+                validation.policyVersion,
+                matched ? evidence.parser.version : null,
+                matched ? evidence.parser.reference : null,
+                matched ? evidence.scanner.version : null,
+                matched ? evidence.scanner.reference : null,
+                matched ? "candidate" : "blocked",
+                matched ? "checks_matched" : "checks_incomplete",
+              ],
+            );
+            return matched;
+          })
+        : false;
       return {
         kind: "quarantined" as const,
         structure: verdict,
-        validation: evidence.kind,
+        validation: persisted ? ("evidence" as const) : ("blocked" as const),
       };
     },
     async finalize(
