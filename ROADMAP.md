@@ -2674,7 +2674,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 15.6 — Implémenter synchronisation des brouillons serveur
-- **Statut :** ☐ À faire
+- **Statut :** ◐ API textuelle conditionnelle préparée derrière `DENTAL_LAB_DRAFT_SYNC_ENABLED=false` : création, lecture cloisonnée, révision CAS, tombstone, reçus idempotents et reprise par même intention ; droits et état clinique revérifiés dans la transaction. Tests avec doubles uniquement ; liste API bornée disponible, découverte dans l’interface/coffre, fichiers et réception PostgreSQL/navigateur restent à faire. Aucune activation.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** PWA, hors ligne et brouillons
@@ -2689,7 +2689,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 15.7 — Implémenter détection des conflits
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Le serveur renvoie un conflit sur révision obsolète et sur réutilisation contradictoire d'une clé idempotente, sans écrire. La lecture du tombstone est cloisonnée. Choix explicite serveur/clone local, fichiers et tests multi-appareils restent à faire ; aucun conflit n'est résolu automatiquement.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** PWA, hors ligne et brouillons

@@ -1,3 +1,9 @@
+import { draftSyncEnabled } from "./draft-sync-config.js";
+import {
+  createDraftSyncService,
+  registerDraftSyncRoutes,
+  assertDraftSyncReady,
+} from "../modules/drafts/index.js";
 import { auditReadEnabled } from "./audit-read-config.js";
 import { internalNoticesEnabled } from "./internal-notices-config.js";
 import {
@@ -174,6 +180,7 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableDraftSync = draftSyncEnabled(env);
   const enableInternalNotices = internalNoticesEnabled(env);
   const enableGeneralMessaging = generalMessagingEnabled(env);
   const enableOrderMessaging = orderMessagingEnabled(env);
@@ -207,6 +214,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     // Fail startup, without creating/migrating anything, if required objects or
     // read privileges are absent. Every checkout also enforces runtime identity.
     await assertAuthStorageReady(database);
+    if (enableDraftSync) await assertDraftSyncReady(database);
     if (enableInternalNotices) await assertInternalNoticeReady(database);
     if (enableGeneralMessaging || enableOrderMessaging)
       await assertGeneralMessagingReady(database);
@@ -407,6 +415,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
         if (enableOrderDecision)
           registerOrderDecisionRoutes(app, {
             service: createOrderDecisionService(database),
+            sessions,
+            origin: config.origin,
+          });
+        if (enableDraftSync)
+          registerDraftSyncRoutes(app, {
+            service: createDraftSyncService(database),
             sessions,
             origin: config.origin,
           });
