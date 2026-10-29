@@ -2346,7 +2346,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 13.4 — Implémenter temps réel et reconnexion
-- **Statut :** ◐ Rattrapage incrémental borné, interrogation toutes les 10 s en onglet visible, reprise réseau et déduplication intégrés. Un cycle limité à cinq pages reste signalé comme incomplet jusqu'au cycle suivant ; relecture refusée efface le contenu local. Tests avec doubles (43 ciblés). Bundle PostgreSQL v6 isolé préparé avec fixture, runner et empreintes (docs/MESSAGING_RECEPTION_V6_PROPOSAL.md), **non exécuté**, donc concurrence SQL et navigateur multi-session non réceptionnés. Aucun nouveau service.
+- **Statut :** ◐ Rattrapage incrémental borné, interrogation toutes les 10 s en onglet visible, reprise réseau et déduplication intégrés. Un cycle limité à cinq pages reste signalé comme incomplet jusqu'au cycle suivant ; relecture refusée efface le contenu local. Les pages de reprise contrôlent maintenant conversation, contiguïté, curseur et fraîcheur avant fusion ; tests adversariaux hors navigateur. Tests avec doubles (43 ciblés précédemment). Bundle PostgreSQL v6 isolé préparé avec fixture, runner et empreintes (docs/MESSAGING_RECEPTION_V6_PROPOSAL.md), **non exécuté**, donc concurrence SQL et navigateur multi-session non réceptionnés. Aucun nouveau service.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel

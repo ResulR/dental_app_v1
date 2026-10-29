@@ -84,7 +84,7 @@ test("catch-up fetches every bounded forward page before considering newest sequ
         query.after_seq === undefined ? page(101, 150) : page(1, 10),
       () => {},
     ),
-  ).rejects.toThrow("MESSAGE_CATCH_UP_STALLED");
+  ).rejects.toThrow("MESSAGE_CATCH_UP_GAP");
 });
 test("large reconnection backlog remains visibly incomplete until subsequent bounded catch-up", async () => {
   let current = page(1, 10);
@@ -119,4 +119,49 @@ test("versioned backfill adds missing sides with zero cursor without rewriting e
   expect(sql).toMatch(/NOT EXISTS/);
   expect(sql).toMatch(/ON CONFLICT \(conversation_id,side\) DO NOTHING/);
   expect(sql).not.toMatch(/UPDATE public\.conversation_reads/);
+});
+
+test("reconnection refuses missing sequences, foreign pages and stale snapshots before merging", async () => {
+  const current = page(1, 10);
+  for (const fresh of [
+    {
+      ...page(11, 12),
+      conversation_id: "91000000-0000-4000-8000-000000000002",
+    },
+    {
+      ...page(11, 12),
+      messages: [page(11, 11).messages[0], page(13, 13).messages[0]],
+    },
+    page(1, 9),
+  ]) {
+    const accepted = [];
+    await expect(
+      catchUpMessages(
+        current,
+        async () => fresh,
+        (p) => accepted.push(p),
+      ),
+    ).rejects.toThrow();
+    expect(accepted).toEqual([]);
+  }
+  for (const forward of [
+    page(12, 13),
+    page(11, 12, { next_after_seq: 11 }),
+    page(11, 12, { last_message_seq: 13 }),
+    {
+      ...page(11, 12),
+      conversation_id: "91000000-0000-4000-8000-000000000002",
+    },
+  ]) {
+    const accepted = [];
+    await expect(
+      catchUpMessages(
+        current,
+        async ({ after_seq }) =>
+          after_seq === undefined ? page(101, 150) : forward,
+        (p) => accepted.push(p),
+      ),
+    ).rejects.toThrow();
+    expect(accepted).toEqual([]);
+  }
 });
