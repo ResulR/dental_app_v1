@@ -40,6 +40,7 @@ export function OrderTrackingPanel({
   const [q, setQ] = useState(initialSearchNumber ?? ""),
     [status, setStatus] = useState(""),
     [kind, setKind] = useState(""),
+    [workType, setWorkType] = useState(""),
     [from, setFrom] = useState(""),
     [to, setTo] = useState(""),
     [dateKind, setDateKind] = useState("requested"),
@@ -127,6 +128,7 @@ export function OrderTrackingPanel({
                 ...(q.trim() ? { q: q.trim() } : {}),
                 ...(status ? { status } : {}),
                 ...(kind ? { kind } : {}),
+                ...(workType.trim() ? { work_type: workType.trim() } : {}),
                 date_kind: dateKind,
                 view,
                 ...(from ? { from } : {}),
@@ -151,6 +153,7 @@ export function OrderTrackingPanel({
           setStatus("");
           setQ("");
           setKind("");
+          setWorkType("");
           setFrom("");
           setTo("");
           setDateKind("requested");
@@ -242,6 +245,17 @@ export function OrderTrackingPanel({
               <option value="retouch">Retushim</option>
             </select>
           </label>
+          {(clinic || permissions.includes("orders.read_details")) && (
+            <label>
+              Lloji i punës
+              <input
+                autoComplete="off"
+                value={workType}
+                maxLength={120}
+                onChange={(e) => setWorkType(e.target.value)}
+              />
+            </label>
+          )}
           <label>
             Data e filtruar
             <select

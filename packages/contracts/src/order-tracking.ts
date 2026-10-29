@@ -6,6 +6,7 @@ const OrderSearchDefinition = z
     q: z.string().trim().max(120).optional(),
     status: StatusSchema.optional(),
     kind: z.enum(["normal", "retouch"]).optional(),
+    work_type: z.string().trim().min(1).max(120).optional(),
     date_kind: z
       .enum(["requested", "planned", "effective"])
       .default("requested"),

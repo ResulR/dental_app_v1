@@ -2752,7 +2752,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 16 — Planning, livraisons, archives et recherche
 
 ### 16.1 — Implémenter recherche des travaux et filtres
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Recherche privée par numéro, clinique et patient/référence sous droits détaillés, filtres statut/date/normal-retouche et type de travail actuel intégrés ; réception PostgreSQL et navigateur encore nécessaires.
+- **Complément 29/10 :** filtre libellé de type de travail sur snapshot de la version courante, refusé aux seuls droits logistiques ; recherche paramétrée et tests de cloisonnement hors PostgreSQL.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Planning, livraisons, archives et recherche

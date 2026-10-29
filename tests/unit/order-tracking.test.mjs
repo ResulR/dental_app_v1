@@ -145,6 +145,12 @@ test("logistics-only reader never queries patient search or details; current rev
     s.startsWith("SELECT o.id,o.number"),
   )[0];
   expect(sql).not.toContain("patient_");
+  expect(
+    (await service.search(actor, { work_type: "Synthetic crown" })).kind,
+  ).toBe("denied");
+  expect(
+    db.query.mock.calls.filter(([s]) => s.startsWith("SELECT o.id,o.number")),
+  ).toHaveLength(1);
   expect((await service.detail(actor, { order_id: id })).kind).toBe("denied");
   for (const patch of [
     { revoked: true },
@@ -180,6 +186,7 @@ test("search parameters are bound, dates validated, history pagination explicit 
     q: "%'_",
     status: "completed",
     kind: "retouch",
+    work_type: "Synthetic crown",
     date_kind: "planned",
     from: "2026-11-01",
     to: "2026-11-30",
@@ -197,7 +204,13 @@ test("search parameters are bound, dates validated, history pagination explicit 
     "2026-11-01",
     "2026-11-30",
     "active",
+    "Synthetic crown",
   ]);
+  const searchSql = db.query.mock.calls.find(([s]) =>
+    s.startsWith("SELECT o.id,o.number"),
+  )[0];
+  expect(searchSql).toContain("w.id=v.work_type_snapshot_id");
+  expect(searchSql).toContain("strpos(lower(w.label),lower($10))>0");
   const result = await service.detail(actor, { order_id: id });
   expect(result.detail.history).toHaveLength(100);
   expect(result.detail.next_before_revision).toBe(2);
@@ -209,6 +222,7 @@ test("search parameters are bound, dates validated, history pagination explicit 
     { clinic_id: id },
     { from: "2026-11-02", to: "2026-11-01" },
     { from: "2026-02-30" },
+    { work_type: " " },
   ])
     expect(
       (await createOrderTrackingService(invalid).search(actor, raw)).kind,
