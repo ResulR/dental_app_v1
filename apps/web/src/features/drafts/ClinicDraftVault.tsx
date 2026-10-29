@@ -22,11 +22,13 @@ export function ClinicDraftVault<T>({
   capture,
   restore,
   disabled,
+  confirmed,
 }: {
   accountId: string;
   capture: () => T;
   restore: (value: T) => boolean;
   disabled: boolean;
+  confirmed: boolean;
 }) {
   const db = useRef<IDBDatabase | null>(null);
   const key = useRef<CryptoKey | null>(null);
@@ -206,6 +208,30 @@ export function ClinicDraftVault<T>({
       setMessage("Drafti u hap. Kontrolloni katalogun përpara dërgimit.");
     });
   }
+  async function removeConfirmed() {
+    if (!confirmed || !db.current || !envelope || !key.current || !revision)
+      return;
+    await run(async () => {
+      const saved = await readLocalDraft<T>(
+        db.current!,
+        envelope,
+        key.current!,
+      );
+      if (
+        !saved ||
+        saved.revision !== revision ||
+        JSON.stringify(saved.value) !== JSON.stringify(capture())
+      ) {
+        setMessage(
+          "Drafti lokal është i ndryshëm nga porosia e konfirmuar; nuk u fshi.",
+        );
+        return;
+      }
+      await deleteLocalDraft(db.current!, envelope, saved.revision);
+      setRevision(0);
+      setMessage("Drafti i kësaj porosie u fshi pas konfirmimit të serverit.");
+    });
+  }
   async function remove() {
     if (
       !db.current ||
@@ -326,14 +352,25 @@ export function ClinicDraftVault<T>({
               ? "Ka një draft lokal të ruajtur."
               : "Nuk ka draft lokal të ruajtur."}
           </p>
-          <Button disabled={busy || disabled} onClick={() => void save()}>
+          <Button
+            disabled={busy || disabled || confirmed}
+            onClick={() => void save()}
+          >
             Ruaj draftin
           </Button>
           {revision > 0 && (
             <>
-              <Button disabled={busy || disabled} onClick={() => void load()}>
+              <Button
+                disabled={busy || disabled || confirmed}
+                onClick={() => void load()}
+              >
                 Hap draftin
               </Button>
+              {confirmed && (
+                <Button disabled={busy} onClick={() => void removeConfirmed()}>
+                  Fshi draftin e kësaj porosie pas konfirmimit
+                </Button>
+              )}
               <Button disabled={busy} onClick={() => void remove()}>
                 Fshi draftin lokal
               </Button>

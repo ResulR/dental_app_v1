@@ -2644,7 +2644,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 15.4 — Implémenter conservation brouillon après déconnexion
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Le coffre IndexedDB est indexé par compte, reste chiffré après démontage de la session et ne s'ouvre qu'avec la même identité authentifiée et la phrase ou le code. La réception navigateur (déconnexion, retour hors ligne, autre compte) reste à faire.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** PWA, hors ligne et brouillons
@@ -2719,7 +2719,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 15.9 — Implémenter nettoyage post-soumission confirmée
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Après reçu `submitted`, la clinique peut supprimer explicitement le seul brouillon local dont le contenu déchiffré correspond au formulaire confirmé ; la révision CAS empêche la suppression concurrente. Aucun effacement sur réponse ambiguë ou brouillon différent. Réception navigateur, rapprochement durable et nettoyage des autres appareils restent ouverts.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** PWA, hors ligne et brouillons

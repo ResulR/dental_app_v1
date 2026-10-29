@@ -288,6 +288,7 @@ export function ClinicOrderForm({
         capture={captureDraft}
         restore={restoreDraft}
         disabled={frozen}
+        confirmed={submission?.kind === "submitted"}
       />
       <form
         onSubmit={(event) => {
