@@ -23,6 +23,7 @@ import {
   ClinicDirectoryPanel,
 } from "../features/clinics/index.js";
 import { AppShell } from "../shared/AppShell.js";
+import { InstallPanel } from "../features/pwa/InstallPanel.js";
 import {
   AuthenticationPanel,
   PermissionBoundary,
@@ -35,6 +36,7 @@ export function App() {
   } | null>(null);
   return (
     <AppShell navigation={[]}>
+      <InstallPanel />
       <div className="welcome">
         <p className="eyebrow">Laboratori · Klinikat</p>
         <h1>Një hapësirë për çdo punë dentare.</h1>

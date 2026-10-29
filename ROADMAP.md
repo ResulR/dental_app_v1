@@ -2599,7 +2599,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 15 — PWA, hors ligne et brouillons
 
 ### 15.1 — Installer manifest et service worker PWA
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Manifest, icônes et service worker de coque publique versionnée présents ; commande d’installation albanaise conditionnée à l’offre du navigateur, sans confirmation anticipée. Tests build/cache hors navigateur ; installation tablette/mobile et mise à jour réelle restent à recevoir.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** PWA, hors ligne et brouillons
