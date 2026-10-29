@@ -90,10 +90,14 @@ export function ClinicDraftVault<T>({
         error instanceof Error &&
         (error.message === "VAULT_CONFLICT" ||
           error.message === "VAULT_ALREADY_EXISTS");
+      const quota =
+        error instanceof Error && error.message === "VAULT_QUOTA_EXCEEDED";
       setMessage(
         conflict
           ? "Drafti u ndryshua në një skedë tjetër. Kyçeni dhe hapeni sërish."
-          : "Veprimi nuk u verifikua. Të dhënat e ruajtura më parë nuk u ndryshuan.",
+          : quota
+            ? "Hapësira e ruajtjes në këtë pajisje nuk mjafton. Drafti nuk u ruajt; lironi hapësirë dhe provoni përsëri."
+            : "Veprimi nuk u verifikua. Të dhënat e ruajtura më parë nuk u ndryshuan.",
       );
     } finally {
       setBusy(false);

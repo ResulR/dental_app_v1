@@ -14,16 +14,22 @@ type StoredDraft = {
   revision: number;
   sealed: SealedDraft;
 };
+const storageError = (name?: string) =>
+  new Error(
+    name === "QuotaExceededError"
+      ? "VAULT_QUOTA_EXCEEDED"
+      : "VAULT_STORAGE_UNAVAILABLE",
+  );
 const result = <T>(request: IDBRequest<T>) =>
   new Promise<T>((resolve, reject) => {
     request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(new Error("VAULT_STORAGE_UNAVAILABLE"));
+    request.onerror = () => reject(storageError(request.error?.name));
   });
 const completed = (transaction: IDBTransaction) =>
   new Promise<void>((resolve, reject) => {
     transaction.oncomplete = () => resolve();
-    transaction.onabort = () => reject(new Error("VAULT_STORAGE_UNAVAILABLE"));
-    transaction.onerror = () => reject(new Error("VAULT_STORAGE_UNAVAILABLE"));
+    transaction.onabort = () => reject(storageError(transaction.error?.name));
+    transaction.onerror = () => reject(storageError(transaction.error?.name));
   });
 export async function openLocalVault() {
   if (
