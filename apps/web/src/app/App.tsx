@@ -52,6 +52,7 @@ export function App() {
               {import.meta.env.VITE_DENTAL_LAB_INTERNAL_NOTICES_ENABLED ===
                 "true" &&
                 (identity.profile === "owner" ||
+                  identity.profile === "clinic" ||
                   import.meta.env.VITE_DENTAL_LAB_GENERAL_MESSAGING_ENABLED ===
                     "true" ||
                   import.meta.env.VITE_DENTAL_LAB_ORDER_MESSAGING_ENABLED ===
