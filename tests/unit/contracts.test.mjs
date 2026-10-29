@@ -117,7 +117,10 @@ test("closed logistics and problem projection; validation issues never echo valu
 });
 test("runtime snapshot detects structure/version drift and design top-level fields match", () => {
   const expected = JSON.parse(
-    fs.readFileSync("docs/contracts/runtime-v1.snapshot.json", "utf8"),
+    fs.readFileSync(
+      `docs/contracts/runtime-v${contractVersion}.snapshot.json`,
+      "utf8",
+    ),
   );
   expect(expected.version).toBe(contractVersion);
   const actual = exportJsonSchemas();

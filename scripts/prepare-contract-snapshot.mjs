@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { contractVersion, exportJsonSchemas } from "@dental-lab/contracts";
 fs.writeFileSync(
-  "docs/contracts/runtime-v1.snapshot.json",
+  `docs/contracts/runtime-v${contractVersion}.snapshot.json`,
   JSON.stringify(
     { version: contractVersion, schemas: exportJsonSchemas() },
     null,

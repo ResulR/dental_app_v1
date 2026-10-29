@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { contractVersion, exportJsonSchemas } from "@dental-lab/contracts";
 const expected = JSON.parse(
-  fs.readFileSync("docs/contracts/runtime-v1.snapshot.json", "utf8"),
+  fs.readFileSync(
+    `docs/contracts/runtime-v${contractVersion}.snapshot.json`,
+    "utf8",
+  ),
 );
 assert.equal(expected.version, contractVersion);
 assert.deepEqual(
