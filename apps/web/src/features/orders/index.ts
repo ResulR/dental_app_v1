@@ -1,4 +1,5 @@
 export { ClinicOrderForm } from "./ClinicOrderForm.js";
+export { OrderEditPanel } from "./OrderEditPanel.js";
 
 export { OrderReviewPanel } from "./OrderReviewPanel.js";
 export { OrderRequestActions } from "./OrderRequestActions.js";

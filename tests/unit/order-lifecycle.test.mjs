@@ -128,6 +128,8 @@ function fixture(patch = {}) {
             return { rows: [{ values: { delivery_mode: "clinic_pickup" } }] };
           if (sql.startsWith("UPDATE public.conversations"))
             return { rows: patch.noConversation ? [] : [{ id }] };
+          if (sql.startsWith("INSERT INTO public.internal_notifications"))
+            return { rows: patch.noClinicNotice ? [] : [{ id }] };
           if (sql.startsWith("UPDATE public.orders")) {
             if (patch.activeRetouch)
               throw Object.assign(new Error("Synthetic unique violation"), {
@@ -487,4 +489,53 @@ test("client rejects unknown outcomes and never retries a mutation automatically
     redirect: "error",
     credentials: "same-origin",
   });
+});
+
+test("motivated correction creates one clinic notice in the status transaction; unavailable recipient rolls back", async () => {
+  const input = {
+    ...command,
+    action: "request_correction",
+    reason: "Synthetic detail missing",
+  };
+  const db = fixture({ status: "pending" });
+  const service = createOrderLifecycleService(db, true);
+  expect((await service.decide(actor, input)).result.status).toBe(
+    "correction_requested",
+  );
+  const notice = db.state.writes.filter(([sql]) =>
+    sql.startsWith("INSERT INTO public.internal_notifications"),
+  );
+  expect(notice).toHaveLength(1);
+  expect(notice[0][0]).toContain(
+    "c.review_state='approved' AND NOT c.suspended",
+  );
+  expect(notice[0][0]).toContain("a.profile='clinic' AND a.lifecycle='active'");
+  expect(notice[0][1][1]).toBe(id);
+  expect((await service.decide(actor, input)).result.kind).toBe("conflict");
+  expect(
+    db.state.writes.filter(([sql]) =>
+      sql.startsWith("INSERT INTO public.internal_notifications"),
+    ),
+  ).toHaveLength(1);
+  for (const patch of [
+    { noClinicNotice: true },
+    { failAt: "public.internal_notifications" },
+  ]) {
+    const failed = fixture({ status: "pending", ...patch });
+    await expect(
+      createOrderLifecycleService(failed, true).decide(actor, input),
+    ).rejects.toThrow();
+    expect(failed.state.status).toBe("pending");
+    expect(failed.state.writes).toEqual([]);
+  }
+  const dormant = fixture({ status: "pending" });
+  expect(
+    (await createOrderLifecycleService(dormant).decide(actor, input)).result
+      .status,
+  ).toBe("correction_requested");
+  expect(
+    dormant.state.writes.some(([sql]) =>
+      sql.includes("public.internal_notifications"),
+    ),
+  ).toBe(false);
 });

@@ -37,6 +37,7 @@ const events = {
 } as const;
 export function createOrderLifecycleRepository(
   database: Pick<ReturnType<typeof createApplicationDatabase>, "transaction">,
+  internalNotices = false,
 ) {
   return {
     async decide(actor: Actor, raw: unknown): Promise<Outcome> {
@@ -314,6 +315,19 @@ export function createOrderLifecycleRepository(
             "INSERT INTO public.outbox_dispatches(event_id) VALUES($1)",
             [event],
           );
+          if (internalNotices && input.action === "request_correction") {
+            const notice = await tx.query(
+              `INSERT INTO public.internal_notifications(event_id,target_account_id)
+               SELECT $1,a.id FROM public.clinics c JOIN public.accounts a ON a.id=c.account_id
+               WHERE c.id=$2 AND c.review_state='approved' AND NOT c.suspended
+                 AND a.profile='clinic' AND a.lifecycle='active'
+                 AND NOT a.security_locked AND NOT a.credential_reset_required
+               RETURNING id`,
+              [event, order.clinic_id],
+            );
+            if (notice.rows.length !== 1)
+              throw new Error("CORRECTION_CLINIC_NOTIFICATION_UNAVAILABLE");
+          }
           await tx.query(
             "INSERT INTO public.audit_events(actor_id,action,object_type,object_id,request_id,aggregate_revision,changed_fields) VALUES($1,$2,'order',$3,$4,$5,ARRAY['status'])",
             [

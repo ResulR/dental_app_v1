@@ -6,6 +6,7 @@ import {
 import { ClinicReviewPanel } from "../clinics/index.js";
 import { GeneralMessagingPanel } from "../messaging/index.js";
 import {
+  OrderEditPanel,
   OrderReviewPanel,
   OrderRequestActions,
   OrderModificationReview,
@@ -164,6 +165,7 @@ export function InternalNoticePanel({
                 clinic_registered: "Kërkesë regjistrimi",
                 order_submitted: "Porosi e re",
                 correction_resubmitted: "Korrigjim i ridërguar",
+                correction_requested: "Korrigjim i kërkuar",
                 cancellation_requested: "Kërkesë anulimi",
                 modification_requested: "Kërkesë ndryshimi",
                 retouch_requested: "Retushim i kërkuar",
@@ -261,6 +263,20 @@ export function InternalNoticePanel({
                       setNotice("Njoftimet nuk u verifikuan."),
                     )
                   }
+                />
+              ) : selected.kind === "correction_requested" && clinic ? (
+                <OrderEditPanel
+                  orderId={selected.order_id}
+                  clinic
+                  permissions={permissions}
+                  onFinished={(text) => {
+                    void refresh()
+                      .then(() => setNotice(text))
+                      .catch(() => {
+                        setSelected(null);
+                        setNotice("Njoftimet nuk u verifikuan.");
+                      });
+                  }}
                 />
               ) : (
                 <OrderReviewPanel

@@ -386,7 +386,10 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
           });
         if (enableOrderLifecycle)
           registerOrderLifecycleRoutes(app, {
-            service: createOrderLifecycleService(database),
+            service: createOrderLifecycleService(
+              database,
+              enableInternalNotices,
+            ),
             sessions,
             origin: config.origin,
           });

@@ -53,13 +53,16 @@ async function viewer(tx: DatabaseExecutor, actor: Actor) {
 }
 const joins = `JOIN public.outbox_events e ON e.id=n.event_id
   JOIN public.clinics c ON c.id=e.clinic_id
-  LEFT JOIN public.orders o ON o.id=e.aggregate_id AND o.clinic_id=c.id AND e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','modification_requested','retouch_requested')
+  LEFT JOIN public.orders o ON o.id=e.aggregate_id AND o.clinic_id=c.id AND e.type IN ('order_submitted','correction_resubmitted','correction_requested','cancellation_requested','modification_requested','retouch_requested')
   LEFT JOIN public.messages m ON m.id=e.aggregate_id AND m.clinic_id=c.id AND e.type='message_created'
   LEFT JOIN public.conversations v ON v.id=m.conversation_id AND v.clinic_id=c.id
   LEFT JOIN public.orders mo ON mo.id=v.order_id AND mo.clinic_id=c.id AND v.kind='order'`;
 const visible = `(
   ($2::boolean AND ((e.type='clinic_registered' AND e.aggregate_type='clinic' AND e.aggregate_id=c.id)
     OR (e.type IN ('order_submitted','correction_resubmitted','cancellation_requested','modification_requested','retouch_requested') AND e.aggregate_type='order' AND o.id IS NOT NULL)))
+  OR (NOT $3::boolean AND e.type='correction_requested' AND e.aggregate_type='order'
+    AND o.id IS NOT NULL AND c.account_id=$1 AND c.review_state='approved'
+    AND NOT c.suspended AND e.actor_id<>$1)
   OR (e.type='message_created' AND e.aggregate_type='message' AND m.id IS NOT NULL
     AND v.id IS NOT NULL AND m.sender_id<>$1 AND
     ((v.kind='general' AND v.order_id IS NULL) OR (v.kind='order' AND mo.id IS NOT NULL))

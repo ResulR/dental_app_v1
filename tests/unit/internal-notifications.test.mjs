@@ -333,3 +333,45 @@ test("assembled notice SQL is balanced and visibility gates stay scoped", async 
     expect(sql).toContain("c.review_state='approved' AND NOT c.suspended");
   }
 });
+
+test("correction notice is scoped to approved clinic and current order on both list and read", async () => {
+  const f = fixture({ profile: "clinic", kind: "correction_requested" });
+  const listed = await f.service.list(actor, {});
+  expect(listed.result.items[0]).toMatchObject({
+    kind: "correction_requested",
+    clinic_id: clinic,
+    order_id: id,
+  });
+  const listSql = f.calls.find(([sql]) =>
+    sql.startsWith("SELECT n.id,e.type AS kind"),
+  )[0];
+  expect(listSql).toContain(
+    "e.type='correction_requested' AND e.aggregate_type='order'",
+  );
+  expect(listSql).toContain("o.id IS NOT NULL AND c.account_id=$1");
+  expect(listSql).toContain("c.review_state='approved'");
+  expect(listSql).toContain("NOT c.suspended AND e.actor_id<>$1");
+  expect(listSql).toContain("n.target_account_id=$1");
+  expect((await f.service.markRead(actor, { id })).kind).toBe("result");
+  const readSql = f.calls.find(([sql]) =>
+    sql.startsWith("SELECT n.read_at FROM"),
+  )[0];
+  expect(readSql).toContain("e.type='correction_requested'");
+  expect(readSql).toContain("FOR UPDATE OF n");
+  expect(
+    (
+      await fixture({
+        profile: "clinic",
+        kind: "correction_requested",
+        suspended: true,
+      }).service.list(actor, {})
+    ).kind,
+  ).toBe("denied");
+  expect(() =>
+    internalNoticesEnabled({
+      DENTAL_LAB_INTERNAL_NOTICES_ENABLED: "true",
+      DENTAL_LAB_REGISTRATION_ENABLED: "true",
+      DENTAL_LAB_ORDER_LIFECYCLE_ENABLED: "true",
+    }),
+  ).toThrow("CORRECTION_NOTICES_DESTINATION_UNAVAILABLE");
+});
