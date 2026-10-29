@@ -1,6 +1,6 @@
 # Brouillons local/serveur et synchronisation — conception 3.8
 
-Conception finalisée avec la décision R15 du propriétaire. Aucune implémentation navigateur ou aptitude production déclarée ; les tests navigateur demeurent obligatoires aux jalons PWA et sécurité. Pas de donnée médicale ou secret réel créé.
+Conception finalisée avec la décision R15 du propriétaire. Depuis le 29/10, une première tranche navigateur est codée : coffre IndexedDB par compte, formulaire textuel scellé, déverrouillage et récupération ; sa persistance réelle sur appareils et son aptitude production ne sont pas validées. Les fichiers, la session hors ligne après rechargement, la synchronisation serveur et les conflits multi-appareils restent à développer. Les tests navigateur demeurent obligatoires aux jalons PWA et sécurité. Pas de donnée médicale ou secret réel créé.
 
 Références : CDC §11, [fichiers](files-lifecycle.md), [versions](orders-versions.md), [comptes](accounts-clinics.md), [architecture](../architecture.md). Ce document n'atteste pas la compatibilité des appareils ni la cryptographie de production.
 

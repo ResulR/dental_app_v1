@@ -4,18 +4,22 @@ import {
   type OrderSubmissionResultSchema,
 } from "@dental-lab/contracts";
 import { useEffect, useRef, useState } from "react";
-import { FDI, OrderPreflightInputSchema } from "@dental-lab/contracts";
+import {
+  FDI,
+  OrderPreflightInputSchema,
+  ToothSchema,
+} from "@dental-lab/contracts";
 import type {
   ActiveCatalogItemSchema,
   CatalogKindSchema,
   OrderPreflightResultSchema,
   OrderSimilarityResultSchema,
-  ToothSchema,
 } from "@dental-lab/contracts";
 import { createCatalogClient } from "../catalog/index.js";
 import { createOrderPreflightClient } from "./preflight-api.js";
 import { createOrderSimilarityClient } from "./similarity-api.js";
 import { Button } from "../../shared/Button.js";
+import { ClinicDraftVault } from "../drafts/index.js";
 type Kind = ReturnType<typeof CatalogKindSchema.parse>;
 type Item = ReturnType<typeof ActiveCatalogItemSchema.parse>;
 type Tooth = ReturnType<typeof ToothSchema.parse>;
@@ -39,8 +43,10 @@ const issues = {
 };
 export function ClinicOrderForm({
   onInspectOrder,
+  accountId,
 }: {
   onInspectOrder?: (number: string) => void;
+  accountId: string;
 }) {
   const [first, setFirst] = useState(""),
     [last, setLast] = useState(""),
@@ -209,6 +215,48 @@ export function ClinicOrderForm({
       }
     });
   }
+  function captureDraft() {
+    return {
+      format: 1,
+      first,
+      last,
+      reference,
+      date,
+      description,
+      selected,
+      teeth,
+    };
+  }
+  function restoreDraft(raw: unknown) {
+    if (!raw || typeof raw !== "object") return false;
+    const value = raw as ReturnType<typeof captureDraft>;
+    if (
+      value.format !== 1 ||
+      ![
+        value.first,
+        value.last,
+        value.reference,
+        value.date,
+        value.description,
+        value.selected?.material,
+        value.selected?.shade,
+        value.selected?.work_type,
+      ].every((field) => typeof field === "string") ||
+      !Array.isArray(value.teeth) ||
+      value.teeth.length > FDI.length ||
+      value.teeth.some((tooth) => !ToothSchema.safeParse(tooth).success)
+    )
+      return false;
+    edit();
+    setFirst(value.first);
+    setLast(value.last);
+    setReference(value.reference);
+    setDate(value.date);
+    setDescription(value.description);
+    setSelected(value.selected);
+    setTeeth(value.teeth);
+    return true;
+  }
   function cycle(fdi: Tooth["fdi"]) {
     edit();
     setTeeth((previous) => {
@@ -231,9 +279,16 @@ export function ClinicOrderForm({
       <h3>Përgatitja e porosisë</h3>
       <p>
         Kontrolloni të dhënat, pastaj dërgoni porosinë me konfirmim të qartë.
-        Drafti nuk ruhet në pajisje. Mos e mbyllni ekranin nëse rezultati i
-        dërgimit është i pasigurt.
+        Drafti ruhet vetëm me veprim të qartë në kasafortën lokale. Skedarët nuk
+        ruhen ende aty. Mos e mbyllni ekranin nëse rezultati i dërgimit është i
+        pasigurt.
       </p>
+      <ClinicDraftVault
+        accountId={accountId}
+        capture={captureDraft}
+        restore={restoreDraft}
+        disabled={frozen}
+      />
       <form
         onSubmit={(event) => {
           event.preventDefault();

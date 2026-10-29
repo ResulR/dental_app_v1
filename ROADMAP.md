@@ -2614,7 +2614,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 15.2 — Implémenter stockage local des brouillons
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Formulaire clinique sauvegardé explicitement sous ciphertext AES-GCM en IndexedDB par compte, relecture/suppression manuelles après déverrouillage et révision locale CAS ; fichiers, quotas/appareils réels, reprise hors ligne après redémarrage non authentifié et synchronisation serveur restent ouverts. Aucun succès de persistance navigateur réel reçu.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** PWA, hors ligne et brouillons
@@ -2629,7 +2629,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 15.3 — Implémenter chiffrement et déverrouillage local
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Deux enveloppes AES-KW (phrase PBKDF2 600 000 et code aléatoire 256 bits), clé active non exportable, clé AES-GCM distincte par génération avec AAD compte/coffre/brouillon/génération, récupération par réenveloppement et relecture du brouillon avant bascule ; tests Web Crypto Node synthétiques. Navigateur/appareils, calibration, fichiers chiffrés et revue de sécurité restent nécessaires.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** PWA, hors ligne et brouillons

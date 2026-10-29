@@ -123,6 +123,7 @@ export function App() {
               </PermissionBoundary>
               {identity.profile === "clinic" && (
                 <ClinicOrderForm
+                  accountId={identity.account_id}
                   key={identity.account_id + "-order-form"}
                   onInspectOrder={(number) =>
                     setSimilarSelection((previous) => ({
