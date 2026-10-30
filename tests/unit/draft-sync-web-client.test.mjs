@@ -84,3 +84,30 @@ test("malformed or unauthorized payload never becomes a draft", async () => {
   await expect(readServerDraft(id)).rejects.toThrow();
   await expect(readServerDraft(id)).rejects.toThrow("DRAFT_SYNC_UNAVAILABLE");
 });
+
+test("delete intent can be replayed after an uncertain response without dropping its identity", async () => {
+  const transport = vi
+    .fn()
+    .mockRejectedValueOnce(new Error("connection lost"))
+    .mockResolvedValueOnce(
+      new globalThis.Response(
+        JSON.stringify({ kind: "committed", revision: "3", replayed: true }),
+        { status: 200 },
+      ),
+    );
+  vi.stubGlobal("fetch", transport);
+  const command = {
+    draft_id: id,
+    expected_revision: 2,
+    idempotency_key: "90000000-0000-4000-8000-000000000003",
+  };
+  await expect(commitServerDraft(command)).rejects.toThrow("connection lost");
+  expect(await commitServerDraft(command)).toEqual({
+    kind: "committed",
+    revision: "3",
+    replayed: true,
+  });
+  expect(
+    transport.mock.calls.map(([, options]) => JSON.parse(options.body)),
+  ).toEqual([command, command]);
+});

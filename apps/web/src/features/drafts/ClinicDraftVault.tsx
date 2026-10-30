@@ -250,6 +250,69 @@ export function ClinicDraftVault<T>({
       setMessage("Drafti u hap. Kontrolloni katalogun përpara dërgimit.");
     });
   }
+  async function applyPending(
+    value: T,
+    localRevision: number,
+    target: RemoteDraft,
+  ) {
+    const command = target.pending!;
+    let answer: Awaited<ReturnType<typeof commitServerDraft>>;
+    try {
+      answer = await commitServerDraft(command);
+    } catch {
+      setMessage(
+        "Përgjigjja e serverit është e pasigurt. Veprimi mbetet i koduar; provoni të njëjtin sinkronizim përsëri.",
+      );
+      return;
+    }
+    if (answer.kind === "conflict") {
+      try {
+        setConflict(
+          (await readServerDraft(command.draft_id)) ?? {
+            draft_id: command.draft_id,
+            revision: "0",
+            state: "missing",
+            payload: null,
+          },
+        );
+      } catch {
+        setMessage(
+          "U zbulua konflikt, por versioni i serverit nuk u lexua. Provoni përsëri.",
+        );
+        return;
+      }
+      setMessage(
+        "Konflikt: zgjidhni versionin e serverit ose ruani versionin lokal si kopje të re.",
+      );
+      return;
+    }
+    const next: RemoteDraft | null = command.payload
+      ? {
+          draft_id: command.draft_id,
+          revision: answer.revision,
+          pending: null,
+          ...(target.origin_draft_id
+            ? { origin_draft_id: target.origin_draft_id }
+            : {}),
+        }
+      : null;
+    const committedRevision = await saveLocalDraft(
+      db.current!,
+      envelope!,
+      key.current!,
+      value,
+      localRevision,
+      next,
+    );
+    setRevision(committedRevision);
+    setRemote(next);
+    setConflict(null);
+    setMessage(
+      command.payload
+        ? "Drafti u sinkronizua në server. Porosia nuk u dërgua."
+        : "Drafti i serverit u fshi; kopja lokale e koduar u ruajt.",
+    );
+  }
   async function sync() {
     if (
       !syncEnabled ||
@@ -310,57 +373,65 @@ export function ClinicDraftVault<T>({
         setRevision(localRevision);
         setRemote(target);
       }
-      const command = target.pending!;
-      let answer: Awaited<ReturnType<typeof commitServerDraft>>;
-      try {
-        answer = await commitServerDraft(command);
-      } catch {
-        setMessage(
-          "Përgjigjja e serverit është e pasigurt. Veprimi mbetet i koduar; provoni të njëjtin sinkronizim përsëri.",
-        );
-        return;
-      }
-      if (answer.kind === "conflict") {
-        try {
-          setConflict(
-            (await readServerDraft(command.draft_id)) ?? {
-              draft_id: command.draft_id,
-              revision: "0",
-              state: "missing",
-              payload: null,
-            },
-          );
-        } catch {
-          setMessage(
-            "U zbulua konflikt, por versioni i serverit nuk u lexua. Provoni përsëri.",
-          );
-          return;
-        }
-        setMessage(
-          "Konflikt: zgjidhni versionin e serverit ose ruani versionin lokal si kopje të re.",
-        );
-        return;
-      }
+      await applyPending(saved.value, localRevision, target);
+    });
+  }
+  async function removeServer() {
+    if (
+      !syncEnabled ||
+      !online ||
+      !db.current ||
+      !key.current ||
+      !envelope ||
+      !remote ||
+      remote.pending ||
+      !revision ||
+      confirmed ||
+      !window.confirm(
+        "Të fshihet drafti i serverit? Kopja lokale e koduar ruhet në këtë pajisje.",
+      )
+    )
+      return;
+    await run(async () => {
+      const saved = await readLocalDraft<T>(
+        db.current!,
+        envelope,
+        key.current!,
+      );
+      if (
+        !saved ||
+        saved.revision !== revision ||
+        !saved.remote ||
+        saved.remote.draft_id !== remote.draft_id ||
+        saved.remote.pending
+      )
+        throw new Error("VAULT_CONFLICT");
+      const expected_revision = Number(saved.remote.revision);
+      if (
+        !Number.isSafeInteger(expected_revision) ||
+        expected_revision < 1 ||
+        expected_revision > 2147483647
+      )
+        throw new Error("VAULT_CONFLICT");
       const next: RemoteDraft = {
-        draft_id: command.draft_id,
-        revision: answer.revision,
-        pending: null,
-        ...(target.origin_draft_id
-          ? { origin_draft_id: target.origin_draft_id }
-          : {}),
+        ...saved.remote,
+        pending: {
+          draft_id: saved.remote.draft_id,
+          expected_revision,
+          idempotency_key: crypto.randomUUID(),
+        },
       };
-      const committedRevision = await saveLocalDraft(
+      const localRevision = await saveLocalDraft(
         db.current!,
         envelope,
         key.current!,
         saved.value,
-        localRevision,
+        revision,
         next,
       );
-      setRevision(committedRevision);
+      setRevision(localRevision);
       setRemote(next);
-      setConflict(null);
-      setMessage("Drafti u sinkronizua në server. Porosia nuk u dërgua.");
+      await applyPending(saved.value, localRevision, next);
     });
   }
   async function discover(after?: string) {
@@ -730,6 +801,14 @@ export function ClinicDraftVault<T>({
                   ? "Verifiko të njëjtin sinkronizim"
                   : "Sinkronizo draftin"}
               </Button>
+              {remote && !remote.pending && (
+                <Button
+                  disabled={busy || !online || confirmed}
+                  onClick={() => void removeServer()}
+                >
+                  Fshi draftin e serverit (ruaj kopjen lokale)
+                </Button>
+              )}
               <Button
                 disabled={busy || !online}
                 onClick={() => void discover()}
