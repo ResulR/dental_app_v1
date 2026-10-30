@@ -14,7 +14,15 @@ import {
   readLocalDraft,
   saveLocalDraft,
   deleteLocalDraft,
+  type RemoteDraft,
 } from "./local-vault.js";
+import {
+  commitServerDraft,
+  listServerDrafts,
+  readServerDraft,
+  type ServerDraft,
+  type ServerDraftPayload,
+} from "./draft-sync-api.js";
 
 type Pending = Awaited<ReturnType<typeof prepareVault>>;
 export function ClinicDraftVault<T>({
@@ -23,12 +31,16 @@ export function ClinicDraftVault<T>({
   restore,
   disabled,
   confirmed,
+  toServer,
+  fromServer,
 }: {
   accountId: string;
   capture: () => T;
   restore: (value: T) => boolean;
   disabled: boolean;
   confirmed: boolean;
+  toServer: (value: T) => ServerDraftPayload | null;
+  fromServer: (value: ServerDraftPayload) => T | null;
 }) {
   const db = useRef<IDBDatabase | null>(null);
   const key = useRef<CryptoKey | null>(null);
@@ -40,6 +52,27 @@ export function ClinicDraftVault<T>({
   >("loading");
   const [busy, setBusy] = useState(false);
   const [revision, setRevision] = useState(0);
+  const [remote, setRemote] = useState<RemoteDraft | null>(null);
+  const [serverDrafts, setServerDrafts] = useState<Awaited<
+    ReturnType<typeof listServerDrafts>
+  > | null>(null);
+  const [conflict, setConflict] = useState<
+    | ServerDraft
+    | { draft_id: string; revision: "0"; state: "missing"; payload: null }
+    | null
+  >(null);
+  const [online, setOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
+  const syncEnabled =
+    import.meta.env.VITE_DENTAL_LAB_DRAFT_SYNC_ENABLED === "true";
   const [phrase, setPhrase] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [code, setCode] = useState("");
@@ -149,6 +182,7 @@ export function ClinicDraftVault<T>({
       key.current = active;
       setPhase("unlocked");
       setRevision(existing?.revision ?? 0);
+      setRemote(existing?.remote ?? null);
       setCode("");
       setMessage(
         existing
@@ -176,6 +210,7 @@ export function ClinicDraftVault<T>({
       key.current = active;
       setPhase("unlocked");
       setRevision(existing?.revision ?? 0);
+      setRemote(existing?.remote ?? null);
       setEnvelope(next);
       setCode("");
       setRecovery(false);
@@ -183,7 +218,8 @@ export function ClinicDraftVault<T>({
     });
   }
   async function save() {
-    if (!db.current || !key.current || !envelope || disabled) return;
+    if (!db.current || !key.current || !envelope || disabled || remote?.pending)
+      return;
     await run(async () => {
       const next = await saveLocalDraft(
         db.current!,
@@ -191,6 +227,7 @@ export function ClinicDraftVault<T>({
         key.current!,
         capture(),
         revision,
+        remote,
       );
       setRevision(next);
       setMessage(
@@ -209,12 +246,302 @@ export function ClinicDraftVault<T>({
       if (!current || !restore(current.value))
         throw new Error("VAULT_DRAFT_INVALID");
       setRevision(current.revision);
+      setRemote(current.remote);
       setMessage("Drafti u hap. Kontrolloni katalogun përpara dërgimit.");
     });
   }
-  async function removeConfirmed() {
-    if (!confirmed || !db.current || !envelope || !key.current || !revision)
+  async function sync() {
+    if (
+      !syncEnabled ||
+      !online ||
+      !db.current ||
+      !key.current ||
+      !envelope ||
+      !revision ||
+      confirmed
+    )
       return;
+    await run(async () => {
+      const saved = await readLocalDraft<T>(
+        db.current!,
+        envelope,
+        key.current!,
+      );
+      if (!saved || saved.revision !== revision)
+        throw new Error("VAULT_CONFLICT");
+      let target = saved.remote;
+      let localRevision = saved.revision;
+      if (!target?.pending) {
+        const payload = toServer(saved.value);
+        if (!payload) {
+          setMessage(
+            "Drafti lokal nuk është i vlefshëm për sinkronizim. Kontrolloni fushat.",
+          );
+          return;
+        }
+        const draft_id = target?.draft_id ?? crypto.randomUUID();
+        const expected_revision = Number(target?.revision ?? 0);
+        if (
+          !Number.isSafeInteger(expected_revision) ||
+          expected_revision > 2147483647
+        )
+          throw new Error("VAULT_CONFLICT");
+        target = {
+          draft_id,
+          revision: target?.revision ?? "0",
+          ...(target?.origin_draft_id
+            ? { origin_draft_id: target.origin_draft_id }
+            : {}),
+          pending: {
+            draft_id,
+            expected_revision,
+            idempotency_key: crypto.randomUUID(),
+            payload,
+          },
+        };
+        localRevision = await saveLocalDraft(
+          db.current!,
+          envelope,
+          key.current!,
+          saved.value,
+          localRevision,
+          target,
+        );
+        setRevision(localRevision);
+        setRemote(target);
+      }
+      const command = target.pending!;
+      let answer: Awaited<ReturnType<typeof commitServerDraft>>;
+      try {
+        answer = await commitServerDraft(command);
+      } catch {
+        setMessage(
+          "Përgjigjja e serverit është e pasigurt. Veprimi mbetet i koduar; provoni të njëjtin sinkronizim përsëri.",
+        );
+        return;
+      }
+      if (answer.kind === "conflict") {
+        try {
+          setConflict(
+            (await readServerDraft(command.draft_id)) ?? {
+              draft_id: command.draft_id,
+              revision: "0",
+              state: "missing",
+              payload: null,
+            },
+          );
+        } catch {
+          setMessage(
+            "U zbulua konflikt, por versioni i serverit nuk u lexua. Provoni përsëri.",
+          );
+          return;
+        }
+        setMessage(
+          "Konflikt: zgjidhni versionin e serverit ose ruani versionin lokal si kopje të re.",
+        );
+        return;
+      }
+      const next: RemoteDraft = {
+        draft_id: command.draft_id,
+        revision: answer.revision,
+        pending: null,
+        ...(target.origin_draft_id
+          ? { origin_draft_id: target.origin_draft_id }
+          : {}),
+      };
+      const committedRevision = await saveLocalDraft(
+        db.current!,
+        envelope,
+        key.current!,
+        saved.value,
+        localRevision,
+        next,
+      );
+      setRevision(committedRevision);
+      setRemote(next);
+      setConflict(null);
+      setMessage("Drafti u sinkronizua në server. Porosia nuk u dërgua.");
+    });
+  }
+  async function discover(after?: string) {
+    if (!syncEnabled || !online) return;
+    await run(async () => {
+      const page = await listServerDrafts(after);
+      setServerDrafts((previous) =>
+        after && previous
+          ? {
+              items: [...previous.items, ...page.items],
+              next_after: page.next_after,
+            }
+          : page,
+      );
+    });
+  }
+  async function importServer(draftId: string) {
+    if (
+      !db.current ||
+      !key.current ||
+      !envelope ||
+      remote?.pending ||
+      confirmed ||
+      (revision > 0 &&
+        !window.confirm(
+          "Drafti lokal do të zëvendësohet nga versioni i serverit. Vazhdoni?",
+        ))
+    )
+      return;
+    await run(async () => {
+      const server = await readServerDraft(draftId);
+      if (!server || server.state !== "active" || !server.payload)
+        throw new Error("DRAFT_SYNC_UNAVAILABLE");
+      const value = fromServer(server.payload);
+      if (!value) throw new Error("VAULT_DRAFT_INVALID");
+      const next: RemoteDraft = {
+        draft_id: draftId,
+        revision: server.revision,
+        pending: null,
+      };
+      const localRevision = await saveLocalDraft(
+        db.current!,
+        envelope,
+        key.current!,
+        value,
+        revision,
+        next,
+      );
+      if (!restore(value)) throw new Error("VAULT_DRAFT_INVALID");
+      setRevision(localRevision);
+      setRemote(next);
+      setConflict(null);
+      setMessage(
+        "Drafti i serverit u hap. Kontrolloni katalogun para dërgimit.",
+      );
+    });
+  }
+  async function chooseServer() {
+    if (
+      !conflict ||
+      conflict.state === "missing" ||
+      !db.current ||
+      !envelope ||
+      !key.current ||
+      !window.confirm("Zgjedhja e serverit zëvendëson draftin lokal. Vazhdoni?")
+    )
+      return;
+    let current: ServerDraft | null;
+    try {
+      current = await readServerDraft(conflict.draft_id);
+    } catch {
+      setMessage("Versioni i serverit nuk u verifikua. Drafti lokal u ruajt.");
+      return;
+    }
+    if (
+      !current ||
+      current.revision !== conflict.revision ||
+      current.state !== conflict.state
+    ) {
+      setConflict(
+        current ?? {
+          draft_id: conflict.draft_id,
+          revision: "0",
+          state: "missing",
+          payload: null,
+        },
+      );
+      setMessage("Versioni i serverit ndryshoi përsëri. Rishikoni konfliktin.");
+      return;
+    }
+    if (current.state === "active" && current.payload) {
+      await importConflict(current);
+      return;
+    }
+    await run(async () => {
+      await deleteLocalDraft(db.current!, envelope, revision);
+      setRevision(0);
+      setRemote(null);
+      setConflict(null);
+      setMessage(
+        "Versioni i serverit është fshirë; drafti lokal u hoq me kërkesën tuaj.",
+      );
+    });
+  }
+  async function importConflict(server: ServerDraft) {
+    await run(async () => {
+      const value = server.payload && fromServer(server.payload);
+      if (!value) throw new Error("VAULT_DRAFT_INVALID");
+      const next: RemoteDraft = {
+        draft_id: server.draft_id,
+        revision: server.revision,
+        pending: null,
+      };
+      const localRevision = await saveLocalDraft(
+        db.current!,
+        envelope!,
+        key.current!,
+        value,
+        revision,
+        next,
+      );
+      if (!restore(value)) throw new Error("VAULT_DRAFT_INVALID");
+      setRevision(localRevision);
+      setRemote(next);
+      setConflict(null);
+      setMessage("Versioni i serverit u zgjodh. Rishikoni të dhënat.");
+    });
+  }
+  async function cloneLocal() {
+    if (!conflict || !db.current || !key.current || !envelope) return;
+    await run(async () => {
+      const saved = await readLocalDraft<T>(
+        db.current!,
+        envelope,
+        key.current!,
+      );
+      if (!saved || saved.revision !== revision)
+        throw new Error("VAULT_CONFLICT");
+      const next: RemoteDraft = {
+        draft_id: crypto.randomUUID(),
+        revision: "0",
+        pending: null,
+        ...(saved.remote
+          ? {
+              origin_draft_id:
+                saved.remote.origin_draft_id ?? saved.remote.draft_id,
+            }
+          : {}),
+      };
+      const localRevision = await saveLocalDraft(
+        db.current!,
+        envelope,
+        key.current!,
+        saved.value,
+        revision,
+        next,
+      );
+      setRevision(localRevision);
+      setRemote(next);
+      setConflict(null);
+      setMessage(
+        "Kopja lokale u ruajt me identitet të ri. Sinkronizojeni vetëm me veprim të qartë.",
+      );
+    });
+  }
+  async function removeConfirmed() {
+    if (
+      !confirmed ||
+      !db.current ||
+      !envelope ||
+      !key.current ||
+      !revision ||
+      remote?.pending
+    )
+      return;
+    if (remote) {
+      setMessage(
+        "Drafti i serverit mbetet aktiv në pajisje të tjera. Fshirja pas dërgimit pret lidhjen me porosinë e konfirmuar.",
+      );
+      return;
+    }
     await run(async () => {
       const saved = await readLocalDraft<T>(
         db.current!,
@@ -233,6 +560,7 @@ export function ClinicDraftVault<T>({
       }
       await deleteLocalDraft(db.current!, envelope, saved.revision);
       setRevision(0);
+      setRemote(null);
       setMessage("Drafti i kësaj porosie u fshi pas konfirmimit të serverit.");
     });
   }
@@ -242,12 +570,14 @@ export function ClinicDraftVault<T>({
       !envelope ||
       !key.current ||
       !revision ||
+      remote?.pending ||
       !window.confirm("Të fshihet vetëm drafti lokal nga kjo pajisje?")
     )
       return;
     await run(async () => {
       await deleteLocalDraft(db.current!, envelope, revision);
       setRevision(0);
+      setRemote(null);
       setMessage("Drafti lokal u fshi. Formulari në ekran nuk u ndryshua.");
     });
   }
@@ -357,7 +687,7 @@ export function ClinicDraftVault<T>({
               : "Nuk ka draft lokal të ruajtur."}
           </p>
           <Button
-            disabled={busy || disabled || confirmed}
+            disabled={busy || disabled || confirmed || !!remote?.pending}
             onClick={() => void save()}
           >
             Ruaj draftin
@@ -378,6 +708,67 @@ export function ClinicDraftVault<T>({
               <Button disabled={busy} onClick={() => void remove()}>
                 Fshi draftin lokal
               </Button>
+            </>
+          )}
+          {syncEnabled && (
+            <>
+              <p>
+                Sinkronizimi është vetëm manual. Skedarët nuk sinkronizohen
+                ende.
+              </p>
+              {remote?.origin_draft_id && (
+                <p>
+                  Kopje lokale e draftit {remote.origin_draft_id.slice(0, 8)};
+                  origjinali në server nuk u zëvendësua.
+                </p>
+              )}
+              <Button
+                disabled={busy || !revision || confirmed || !online}
+                onClick={() => void sync()}
+              >
+                {remote?.pending
+                  ? "Verifiko të njëjtin sinkronizim"
+                  : "Sinkronizo draftin"}
+              </Button>
+              <Button
+                disabled={busy || !online}
+                onClick={() => void discover()}
+              >
+                Shiko draftet e serverit
+              </Button>
+              {serverDrafts?.items.map((item) => (
+                <Button
+                  key={item.draft_id}
+                  disabled={busy || !!remote?.pending}
+                  onClick={() => void importServer(item.draft_id)}
+                >
+                  Hap draftin {item.draft_id.slice(0, 8)} · v{item.revision}
+                </Button>
+              ))}
+              {serverDrafts?.next_after && (
+                <Button
+                  disabled={busy}
+                  onClick={() => void discover(serverDrafts.next_after!)}
+                >
+                  Më shumë
+                </Button>
+              )}
+              {conflict && (
+                <div role="alert">
+                  <p>
+                    Konflikt me versionin {conflict.revision} të serverit (
+                    {conflict.state}). Asgjë nuk u zëvendësua.
+                  </p>
+                  {conflict.state !== "missing" && (
+                    <Button disabled={busy} onClick={() => void chooseServer()}>
+                      Zgjidh serverin
+                    </Button>
+                  )}
+                  <Button disabled={busy} onClick={() => void cloneLocal()}>
+                    Ruaj lokalisht si kopje të re
+                  </Button>
+                </div>
+              )}
             </>
           )}
           <Button

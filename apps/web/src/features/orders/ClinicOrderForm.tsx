@@ -8,6 +8,7 @@ import {
   FDI,
   OrderPreflightInputSchema,
   ToothSchema,
+  DraftPayloadSchema,
 } from "@dental-lab/contracts";
 import type {
   ActiveCatalogItemSchema,
@@ -227,6 +228,43 @@ export function ClinicOrderForm({
       teeth,
     };
   }
+  function toServerDraft(raw: ReturnType<typeof captureDraft>) {
+    const patient = {
+      ...(raw.first.trim() ? { first_name: raw.first.trim() } : {}),
+      ...(raw.last.trim() ? { last_name: raw.last.trim() } : {}),
+      ...(raw.reference.trim()
+        ? { internal_reference: raw.reference.trim() }
+        : {}),
+    };
+    const parsed = DraftPayloadSchema.safeParse({
+      ...(Object.keys(patient).length ? { patient } : {}),
+      ...(raw.date ? { requested_delivery_date: raw.date } : {}),
+      ...(raw.selected.material ? { material: raw.selected.material } : {}),
+      ...(raw.selected.shade ? { shade: raw.selected.shade } : {}),
+      ...(raw.selected.work_type ? { work_type: raw.selected.work_type } : {}),
+      ...(raw.description ? { description: raw.description } : {}),
+      teeth: raw.teeth,
+    });
+    return parsed.success ? parsed.data : null;
+  }
+  function fromServerDraft(raw: ReturnType<typeof DraftPayloadSchema.parse>) {
+    const parsed = DraftPayloadSchema.safeParse(raw);
+    if (!parsed.success) return null;
+    return {
+      format: 1,
+      first: parsed.data.patient?.first_name ?? "",
+      last: parsed.data.patient?.last_name ?? "",
+      reference: parsed.data.patient?.internal_reference ?? "",
+      date: parsed.data.requested_delivery_date ?? "",
+      description: parsed.data.description ?? "",
+      selected: {
+        material: parsed.data.material ?? "",
+        shade: parsed.data.shade ?? "",
+        work_type: parsed.data.work_type ?? "",
+      },
+      teeth: parsed.data.teeth ?? [],
+    };
+  }
   function restoreDraft(raw: unknown) {
     if (!raw || typeof raw !== "object") return false;
     const value = raw as ReturnType<typeof captureDraft>;
@@ -289,6 +327,8 @@ export function ClinicOrderForm({
         restore={restoreDraft}
         disabled={frozen}
         confirmed={submission?.kind === "submitted"}
+        toServer={toServerDraft}
+        fromServer={fromServerDraft}
       />
       <form
         onSubmit={(event) => {

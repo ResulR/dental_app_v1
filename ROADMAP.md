@@ -2674,7 +2674,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 15.6 — Implémenter synchronisation des brouillons serveur
-- **Statut :** ◐ API textuelle conditionnelle préparée derrière `DENTAL_LAB_DRAFT_SYNC_ENABLED=false` : création, lecture cloisonnée, révision CAS, tombstone, reçus idempotents et reprise par même intention ; droits et état clinique revérifiés dans la transaction. Tests avec doubles uniquement ; liste API bornée disponible, découverte dans l’interface/coffre, fichiers et réception PostgreSQL/navigateur restent à faire. Aucune activation.
+- **Statut :** ◐ API textuelle conditionnelle préparée derrière `DENTAL_LAB_DRAFT_SYNC_ENABLED=false` : création, lecture cloisonnée, révision CAS, tombstone, reçus idempotents et reprise par même intention ; droits et état clinique revérifiés dans la transaction. Tests avec doubles uniquement ; liste API bornée et parcours manuel de coffre chiffré codés, fichiers et réception PostgreSQL/navigateur restent à faire. Aucune activation.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** PWA, hors ligne et brouillons
@@ -2689,7 +2689,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 15.7 — Implémenter détection des conflits
-- **Statut :** ◐ Le serveur renvoie un conflit sur révision obsolète et sur réutilisation contradictoire d'une clé idempotente, sans écrire. La lecture du tombstone est cloisonnée. Choix explicite serveur/clone local, fichiers et tests multi-appareils restent à faire ; aucun conflit n'est résolu automatiquement.
+- **Statut :** ◐ Le serveur renvoie un conflit sur révision obsolète et sur réutilisation contradictoire d'une clé idempotente, sans écrire. La lecture du tombstone est cloisonnée. Choix explicite serveur/clone local codé pour brouillons textuels ; fichiers et tests multi-appareils restent à faire ; aucun conflit n'est résolu automatiquement.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** PWA, hors ligne et brouillons
@@ -2719,7 +2719,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 15.9 — Implémenter nettoyage post-soumission confirmée
-- **Statut :** ◐ Après reçu `submitted`, la clinique peut supprimer explicitement le seul brouillon local dont le contenu déchiffré correspond au formulaire confirmé ; la révision CAS empêche la suppression concurrente. Aucun effacement sur réponse ambiguë ou brouillon différent. Réception navigateur, rapprochement durable et nettoyage des autres appareils restent ouverts.
+- **Statut :** ◐ Après reçu `submitted`, la clinique peut supprimer explicitement le seul brouillon local dont le contenu déchiffré correspond au formulaire confirmé ; la révision CAS empêche la suppression concurrente. Aucun effacement sur réponse ambiguë ou brouillon différent. Un brouillon serveur actif bloque ce retrait après dépôt jusqu’au lien transactionnel avec la commande ; réception navigateur et nettoyage des autres appareils restent ouverts.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** PWA, hors ligne et brouillons

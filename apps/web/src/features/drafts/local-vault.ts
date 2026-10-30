@@ -1,3 +1,4 @@
+import { DraftMutationSchema } from "@dental-lab/contracts";
 import {
   openDraft,
   sealDraft,
@@ -5,6 +6,13 @@ import {
   type VaultEnvelope,
 } from "./vault-crypto.js";
 
+import type { DraftCommand } from "./draft-sync-api.js";
+export type RemoteDraft = {
+  draft_id: string;
+  revision: string;
+  pending: DraftCommand | null;
+  origin_draft_id?: string;
+};
 const NAME = "dental-lab-local-vault-v1";
 const DRAFT = "clinic-order-form";
 type StoredDraft = {
@@ -122,8 +130,35 @@ export async function readLocalDraft<T>(
     stored.revision < 1
   )
     throw new Error("VAULT_DRAFT_INVALID");
-  const value = await openDraft<T>(key, envelope, DRAFT, stored.sealed);
-  return { value, revision: stored.revision };
+  const opened = await openDraft<unknown>(key, envelope, DRAFT, stored.sealed);
+  if (opened && typeof opened === "object" && "local_vault_format" in opened) {
+    const wrapped = opened as {
+      local_vault_format: unknown;
+      value: T;
+      remote: RemoteDraft | null;
+    };
+    if (
+      wrapped.local_vault_format !== 2 ||
+      (wrapped.remote &&
+        (!/^[0-9a-f-]{36}$/.test(wrapped.remote.draft_id) ||
+          !/^(0|[1-9][0-9]*)$/.test(wrapped.remote.revision) ||
+          (wrapped.remote.origin_draft_id !== undefined &&
+            !/^[0-9a-f-]{36}$/.test(wrapped.remote.origin_draft_id)) ||
+          (wrapped.remote.pending &&
+            (wrapped.remote.pending.draft_id !== wrapped.remote.draft_id ||
+              wrapped.remote.pending.expected_revision !==
+                Number(wrapped.remote.revision) ||
+              !wrapped.remote.pending.payload ||
+              !DraftMutationSchema.safeParse(wrapped.remote.pending).success))))
+    )
+      throw new Error("VAULT_DRAFT_INVALID");
+    return {
+      value: wrapped.value,
+      revision: stored.revision,
+      remote: wrapped.remote,
+    };
+  }
+  return { value: opened as T, revision: stored.revision, remote: null };
 }
 export async function saveLocalDraft(
   database: IDBDatabase,
@@ -131,10 +166,15 @@ export async function saveLocalDraft(
   key: CryptoKey,
   value: unknown,
   expectedRevision: number,
+  remote: RemoteDraft | null = null,
 ) {
   if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 0)
     throw new Error("VAULT_REVISION_INVALID");
-  const sealed = await sealDraft(key, envelope, DRAFT, value);
+  const sealed = await sealDraft(key, envelope, DRAFT, {
+    local_vault_format: 2,
+    value,
+    remote,
+  });
   const estimate = await navigator.storage?.estimate?.();
   if (
     estimate?.quota !== undefined &&
@@ -177,12 +217,18 @@ export async function deleteLocalDraft(
   envelope: VaultEnvelope,
   expectedRevision: number,
 ) {
-  const tx = database.transaction("drafts", "readwrite");
+  const tx = database.transaction(["vaults", "drafts"], "readwrite");
   const done = completed(tx);
+  const vault = (await result(
+    tx.objectStore("vaults").get(envelope.accountId),
+  )) as VaultEnvelope | undefined;
   const drafts = tx.objectStore("drafts");
   const current = (await result(drafts.get([envelope.accountId, DRAFT]))) as
     StoredDraft | undefined;
   if (
+    !vault ||
+    vault.vaultId !== envelope.vaultId ||
+    vault.wrappedPhrase !== envelope.wrappedPhrase ||
     !current ||
     current.revision !== expectedRevision ||
     current.vaultId !== envelope.vaultId

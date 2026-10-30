@@ -131,3 +131,40 @@ test("wrong identity, wrong secrets and altered bytes fail closed", async () => 
     recoverPhrase(envelope, account, "invalid-code", "next phrase"),
   ).rejects.toThrow("VAULT_INVALID_CODE");
 }, 20000);
+
+test("a staged sync intention is encrypted and bound to this account and draft", async () => {
+  const { envelope, active } = await prepareVault(
+    account,
+    "synthetic long phrase for sync",
+  );
+  const staged = {
+    local_vault_format: 2,
+    value: fake,
+    remote: {
+      draft_id: "90000000-0000-4000-8000-000000000001",
+      revision: "0",
+      pending: {
+        draft_id: "90000000-0000-4000-8000-000000000001",
+        expected_revision: 0,
+        idempotency_key: "90000000-0000-4000-8000-000000000002",
+        payload: { description: "Synthetic" },
+      },
+    },
+  };
+  const sealed = await sealDraft(active, envelope, "clinic-order-form", staged);
+  expect(JSON.stringify(sealed)).not.toContain("Synthetic");
+  expect(JSON.stringify(sealed)).not.toContain(
+    staged.remote.pending.idempotency_key,
+  );
+  expect(
+    await openDraft(active, envelope, "clinic-order-form", sealed),
+  ).toEqual(staged);
+  await expect(
+    openDraft(
+      active,
+      { ...envelope, accountId: "90000000-0000-4000-8000-000000000009" },
+      "clinic-order-form",
+      sealed,
+    ),
+  ).rejects.toThrow();
+}, 20000);
