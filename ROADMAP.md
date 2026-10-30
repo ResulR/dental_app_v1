@@ -2674,7 +2674,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 15.6 — Implémenter synchronisation des brouillons serveur
-- **Statut :** ◐ API textuelle conditionnelle préparée derrière `DENTAL_LAB_DRAFT_SYNC_ENABLED=false` : création, lecture cloisonnée, révision CAS, tombstone, reçus idempotents et reprise par même intention ; droits et état clinique revérifiés dans la transaction. Tests avec doubles uniquement ; liste API bornée, parcours manuel de coffre chiffré et suppression explicite du brouillon serveur avec conservation locale codés, fichiers et réception PostgreSQL/navigateur restent à faire. Aucune activation.
+- **Statut :** ◐ API textuelle conditionnelle préparée derrière `DENTAL_LAB_DRAFT_SYNC_ENABLED=false` : création, lecture cloisonnée, révision CAS, tombstone, reçus idempotents et reprise par même intention ; droits et état clinique revérifiés dans la transaction. Tests avec doubles uniquement ; liste API bornée, parcours manuel de coffre chiffré et suppression explicite du brouillon serveur avec conservation locale et reprise après fermeture codés, fichiers et réception PostgreSQL/navigateur restent à faire. Aucune activation.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** PWA, hors ligne et brouillons

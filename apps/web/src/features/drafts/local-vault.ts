@@ -131,6 +131,12 @@ export async function readLocalDraft<T>(
   )
     throw new Error("VAULT_DRAFT_INVALID");
   const opened = await openDraft<unknown>(key, envelope, DRAFT, stored.sealed);
+  return { ...decodeStoredDraft<T>(opened), revision: stored.revision };
+}
+export function decodeStoredDraft<T>(opened: unknown): {
+  value: T;
+  remote: RemoteDraft | null;
+} {
   if (opened && typeof opened === "object" && "local_vault_format" in opened) {
     const wrapped = opened as {
       local_vault_format: unknown;
@@ -148,17 +154,15 @@ export async function readLocalDraft<T>(
             (wrapped.remote.pending.draft_id !== wrapped.remote.draft_id ||
               wrapped.remote.pending.expected_revision !==
                 Number(wrapped.remote.revision) ||
-              !wrapped.remote.pending.payload ||
               !DraftMutationSchema.safeParse(wrapped.remote.pending).success))))
     )
       throw new Error("VAULT_DRAFT_INVALID");
     return {
       value: wrapped.value,
-      revision: stored.revision,
       remote: wrapped.remote,
     };
   }
-  return { value: opened as T, revision: stored.revision, remote: null };
+  return { value: opened as T, remote: null };
 }
 export async function saveLocalDraft(
   database: IDBDatabase,

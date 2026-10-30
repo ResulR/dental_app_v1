@@ -7,6 +7,7 @@ import {
   sealDraft,
   openDraft,
 } from "../../apps/web/src/features/drafts/vault-crypto.ts";
+import { decodeStoredDraft } from "../../apps/web/src/features/drafts/local-vault.ts";
 const account = "90000000-0000-4000-8000-000000000001";
 Object.defineProperty(globalThis, "isSecureContext", {
   value: true,
@@ -167,4 +168,48 @@ test("a staged sync intention is encrypted and bound to this account and draft",
       sealed,
     ),
   ).rejects.toThrow();
+}, 20000);
+
+test("encrypted deletion intent survives opening and rejects wrong revision or identity", async () => {
+  const { envelope, active } = await prepareVault(
+    account,
+    "synthetic phrase for deletion",
+  );
+  const command = {
+    draft_id: "90000000-0000-4000-8000-000000000001",
+    expected_revision: 2,
+    idempotency_key: "90000000-0000-4000-8000-000000000004",
+  };
+  const staged = {
+    local_vault_format: 2,
+    value: fake,
+    remote: { draft_id: command.draft_id, revision: "2", pending: command },
+  };
+  const sealed = await sealDraft(active, envelope, "clinic-order-form", staged);
+  expect(JSON.stringify(sealed)).not.toContain(command.idempotency_key);
+  const reopened = await openDraft(
+    active,
+    envelope,
+    "clinic-order-form",
+    sealed,
+  );
+  expect(decodeStoredDraft(reopened)).toEqual({
+    value: fake,
+    remote: staged.remote,
+  });
+  expect(() =>
+    decodeStoredDraft({
+      ...staged,
+      remote: { ...staged.remote, revision: "3" },
+    }),
+  ).toThrow("VAULT_DRAFT_INVALID");
+  expect(() =>
+    decodeStoredDraft({
+      ...staged,
+      remote: {
+        ...staged.remote,
+        draft_id: "90000000-0000-4000-8000-000000000009",
+      },
+    }),
+  ).toThrow("VAULT_DRAFT_INVALID");
 }, 20000);
