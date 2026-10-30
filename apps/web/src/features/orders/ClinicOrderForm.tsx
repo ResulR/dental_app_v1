@@ -84,6 +84,22 @@ export function ClinicOrderForm({
     typeof OrderSubmissionSchema.parse
   > | null>(null);
   const [ack, setAck] = useState(false);
+  const [online, setOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const connectionChanged = () => {
+      setOnline(navigator.onLine);
+      // A previous preflight cannot authorize a submission after disconnection.
+      setResult(null);
+      setSimilar(null);
+      setAck(false);
+    };
+    window.addEventListener("online", connectionChanged);
+    window.addEventListener("offline", connectionChanged);
+    return () => {
+      window.removeEventListener("online", connectionChanged);
+      window.removeEventListener("offline", connectionChanged);
+    };
+  }, []);
   const frozen = busy || intent !== null || submission?.kind === "submitted";
   const pending = useRef<AbortController | null>(null);
   useEffect(
@@ -165,6 +181,10 @@ export function ClinicOrderForm({
     };
   }
   async function submit() {
+    if (!navigator.onLine) {
+      setMessage("Nuk ka lidhje. Porosia nuk dërgohet jashtë linje.");
+      return;
+    }
     if (
       pending.current ||
       submission?.kind === "submitted" ||
@@ -194,6 +214,10 @@ export function ClinicOrderForm({
     });
   }
   async function check() {
+    if (!navigator.onLine) {
+      setMessage("Nuk ka lidhje. Kontrolli dhe dërgimi kërkojnë serverin.");
+      return;
+    }
     if (!OrderPreflightInputSchema.safeParse(input()).success) {
       setResult(null);
       setMessage(
@@ -330,6 +354,12 @@ export function ClinicOrderForm({
         toServer={toServerDraft}
         fromServer={fromServerDraft}
       />
+      {!online && (
+        <p role="status">
+          Jashtë linje: drafti mund të ruhet lokalisht; kontrolli dhe dërgimi
+          kërkojnë lidhje. Pas rilidhjes kontrolloni sërish të dhënat.
+        </p>
+      )}
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -491,12 +521,12 @@ export function ClinicOrderForm({
         {!teeth.length && !description.trim() && (
           <p>Nuk ka dhëmbë ose përshkrim. Ky është paralajmërim, jo ndalim.</p>
         )}
-        <Button type="submit" disabled={frozen}>
+        <Button type="submit" disabled={frozen || !online}>
           Kontrollo të dhënat
         </Button>
       </form>
       {intent && submission?.kind !== "conflict" && (
-        <Button disabled={busy} onClick={() => void submit()}>
+        <Button disabled={busy || !online} onClick={() => void submit()}>
           Verifiko përsëri të njëjtin dërgim
         </Button>
       )}
@@ -599,7 +629,7 @@ export function ClinicOrderForm({
                 </label>
               )}
               <Button
-                disabled={result.warnings.length > 0 && !ack}
+                disabled={!online || (result.warnings.length > 0 && !ack)}
                 onClick={() => void submit()}
               >
                 Konfirmo dhe dërgo porosinë

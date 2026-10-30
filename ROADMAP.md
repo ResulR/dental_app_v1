@@ -2704,7 +2704,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 15.8 — Implémenter envoi explicite et récupération interruption
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Précontrôle et dépôt explicites avec idempotence en mémoire ; perte de connexion invalide le précontrôle et bloque le dépôt hors ligne, puis exige un nouveau contrôle après reconnexion. Réponse incertaine rejouable sur le même écran ; intention persistante après fermeture, fichiers et réception navigateur restent à faire.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** PWA, hors ligne et brouillons

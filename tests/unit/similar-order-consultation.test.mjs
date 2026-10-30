@@ -1,7 +1,10 @@
-import { test, expect } from "vitest";
+import { test, expect, vi } from "vitest";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { SubmittedOrderReceipt } from "../../apps/web/src/features/orders/ClinicOrderForm.tsx";
+import {
+  ClinicOrderForm,
+  SubmittedOrderReceipt,
+} from "../../apps/web/src/features/orders/ClinicOrderForm.tsx";
 import { OrderTrackingPanel } from "../../apps/web/src/features/orders/OrderTrackingPanel.tsx";
 
 test("a similarity number prefills the clinic's own tracking search without patient data", () => {
@@ -54,4 +57,22 @@ test("laboratory production views require their respective action permissions", 
     }),
   );
   expect(clinic).not.toContain("Punët në prodhim");
+});
+
+test("offline rendering disables preflight and offers no submission action", () => {
+  vi.stubGlobal("navigator", { onLine: false });
+  try {
+    const html = renderToStaticMarkup(
+      createElement(ClinicOrderForm, {
+        accountId: "90000000-0000-4000-8000-000000000001",
+      }),
+    );
+    expect(html).toContain("Jashtë linje");
+    expect(html).toMatch(
+      /<button[^>]*disabled=""[^>]*>Kontrollo të dhënat<\/button>/,
+    );
+    expect(html).not.toContain("Konfirmo dhe dërgo porosinë");
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });
