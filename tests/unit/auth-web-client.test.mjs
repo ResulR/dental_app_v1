@@ -140,3 +140,41 @@ test("requests including body decoding are abortable and bounded to eight second
     vi.useRealTimers();
   }
 });
+test("suspension signal is accepted only with explicit clinic identity", async () => {
+  const suspended = createAuthClient(
+    async () =>
+      new Response(
+        JSON.stringify({
+          account_id: "10000000-0000-4000-8000-000000000001",
+          profile: "clinic",
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+  );
+  expect(await suspended.suspension()).toEqual({
+    kind: "suspended",
+    accountId: "10000000-0000-4000-8000-000000000001",
+  });
+  expect(
+    await createAuthClient(
+      async () => new Response("{}", { status: 401 }),
+    ).suspension(),
+  ).toEqual({ kind: "other" });
+  expect(
+    await createAuthClient(async () => {
+      throw new Error("network");
+    }).suspension(),
+  ).toEqual({ kind: "unavailable" });
+  expect(
+    await createAuthClient(
+      async () =>
+        new Response(
+          JSON.stringify({
+            account_id: "10000000-0000-4000-8000-000000000001",
+            profile: "owner",
+          }),
+          { status: 200 },
+        ),
+    ).suspension(),
+  ).toEqual({ kind: "unavailable" });
+});

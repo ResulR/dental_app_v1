@@ -178,6 +178,21 @@ async function insert(
 }
 export function createSessionRepository(database: Database): SessionStore {
   return {
+    async suspension(digest) {
+      if (digest.length !== 32) return null;
+      const result = await database.query<{ account_id: string }>(
+        `SELECT s.account_id FROM public.sessions s
+         JOIN public.session_limits l ON l.session_id=s.id
+         JOIN public.accounts a ON a.id=s.account_id
+         JOIN public.clinics c ON c.account_id=a.id
+         WHERE s.secret_digest=$1 AND a.profile='clinic'
+           AND (a.lifecycle='suspended' OR c.suspended)
+           AND s.created_at <= clock_timestamp()
+           AND l.absolute_expires_at > clock_timestamp()`,
+        [Buffer.from(digest)],
+      );
+      return result.rows[0]?.account_id ?? null;
+    },
     async find(digest) {
       if (digest.length !== 32) return undefined;
       const result = await database.query<StoredSession>(

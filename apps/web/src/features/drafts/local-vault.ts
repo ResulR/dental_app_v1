@@ -56,6 +56,22 @@ export async function openLocalVault() {
   request.onblocked = () => request.onerror?.(new Event("error"));
   return result(request);
 }
+// A confirmed server suspension is the only caller. One transaction prevents a
+// partially removed key from leaving unreadable draft/intent records behind.
+export async function purgeSuspendedAccount(accountId: string): Promise<void> {
+  const database = await openLocalVault();
+  try {
+    const tx = database.transaction(["drafts", "vaults"], "readwrite");
+    const done = completed(tx);
+    const drafts = tx.objectStore("drafts");
+    drafts.delete([accountId, "clinic-order-form"]);
+    drafts.delete([accountId, "clinic-order-submission"]);
+    tx.objectStore("vaults").delete(accountId);
+    await done;
+  } finally {
+    database.close();
+  }
+}
 export async function readVault(
   database: IDBDatabase,
   accountId: string,
@@ -132,7 +148,12 @@ export async function readLocalDraft<T>(
     stored.revision < 1
   )
     throw new Error("VAULT_DRAFT_INVALID");
-  const opened = await openDraft<unknown>(key, envelope, draftId, stored.sealed);
+  const opened = await openDraft<unknown>(
+    key,
+    envelope,
+    draftId,
+    stored.sealed,
+  );
   return { ...decodeStoredDraft<T>(opened), revision: stored.revision };
 }
 export function decodeStoredDraft<T>(opened: unknown): {

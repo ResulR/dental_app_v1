@@ -2659,7 +2659,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 15.5 — Implémenter révocation sur suspension lors du retour réseau
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Signal serveur de suspension de clinique lié au jeton précédemment émis et encore dans sa limite absolue, distinct d’une session expirée/révoquée ordinaire ; PWA bloque le portail et efface atomiquement ses deux enregistrements chiffrés et son enveloppe de coffre pour le seul compte identifié ; réception navigateur, concurrence interonglets et limite du jeton restent ouvertes. Aucune suppression sur panne ou réponse ambiguë.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** PWA, hors ligne et brouillons

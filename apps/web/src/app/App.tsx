@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { purgeSuspendedAccount } from "../features/drafts/local-vault.js";
 import { AuditLogPanel } from "../features/audit/AuditLogPanel.js";
 import { InternalNoticePanel } from "../features/notifications/InternalNoticePanel.js";
 import { GeneralMessagingPanel } from "../features/messaging/GeneralMessagingPanel.js";
@@ -44,6 +45,7 @@ export function App() {
           Porositë, dorëzimet dhe bisedat në një vend të vetëm.
         </p>
         <AuthenticationPanel
+          purgeSuspendedAccount={purgeSuspendedAccount}
           renderAuthenticated={(identity) => (
             <>
               {identity.profile !== "clinic" && (

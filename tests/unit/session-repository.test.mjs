@@ -285,3 +285,20 @@ test("owner alert failure rolls back login; employees do not enqueue owner alert
   await f.repository.issue(write());
   expect(f.events.some((e) => e.sql.includes("public.outbox"))).toBe(false);
 });
+test("suspension lookup is bound to a previously issued token and current clinic state", async () => {
+  const database = {
+    query: vi.fn().mockResolvedValue({ rows: [{ account_id: accountId }] }),
+  };
+  const repository = createSessionRepository(database);
+  expect(await repository.suspension(Buffer.alloc(32, 7))).toBe(accountId);
+  const [sql, args] = database.query.mock.calls[0];
+  expect(sql).toContain("s.secret_digest=$1");
+  expect(sql).toContain("a.profile='clinic'");
+  expect(sql).toContain("a.lifecycle='suspended' OR c.suspended");
+  expect(sql).toContain("l.absolute_expires_at > clock_timestamp()");
+  expect(args).toEqual([Buffer.alloc(32, 7)]);
+  database.query.mockResolvedValueOnce({ rows: [] });
+  expect(await repository.suspension(Buffer.alloc(32, 7))).toBeNull();
+  expect(await repository.suspension(Buffer.alloc(1))).toBeNull();
+  expect(database.query).toHaveBeenCalledTimes(2);
+});

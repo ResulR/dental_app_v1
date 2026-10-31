@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Button } from "../../shared/Button.js";
 import { Card } from "../../shared/Card.js";
 import { createAuthClient, authFailureMessage } from "./auth-api.js";
@@ -14,14 +14,17 @@ const profiles = {
 type View =
   | { kind: "checking" }
   | { kind: "anonymous" }
+  | { kind: "suspended"; accountId: string }
   | { kind: "unavailable" }
   | { kind: "authenticated"; identity: SessionIdentity };
 export function AuthenticationPanel({
   client = api,
   renderAuthenticated,
+  purgeSuspendedAccount,
 }: {
   client?: AuthClient;
   renderAuthenticated?: (identity: SessionIdentity) => ReactNode;
+  purgeSuspendedAccount?: (accountId: string) => Promise<void>;
 }) {
   const [view, setView] = useState<View>({ kind: "checking" });
   const [email, setEmail] = useState("");
@@ -41,13 +44,37 @@ export function AuthenticationPanel({
       setMessage(authFailureMessage(result));
     }
   }
+  const resolveDenied = useCallback(
+    async (signal?: AbortSignal) => {
+      const result = await client.suspension(signal);
+      if (result.kind === "suspended") {
+        setView(result);
+        try {
+          if (!purgeSuspendedAccount) throw new Error("PURGE_UNAVAILABLE");
+          await purgeSuspendedAccount(result.accountId);
+          setMessage("Draftet dhe qëllimet lokale të kësaj llogarie u hoqën.");
+        } catch {
+          setMessage(
+            "Pastrimi lokal nuk u konfirmua. Qasja mbetet e bllokuar; provoni përsëri.",
+          );
+        }
+      } else if (result.kind === "other") setView({ kind: "anonymous" });
+      else {
+        setView({ kind: "unavailable" });
+        setMessage(
+          "Gjendja e llogarisë nuk u verifikua. Provoni përsëri online.",
+        );
+      }
+    },
+    [client, purgeSuspendedAccount],
+  );
   useEffect(() => {
     const controller = new AbortController();
     let current = true;
     void client.session(controller.signal).then((result) => {
       if (!current) return;
       if (result.kind === "authenticated") setView(result);
-      else if (result.kind === "denied") setView({ kind: "anonymous" });
+      else if (result.kind === "denied") void resolveDenied(controller.signal);
       else {
         setView({ kind: "unavailable" });
         setMessage(authFailureMessage(result));
@@ -57,7 +84,7 @@ export function AuthenticationPanel({
       current = false;
       controller.abort();
     };
-  }, [client]);
+  }, [client, resolveDenied]);
   async function operation(work: () => Promise<void>) {
     if (inFlight.current) return;
     inFlight.current = true;
@@ -76,12 +103,13 @@ export function AuthenticationPanel({
     await operation(async () => {
       const current = await client.session();
       if (current.kind !== "authenticated") {
-        applySession(current);
+        if (current.kind === "denied") await resolveDenied();
+        else applySession(current);
         return;
       }
       const renewed = await client.renew();
       if (renewed.kind !== "ok") {
-        if (renewed.kind === "denied") setView({ kind: "anonymous" });
+        if (renewed.kind === "denied") await resolveDenied();
         setMessage(authFailureMessage(renewed));
         return;
       }
@@ -157,6 +185,21 @@ export function AuthenticationPanel({
           }}
         >
           Provo përsëri
+        </Button>
+      </Card>
+    );
+  if (view.kind === "suspended")
+    return (
+      <Card>
+        <h2>Llogaria e pezulluar</h2>
+        <p role="alert">
+          Serveri konfirmoi pezullimin e kësaj klinike. Qasja është bllokuar. Të
+          dhënat lokale të koduara kërkojnë pastrim të kontrolluar për këtë
+          llogari.
+        </p>
+        {feedback}
+        <Button disabled={busy} onClick={() => void check()}>
+          Verifiko përsëri
         </Button>
       </Card>
     );

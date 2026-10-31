@@ -84,6 +84,24 @@ export function registerAuthenticationRoutes(
     res.setHeader("Set-Cookie", session.setCookie);
     res.status(204).end();
   });
+  app.get("/api/v1/auth/suspension", async (req, res) => {
+    if (Object.keys(req.query).length !== 0) {
+      sendProblem(res, "VALIDATION_FAILED", 400);
+      return;
+    }
+    const token = readSessionCookie(req.headers.cookie);
+    const accountId = token
+      ? await services.sessions.suspendedAccount(token)
+      : null;
+    if (!accountId) {
+      sendProblem(res, "AUTHENTICATION_REQUIRED", 401);
+      return;
+    }
+    res.setHeader("Cache-Control", "no-store");
+    res.json(
+      SessionIdentitySchema.parse({ account_id: accountId, profile: "clinic" }),
+    );
+  });
   app.get("/api/v1/auth/session", async (req, res) => {
     if (Object.keys(req.query).length !== 0) {
       sendProblem(res, "VALIDATION_FAILED", 400);

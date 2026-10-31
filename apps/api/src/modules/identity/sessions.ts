@@ -23,6 +23,7 @@ export type SessionWrite = {
 };
 export type SessionStore = {
   find: (digest: Buffer) => Promise<SessionRecord | undefined>;
+  suspension?: (digest: Buffer) => Promise<string | null>;
   // Implementations must recheck account state/epoch and persist the session,
   // limit and required audit within the same transaction before returning true.
   issue: (input: SessionWrite) => Promise<boolean>;
@@ -142,6 +143,11 @@ export function createSessionService(
     }
   }
   return {
+    async suspendedAccount(token: string): Promise<string | null> {
+      const hash = digest(token);
+      if (!hash || !store.suspension) return null;
+      return store.suspension(hash);
+    },
     async issue(fact: Fact): Promise<{ setCookie: string } | null> {
       const at = clock();
       const created = next(fact, at, at + settings.absoluteLifetimeMs);

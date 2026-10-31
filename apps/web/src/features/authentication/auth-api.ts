@@ -89,6 +89,21 @@ export function createAuthClient(transport: typeof fetch = fetch) {
     return response?.status === 204 ? { kind: "ok" } : failure(response);
   }
   return {
+    async suspension(
+      signal?: AbortSignal,
+    ): Promise<
+      | { kind: "suspended"; accountId: string }
+      | { kind: "other" | "unavailable" }
+    > {
+      const response = await request("suspension", undefined, signal);
+      if (!response) return { kind: "unavailable" };
+      if (response.status === 401) return { kind: "other" };
+      if (response.status !== 200) return { kind: "unavailable" };
+      const parsed = SessionIdentitySchema.safeParse(response.body);
+      return parsed.success && parsed.data.profile === "clinic"
+        ? { kind: "suspended", accountId: parsed.data.account_id }
+        : { kind: "unavailable" };
+    },
     async permissions(signal?: AbortSignal) {
       const response = await request("permissions", undefined, signal);
       if (response?.status !== 200) return null;
