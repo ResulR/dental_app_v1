@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { RefObject } from "react";
 import { Button } from "../../shared/Button.js";
 import {
   prepareVault,
@@ -24,6 +25,21 @@ import {
   type ServerDraftPayload,
 } from "./draft-sync-api.js";
 
+import {
+  readSubmissionIntent,
+  stageSubmissionIntent,
+  markSubmissionAttempt,
+  recordSubmissionReply,
+  clearSettledSubmission,
+  type StoredSubmission,
+  type SubmissionRequest,
+} from "./submission-intent.js";
+
+export type SubmissionStorePort = {
+  stage: (request: SubmissionRequest) => Promise<void>;
+  markAttempt: (request: SubmissionRequest) => Promise<void>;
+  record: (request: SubmissionRequest, reply: unknown) => Promise<void>;
+};
 type Pending = Awaited<ReturnType<typeof prepareVault>>;
 export function ClinicDraftVault<T>({
   accountId,
@@ -33,6 +49,8 @@ export function ClinicDraftVault<T>({
   confirmed,
   toServer,
   fromServer,
+  submissionStoreRef,
+  onSubmissionRecovered,
 }: {
   accountId: string;
   capture: () => T;
@@ -41,6 +59,8 @@ export function ClinicDraftVault<T>({
   confirmed: boolean;
   toServer: (value: T) => ServerDraftPayload | null;
   fromServer: (value: ServerDraftPayload) => T | null;
+  submissionStoreRef: RefObject<SubmissionStorePort | null>;
+  onSubmissionRecovered: (submission: StoredSubmission | null) => void;
 }) {
   const db = useRef<IDBDatabase | null>(null);
   const key = useRef<CryptoKey | null>(null);
@@ -52,6 +72,8 @@ export function ClinicDraftVault<T>({
   >("loading");
   const [busy, setBusy] = useState(false);
   const [revision, setRevision] = useState(0);
+  const [storedSubmission, setStoredSubmission] =
+    useState<StoredSubmission | null>(null);
   const [remote, setRemote] = useState<RemoteDraft | null>(null);
   const [serverDrafts, setServerDrafts] = useState<Awaited<
     ReturnType<typeof listServerDrafts>
@@ -82,6 +104,7 @@ export function ClinicDraftVault<T>({
   useEffect(() => {
     let current = true;
     key.current = null;
+    submissionStoreRef.current = null;
     pending.current = null;
     db.current = null;
     void openLocalVault()
@@ -109,9 +132,10 @@ export function ClinicDraftVault<T>({
       db.current?.close();
       db.current = null;
       key.current = null;
+      submissionStoreRef.current = null;
       pending.current = null;
     };
-  }, [accountId]);
+  }, [accountId, submissionStoreRef]);
   async function run(work: () => Promise<void>) {
     if (busy || !db.current) return;
     setBusy(true);
@@ -139,6 +163,52 @@ export function ClinicDraftVault<T>({
       if (envelope) setCode("");
     }
   }
+  async function connectSubmissionStore(
+    database: IDBDatabase,
+    stored: VaultEnvelope,
+    active: CryptoKey,
+  ) {
+    const context = { db: database, envelope: stored, key: active };
+    const existing = await readSubmissionIntent(context);
+    setStoredSubmission(existing);
+    onSubmissionRecovered(existing);
+    submissionStoreRef.current = {
+      async stage(request) {
+        const value = await stageSubmissionIntent(context, request);
+        setStoredSubmission(value);
+      },
+      async markAttempt(request) {
+        const value = await markSubmissionAttempt(context, request);
+        setStoredSubmission(value);
+      },
+      async record(request, reply) {
+        const value = await recordSubmissionReply(context, request, reply);
+        setStoredSubmission(value);
+      },
+    };
+  }
+  async function clearSubmission() {
+    if (
+      !storedSubmission ||
+      storedSubmission.state !== "settled" ||
+      !db.current ||
+      !key.current ||
+      !envelope ||
+      !window.confirm(
+        "Të hiqet vetëm gjurma lokale e këtij dërgimi të përfunduar?",
+      )
+    )
+      return;
+    await run(async () => {
+      await clearSettledSubmission(
+        { db: db.current!, envelope, key: key.current! },
+        storedSubmission.idempotency_key,
+      );
+      setStoredSubmission(null);
+      onSubmissionRecovered(null);
+      setMessage("Gjurma e përfunduar u hoq nga kasaforta.");
+    });
+  }
   async function prepare() {
     if (!phrase || phrase !== confirmation) {
       setMessage("Fraza dhe konfirmimi duhet të përputhen.");
@@ -156,6 +226,11 @@ export function ClinicDraftVault<T>({
     await run(async () => {
       const prepared = pending.current!;
       await createVault(db.current!, prepared.envelope);
+      await connectSubmissionStore(
+        db.current!,
+        prepared.envelope,
+        prepared.active,
+      );
       key.current = prepared.active;
       setEnvelope(prepared.envelope);
       setPhase("unlocked");
@@ -178,6 +253,7 @@ export function ClinicDraftVault<T>({
         recovery ? "recovery" : "phrase",
       );
       const existing = await readLocalDraft<T>(db.current!, stored, active);
+      await connectSubmissionStore(db.current!, stored, active);
       setEnvelope(stored);
       key.current = active;
       setPhase("unlocked");
@@ -207,6 +283,7 @@ export function ClinicDraftVault<T>({
       const active = await unlockVault(next, accountId, phrase, "phrase");
       const existing = await readLocalDraft<T>(db.current!, next, active);
       await replaceVault(db.current!, envelope, next);
+      await connectSubmissionStore(db.current!, next, active);
       key.current = active;
       setPhase("unlocked");
       setRevision(existing?.revision ?? 0);
@@ -757,6 +834,24 @@ export function ClinicDraftVault<T>({
               ? "Ka një draft lokal të ruajtur."
               : "Nuk ka draft lokal të ruajtur."}
           </p>
+          {storedSubmission && (
+            <div role="status">
+              <p>
+                {storedSubmission.state === "prepared"
+                  ? "Dërgimi është përgatitur lokalisht; mund të mos jetë nisur."
+                  : storedSubmission.state === "uncertain"
+                    ? "Rezultati i dërgimit nuk dihet. Verifikojeni me të njëjtën kërkesë; mos krijoni një tjetër."
+                    : storedSubmission.reply?.kind === "submitted"
+                      ? "Konfirmimi i serverit ruhet i koduar në këtë pajisje."
+                      : "Përgjigjja e serverit u ruajt; rishikoni arsyet para një kërkese tjetër."}
+              </p>
+              {storedSubmission.state === "settled" && (
+                <Button disabled={busy} onClick={() => void clearSubmission()}>
+                  Fshi gjurmën e dërgimit të përfunduar
+                </Button>
+              )}
+            </div>
+          )}
           <Button
             disabled={busy || disabled || confirmed || !!remote?.pending}
             onClick={() => void save()}

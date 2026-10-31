@@ -15,6 +15,7 @@ export type RemoteDraft = {
 };
 const NAME = "dental-lab-local-vault-v1";
 const DRAFT = "clinic-order-form";
+export type VaultRecordId = "clinic-order-form" | "clinic-order-submission";
 type StoredDraft = {
   accountId: string;
   draftId: string;
@@ -114,23 +115,24 @@ export async function readLocalDraft<T>(
   database: IDBDatabase,
   envelope: VaultEnvelope,
   key: CryptoKey,
+  draftId: VaultRecordId = DRAFT,
 ) {
   const tx = database.transaction("drafts", "readonly");
   const done = completed(tx);
   const stored = (await result(
-    tx.objectStore("drafts").get([envelope.accountId, DRAFT]),
+    tx.objectStore("drafts").get([envelope.accountId, draftId]),
   )) as StoredDraft | undefined;
   await done;
   if (!stored) return null;
   if (
     stored.accountId !== envelope.accountId ||
     stored.vaultId !== envelope.vaultId ||
-    stored.draftId !== DRAFT ||
+    stored.draftId !== draftId ||
     !Number.isSafeInteger(stored.revision) ||
     stored.revision < 1
   )
     throw new Error("VAULT_DRAFT_INVALID");
-  const opened = await openDraft<unknown>(key, envelope, DRAFT, stored.sealed);
+  const opened = await openDraft<unknown>(key, envelope, draftId, stored.sealed);
   return { ...decodeStoredDraft<T>(opened), revision: stored.revision };
 }
 export function decodeStoredDraft<T>(opened: unknown): {
@@ -171,10 +173,11 @@ export async function saveLocalDraft(
   value: unknown,
   expectedRevision: number,
   remote: RemoteDraft | null = null,
+  draftId: VaultRecordId = DRAFT,
 ) {
   if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 0)
     throw new Error("VAULT_REVISION_INVALID");
-  const sealed = await sealDraft(key, envelope, DRAFT, {
+  const sealed = await sealDraft(key, envelope, draftId, {
     local_vault_format: 2,
     value,
     remote,
@@ -192,7 +195,7 @@ export async function saveLocalDraft(
     tx.objectStore("vaults").get(envelope.accountId),
   )) as VaultEnvelope | undefined;
   const drafts = tx.objectStore("drafts");
-  const current = (await result(drafts.get([envelope.accountId, DRAFT]))) as
+  const current = (await result(drafts.get([envelope.accountId, draftId]))) as
     StoredDraft | undefined;
   if (
     !vault ||
@@ -208,7 +211,7 @@ export async function saveLocalDraft(
   const revision = expectedRevision + 1;
   drafts.put({
     accountId: envelope.accountId,
-    draftId: DRAFT,
+    draftId,
     vaultId: envelope.vaultId,
     revision,
     sealed,
@@ -220,6 +223,7 @@ export async function deleteLocalDraft(
   database: IDBDatabase,
   envelope: VaultEnvelope,
   expectedRevision: number,
+  draftId: VaultRecordId = DRAFT,
 ) {
   const tx = database.transaction(["vaults", "drafts"], "readwrite");
   const done = completed(tx);
@@ -227,7 +231,7 @@ export async function deleteLocalDraft(
     tx.objectStore("vaults").get(envelope.accountId),
   )) as VaultEnvelope | undefined;
   const drafts = tx.objectStore("drafts");
-  const current = (await result(drafts.get([envelope.accountId, DRAFT]))) as
+  const current = (await result(drafts.get([envelope.accountId, draftId]))) as
     StoredDraft | undefined;
   if (
     !vault ||
@@ -241,6 +245,6 @@ export async function deleteLocalDraft(
     await done.catch(() => {});
     throw new Error("VAULT_CONFLICT");
   }
-  drafts.delete([envelope.accountId, DRAFT]);
+  drafts.delete([envelope.accountId, draftId]);
   await done;
 }

@@ -21,6 +21,7 @@ import { createOrderPreflightClient } from "./preflight-api.js";
 import { createOrderSimilarityClient } from "./similarity-api.js";
 import { Button } from "../../shared/Button.js";
 import { ClinicDraftVault } from "../drafts/index.js";
+import type { SubmissionStorePort } from "../drafts/index.js";
 type Kind = ReturnType<typeof CatalogKindSchema.parse>;
 type Item = ReturnType<typeof ActiveCatalogItemSchema.parse>;
 type Tooth = ReturnType<typeof ToothSchema.parse>;
@@ -102,6 +103,7 @@ export function ClinicOrderForm({
   }, []);
   const frozen = busy || intent !== null || submission?.kind === "submitted";
   const pending = useRef<AbortController | null>(null);
+  const submissionStoreRef = useRef<SubmissionStorePort | null>(null);
   useEffect(
     () => () => {
       pending.current?.abort();
@@ -187,10 +189,15 @@ export function ClinicOrderForm({
     }
     if (
       pending.current ||
-      submission?.kind === "submitted" ||
+      (submission?.kind === "submitted" && !intent) ||
       submission?.kind === "conflict"
     )
       return;
+    const store = submissionStoreRef.current;
+    if (!store) {
+      setMessage("Hapni kasafortën për të ruajtur kërkesën para dërgimit.");
+      return;
+    }
     const request =
       intent ??
       OrderSubmissionSchema.parse({
@@ -200,16 +207,36 @@ export function ClinicOrderForm({
       });
     setIntent(request);
     await run(async (signal) => {
+      let staged = false;
+      try {
+        await store.stage(request);
+        staged = true;
+        await store.markAttempt(request);
+      } catch {
+        if (!staged) setIntent(null);
+        setMessage(
+          "Kërkesa nuk u dërgua: ruajtja e koduar nuk u konfirmua. Kontrolloni kasafortën dhe provoni përsëri.",
+        );
+        return;
+      }
       try {
         const response = await submissionApi.submit(request, signal);
+        // A response can arrive even if the UI timeout raced with it.
+        // The same encrypted intention remains available for manual reconciliation.
         if (signal.aborted) return;
         setSubmission(response);
-        if (response.kind !== "conflict") setIntent(null);
-      } catch {
-        if (!signal.aborted || pending.current)
+        try {
+          await store.record(request, response);
+          if (response.kind !== "conflict") setIntent(null);
+        } catch {
           setMessage(
-            "Rezultati i dërgimit është i pasigurt. Mos e mbyllni ekranin. Përdorni të njëjtën kërkesë për ta verifikuar; mos krijoni një porosi tjetër.",
+            "Përgjigjja e serverit u mor, por ruajtja lokale nuk u konfirmua. Verifikojeni përsëri të njëjtën kërkesë.",
           );
+        }
+      } catch {
+        setMessage(
+          "Rezultati i dërgimit është i pasigurt. Kërkesa është ruajtur e koduar; pas rihapjes verifikojeni me të njëjtin identifikues.",
+        );
       }
     });
   }
@@ -343,7 +370,8 @@ export function ClinicOrderForm({
         Kontrolloni të dhënat, pastaj dërgoni porosinë me konfirmim të qartë.
         Drafti ruhet vetëm me veprim të qartë në kasafortën lokale. Skedarët nuk
         ruhen ende aty. Mos e mbyllni ekranin nëse rezultati i dërgimit është i
-        pasigurt.
+        pasigurt. Hapni kasafortën lokale përpara depozitimit që kërkesa të
+        ruhet e koduar deri në përgjigjen e serverit.
       </p>
       <ClinicDraftVault
         accountId={accountId}
@@ -353,6 +381,22 @@ export function ClinicOrderForm({
         confirmed={submission?.kind === "submitted"}
         toServer={toServerDraft}
         fromServer={fromServerDraft}
+        submissionStoreRef={submissionStoreRef}
+        onSubmissionRecovered={(stored) => {
+          if (!stored) {
+            setIntent(null);
+            setSubmission(null);
+          } else if (stored.state === "settled") {
+            setIntent(null);
+            setSubmission(stored.reply);
+          } else {
+            setIntent(stored.request);
+            setSubmission(null);
+            setMessage(
+              "U gjet një kërkesë e papërfunduar. Verifikojeni shprehimisht me të njëjtin identifikues.",
+            );
+          }
+        }}
       />
       {!online && (
         <p role="status">
