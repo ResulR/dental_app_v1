@@ -14,6 +14,7 @@ import {
 import type { CalendarMode } from "./calendar-period.js";
 import { createOrderTrackingClient } from "./tracking-api.js";
 import { orderStatusLabels } from "./status-labels.js";
+import { deliveryUrgency, deliveryUrgencyLabel } from "./delivery-urgency.js";
 const api = createOrderTrackingClient();
 const planClient = createDeliveryPlanClient();
 type Page = OrderTrackingPage;
@@ -42,6 +43,16 @@ function CalendarResults({
   const [page, setPage] = useState<Page | null>(null);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const refresh = () => setNow(new Date());
+    const timer = window.setInterval(refresh, 60_000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, []);
   const [proposal, setProposal] = useState<{
     context: DeliveryPlanContext;
     target: string;
@@ -255,6 +266,18 @@ function CalendarResults({
                       <br />
                       {orderStatusLabels[item.status]}
                       {item.planned_delivery_date ? "" : " · E përkohshme"}
+                      {item.priority && <p>Prioritet manual</p>}
+                      {(() => {
+                        const urgency = deliveryUrgency(
+                          item.status,
+                          item.planned_delivery_date,
+                          item.requested_delivery_date,
+                          now,
+                        );
+                        return urgency ? (
+                          <p>{deliveryUrgencyLabel(urgency)}</p>
+                        ) : null;
+                      })()}
                       {page.can_read_details && (
                         <>
                           <br />
