@@ -17,5 +17,5 @@ for (const folder of root.workspaces) {
   assert.equal(p.type, "module");
 }
 const { contractVersion } = await import("@dental-lab/contracts");
-assert.equal(contractVersion, 2);
+assert.equal(contractVersion, 3);
 console.log("Workspace manifests and shared package resolution OK");

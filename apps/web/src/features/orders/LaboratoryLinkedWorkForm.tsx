@@ -202,6 +202,7 @@ export function LaboratoryLinkedWorkForm({
           "Burimi ndryshoi ose nuk lejon punë të lidhur. Ringarkoni detajet.",
         conflict:
           "Çelësi është përdorur me të dhëna të tjera. Kontrolloni historikun; dërgimi i ri bllokohet.",
+        draft_conflict: "Drafti i serverit ndryshoi; nuk u krijua punë e re.",
         blocked:
           "Katalogu ose skedarët nuk kaluan kontrollet. Nuk u krijua punë dhe burimi nuk u ndryshua.",
         exception_required:

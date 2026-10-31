@@ -198,24 +198,27 @@ export function ClinicOrderForm({
       setMessage("Hapni kasafortën për të ruajtur kërkesën para dërgimit.");
       return;
     }
-    const request =
-      intent ??
-      OrderSubmissionSchema.parse({
-        idempotency_key: crypto.randomUUID(),
-        input: input(),
-        confirmed_warnings: ack,
-      });
-    setIntent(request);
     await run(async (signal) => {
+      let request: ReturnType<typeof OrderSubmissionSchema.parse>;
       let staged = false;
       try {
+        const link = intent ? null : await store.link();
+        request =
+          intent ??
+          OrderSubmissionSchema.parse({
+            idempotency_key: crypto.randomUUID(),
+            input: input(),
+            confirmed_warnings: ack,
+            ...(link ?? {}),
+          });
+        setIntent(request);
         await store.stage(request);
         staged = true;
         await store.markAttempt(request);
       } catch {
         if (!staged) setIntent(null);
         setMessage(
-          "Kërkesa nuk u dërgua: ruajtja e koduar nuk u konfirmua. Kontrolloni kasafortën dhe provoni përsëri.",
+          "Kërkesa nuk u dërgua: ruajtja e koduar ose drafti i serverit nuk u verifikua. Kontrolloni kasafortën.",
         );
         return;
       }
@@ -592,6 +595,12 @@ export function ClinicOrderForm({
         <p role="alert">
           Gjendja ndryshoi. Kontrolloni përsëri dhe konfirmoni paralajmërimet
           para dërgimit.
+        </p>
+      )}
+      {submission?.kind === "draft_conflict" && (
+        <p role="alert">
+          Drafti i serverit ndryshoi ose nuk përputhet me porosinë. Asnjë porosi
+          e re nuk u regjistrua; rishikoni draftin dhe konfliktin.
         </p>
       )}
       {submission?.kind === "conflict" && (

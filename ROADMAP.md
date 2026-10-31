@@ -2719,7 +2719,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 15.9 — Implémenter nettoyage post-soumission confirmée
-- **Statut :** ◐ Après reçu `submitted`, la clinique peut supprimer explicitement le seul brouillon local dont le contenu déchiffré correspond au formulaire confirmé ; la révision CAS empêche la suppression concurrente. Aucun effacement sur réponse ambiguë ou brouillon différent. Un brouillon serveur actif bloque ce retrait après dépôt jusqu’au lien transactionnel avec la commande ; réception navigateur et nettoyage des autres appareils restent ouverts.
+- **Statut :** ◐ Dépôt textuel lié facultativement à un brouillon serveur actif de même compte/clinique et révision exacte : comparaison du contenu, verrou et transition `submitted` avec reçu dans la transaction de commande ; rejeu de la même intention relit le lien. Le retrait local explicite conserve son CAS et attend un reçu certain. Fichiers, réception PostgreSQL/navigateur et nettoyage des autres appareils restent ouverts.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** PWA, hors ligne et brouillons

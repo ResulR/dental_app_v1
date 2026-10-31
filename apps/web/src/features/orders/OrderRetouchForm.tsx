@@ -160,6 +160,7 @@ export function OrderRetouchForm({
         active_retouch: "Ekziston një retushim aktiv për këtë punë.",
         conflict:
           "Çelësi i kërkesës ka të dhëna të tjera. Kontrolloni historikun përpara një kërkese të re.",
+        draft_conflict: "Drafti i serverit ndryshoi; nuk u krijua retushim.",
         blocked:
           "Katalogu ose skedarët nuk kaluan kontrollet. Asnjë retushim nuk u regjistrua.",
         confirmation_required:

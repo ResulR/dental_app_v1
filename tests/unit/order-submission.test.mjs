@@ -19,7 +19,7 @@ const input = {
 const command = { input, idempotency_key: id, confirmed_warnings: false };
 // Transactional state double: tests orchestration, NOT actual PostgreSQL locking/constraints.
 function fixture(patch = {}) {
-  const state = { writes: [], receipt: null, order: null },
+  const state = { writes: [], receipt: null, order: null, linkedDraft: null },
     calls = [];
   let queue = Promise.resolve();
   const transaction = vi.fn((fn) => {
@@ -50,12 +50,56 @@ function fixture(patch = {}) {
           )
         )
           return { rows: patch.unapproved ? [] : [{ id }] };
-        if (sql.startsWith("SELECT r.payload_fingerprint"))
+        if (sql.startsWith("SELECT r.id AS receipt_id"))
           return {
             rows: draft.receipt
-              ? [{ ...draft.order, payload_fingerprint: draft.receipt }]
+              ? [
+                  {
+                    ...draft.order,
+                    receipt_id: id,
+                    payload_fingerprint: draft.receipt,
+                  },
+                ]
               : [],
           };
+        if (sql.startsWith("SELECT id FROM public.drafts WHERE")) {
+          return {
+            rows: draft.linkedDraft === values[0] ? [{ id: values[0] }] : [],
+          };
+        }
+        if (
+          sql.includes("FROM public.drafts d") &&
+          sql.includes("FOR UPDATE OF d")
+        ) {
+          return {
+            rows: patch.foreignDraft
+              ? []
+              : [
+                  {
+                    revision: patch.draftRevision ?? "2",
+                    state: patch.draftState ?? "active",
+                    payload: patch.draftPayload ?? {
+                      patient: { internal_reference: "Synthetic" },
+                      requested_delivery_date: "2026-11-01",
+                      material: id,
+                      shade,
+                      teeth: [{ fdi: 11, selection: "pontic" }],
+                    },
+                  },
+                ],
+          };
+        }
+        if (sql.includes("FROM public.draft_revision_files"))
+          return { rows: patch.draftFiles ? [{ file_id: id }] : [] };
+        if (
+          sql.startsWith("WITH changed AS (") &&
+          sql.includes("UPDATE public.drafts")
+        ) {
+          if (patch.failAtLink) throw new Error("SYNTHETIC_LINK_FAILURE");
+          draft.writes.push([sql, values]);
+          draft.linkedDraft = values[0];
+          return { rows: [{ draft_id: values[0] }] };
+        }
         if (sql.startsWith("SELECT id,kind,label"))
           return {
             rows: [
@@ -100,8 +144,10 @@ function fixture(patch = {}) {
           }
           if (sql.startsWith("INSERT INTO public.internal_notifications"))
             return { rows: patch.noOwnerNotice ? [] : [{ id }] };
-          if (sql.startsWith("INSERT INTO public.submission_receipts"))
+          if (sql.startsWith("INSERT INTO public.submission_receipts")) {
             draft.receipt = values[2];
+            return { rows: [{ id }] };
+          }
         }
         return { rows: [] };
       };
@@ -487,4 +533,79 @@ test("closed notice flag leaves submission unchanged; enabled owner notice is tr
     expect(failed.state.writes).toEqual([]);
     expect(failed.state.receipt).toBeNull();
   }
+});
+
+test("draft link is conditional, in the order transaction, and replay checks the same receipt", async () => {
+  const linked = { ...command, draft_id: id, draft_revision: 2 };
+  const db = fixture();
+  const service = createOrderSubmissionService(db);
+  expect((await service.submit(actor, linked)).result.kind).toBe("submitted");
+  expect(db.state.linkedDraft).toBe(id);
+  expect(
+    db.state.writes.some(
+      ([sql, values]) =>
+        sql.includes("UPDATE public.drafts") &&
+        values[0] === id &&
+        values[4] === 2,
+    ),
+  ).toBe(true);
+  const writes = db.state.writes.length;
+  expect((await service.submit(actor, linked)).result.replayed).toBe(true);
+  expect(db.state.writes).toHaveLength(writes);
+  const foreign = fixture({ foreignDraft: true });
+  expect(
+    (await createOrderSubmissionService(foreign).submit(actor, linked)).result
+      .kind,
+  ).toBe("draft_conflict");
+  expect(foreign.state.writes).toEqual([]);
+  for (const patch of [
+    { draftRevision: "3" },
+    { draftState: "deleted" },
+    { draftPayload: { description: "Different" } },
+  ]) {
+    const failed = fixture(patch);
+    expect(
+      (await createOrderSubmissionService(failed).submit(actor, linked)).result
+        .kind,
+    ).toBe("draft_conflict");
+    expect(failed.state.writes).toEqual([]);
+  }
+  const blocked = fixture({ draftFiles: true });
+  expect(
+    (await createOrderSubmissionService(blocked).submit(actor, linked)).result,
+  ).toMatchObject({
+    kind: "blocked",
+    reasons: ["files_not_ready"],
+  });
+  expect(blocked.state.writes).toEqual([]);
+  const rollback = fixture({ failAtLink: true });
+  await expect(
+    createOrderSubmissionService(rollback).submit(actor, linked),
+  ).rejects.toThrow("SYNTHETIC_LINK_FAILURE");
+  expect(rollback.state.writes).toEqual([]);
+  expect(rollback.state.receipt).toBeNull();
+  expect(rollback.state.linkedDraft).toBeNull();
+});
+test("draft content and idempotency key must match exactly, with legacy unlinked receipt unchanged", async () => {
+  const linked = { ...command, draft_id: id, draft_revision: 2 };
+  const db = fixture();
+  const service = createOrderSubmissionService(db);
+  await service.submit(actor, linked);
+  const sameKeyOtherDraft = { ...linked, draft_id: shade };
+  expect((await service.submit(actor, sameKeyOtherDraft)).result.kind).toBe(
+    "conflict",
+  );
+  expect(
+    (
+      await service.submit(actor, {
+        ...linked,
+        input: { ...input, description: "Changed" },
+      })
+    ).result.kind,
+  ).toBe("conflict");
+  const legacy = fixture();
+  expect(
+    (await createOrderSubmissionService(legacy).submit(actor, command)).result
+      .kind,
+  ).toBe("submitted");
 });

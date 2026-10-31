@@ -36,6 +36,7 @@ import {
 } from "./submission-intent.js";
 
 export type SubmissionStorePort = {
+  link: () => Promise<{ draft_id: string; draft_revision: number } | null>;
   stage: (request: SubmissionRequest) => Promise<void>;
   markAttempt: (request: SubmissionRequest) => Promise<void>;
   record: (request: SubmissionRequest, reply: unknown) => Promise<void>;
@@ -173,6 +174,20 @@ export function ClinicDraftVault<T>({
     setStoredSubmission(existing);
     onSubmissionRecovered(existing);
     submissionStoreRef.current = {
+      async link() {
+        const draft = await readLocalDraft<unknown>(database, stored, active);
+        const remote = draft?.remote;
+        if (remote?.pending) throw new Error("SUBMISSION_DRAFT_PENDING");
+        if (!remote || remote.revision === "0") return null;
+        const draft_revision = Number(remote.revision);
+        if (
+          !Number.isSafeInteger(draft_revision) ||
+          draft_revision < 1 ||
+          draft_revision > 2147483647
+        )
+          throw new Error("SUBMISSION_DRAFT_INVALID");
+        return { draft_id: remote.draft_id, draft_revision };
+      },
       async stage(request) {
         const value = await stageSubmissionIntent(context, request);
         setStoredSubmission(value);

@@ -7,6 +7,7 @@ import type { createApplicationDatabase } from "../../shared/database.js";
 import { createCurrentPermissionsRepository } from "../permissions/index.js";
 import { readCatalogForUse } from "../catalog/index.js";
 import { prepareNewOrderFiles } from "../files/index.js";
+import { draftMatchesSubmission } from "./submission-draft.js";
 import type { AttachmentPolicy } from "../files/index.js";
 type Actor = { accountId: string; sessionId: string };
 // No retry here: a lost COMMIT response must be reconciled using the same receipt key.
@@ -19,13 +20,30 @@ export function createOrderSubmissionRepository(
     async submit(actor: Actor, raw: unknown) {
       const parsed = OrderSubmissionSchema.safeParse(raw);
       if (!parsed.success) return { kind: "invalid" as const };
-      const { input, idempotency_key, confirmed_warnings } = parsed.data;
+      const {
+        input,
+        idempotency_key,
+        confirmed_warnings,
+        draft_id,
+        draft_revision,
+      } = parsed.data;
       const fingerprint = createHash("sha256")
         .update(
-          JSON.stringify({
-            ...input,
-            teeth: [...input.teeth].sort((a, b) => a.fdi - b.fdi),
-          }),
+          JSON.stringify(
+            draft_id
+              ? {
+                  input: {
+                    ...input,
+                    teeth: [...input.teeth].sort((a, b) => a.fdi - b.fdi),
+                  },
+                  draft_id,
+                  draft_revision,
+                }
+              : {
+                  ...input,
+                  teeth: [...input.teeth].sort((a, b) => a.fdi - b.fdi),
+                },
+          ),
         )
         .digest();
       return database.transaction(async (tx) => {
@@ -53,7 +71,7 @@ export function createOrderSubmissionRepository(
         if (clinics.rows.length !== 1) return { kind: "denied" as const };
         const clinicId = clinics.rows[0]!.id;
         const previous = await tx.query(
-          "SELECT r.payload_fingerprint,o.id AS order_id,o.number::text,o.received_at FROM public.submission_receipts r JOIN public.orders o ON o.id=r.order_id AND o.clinic_id=r.clinic_id WHERE r.account_id=$1 AND r.intent='clinic_order' AND r.idempotency_key=$2 AND r.clinic_id=$3",
+          "SELECT r.id AS receipt_id,r.payload_fingerprint,o.id AS order_id,o.number::text,o.received_at FROM public.submission_receipts r JOIN public.orders o ON o.id=r.order_id AND o.clinic_id=r.clinic_id WHERE r.account_id=$1 AND r.intent='clinic_order' AND r.idempotency_key=$2 AND r.clinic_id=$3",
           [actor.accountId, idempotency_key, clinicId],
         );
         const receipt = (row: Record<string, unknown>, replayed: boolean) =>
@@ -81,7 +99,62 @@ export function createOrderSubmissionRepository(
                 persisted: false,
               }),
             };
+          if (draft_id) {
+            const linked = await tx.query(
+              "SELECT id FROM public.drafts WHERE id=$1 AND account_id=$2 AND clinic_id=$3 AND state='submitted' AND submission_receipt_id=$4",
+              [draft_id, actor.accountId, clinicId, row.receipt_id],
+            );
+            if (linked.rows.length !== 1)
+              return {
+                kind: "result" as const,
+                result: OrderSubmissionResultSchema.parse({
+                  kind: "draft_conflict",
+                  persisted: false,
+                }),
+              };
+          }
           return { kind: "result" as const, result: receipt(row, true) };
+        }
+        if (draft_id) {
+          const draft = await tx.query<{
+            revision: string;
+            state: string;
+            payload: unknown;
+          }>(
+            `SELECT d.revision::text,d.state,r.payload FROM public.drafts d
+             JOIN public.draft_revisions r ON r.draft_id=d.id AND r.revision=d.revision
+             WHERE d.id=$1 AND d.account_id=$2 AND d.clinic_id=$3 FOR UPDATE OF d`,
+            [draft_id, actor.accountId, clinicId],
+          );
+          const current = draft.rows[0];
+          if (
+            !current ||
+            current.state !== "active" ||
+            current.revision !== String(draft_revision) ||
+            !draftMatchesSubmission(current.payload, input)
+          )
+            return {
+              kind: "result" as const,
+              result: OrderSubmissionResultSchema.parse({
+                kind: "draft_conflict",
+                persisted: false,
+              }),
+            };
+          const draftFiles = await tx.query(
+            `SELECT file_id FROM public.draft_revision_files f
+             JOIN public.draft_revisions r ON r.id=f.revision_id
+             WHERE r.draft_id=$1 AND r.revision=$2 LIMIT 1`,
+            [draft_id, draft_revision],
+          );
+          if (draftFiles.rows.length || input.file_ids.length)
+            return {
+              kind: "result" as const,
+              result: OrderSubmissionResultSchema.parse({
+                kind: "blocked",
+                persisted: false,
+                reasons: ["files_not_ready"],
+              }),
+            };
         }
         const { missing, references } = await readCatalogForUse(tx, input);
         const reasons: (
@@ -209,10 +282,38 @@ export function createOrderSubmissionRepository(
           "INSERT INTO public.audit_events(actor_id,action,object_type,object_id,request_id,aggregate_revision,changed_fields) VALUES($1,'ORDER_SUBMITTED','order',$2,$3,1,ARRAY['status','version'])",
           [actor.accountId, orderId, requestId],
         );
-        await tx.query(
-          "INSERT INTO public.submission_receipts(account_id,intent,idempotency_key,payload_fingerprint,order_id,clinic_id) VALUES($1,'clinic_order',$2,$3,$4,$5)",
+        const persistedReceipt = await tx.query<{ id: string }>(
+          "INSERT INTO public.submission_receipts(account_id,intent,idempotency_key,payload_fingerprint,order_id,clinic_id) VALUES($1,'clinic_order',$2,$3,$4,$5) RETURNING id",
           [actor.accountId, idempotency_key, fingerprint, orderId, clinicId],
         );
+        if (draft_id) {
+          if (persistedReceipt.rows.length !== 1)
+            throw new Error("ORDER_RECEIPT_MISSING");
+          const linked = await tx.query(
+            `WITH changed AS (
+              UPDATE public.drafts SET revision=revision+1,state='submitted',
+                submission_receipt_id=$4,updated_at=CURRENT_TIMESTAMP
+              WHERE id=$1 AND account_id=$2 AND clinic_id=$3
+                AND revision=$5 AND state='active'
+              RETURNING id,account_id,clinic_id,revision
+            ), history AS (
+              INSERT INTO public.draft_revisions(draft_id,account_id,clinic_id,revision,schema_version,payload)
+              SELECT c.id,c.account_id,c.clinic_id,c.revision,r.schema_version,r.payload
+              FROM changed c JOIN public.draft_revisions r
+                ON r.draft_id=c.id AND r.revision=c.revision-1
+              RETURNING draft_id
+            ) SELECT draft_id FROM history`,
+            [
+              draft_id,
+              actor.accountId,
+              clinicId,
+              persistedReceipt.rows[0]!.id,
+              draft_revision,
+            ],
+          );
+          if (linked.rows.length !== 1)
+            throw new Error("DRAFT_SUBMISSION_LINK_MISSING");
+        }
         if (order.rows.length !== 1) throw new Error("ORDER_RECEIPT_MISSING");
         return {
           kind: "result" as const,
