@@ -70,6 +70,7 @@ test("effective calendar search is scoped and asks SQL to prefer planned date", 
     "2026-10-19",
     "2026-10-25",
     "active",
+    null, // Optional current work type label filter.
   ]);
   expect(
     sql.match(
