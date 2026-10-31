@@ -20,6 +20,7 @@ export type StoredSubmission = {
   idempotency_key: string;
   request: SubmissionRequest | null;
   reply: SubmissionReply | null;
+  linked_draft?: { draft_id: string; draft_revision: number };
 };
 const recordId = "clinic-order-submission";
 type Context = { db: IDBDatabase; envelope: VaultEnvelope; key: CryptoKey };
@@ -46,12 +47,24 @@ export function parseStoredSubmission(raw: unknown): StoredSubmission {
   if (value.state === "settled") {
     if (request !== null || reply === null || !reply.success)
       throw new Error("SUBMISSION_INTENT_INVALID");
+    const linked = z
+      .strictObject({
+        draft_id: z.uuid(),
+        draft_revision: z.number().int().min(1).max(2147483647),
+      })
+      .safeParse(value.linked_draft);
+    if (
+      value.linked_draft !== undefined &&
+      (!linked.success || reply.data.kind !== "submitted")
+    )
+      throw new Error("SUBMISSION_INTENT_INVALID");
     return {
       format: 1,
       state: "settled",
       idempotency_key: key.data,
       request: null,
       reply: reply.data,
+      ...(linked.success ? { linked_draft: linked.data } : {}),
     };
   }
   if (
@@ -163,6 +176,14 @@ export async function recordSubmissionReply(
     state: "settled",
     request: null,
     reply,
+    ...(reply.kind === "submitted" && request.draft_id && request.draft_revision
+      ? {
+          linked_draft: {
+            draft_id: request.draft_id,
+            draft_revision: request.draft_revision,
+          },
+        }
+      : {}),
   };
   const revision = await saveLocalDraft(
     context.db,

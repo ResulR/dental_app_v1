@@ -699,9 +699,16 @@ export function ClinicDraftVault<T>({
       remote?.pending
     )
       return;
-    if (remote) {
+    if (
+      remote &&
+      (storedSubmission?.state !== "settled" ||
+        storedSubmission.reply?.kind !== "submitted" ||
+        storedSubmission.linked_draft?.draft_id !== remote.draft_id ||
+        String(storedSubmission.linked_draft.draft_revision) !==
+          remote.revision)
+    ) {
       setMessage(
-        "Drafti i serverit mbetet aktiv në pajisje të tjera. Fshirja pas dërgimit pret lidhjen me porosinë e konfirmuar.",
+        "Lidhja e draftit me porosinë e konfirmuar nuk u verifikua; drafti lokal u ruajt.",
       );
       return;
     }

@@ -128,3 +128,34 @@ test("invalid stages and counterfeit receipts are rejected", () => {
     }).request,
   ).toBeNull();
 });
+test("a linked confirmed receipt retains only draft identity and rejects inconsistent metadata", () => {
+  const receipt = {
+    kind: "submitted",
+    persisted: true,
+    order_id: account,
+    number: "123",
+    received_at: "2026-10-31T10:00:00.000Z",
+    replayed: false,
+  };
+  const settled = {
+    format: 1,
+    state: "settled",
+    idempotency_key: request.idempotency_key,
+    request: null,
+    reply: receipt,
+    linked_draft: { draft_id: account, draft_revision: 3 },
+  };
+  expect(parseStoredSubmission(settled)).toEqual(settled);
+  expect(() =>
+    parseStoredSubmission({
+      ...settled,
+      linked_draft: { draft_id: "foreign", draft_revision: 3 },
+    }),
+  ).toThrow("SUBMISSION_INTENT_INVALID");
+  expect(() =>
+    parseStoredSubmission({
+      ...settled,
+      reply: { kind: "draft_conflict", persisted: false },
+    }),
+  ).toThrow("SUBMISSION_INTENT_INVALID");
+});

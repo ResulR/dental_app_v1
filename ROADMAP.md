@@ -2719,7 +2719,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 15.9 — Implémenter nettoyage post-soumission confirmée
-- **Statut :** ◐ Dépôt textuel lié facultativement à un brouillon serveur actif de même compte/clinique et révision exacte : comparaison du contenu, verrou et transition `submitted` avec reçu dans la transaction de commande ; rejeu de la même intention relit le lien. Le retrait local explicite conserve son CAS et attend un reçu certain. Fichiers, réception PostgreSQL/navigateur et nettoyage des autres appareils restent ouverts.
+- **Statut :** ◐ Dépôt textuel lié facultativement à un brouillon serveur actif de même compte/clinique et révision exacte : comparaison du contenu, verrou et transition `submitted` avec reçu dans la transaction de commande ; rejeu de la même intention relit le lien. Le reçu chiffré conserve la référence minimale du brouillon lié pour permettre le retrait local explicite sous CAS uniquement après confirmation ; aucun autre appareil n’est purgé. Fichiers et réception PostgreSQL/navigateur restent ouverts.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** PWA, hors ligne et brouillons
