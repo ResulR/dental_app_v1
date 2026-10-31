@@ -3,7 +3,13 @@ import type { DeliveryPlanContext } from "@dental-lab/contracts";
 import { createDeliveryPlanClient } from "./delivery-plan-api.js";
 import { Button } from "../../shared/Button.js";
 const client = createDeliveryPlanClient();
-export function DeliveryPlanPanel({ orderId }: { orderId: string }) {
+export function DeliveryPlanPanel({
+  orderId,
+  onUpdated,
+}: {
+  orderId: string;
+  onUpdated?: () => void;
+}) {
   const [context, setContext] = useState<DeliveryPlanContext | null>(null);
   const [date, setDate] = useState("");
   const [busy, setBusy] = useState(false);
@@ -73,6 +79,7 @@ export function DeliveryPlanPanel({ orderId }: { orderId: string }) {
       );
       if (signal.aborted) return;
       setContext(null);
+      if (result.kind === "updated") onUpdated?.();
       setMessage(
         result.kind === "updated"
           ? "Data u ruajt dhe u regjistrua në historik. Ringarkoni planifikimin."

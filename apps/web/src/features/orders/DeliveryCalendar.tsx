@@ -330,8 +330,12 @@ function CalendarResults({
               <Button onClick={() => setEditingId(null)}>
                 Mbyll formularin
               </Button>
-              <DeliveryPlanPanel key={editingId} orderId={editingId} />
-              <p>Pas ruajtjes, ringarkoni kalendarin për të parë datën e re.</p>
+              <DeliveryPlanPanel
+                key={editingId}
+                orderId={editingId}
+                onUpdated={onPlanUpdated}
+              />
+              <p>Pas konfirmimit, kalendari ringarkohet me datën e re.</p>
             </section>
           )}
           {page.next_after && (
