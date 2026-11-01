@@ -170,6 +170,8 @@ export function InternalNoticePanel({
                 modification_requested: "Kërkesë ndryshimi",
                 retouch_requested: "Retushim i kërkuar",
                 message_created: "Mesazh i ri",
+                order_due_soon: "Afati po afrohet",
+                order_overdue: "Punim me vonesë",
               }[item.kind]
             }{" "}
             · {item.clinic_name} ·{" "}
