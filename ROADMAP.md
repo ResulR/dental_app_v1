@@ -2981,7 +2981,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 17.7 — Implémenter mode maintenance propriétaire
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Partiel — état versionné et historique transactionnel propriétaire préparés dans 0026 non exécutée ; aucune route, garde serveur ni sortie de secours active. Blocage des mutations, interface et réception restent à développer.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Administration, audit, rétention et conformité
@@ -2996,7 +2996,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 17.8 — Implémenter bandeau maintenance planifiée
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Partiel — champs de date/message et historique versionné préparés dans 0026 non exécutée ; aucune route ni bandeau, aucune publication ou activation.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Administration, audit, rétention et conformité
