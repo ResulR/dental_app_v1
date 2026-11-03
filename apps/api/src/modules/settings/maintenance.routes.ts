@@ -12,6 +12,16 @@ export function registerMaintenanceRoutes(
     origin: string;
   },
 ) {
+  app.get("/api/v1/maintenance/notice", async (req, res) => {
+    if (Object.keys(req.query).length)
+      return sendProblem(res, "VALIDATION_FAILED", 400);
+    const token = readSessionCookie(req.headers.cookie);
+    const actor = token ? await services.sessions.authenticate(token) : null;
+    if (!actor) return sendProblem(res, "AUTHENTICATION_REQUIRED", 401);
+    const notice = await services.repository.notice(actor);
+    if (!notice) return sendProblem(res, "FORBIDDEN", 403);
+    res.json(notice);
+  });
   app.get("/api/v1/maintenance/state", async (req, res) => {
     if (Object.keys(req.query).length)
       return sendProblem(res, "VALIDATION_FAILED", 400);

@@ -37,6 +37,25 @@ export function createMaintenanceStateRepository(
   db: Pick<ReturnType<typeof createApplicationDatabase>, "transaction">,
 ) {
   return {
+    async notice(actor: Actor) {
+      return db.transaction(async (tx) => {
+        await tx.query("SELECT id FROM public.accounts WHERE id=$1 FOR SHARE", [
+          actor.accountId,
+        ]);
+        await tx.query(
+          "SELECT id FROM public.sessions WHERE id=$1 AND account_id=$2 FOR SHARE",
+          [actor.sessionId, actor.accountId],
+        );
+        if (!(await createCurrentPermissionsRepository(tx).current(actor)))
+          return null;
+        const r = await tx.query(
+          "SELECT active,message,planned_at,planned_message FROM public.maintenance_state WHERE id='86000000-0000-4000-8000-000000000002'",
+        );
+        if (r.rows.length !== 1)
+          throw new Error("MAINTENANCE_STATE_UNAVAILABLE");
+        return r.rows[0];
+      });
+    },
     async read(actor: Actor) {
       return db.transaction(async (tx) => {
         if (!(await owner(tx, actor))) return null;

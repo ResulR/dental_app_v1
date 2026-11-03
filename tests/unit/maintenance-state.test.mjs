@@ -99,3 +99,11 @@ test("no empty active message and no delegated access", async () => {
     ).kind,
   ).toBe("invalid");
 });
+
+test("authenticated non-owner reads only the notice; owner retains control", async () => {
+  const db = fixture("admin"),
+    repo = createMaintenanceStateRepository(db);
+  expect((await repo.notice(actor)).active).toBe(false);
+  expect(await repo.read(actor)).toBeNull();
+  expect((await repo.update(actor, command)).kind).toBe("denied");
+});

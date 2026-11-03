@@ -8,6 +8,7 @@ import { ActionInboxPanel } from "../features/orders/index.js";
 import { OrderTrackingPanel } from "../features/orders/index.js";
 import { ClinicOrderForm, OrderReviewPanel } from "../features/orders/index.js";
 import { LaboratorySettingsPanel } from "../features/settings/index.js";
+import { MaintenancePanel } from "../features/settings/MaintenancePanel.js";
 import {
   CatalogPanel,
   CatalogManagementPanel,
@@ -48,6 +49,13 @@ export function App() {
           purgeSuspendedAccount={purgeSuspendedAccount}
           renderAuthenticated={(identity) => (
             <>
+              {import.meta.env.VITE_DENTAL_LAB_MAINTENANCE_ENABLED ===
+                "true" && (
+                <MaintenancePanel
+                  key={identity.account_id + "-maintenance"}
+                  owner={identity.profile === "owner"}
+                />
+              )}
               {identity.profile !== "clinic" && (
                 <ActionInboxPanel key={identity.account_id + "-action-inbox"} />
               )}
