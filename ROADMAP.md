@@ -2981,7 +2981,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 17.7 — Implémenter mode maintenance propriétaire
-- **Statut :** ◐ Partiel — état versionné et historique transactionnel propriétaire préparés dans 0026 non exécutée ; garde transactionnelle dormante derrière drapeau désactivé, avec verrou partagé sur les mutations et verrou exclusif pour la commande propriétaire. Routes, interface, sortie de secours, revue de toutes les exceptions et réception PostgreSQL restent à développer ; aucun blocage actif en production.
+- **Statut :** ◐ Partiel — état versionné et historique transactionnel propriétaire préparés dans 0026 non exécutée ; garde transactionnelle dormante derrière drapeau désactivé, avec verrou partagé sur les mutations et verrou exclusif pour la commande propriétaire. Routes propriétaire derrière drapeau fermé préparées ; interface, message utilisateur général, sortie de secours, revue des exceptions et réception PostgreSQL restent à développer ; aucun blocage actif en production.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Administration, audit, rétention et conformité

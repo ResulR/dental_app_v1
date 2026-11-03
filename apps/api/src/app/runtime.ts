@@ -1,3 +1,5 @@
+import { createMaintenanceStateRepository } from "../modules/settings/maintenance-state.repository.js";
+import { registerMaintenanceRoutes } from "../modules/settings/maintenance.routes.js";
 import { draftSyncEnabled } from "./draft-sync-config.js";
 import {
   createDraftSyncService,
@@ -180,6 +182,9 @@ import {
 } from "../modules/identity/index.js";
 
 export async function createRuntime(env: NodeJS.ProcessEnv) {
+  const enableMaintenance = env.DENTAL_LAB_MAINTENANCE_ENABLED === "true";
+  if (enableMaintenance && env.DENTAL_LAB_AUTH_ENABLED !== "true")
+    throw new Error("INVALID_MAINTENANCE_CONFIG");
   const enableDraftSync = draftSyncEnabled(env);
   const enableInternalNotices = internalNoticesEnabled(env);
   const enableGeneralMessaging = generalMessagingEnabled(env);
@@ -214,6 +219,13 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     // Fail startup, without creating/migrating anything, if required objects or
     // read privileges are absent. Every checkout also enforces runtime identity.
     await assertAuthStorageReady(database);
+    if (enableMaintenance) {
+      const ready = await database.query(
+        "SELECT has_table_privilege(current_user,'public.maintenance_state','SELECT') AND has_column_privilege(current_user,'public.maintenance_state','active','UPDATE') AND has_table_privilege(current_user,'public.maintenance_events','INSERT') AS ready",
+      );
+      if (ready.rows[0]?.ready !== true)
+        throw new Error("MAINTENANCE_STORAGE_UNAVAILABLE");
+    }
     if (enableDraftSync) await assertDraftSyncReady(database);
     if (enableInternalNotices) await assertInternalNoticeReady(database);
     if (enableGeneralMessaging || enableOrderMessaging)
@@ -267,6 +279,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     }
     return {
       registerRoutes: (app: Express) => {
+        if (enableMaintenance)
+          registerMaintenanceRoutes(app, {
+            repository: createMaintenanceStateRepository(database),
+            sessions,
+            origin: config.origin,
+          });
         registerAuthenticationRoutes(app, {
           currentPermissions:
             createCurrentPermissionsRepository(database).current,
