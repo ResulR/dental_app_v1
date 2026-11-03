@@ -8,11 +8,13 @@ type ProblemCode =
   | "FORBIDDEN"
   | "RATE_LIMITED"
   | "DEPENDENCY_UNAVAILABLE"
-  | "STATE_CONFLICT";
+  | "STATE_CONFLICT"
+  | "MAINTENANCE";
 import { ProblemSchema } from "@dental-lab/contracts";
 import type { FieldIssue } from "@dental-lab/contracts";
 const titles: Record<ProblemCode, string> = {
   DEPENDENCY_UNAVAILABLE: "Shërbimi nuk është i disponueshëm për momentin.",
+  MAINTENANCE: "Aplikacioni është në mirëmbajtje. Provoni përsëri më vonë.",
   STATE_CONFLICT: "Regjistrimi nuk mund të përfundohet me këto të dhëna.",
   AUTHENTICATION_REQUIRED: "Identifikimi nuk u pranua.",
   FORBIDDEN: "Kjo kërkesë nuk lejohet.",
@@ -67,6 +69,10 @@ export function errorHandler(
   }
   if (type === "entity.too.large") {
     sendProblem(res, "VALIDATION_FAILED", 413);
+    return;
+  }
+  if (error instanceof Error && error.message === "MAINTENANCE_ACTIVE") {
+    sendProblem(res, "MAINTENANCE", 503);
     return;
   }
   sendProblem(res, "INTERNAL_ERROR", 500);

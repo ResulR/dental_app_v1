@@ -1,6 +1,15 @@
 import { Pool } from "pg";
 import type { PoolConfig, QueryResult, QueryResultRow } from "pg";
 
+const maintenanceId = "86000000-0000-4000-8000-000000000002";
+// Fail closed on unknown SQL while maintenance is active. Explicit reads remain available.
+export function maintenanceWrite(sql: string): boolean {
+  return (
+    !/^\s*(SELECT|SHOW)\b/i.test(sql) &&
+    !/^LOCK TABLE public\.account_grants IN SHARE MODE$/i.test(sql.trim())
+  );
+}
+
 export type DatabaseExecutor = {
   query<Row extends QueryResultRow>(
     text: string,
@@ -102,6 +111,7 @@ export function createApplicationDatabase(
   },
 ) {
   applicationPoolConfig(process.env);
+  const maintenanceEnabled = env.DENTAL_LAB_MAINTENANCE_ENABLED === "true";
   const pool = new Pool(applicationPoolConfig(env));
   pool.on("error", () => onIdleError("DATABASE_IDLE_ERROR"));
   return {
@@ -109,6 +119,8 @@ export function createApplicationDatabase(
       text: string,
       values: unknown[] = [],
     ) {
+      if (maintenanceEnabled)
+        return this.transaction((tx) => tx.query<Row>(text, values));
       const client = await pool.connect();
       let discard = false;
       try {
@@ -128,6 +140,7 @@ export function createApplicationDatabase(
     // perform database work only; no network/KDF work while holding row locks.
     async transaction<T>(
       work: (transaction: DatabaseExecutor) => Promise<T>,
+      options: { maintenanceControl?: boolean } = {},
     ): Promise<T> {
       const client = await pool.connect();
       let active = false;
@@ -136,6 +149,7 @@ export function createApplicationDatabase(
       let begun = false;
       let committing = false;
       let discard = false;
+      let maintenanceActive = false;
       let timer: ReturnType<typeof setTimeout> | undefined;
       const transaction: DatabaseExecutor = {
         async query<Row extends QueryResultRow>(
@@ -145,6 +159,15 @@ export function createApplicationDatabase(
           if (!active || pending || failed) {
             failed = true;
             throw new Error("DATABASE_TRANSACTION_NOT_AVAILABLE");
+          }
+          if (
+            maintenanceEnabled &&
+            maintenanceActive &&
+            !options.maintenanceControl &&
+            maintenanceWrite(text)
+          ) {
+            failed = true;
+            throw new Error("MAINTENANCE_ACTIVE");
           }
           pending = true;
           try {
@@ -165,6 +188,17 @@ export function createApplicationDatabase(
         await client.query("BEGIN");
         begun = true;
         await client.query("SET LOCAL transaction_timeout = '10s'");
+        if (maintenanceEnabled) {
+          // Shared row lock serializes every transaction against activation.
+          // Control takes the exclusive lock before changing active state.
+          const guard = await client.query<{ active: boolean }>(
+            `SELECT active FROM public.maintenance_state WHERE id=$1 FOR ${options.maintenanceControl ? "UPDATE" : "SHARE"}`,
+            [maintenanceId],
+          );
+          if (guard.rows.length !== 1)
+            throw new Error("MAINTENANCE_STATE_UNAVAILABLE");
+          maintenanceActive = guard.rows[0]!.active;
+        }
         active = true;
         const deadline = new Promise<never>((_, reject) => {
           timer = setTimeout(() => {

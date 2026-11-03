@@ -279,3 +279,47 @@ test("transaction rejects wrong checkout identity before BEGIN", async () => {
     end.mockRestore();
   }
 });
+
+test("maintenance gate serializes writes against activation and preserves reads", async () => {
+  const queries = [];
+  const release = vi.fn();
+  let active = true;
+  const query = vi.fn(async (sql) => {
+    queries.push(sql);
+    if (sql.includes("current_database()")) return { rows: [valid] };
+    if (sql.includes("FROM public.maintenance_state"))
+      return { rows: [{ active }] };
+    return { rows: [], rowCount: 1 };
+  });
+  const connect = vi
+    .spyOn(pg.Pool.prototype, "connect")
+    .mockResolvedValue({ query, release });
+  const end = vi.spyOn(pg.Pool.prototype, "end").mockResolvedValue();
+  const db = createApplicationDatabase({
+    DENTAL_LAB_MAINTENANCE_ENABLED: "true",
+  });
+  try {
+    await expect(
+      db.transaction((tx) =>
+        tx.query("INSERT INTO public.orders DEFAULT VALUES"),
+      ),
+    ).rejects.toThrow("MAINTENANCE_ACTIVE");
+    expect(queries).not.toContain("INSERT INTO public.orders DEFAULT VALUES");
+    expect(queries.some((q) => q.includes("FOR SHARE"))).toBe(true);
+    await db.transaction((tx) => tx.query("SELECT 1"));
+    await db.transaction(
+      (tx) => tx.query("UPDATE public.maintenance_state SET active=false"),
+      { maintenanceControl: true },
+    );
+    expect(queries.some((q) => q.includes("FOR UPDATE"))).toBe(true);
+    active = false;
+    await db.transaction((tx) =>
+      tx.query("INSERT INTO public.orders DEFAULT VALUES"),
+    );
+    expect(queries).toContain("INSERT INTO public.orders DEFAULT VALUES");
+  } finally {
+    await db.close();
+    connect.mockRestore();
+    end.mockRestore();
+  }
+});
