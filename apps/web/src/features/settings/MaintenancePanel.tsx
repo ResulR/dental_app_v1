@@ -28,6 +28,8 @@ export function MaintenancePanel({ owner }: { owner: boolean }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const draftDirty = useRef(false);
+  const saving = useRef(false);
+  const refreshGeneration = useRef(0);
   const edit = (next: State) => {
     draftDirty.current = true;
     setState(next);
@@ -41,16 +43,19 @@ export function MaintenancePanel({ owner }: { owner: boolean }) {
     }[]
   >([]);
   const refresh = async (replaceDraft = false) => {
+    const generation = ++refreshGeneration.current;
     const current = await request("/notice");
+    if (generation !== refreshGeneration.current) return;
     setNotice(current);
     if (owner) {
       const latest = await request("/state");
+      if (generation !== refreshGeneration.current) return;
       if (replaceDraft || !draftDirty.current) {
         setState(latest);
         draftDirty.current = false;
       }
       const page = await request("/history");
-      setHistory(page.items);
+      if (generation === refreshGeneration.current) setHistory(page.items);
     }
   };
   useEffect(() => {
@@ -71,7 +76,7 @@ export function MaintenancePanel({ owner }: { owner: boolean }) {
     };
     load();
     const timer = window.setInterval(() => {
-      if (!document.hidden && navigator.onLine) load();
+      if (!document.hidden && navigator.onLine && !saving.current) load();
     }, 30000);
     return () => {
       alive = false;
@@ -93,6 +98,7 @@ export function MaintenancePanel({ owner }: { owner: boolean }) {
       return;
     }
     draftDirty.current = true;
+    saving.current = true;
     setBusy(true);
     setError("");
     try {
@@ -115,6 +121,7 @@ export function MaintenancePanel({ owner }: { owner: boolean }) {
         "Përgjigjja nuk u verifikua. Ringarkojeni; mos e përsëritni automatikisht.",
       );
     } finally {
+      saving.current = false;
       setBusy(false);
     }
   }
