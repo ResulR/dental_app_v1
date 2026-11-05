@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type {
   MaintenanceNotice,
   MaintenanceState,
@@ -27,6 +27,11 @@ export function MaintenancePanel({ owner }: { owner: boolean }) {
   const [state, setState] = useState<State | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const draftDirty = useRef(false);
+  const edit = (next: State) => {
+    draftDirty.current = true;
+    setState(next);
+  };
   const [history, setHistory] = useState<
     {
       revision: string;
@@ -35,11 +40,15 @@ export function MaintenancePanel({ owner }: { owner: boolean }) {
       after_state: Notice;
     }[]
   >([]);
-  const refresh = async () => {
+  const refresh = async (replaceDraft = false) => {
     const current = await request("/notice");
     setNotice(current);
     if (owner) {
-      setState(await request("/state"));
+      const latest = await request("/state");
+      if (replaceDraft || !draftDirty.current) {
+        setState(latest);
+        draftDirty.current = false;
+      }
       const page = await request("/history");
       setHistory(page.items);
     }
@@ -49,7 +58,7 @@ export function MaintenancePanel({ owner }: { owner: boolean }) {
     const load = () => {
       void refresh()
         .then(() => {
-          if (alive) setError("");
+          if (alive && !draftDirty.current) setError("");
         })
         .catch(() => {
           if (alive) {
@@ -83,6 +92,7 @@ export function MaintenancePanel({ owner }: { owner: boolean }) {
       setError("Shënoni një datë me zonë kohore të vlefshme.");
       return;
     }
+    draftDirty.current = true;
     setBusy(true);
     setError("");
     try {
@@ -95,9 +105,11 @@ export function MaintenancePanel({ owner }: { owner: boolean }) {
           : null,
         planned_message: next.planned_message,
       });
-      if (result.kind !== "applied" && result.kind !== "unchanged")
+      if (result.kind !== "applied" && result.kind !== "unchanged") {
         setError("Gjendja ndryshoi. Ringarkojeni para një veprimi tjetër.");
-      await refresh();
+      } else {
+        await refresh(true);
+      }
     } catch {
       setError(
         "Përgjigjja nuk u verifikua. Ringarkojeni; mos e përsëritni automatikisht.",
@@ -128,7 +140,7 @@ export function MaintenancePanel({ owner }: { owner: boolean }) {
             Mesazhi aktiv
             <input
               value={state.message}
-              onChange={(e) => setState({ ...state, message: e.target.value })}
+              onChange={(e) => edit({ ...state, message: e.target.value })}
             />
           </label>
           <label>
@@ -137,7 +149,7 @@ export function MaintenancePanel({ owner }: { owner: boolean }) {
               value={state.planned_at ?? ""}
               placeholder="2026-11-03T20:00:00+01:00"
               onChange={(e) =>
-                setState({ ...state, planned_at: e.target.value || null })
+                edit({ ...state, planned_at: e.target.value || null })
               }
             />
           </label>
@@ -146,7 +158,7 @@ export function MaintenancePanel({ owner }: { owner: boolean }) {
             <input
               value={state.planned_message}
               onChange={(e) =>
-                setState({ ...state, planned_message: e.target.value })
+                edit({ ...state, planned_message: e.target.value })
               }
             />
           </label>
@@ -176,7 +188,9 @@ export function MaintenancePanel({ owner }: { owner: boolean }) {
           <Button
             disabled={busy}
             onClick={() =>
-              void refresh().catch(() => setError("Gjendja nuk u verifikua."))
+              void refresh(true).catch(() =>
+                setError("Gjendja nuk u verifikua."),
+              )
             }
           >
             Ringarko

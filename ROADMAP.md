@@ -2996,7 +2996,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 17.8 — Implémenter bandeau maintenance planifiée
-- **Statut :** ◐ Partiel — champs de date/message et historique versionné dans 0026 non exécutée ; routes propriétaire, lecture autorisée et bandeau albanais derrière drapeaux fermés ; annulation explicite et schémas publics de version 3 ajoutés. Réception PostgreSQL et navigateur et activation restent à faire ; aucune annonce publiée.
+- **Statut :** ◐ Partiel — champs de date/message et historique versionné dans 0026 non exécutée ; routes propriétaire, lecture autorisée et bandeau albanais derrière drapeaux fermés ; annulation explicite, préservation du formulaire non enregistré pendant le rafraîchissement et schémas publics de version 3 ajoutés. Réception PostgreSQL et navigateur et activation restent à faire ; aucune annonce publiée.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Administration, audit, rétention et conformité
