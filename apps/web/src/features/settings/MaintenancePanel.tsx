@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
+import type {
+  MaintenanceNotice,
+  MaintenanceState,
+} from "@dental-lab/contracts";
 import { Button } from "../../shared/Button.js";
-type Notice = {
-  active: boolean;
-  message: string;
-  planned_at: string | null;
-  planned_message: string;
-};
-type State = Notice & { revision: number };
+type Notice = MaintenanceNotice;
+type State = MaintenanceState;
 const base = "/api/v1/maintenance";
 async function request(path: string, method = "GET", body?: unknown) {
   const response = await fetch(base + path, {
@@ -48,9 +47,18 @@ export function MaintenancePanel({ owner }: { owner: boolean }) {
   useEffect(() => {
     let alive = true;
     const load = () => {
-      void refresh().catch(() => {
-        if (alive) setError("Gjendja e mirëmbajtjes nuk u verifikua.");
-      });
+      void refresh()
+        .then(() => {
+          if (alive) setError("");
+        })
+        .catch(() => {
+          if (alive) {
+            setNotice(null);
+            setError(
+              "Njoftimi nuk u verifikua; lidhja ose serveri mund të jetë i padisponueshëm.",
+            );
+          }
+        });
     };
     load();
     const timer = window.setInterval(() => {
@@ -144,6 +152,14 @@ export function MaintenancePanel({ owner }: { owner: boolean }) {
           </label>
           <Button disabled={busy} onClick={() => void save(state)}>
             Ruaj njoftimin
+          </Button>
+          <Button
+            disabled={busy || !state.planned_at}
+            onClick={() =>
+              void save({ ...state, planned_at: null, planned_message: "" })
+            }
+          >
+            Anulo njoftimin e planifikuar
           </Button>
           <Button
             disabled={busy || state.active || !state.message.trim()}

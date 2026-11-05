@@ -1,0 +1,9 @@
+# Sortie de secours du mode maintenance (préparée, non activée)
+
+La commande locale `scripts/maintenance-emergency-exit.mjs` réutilise les routes propriétaire existantes. Elle n'ajoute aucun privilège et ne fonctionne que si l'API HTTPS et une session propriétaire valide restent disponibles. Elle ne remplace pas une procédure de récupération de l'API ou de l'identité indisponibles.
+
+1. Depuis un terminal privé de l'opérateur autorisé, déterminer la révision actuelle dans l'état propriétaire précédemment consulté. Définir `DENTAL_LAB_ORIGIN` sur l'origine HTTPS exacte configurée pour l'API. Ne placer aucun jeton dans l'historique du shell, les arguments ou un fichier.
+2. Exécuter `node scripts/maintenance-emergency-exit.mjs --expected-revision=N`. Saisir interactivement la valeur du cookie de session propriétaire `__Host-dental_session` lorsque le terminal la demande. La saisie est masquée. La commande lit l'état, vérifie la révision et l'activité, effectue au plus une désactivation conditionnelle, puis relit l'état.
+3. Vérifier le résultat `confirmed` et la nouvelle révision. Consulter l'historique propriétaire et l'événement d'audit. En cas de révision obsolète, d'erreur ou de réponse incertaine, ne pas rejouer aveuglément : relire l'état avec une session autorisée, puis décider explicitement de la suite.
+
+Le serveur conserve l'identité propriétaire et l'audit transactionnel de la route. Le jeton ne doit être saisi que sur un terminal de confiance. La commande refuse HTTP, les origines avec identifiants et les redirections. Une panne de l'API, une session expirée ou une perte de l'identité propriétaire exige une procédure opérateur distincte, encore à qualifier et à tester sur PostgreSQL isolé ; aucune commande SQL directe sur la production n'est autorisée ici. La migration 0026 et le drapeau d'activation restent non exécutés.

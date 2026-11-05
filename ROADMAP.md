@@ -2981,7 +2981,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 17.7 — Implémenter mode maintenance propriétaire
-- **Statut :** ◐ Partiel — état versionné et historique transactionnel propriétaire préparés dans 0026 non exécutée ; garde transactionnelle dormante derrière drapeau désactivé, avec verrou partagé sur les mutations et verrou exclusif pour la commande propriétaire. Routes propriétaire et interface albanaise derrière drapeaux fermés préparées ; sortie de secours hors UI, revue des exceptions et réception PostgreSQL restent à développer ; aucun blocage actif en production.
+- **Statut :** ◐ Partiel — état versionné et historique transactionnel propriétaire préparés dans 0026 non exécutée ; garde transactionnelle dormante derrière drapeau désactivé, avec verrou partagé sur les mutations et verrou exclusif pour la commande propriétaire. Routes propriétaire et interface albanaise derrière drapeaux fermés préparées ; commande locale de sortie via session propriétaire, avec lecture de révision et réconciliation sans répétition automatique, préparée. Une sortie sans API/session propriétaire, la revue des exceptions et la réception PostgreSQL restent ouvertes ; aucun blocage actif en production.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Administration, audit, rétention et conformité
@@ -2996,7 +2996,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 17.8 — Implémenter bandeau maintenance planifiée
-- **Statut :** ◐ Partiel — champs de date/message et historique versionné dans 0026 non exécutée ; routes propriétaire, lecture autorisée et bandeau albanais derrière drapeaux fermés. Réception PostgreSQL et navigateur, contrat public versionné et activation restent à faire ; aucune annonce publiée.
+- **Statut :** ◐ Partiel — champs de date/message et historique versionné dans 0026 non exécutée ; routes propriétaire, lecture autorisée et bandeau albanais derrière drapeaux fermés ; annulation explicite et schémas publics de version 3 ajoutés. Réception PostgreSQL et navigateur et activation restent à faire ; aucune annonce publiée.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Administration, audit, rétention et conformité
@@ -3104,7 +3104,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 18.2 — Auditer sessions, CSRF, XSS et injection
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Partiel — contrôle ciblé de la route maintenance (session propriétaire, origine des mutations) et durcissement de la classification SQL contre commandes composées/SELECT INTO ; revue complète sessions, CSP, XSS et injections encore ouverte.
 - **Priorité :** Critique
 - **Catégorie / type :** Sécurité / performance
 - **Zone concernée :** Sécurité, fiabilité et performances

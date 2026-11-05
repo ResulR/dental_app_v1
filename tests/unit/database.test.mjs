@@ -3,6 +3,7 @@ import {
   applicationPoolConfig,
   assertApplicationSession,
   createApplicationDatabase,
+  maintenanceWrite,
 } from "../../apps/api/dist/shared/database.js";
 import pg from "pg";
 
@@ -278,6 +279,23 @@ test("transaction rejects wrong checkout identity before BEGIN", async () => {
     connect.mockRestore();
     end.mockRestore();
   }
+});
+
+test("maintenance permits fixed reads and rejects compound or unknown SQL", () => {
+  for (const sql of [
+    "SELECT id FROM public.orders WHERE id=$1 FOR SHARE",
+    "SHOW transaction_isolation",
+    "LOCK TABLE public.account_grants IN SHARE MODE",
+  ])
+    expect(maintenanceWrite(sql)).toBe(false);
+  for (const sql of [
+    "WITH changed AS (UPDATE public.orders SET status='delivered' RETURNING id) SELECT id FROM changed",
+    "SELECT id INTO temporary_result FROM public.orders",
+    "SELECT 1; UPDATE public.orders SET status='delivered'",
+    "INSERT INTO public.orders DEFAULT VALUES",
+    "/* disguised */ SELECT 1",
+  ])
+    expect(maintenanceWrite(sql)).toBe(true);
 });
 
 test("maintenance gate serializes writes against activation and preserves reads", async () => {

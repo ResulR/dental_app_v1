@@ -2,12 +2,17 @@ import { Pool } from "pg";
 import type { PoolConfig, QueryResult, QueryResultRow } from "pg";
 
 const maintenanceId = "86000000-0000-4000-8000-000000000002";
-// Fail closed on unknown SQL while maintenance is active. Explicit reads remain available.
+// This is a guard on the application's fixed SQL, not a SQL parser or a
+// replacement for database privileges. Unknown and compound statements fail closed.
 export function maintenanceWrite(sql: string): boolean {
-  return (
-    !/^\s*(SELECT|SHOW)\b/i.test(sql) &&
-    !/^LOCK TABLE public\.account_grants IN SHARE MODE$/i.test(sql.trim())
-  );
+  const statement = sql.trim();
+  if (/^LOCK TABLE public\.account_grants IN SHARE MODE$/i.test(statement))
+    return false;
+  if (!/^(SELECT|SHOW)\b/i.test(statement)) return true;
+  // No compound commands or SELECT INTO. WITH queries are rejected above;
+  // existing application reads use SELECT, including SELECT ... FOR SHARE.
+  if (/;|\bINTO\b/i.test(statement)) return true;
+  return false;
 }
 
 export type DatabaseExecutor = {

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { z } from "zod";
+import { MaintenanceCommandSchema } from "@dental-lab/contracts";
 import type {
   createApplicationDatabase,
   DatabaseExecutor,
@@ -8,19 +8,6 @@ import { currentRequestCorrelation } from "../../shared/request-correlation.js";
 import { createCurrentPermissionsRepository } from "../permissions/index.js";
 
 type Actor = { accountId: string; sessionId: string };
-const Command = z
-  .strictObject({
-    expected_revision: z.number().int().nonnegative(),
-    active: z.boolean(),
-    message: z.string().trim().max(2000),
-    planned_at: z.iso.datetime().nullable(),
-    planned_message: z.string().trim().max(2000),
-  })
-  .refine(
-    (v) =>
-      (!v.active || v.message.length > 0) &&
-      (v.planned_at === null || v.planned_message.length > 0),
-  );
 async function owner(tx: DatabaseExecutor, actor: Actor) {
   await tx.query("SELECT id FROM public.accounts WHERE id=$1 FOR SHARE", [
     actor.accountId,
@@ -77,7 +64,7 @@ export function createMaintenanceStateRepository(
       });
     },
     async update(actor: Actor, raw: unknown) {
-      const parsed = Command.safeParse(raw);
+      const parsed = MaintenanceCommandSchema.safeParse(raw);
       if (!parsed.success) return { kind: "invalid" as const };
       return db.transaction(
         async (tx) => {

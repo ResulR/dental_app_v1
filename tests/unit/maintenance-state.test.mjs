@@ -100,6 +100,36 @@ test("no empty active message and no delegated access", async () => {
   ).toBe("invalid");
 });
 
+test("planned notice can be cancelled without activating maintenance", async () => {
+  const db = fixture(),
+    repo = createMaintenanceStateRepository(db);
+  expect(
+    (
+      await repo.update(actor, {
+        ...command,
+        active: false,
+        message: "",
+        planned_at: "2026-11-06T12:00:00Z",
+        planned_message: "Njoftim",
+      })
+    ).kind,
+  ).toBe("applied");
+  expect(db.state.active).toBe(false);
+  expect(
+    (
+      await repo.update(actor, {
+        expected_revision: 1,
+        active: false,
+        message: "",
+        planned_at: null,
+        planned_message: "",
+      })
+    ).kind,
+  ).toBe("applied");
+  expect(db.state.planned_at).toBeNull();
+  expect(db.state.events).toHaveLength(2);
+});
+
 test("authenticated non-owner reads only the notice; owner retains control", async () => {
   const db = fixture("admin"),
     repo = createMaintenanceStateRepository(db);
