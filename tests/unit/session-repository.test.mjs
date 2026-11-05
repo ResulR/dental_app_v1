@@ -180,6 +180,9 @@ test("failed limit/audit or elapsed window cannot commit rotation or issue", asy
 test("revocations lock account first, targeted logout scopes IDs, global logout increments epoch", async () => {
   const one = fixture();
   await one.repository.revokeOne(accountId, sessionId);
+  expect(one.database.transaction.mock.calls[0][1]).toEqual({
+    maintenanceControl: true,
+  });
   expect(one.events[0].sql).toContain("FOR UPDATE");
   expect(one.events[1].values).toEqual([sessionId, accountId]);
   expect(one.events[1].sql).toContain("account_id=$2");

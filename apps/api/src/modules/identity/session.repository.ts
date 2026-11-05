@@ -269,16 +269,19 @@ export function createSessionRepository(database: Database): SessionStore {
       });
     },
     async revokeOne(accountId, sessionId) {
-      await database.transaction(async (tx) => {
-        if (!(await lockAccount(tx, accountId))) return;
-        const result = await tx.query(
-          `UPDATE public.sessions SET revoked_at=GREATEST(clock_timestamp(),created_at)
+      await database.transaction(
+        async (tx) => {
+          if (!(await lockAccount(tx, accountId))) return;
+          const result = await tx.query(
+            `UPDATE public.sessions SET revoked_at=GREATEST(clock_timestamp(),created_at)
           WHERE id=$1 AND account_id=$2 AND revoked_at IS NULL RETURNING id`,
-          [sessionId, accountId],
-        );
-        if (result.rowCount === 1)
-          await audit(tx, accountId, "SESSION_REVOKED");
-      });
+            [sessionId, accountId],
+          );
+          if (result.rowCount === 1)
+            await audit(tx, accountId, "SESSION_REVOKED");
+        },
+        { maintenanceControl: true },
+      );
     },
     async revokeAll(accountId) {
       await database.transaction(async (tx) => {
