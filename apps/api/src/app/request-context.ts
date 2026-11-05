@@ -9,6 +9,9 @@ export function requestContext(log: TechnicalLogger): RequestHandler {
     res.locals.routeId = "unmatched";
     res.set("X-Request-Id", id);
     res.set("Cache-Control", "no-store");
+    res.set("X-Content-Type-Options", "nosniff");
+    res.set("Referrer-Policy", "no-referrer");
+    res.set("Cross-Origin-Resource-Policy", "same-origin");
     const start = process.hrtime.bigint();
     let recorded = false;
     const record = (completed: boolean) => {

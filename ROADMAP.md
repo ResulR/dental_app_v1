@@ -3104,7 +3104,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 18.2 — Auditer sessions, CSRF, XSS et injection
-- **Statut :** ◐ Partiel — contrôle ciblé de la route maintenance (session propriétaire, origine des mutations) et durcissement de la classification SQL contre commandes composées/SELECT INTO ; revue complète sessions, CSP, XSS et injections encore ouverte.
+- **Statut :** ◐ Partiel — contrôle ciblé de la route maintenance (session propriétaire, origine des mutations), classification SQL contre commandes composées/SELECT INTO et en-têtes nosniff, no-referrer et same-origin côté API ; revue complète sessions, CSP, XSS et injections encore ouverte.
 - **Priorité :** Critique
 - **Catégorie / type :** Sécurité / performance
 - **Zone concernée :** Sécurité, fiabilité et performances

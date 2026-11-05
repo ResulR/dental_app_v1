@@ -12,6 +12,9 @@ test("real API liveness and generic unknown route; server closed", async () => {
     expect(health.status).toBe(200);
     expect(await health.json()).toEqual({ status: "ok" });
     expect(health.headers.get("cache-control")).toBe("no-store");
+    expect(health.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(health.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(health.headers.get("cross-origin-resource-policy")).toBe("same-origin");
     expect(health.headers.get("x-powered-by")).toBeNull();
     const missing = await fetch(origin + "/api/v1/unknown");
     expect(missing.status).toBe(404);
