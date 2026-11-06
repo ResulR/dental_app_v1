@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { purgeSuspendedAccount } from "../features/drafts/local-vault.js";
 import { AuditLogPanel } from "../features/audit/AuditLogPanel.js";
 import { InternalNoticePanel } from "../features/notifications/InternalNoticePanel.js";
 import { GeneralMessagingPanel } from "../features/messaging/GeneralMessagingPanel.js";
 import { MessagingInboxPanel } from "../features/messaging/MessagingInboxPanel.js";
-import { ActionInboxPanel } from "../features/orders/index.js";
-import { OrderTrackingPanel } from "../features/orders/index.js";
-import { ClinicOrderForm, OrderReviewPanel } from "../features/orders/index.js";
+import {
+  ActionInboxPanel,
+  OrderReviewPanel,
+} from "../features/orders/index.js";
 import { LaboratorySettingsPanel } from "../features/settings/index.js";
 import { MaintenancePanel } from "../features/settings/MaintenancePanel.js";
 import {
@@ -30,6 +31,16 @@ import {
   AuthenticationPanel,
   PermissionBoundary,
 } from "../features/authentication/index.js";
+const ClinicOrderForm = lazy(() =>
+  import("../features/orders/ClinicOrderForm.js").then((module) => ({
+    default: module.ClinicOrderForm,
+  })),
+);
+const OrderTrackingPanel = lazy(() =>
+  import("../features/orders/OrderTrackingPanel.js").then((module) => ({
+    default: module.OrderTrackingPanel,
+  })),
+);
 export function App() {
   const [similarSelection, setSimilarSelection] = useState<{
     accountId: string;
@@ -102,47 +113,57 @@ export function App() {
                 allowClinic
               >
                 {(snapshot) => (
-                  <OrderTrackingPanel
-                    key={
-                      identity.account_id +
-                      "-tracking-" +
-                      (similarSelection?.accountId === identity.account_id
-                        ? similarSelection.sequence
-                        : "")
-                    }
-                    clinic={identity.profile === "clinic"}
-                    initialSearchNumber={
-                      similarSelection?.accountId === identity.account_id
-                        ? similarSelection.number
-                        : ""
-                    }
-                    permissions={snapshot.permissions}
-                    renderConversation={(orderId) => (
-                      <GeneralMessagingPanel
-                        key={orderId}
-                        orderId={orderId}
-                        clinic={identity.profile === "clinic"}
-                        canReply={
-                          identity.profile === "clinic" ||
-                          snapshot.permissions.includes("messaging.order.reply")
-                        }
-                      />
-                    )}
-                  />
+                  <Suspense
+                    fallback={<p role="status">Duke ngarkuar porositë…</p>}
+                  >
+                    <OrderTrackingPanel
+                      key={
+                        identity.account_id +
+                        "-tracking-" +
+                        (similarSelection?.accountId === identity.account_id
+                          ? similarSelection.sequence
+                          : "")
+                      }
+                      clinic={identity.profile === "clinic"}
+                      initialSearchNumber={
+                        similarSelection?.accountId === identity.account_id
+                          ? similarSelection.number
+                          : ""
+                      }
+                      permissions={snapshot.permissions}
+                      renderConversation={(orderId) => (
+                        <GeneralMessagingPanel
+                          key={orderId}
+                          orderId={orderId}
+                          clinic={identity.profile === "clinic"}
+                          canReply={
+                            identity.profile === "clinic" ||
+                            snapshot.permissions.includes(
+                              "messaging.order.reply",
+                            )
+                          }
+                        />
+                      )}
+                    />
+                  </Suspense>
                 )}
               </PermissionBoundary>
               {identity.profile === "clinic" && (
-                <ClinicOrderForm
-                  accountId={identity.account_id}
-                  key={identity.account_id + "-order-form"}
-                  onInspectOrder={(number) =>
-                    setSimilarSelection((previous) => ({
-                      accountId: identity.account_id,
-                      number,
-                      sequence: (previous?.sequence ?? 0) + 1,
-                    }))
-                  }
-                />
+                <Suspense
+                  fallback={<p role="status">Duke ngarkuar formularin…</p>}
+                >
+                  <ClinicOrderForm
+                    accountId={identity.account_id}
+                    key={identity.account_id + "-order-form"}
+                    onInspectOrder={(number) =>
+                      setSimilarSelection((previous) => ({
+                        accountId: identity.account_id,
+                        number,
+                        sequence: (previous?.sequence ?? 0) + 1,
+                      }))
+                    }
+                  />
+                </Suspense>
               )}
               {identity.profile !== "clinic" &&
                 import.meta.env.VITE_DENTAL_LAB_GENERAL_MESSAGING_ENABLED ===

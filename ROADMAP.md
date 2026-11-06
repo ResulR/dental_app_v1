@@ -3149,7 +3149,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 18.5 — Auditer performance sur volumes réalistes
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Partiel — chargement différé des formulaires clinique et suivi : bundle initial minifié 510,96 → 452,85 Ko (gzip 142,74 → 128,81 Ko) au build local ; tests de volumes réalistes et mesures sur appareils/VPS restent ouverts.
 - **Priorité :** Critique
 - **Catégorie / type :** Sécurité / performance
 - **Zone concernée :** Sécurité, fiabilité et performances
