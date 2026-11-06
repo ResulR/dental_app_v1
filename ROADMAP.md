@@ -3302,7 +3302,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 19.7 — Configurer surveillance santé applicative
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Partiel — route /ready distincte de /health, vérifiant une requête SQL de lecture et répondant 503 sans détail en cas d'indisponibilité ; tests HTTP synthétiques. Supervision externe, TLS, alertes et dépendances tierces restent à configurer et recevoir.
 - **Priorité :** Critique
 - **Catégorie / type :** Test / recette / exploitation
 - **Zone concernée :** Infrastructure production et exploitation

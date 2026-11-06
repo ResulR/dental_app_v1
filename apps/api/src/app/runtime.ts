@@ -1,3 +1,4 @@
+import { registerReadinessRoute } from "./readiness.js";
 import { createMaintenanceStateRepository } from "../modules/settings/maintenance-state.repository.js";
 import { registerMaintenanceRoutes } from "../modules/settings/maintenance.routes.js";
 import { draftSyncEnabled } from "./draft-sync-config.js";
@@ -279,6 +280,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     }
     return {
       registerRoutes: (app: Express) => {
+        registerReadinessRoute(app, database);
         if (enableMaintenance)
           registerMaintenanceRoutes(app, {
             repository: createMaintenanceStateRepository(database),
