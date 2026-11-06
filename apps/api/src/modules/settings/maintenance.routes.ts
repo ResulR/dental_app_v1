@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { readSessionCookie, mutationOriginAllowed } from "../identity/index.js";
 import type { createSessionService } from "../identity/index.js";
-import type { createMaintenanceStateRepository } from "./maintenance-state.repository.js";
+import type { createMaintenanceStateRepository } from "./settings.service.js";
 import { sendProblem } from "../../shared/problems.js";
 
 export function registerMaintenanceRoutes(
