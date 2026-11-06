@@ -4,13 +4,15 @@ import { registerReadinessRoute } from "../../apps/api/dist/app/readiness.js";
 import { closeServer } from "../../apps/api/dist/app/server.js";
 
 async function serve(query) {
+  const log = vi.fn();
   const server = createApp(
     (app) => registerReadinessRoute(app, { query }),
-    () => {},
+    log,
   ).listen(0, "127.0.0.1");
   await new Promise((resolve) => server.once("listening", resolve));
   return {
     server,
+    log,
     url: "http://127.0.0.1:" + server.address().port + "/ready",
   };
 }
@@ -33,7 +35,7 @@ test("readiness distinguishes a working database from process liveness", async (
 });
 
 test("unavailable database returns a generic 503 while liveness stays available", async () => {
-  const { server, url } = await serve(async () => {
+  const { server, url, log } = await serve(async () => {
     throw new Error("SYNTHETIC_DATABASE_SECRET");
   });
   try {
@@ -45,6 +47,15 @@ test("unavailable database returns a generic 503 while liveness stays available"
     ).toEqual({
       status: "ok",
     });
+    expect(
+      log.mock.calls.map(([entry]) => [entry.route, entry.status]),
+    ).toEqual([
+      ["ready", 503],
+      ["health", 200],
+    ]);
+    expect(JSON.stringify(log.mock.calls)).not.toContain(
+      "SYNTHETIC_DATABASE_SECRET",
+    );
   } finally {
     await closeServer(server);
   }

@@ -25,7 +25,9 @@ export function requestContext(log: TechnicalLogger): RequestHandler {
       log({
         event: completed ? "request_completed" : "request_aborted",
         requestId: id,
-        route: res.locals.routeId === "health" ? "health" : "unmatched",
+        route: ["health", "ready"].includes(res.locals.routeId)
+          ? res.locals.routeId
+          : "unmatched",
         method: req.method,
         status: completed ? res.statusCode : 0,
         durationMs: Number(process.hrtime.bigint() - start) / 1e6,

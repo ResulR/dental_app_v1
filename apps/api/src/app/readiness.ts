@@ -8,6 +8,7 @@ export function registerReadinessRoute(
   database: Pick<DatabaseExecutor, "query">,
 ) {
   app.get("/ready", async (req, res) => {
+    res.locals.routeId = "ready";
     if (Object.keys(req.query).length) {
       res.status(400).json({ status: "unavailable" });
       return;
