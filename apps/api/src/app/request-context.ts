@@ -12,6 +12,11 @@ export function requestContext(log: TechnicalLogger): RequestHandler {
     res.set("X-Content-Type-Options", "nosniff");
     res.set("Referrer-Policy", "no-referrer");
     res.set("Cross-Origin-Resource-Policy", "same-origin");
+    res.set("X-Frame-Options", "DENY");
+    res.set(
+      "Content-Security-Policy",
+      "default-src 'none'; frame-ancestors 'none'",
+    );
     const start = process.hrtime.bigint();
     let recorded = false;
     const record = (completed: boolean) => {

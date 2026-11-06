@@ -83,6 +83,10 @@ test("tracking search enforces origin authentication strict body and private res
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(result);
     expect(response.headers.get("cache-control")).toContain("no-store");
+    expect(response.headers.get("x-frame-options")).toBe("DENY");
+    expect(response.headers.get("content-security-policy")).toBe(
+      "default-src 'none'; frame-ancestors 'none'",
+    );
   } finally {
     await closeServer(server);
   }
