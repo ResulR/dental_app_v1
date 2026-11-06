@@ -3317,7 +3317,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 19.8 — Configurer surveillance espace indépendante
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Partiel — sonde disque locale en lecture seule avec seuil explicite, sortie machine et codes d'alerte, testée sur répertoire synthétique ; supervision externe, seuils mesurés et alerte hors application restent à configurer par l'opérateur.
 - **Priorité :** Critique
 - **Catégorie / type :** Test / recette / exploitation
 - **Zone concernée :** Infrastructure production et exploitation
