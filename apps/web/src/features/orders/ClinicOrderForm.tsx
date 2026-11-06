@@ -530,7 +530,7 @@ export function ClinicOrderForm({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(8,minmax(0,1fr))",
+              gridTemplateColumns: "repeat(auto-fit,minmax(4.5rem,1fr))",
               gap: "0.25rem",
             }}
           >
@@ -539,7 +539,7 @@ export function ClinicOrderForm({
               return (
                 <Button
                   key={fdi}
-                  aria-pressed={!!value}
+                  aria-label={`Dhëmbi ${fdi}: ${value === "pontic" ? "antar" : value === "normal" ? "normal" : "bosh"}. Shtypni për të ndryshuar.`}
                   onClick={() => cycle(fdi)}
                 >
                   {fdi} ·{" "}

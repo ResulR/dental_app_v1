@@ -3164,7 +3164,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 18.6 — Auditer accessibilité et compatibilité tablette
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Partiel — grille FDI adaptable aux petits écrans et libellé de chaque dent décrivant son état à trois valeurs ; typage et build vérifiés. Réception clavier, tactile, contrastes et appareils réels encore ouverte.
 - **Priorité :** Critique
 - **Catégorie / type :** Sécurité / performance
 - **Zone concernée :** Sécurité, fiabilité et performances
