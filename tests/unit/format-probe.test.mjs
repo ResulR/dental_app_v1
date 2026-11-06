@@ -49,6 +49,14 @@ test("seven supported families have a bounded preliminary content check", async 
     ],
     ["obj", Buffer.from("v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n")],
   ];
+  expect(
+    await probe(
+      Buffer.from(
+        "ply\r\nformat ascii 1.0\r\nelement vertex 1\r\nend_header\r\n0 0 0\r\n",
+      ),
+      "ply",
+    ),
+  ).toBe("candidate");
   for (const [format, bytes] of samples) {
     expect(await probe(bytes, format)).toBe("candidate");
     expect(await probe(bytes, format === "pdf" ? "png" : "pdf")).toBe(

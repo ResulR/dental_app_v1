@@ -3119,7 +3119,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 18.3 — Auditer upload hostile et ZIP
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Partiel — le filtre préliminaire PLY accepte les fins de ligne CRLF valides ; tests synthétiques des signatures et structures bornées. Scanner qualifié, validation complète et tests ZIP hostiles restent ouverts ; aucun fichier non validé distribuable.
 - **Priorité :** Critique
 - **Catégorie / type :** Sécurité / performance
 - **Zone concernée :** Sécurité, fiabilité et performances

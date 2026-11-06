@@ -100,7 +100,7 @@ export async function probeFileFormat(
     case "ply":
       return /^ply\r?\nformat (ascii|binary_little_endian|binary_big_endian) 1\.0\r?\n/.test(
         text,
-      ) && text.includes("\nend_header\n")
+      ) && /\r?\nend_header\r?\n/.test(text)
         ? "candidate"
         : "rejected";
     case "obj":
