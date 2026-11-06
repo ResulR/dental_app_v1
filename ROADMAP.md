@@ -3089,7 +3089,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 18 — Sécurité, fiabilité et performances
 
 ### 18.1 — Auditer autorisations de bout en bout
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Partiel — reçu interne de téléchargement borné à la session de transfert de la bonne commande et du créateur du fichier ; contrôles ciblés des accès aux commandes, messages et brouillons, sans réception interclinique PostgreSQL. Les autres parcours, rôles, temps réel et exports restent à auditer.
 - **Priorité :** Critique
 - **Catégorie / type :** Sécurité / performance
 - **Zone concernée :** Sécurité, fiabilité et performances

@@ -23,6 +23,7 @@ function database({
   foreign = false,
   state = "ready",
   wrongVersion = false,
+  wrongDestination = false,
 } = {}) {
   return {
     transaction: (fn) =>
@@ -52,12 +53,16 @@ function database({
             return { rows: [{ id: clinicId }] };
           if (sql.startsWith("SELECT f.object_key")) {
             expect(sql).toContain("u.state='ready'");
+            expect(sql).toContain("u.intended_order_id=o.id");
+            expect(sql).toContain("u.account_id=f.created_by");
+            expect(sql).toContain("u.received_bytes=u.declared_size");
             expect(sql).toContain("b.version_id=o.current_version_id");
             return {
               rows:
                 foreign ||
                 state !== "ready" ||
                 wrongVersion ||
+                wrongDestination ||
                 values[1] !== input.version_id
                   ? []
                   : [
@@ -82,6 +87,7 @@ test("download grant is distinct and SQL receipt requires current scoped associa
     { foreign: true },
     { state: "verifying" },
     { wrongVersion: true },
+    { wrongDestination: true },
   ])
     expect(
       (

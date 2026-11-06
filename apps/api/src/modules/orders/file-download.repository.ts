@@ -46,6 +46,10 @@ export function createOrderFileDownloadRepository(
                ON f.id=b.file_id AND f.clinic_id=b.clinic_id
              JOIN public.upload_sessions u
                ON u.file_id=f.id AND u.clinic_id=f.clinic_id
+                  AND u.account_id=f.created_by
+                  AND u.intended_kind='initial_order'
+                  AND u.intended_order_id=o.id
+                  AND u.received_bytes=u.declared_size
             WHERE o.id=$1 AND o.current_version_id=$2 AND b.file_id=$3
               AND ($4::uuid IS NULL OR o.clinic_id=$4)
               AND f.state='ready' AND f.verified_at IS NOT NULL
