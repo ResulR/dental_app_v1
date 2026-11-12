@@ -3134,7 +3134,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 18.4 — Auditer dépendances, secrets et supply chain
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Garde lockfile et audit hors ligne partiels — revue complète différée
 - **Priorité :** Critique
 - **Catégorie / type :** Sécurité / performance
 - **Zone concernée :** Sécurité, fiabilité et performances
@@ -3147,6 +3147,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Avancement 12/11 :** le contrôle workspace refuse les archives du lockfile hors registre npm HTTPS, sans SHA-512 ou avec liens workspace redirigés ; deux tests ciblés. `npm audit --offline --omit=dev` a indiqué zéro vulnérabilité pour les 297 dépendances visibles dans son cache, sans prouver l'état actuel du registre ni couvrir les dépendances de développement. `check-versioning.py` passe ; permissions runtime et audit connecté restent ouverts.
 
 ### 18.5 — Auditer performance sur volumes réalistes
 - **Statut :** ◐ Partiel — chargement différé des formulaires clinique et suivi : bundle initial minifié 510,96 → 452,85 Ko (gzip 142,74 → 128,81 Ko) au build local ; tests de volumes réalistes et mesures sur appareils/VPS restent ouverts.
