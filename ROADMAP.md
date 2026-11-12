@@ -3353,7 +3353,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Avancement 12/11 :** `scripts/verify-backup-set.mjs` contrôle hors ligne un jeu synthétique déjà déchiffré (dump, objets opaques, taille, SHA-256, doublons, chemins et liens symboliques) en flux borné. La version 2 rapproche un inventaire borné des objets et des associations commande/version/clinique, avec refus des références manquantes, altérées ou étrangères ; sept tests ciblés. Ce précontrôle ne prouve ni l'authenticité du manifeste, ni l'extraction de l'inventaire et du dump sous le même snapshot, le chiffrement distant, RPO/RTO ou la restauration. Autres associations, destination, pin transactionnel, cadence et exercice isolé restent à réaliser et autoriser.
 
 ### 19.10 — Tester restauration totale et RTO
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Répétition fichiers synthétiques isolée — restauration PostgreSQL et RTO à faire
 - **Priorité :** Critique
 - **Catégorie / type :** Test / recette / exploitation
 - **Zone concernée :** Infrastructure production et exploitation
@@ -3366,6 +3366,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Non (rapport / décision, sauf document à versionner)
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Avancement 12/11 :** `stageSyntheticRestore` copie dans `.local` un petit jeu préalablement vérifié, le revérifie dans un répertoire privé neuf et supprime uniquement ce répertoire en cas d'interruption ; une relance explicite depuis la source intacte réussit. Trois tests synthétiques. Aucun `pg_restore`, aucune base reconstruite, aucun RPO/RTO mesuré ni jeu de production utilisé.
 
 ### 19.11 — Configurer maintenance et rollback
 - **Statut :** ☐ À faire
