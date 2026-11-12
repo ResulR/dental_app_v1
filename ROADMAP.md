@@ -3318,6 +3318,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Non (rapport / décision, sauf document à versionner)
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
+- **Correction 12/11 :** le journal technique conserve désormais le repère `ready` distinct de `unmatched`, y compris pour une réponse 503 ; aucun détail SQL ou corps de requête ajouté. Supervision et alertes externes restent non configurées.
+
 ### 19.8 — Configurer surveillance espace indépendante
 - **Statut :** ◐ Partiel — sonde disque locale en lecture seule avec seuil explicite, sortie machine et codes d'alerte, testée sur répertoire synthétique ; supervision externe, seuils mesurés et alerte hors application restent à configurer par l'opérateur.
 - **Priorité :** Critique

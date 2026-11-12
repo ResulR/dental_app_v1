@@ -6,7 +6,7 @@ export type TechnicalEvent = {
     | "api_start_failed"
     | "api_stop_failed";
   requestId?: string;
-  route?: "health" | "unmatched";
+  route?: "health" | "ready" | "unmatched";
   method?: string;
   status?: number;
   durationMs?: number;
@@ -51,7 +51,11 @@ export function createTechnicalLogger(
       )
     )
       record.request_id = input.requestId;
-    if (input.route === "health" || input.route === "unmatched")
+    if (
+      input.route === "health" ||
+      input.route === "ready" ||
+      input.route === "unmatched"
+    )
       record.route = input.route;
     if (input.method !== undefined)
       record.method = methods.has(input.method) ? input.method : "OTHER";

@@ -65,6 +65,21 @@ test("500 is correlated without echoing URL, header, body, message or stack", as
     await closeServer(server);
   }
 });
+test("readiness route remains distinct in the sanitized technical log", () => {
+  const lines = [];
+  createTechnicalLogger((line) => lines.push(line))({
+    event: "request_completed",
+    route: "ready",
+    method: "GET",
+    status: 503,
+  });
+  expect(JSON.parse(lines[0])).toMatchObject({
+    route: "ready",
+    method: "GET",
+    status: 503,
+    level: "error",
+  });
+});
 test("audit append destination is separate and failed append propagates", async () => {
   const directory = await fs.mkdtemp(path.resolve(".local/log-test-"));
   try {
