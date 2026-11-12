@@ -3582,7 +3582,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 21 — Mise en production et clôture
 
 ### 21.1 — Préparer release Git revue et approuvée
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Précontrôle Git local prêt — qualité, revue, tag et approbation différés
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Mise en production et clôture
@@ -3595,6 +3595,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Avancement 12/11 :** `scripts/check-release-candidate.mjs [HEAD]` refuse une branche autre que main, un arbre non propre, un décalage avec `origin/main` local ou un HEAD inattendu. Lecture Git seulement ; le suivi distant doit être rafraîchi séparément. Aucun tag, approbation, build complet ou release n'est produit par ce précontrôle.
 
 ### 21.2 — Vérifier autorisations d’intervention production
 - **Statut :** ☐ À faire
