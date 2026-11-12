@@ -46,6 +46,8 @@ Protocole proposé :
 
 Documentation PostgreSQL17 consultée10/10/2026 : https://www.postgresql.org/docs/17/app-pgdump.html et https://www.postgresql.org/docs/17/backup.html. pg_dump cible une base et --snapshot permet la coordination de sessions ; cela ne rend pas le stockage binaire transactionnel. L'algorithme de pin/manifeste reste à implémenter et éprouver. Dump logique répété n'est pas encore une preuve de RPO/RTO sur volumes réels ; si insuffisant, réviser architecture avec administrateur sans élargir au cluster partagé par défaut.
 
+Précontrôle hors ligne (12/11/2026) : `node scripts/verify-backup-set.mjs ABSOLUTE_ISOLATED_ROOT` lit un jeu **déjà déchiffré** contenant `manifest.json`, `database.dump` et `objects/<clé hexadécimale opaque>`. Le manifeste version 1 comporte `snapshotAt` (UTC), `database: {bytes, sha256}` et `objects: [{key, bytes, sha256}]`. Le script vérifie en flux la présence, les tailles et SHA-256, rejette doublons, chemins non opaques et liens symboliques ; la sortie ne contient aucun nom de fichier patient. Ce format de précontrôle n'est pas un format de sauvegarde de production approuvé. Le manifeste doit être authentifié par le mécanisme de chiffrement choisi avant cette étape ; le script ne prouve ni snapshot commun, ni pin, ni destination hors VPS, ni restauration. Tests synthétiques seulement.
+
 ## Objectifs mesurables et secrets
 
 RPO maximum1h : âge réel du dernier snapshot cohérent dont DB ET fichiers sont déjà disponibles hors VPS, évalué à l'incident ; planifier fréquence et marge de copie en conséquence. Une tâche démarrée chaque heure ne prouve pas ce seuil si son transfert échoue ou dure trop longtemps. Alerter P sur retard/échec, avant dépassement ; surveillance indépendante si possible.

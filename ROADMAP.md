@@ -3332,7 +3332,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 19.9 — Configurer sauvegardes DB + pièces jointes
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Précontrôle local d'intégrité synthétique — configuration et restauration réelle à faire
 - **Priorité :** Critique
 - **Catégorie / type :** Test / recette / exploitation
 - **Zone concernée :** Infrastructure production et exploitation
@@ -3345,6 +3345,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Non (rapport / décision, sauf document à versionner)
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+- **Avancement 12/11 :** `scripts/verify-backup-set.mjs` contrôle hors ligne un jeu synthétique déjà déchiffré (dump, objets opaques, taille, SHA-256, doublons, chemins et liens symboliques) en flux borné ; quatre tests ciblés. Ce précontrôle ne prouve ni l'authenticité du manifeste, ni la cohérence du snapshot, le chiffrement distant, RPO/RTO ou la restauration. Destination, pin transactionnel, cadence et exercice isolé restent à réaliser et autoriser.
 
 ### 19.10 — Tester restauration totale et RTO
 - **Statut :** ☐ À faire
