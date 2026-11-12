@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { MessagingInboxPageSchema } from "@dental-lab/contracts";
 import { Button } from "../../shared/Button.js";
 import {
@@ -26,6 +26,7 @@ export function MessagingInboxPanel({
   const [selected, setSelected] = useState<Item | null>(null);
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
+  const requestEpoch = useRef(0);
   const query = useCallback(
     (cursor?: Page) => ({
       ...(filters.search ? { search: filters.search } : {}),
@@ -39,52 +40,57 @@ export function MessagingInboxPanel({
   );
   const refresh = useCallback(
     async (signal?: AbortSignal) => {
-      const result = await messagingInbox(query(), signal);
-      let scoped: Item | null = null;
-      if (
-        selected &&
-        !result.items.some(
-          (item) => item.conversation_id === selected.conversation_id,
-        )
-      ) {
-        if (selected.kind === "order" && selected.order_id) {
-          const current = await orderConversation(
-            { order_id: selected.order_id },
-            signal,
-          );
-          scoped = {
-            ...selected,
-            closed: current.closed,
-            unread_count: current.unread_count,
-          };
-        } else if (selected.kind === "general") {
-          const current = await generalConversations(
-            { clinic_id: selected.clinic_id },
-            signal,
-          );
-          scoped = current.items.some(
-            (item) => item.id === selected.conversation_id,
+      const epoch = ++requestEpoch.current;
+      try {
+        const result = await messagingInbox(query(), signal);
+        let scoped: Item | null = null;
+        if (
+          selected &&
+          !result.items.some(
+            (item) => item.conversation_id === selected.conversation_id,
           )
-            ? selected
-            : null;
+        ) {
+          if (selected.kind === "order" && selected.order_id) {
+            const current = await orderConversation(
+              { order_id: selected.order_id },
+              signal,
+            );
+            scoped = {
+              ...selected,
+              closed: current.closed,
+              unread_count: current.unread_count,
+            };
+          } else if (selected.kind === "general") {
+            const current = await generalConversations(
+              { clinic_id: selected.clinic_id },
+              signal,
+            );
+            scoped = current.items.some(
+              (item) => item.id === selected.conversation_id,
+            )
+              ? selected
+              : null;
+          }
         }
+        if (signal?.aborted || epoch !== requestEpoch.current) return;
+        setPage(result);
+        setNotice("");
+        setSelected((previous) => {
+          if (!previous) return null;
+          const next =
+            result.items.find(
+              (item) => item.conversation_id === previous.conversation_id,
+            ) ?? scoped;
+          return next &&
+            next.unread_count === previous.unread_count &&
+            next.closed === previous.closed &&
+            next.activity_at === previous.activity_at
+            ? previous
+            : next;
+        });
+      } catch (error) {
+        if (epoch === requestEpoch.current && !signal?.aborted) throw error;
       }
-      if (signal?.aborted) return;
-      setPage(result);
-      setNotice("");
-      setSelected((previous) => {
-        if (!previous) return null;
-        const next =
-          result.items.find(
-            (item) => item.conversation_id === previous.conversation_id,
-          ) ?? scoped;
-        return next &&
-          next.unread_count === previous.unread_count &&
-          next.closed === previous.closed &&
-          next.activity_at === previous.activity_at
-          ? previous
-          : next;
-      });
     },
     [query, selected],
   );
@@ -131,12 +137,19 @@ export function MessagingInboxPanel({
   }, [refresh]);
   async function more() {
     if (!page?.next_before_at || loading) return;
+    const epoch = requestEpoch.current;
     setLoading(true);
     try {
       const result = await messagingInbox(query(page));
-      setPage({ ...result, items: [...page.items, ...result.items] });
+      if (epoch === requestEpoch.current)
+        setPage((current) =>
+          current === page
+            ? { ...result, items: [...page.items, ...result.items] }
+            : current,
+        );
     } catch {
-      setNotice("Bisedat e mëparshme nuk u ngarkuan.");
+      if (epoch === requestEpoch.current)
+        setNotice("Bisedat e mëparshme nuk u ngarkuan.");
     } finally {
       setLoading(false);
     }
@@ -147,6 +160,7 @@ export function MessagingInboxPanel({
       <form
         onSubmit={(event) => {
           event.preventDefault();
+          requestEpoch.current++;
           setSelected(null);
           setPage(null);
           setFilters({ search: search.trim(), kind, unreadOnly });
