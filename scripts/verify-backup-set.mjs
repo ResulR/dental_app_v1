@@ -3,6 +3,7 @@ import { constants } from "node:fs";
 import { lstat, open } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { verifyBackupInventory } from "./verify-backup-inventory.mjs";
 
 const SHA = /^[a-f0-9]{64}$/;
 const KEY = /^[a-f0-9]{32,64}$/;
@@ -24,6 +25,8 @@ async function verifyEntry(file, expected) {
     const hash = createHash("sha256");
     for await (const chunk of handle.createReadStream({
       highWaterMark: 1024 * 1024,
+      start: 0,
+      end: expected.bytes - 1,
       autoClose: false,
     }))
       hash.update(chunk);
@@ -32,11 +35,47 @@ async function verifyEntry(file, expected) {
       before.dev !== after.dev ||
       before.ino !== after.ino ||
       before.size !== after.size ||
-      before.mtimeMs !== after.mtimeMs
+      before.mtimeMs !== after.mtimeMs ||
+      before.ctimeMs !== after.ctimeMs
     )
       throw new Error("BACKUP_ENTRY_CHANGED");
     if (hash.digest("hex") !== expected.sha256)
       throw new Error("BACKUP_HASH_MISMATCH");
+  } finally {
+    await handle.close();
+  }
+}
+
+async function readInventory(file, expected) {
+  if (!validEntry(expected) || expected.bytes > MAX_MANIFEST_BYTES)
+    throw new Error("BACKUP_INVENTORY_INVALID");
+  const handle = await open(file, constants.O_RDONLY | constants.O_NOFOLLOW);
+  try {
+    const before = await handle.stat();
+    if (!before.isFile() || before.size !== expected.bytes)
+      throw new Error("BACKUP_INVENTORY_INVALID");
+    const bytes = Buffer.alloc(expected.bytes);
+    for (let offset = 0; offset < bytes.length;) {
+      const { bytesRead } = await handle.read(
+        bytes,
+        offset,
+        bytes.length - offset,
+        offset,
+      );
+      if (!bytesRead) throw new Error("BACKUP_INVENTORY_INVALID");
+      offset += bytesRead;
+    }
+    const after = await handle.stat();
+    if (
+      before.dev !== after.dev ||
+      before.ino !== after.ino ||
+      before.size !== after.size ||
+      before.mtimeMs !== after.mtimeMs ||
+      before.ctimeMs !== after.ctimeMs ||
+      createHash("sha256").update(bytes).digest("hex") !== expected.sha256
+    )
+      throw new Error("BACKUP_INVENTORY_INVALID");
+    return JSON.parse(bytes.toString("utf8"));
   } finally {
     await handle.close();
   }
@@ -48,7 +87,7 @@ function validEntry(entry) {
     typeof entry === "object" &&
     !Array.isArray(entry) &&
     Number.isSafeInteger(entry.bytes) &&
-    entry.bytes >= 0 &&
+    entry.bytes > 0 &&
     SHA.test(entry.sha256)
   );
 }
@@ -70,13 +109,31 @@ export async function verifyBackupSet(root) {
     const info = await manifestHandle.stat();
     if (!info.isFile() || info.size > MAX_MANIFEST_BYTES)
       throw new Error("BACKUP_MANIFEST_INVALID");
-    manifest = JSON.parse(await manifestHandle.readFile({ encoding: "utf8" }));
+    const bytes = Buffer.alloc(info.size);
+    for (let offset = 0; offset < bytes.length;) {
+      const { bytesRead } = await manifestHandle.read(
+        bytes,
+        offset,
+        bytes.length - offset,
+        offset,
+      );
+      if (!bytesRead) throw new Error("BACKUP_MANIFEST_INVALID");
+      offset += bytesRead;
+    }
+    const after = await manifestHandle.stat();
+    if (
+      after.size !== info.size ||
+      after.mtimeMs !== info.mtimeMs ||
+      after.ctimeMs !== info.ctimeMs
+    )
+      throw new Error("BACKUP_MANIFEST_INVALID");
+    manifest = JSON.parse(bytes.toString("utf8"));
   } finally {
     await manifestHandle.close();
   }
   if (
     !manifest ||
-    manifest.version !== 1 ||
+    (manifest.version !== 1 && manifest.version !== 2) ||
     typeof manifest.snapshotAt !== "string" ||
     !/^[0-9]{4}-[0-9]{2}-[0-9]{2}T.*Z$/.test(manifest.snapshotAt) ||
     Number.isNaN(Date.parse(manifest.snapshotAt)) ||
@@ -96,10 +153,28 @@ export async function verifyBackupSet(root) {
       throw new Error("BACKUP_MANIFEST_INVALID");
     seen.add(object.key);
   }
+  if (manifest.version === 2 && !validEntry(manifest.inventory))
+    throw new Error("BACKUP_MANIFEST_INVALID");
   await verifyEntry(path.join(root, "database.dump"), manifest.database);
   for (const object of manifest.objects)
     await verifyEntry(path.join(root, "objects", object.key), object);
-  return { snapshotAt: manifest.snapshotAt, objectCount: seen.size };
+  const checked =
+    manifest.version === 2
+      ? verifyBackupInventory(
+          manifest,
+          await readInventory(
+            path.join(root, "inventory.json"),
+            manifest.inventory,
+          ),
+        )
+      : null;
+  return {
+    snapshotAt: manifest.snapshotAt,
+    objectCount: seen.size,
+    ...(checked
+      ? { fileCount: checked.fileCount, bindingCount: checked.bindingCount }
+      : {}),
+  };
 }
 
 if (

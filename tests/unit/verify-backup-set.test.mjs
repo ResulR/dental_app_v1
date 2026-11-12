@@ -25,6 +25,30 @@ async function fixture() {
   return { root, manifest };
 }
 
+const fileId = "10000000-0000-4000-8000-000000000001";
+const clinicId = "20000000-0000-4000-8000-000000000001";
+const versionId = "30000000-0000-4000-8000-000000000001";
+async function inventoryFixture() {
+  const { root, manifest } = await fixture();
+  const inventory = {
+    version: 1,
+    snapshotAt: manifest.snapshotAt,
+    databaseSha256: manifest.database.sha256,
+    files: [{ id: fileId, clinicId, ...manifest.objects[0] }],
+    versions: [{ id: versionId, clinicId }],
+    bindings: [{ fileId, versionId, clinicId }],
+  };
+  manifest.version = 2;
+  async function save() {
+    const bytes = Buffer.from(JSON.stringify(inventory));
+    manifest.inventory = { bytes: bytes.length, sha256: digest(bytes) };
+    await writeFile(path.join(root, "inventory.json"), bytes);
+    await writeFile(path.join(root, "manifest.json"), JSON.stringify(manifest));
+  }
+  await save();
+  return { root, manifest, inventory, save };
+}
+
 test("verifies a complete synthetic set without changing it", async () => {
   const { root } = await fixture();
   try {
@@ -97,6 +121,64 @@ test("refuses incomplete or oversized manifests", async () => {
     );
     await expect(verifyBackupSet(root)).rejects.toThrow(
       "BACKUP_MANIFEST_INVALID",
+    );
+  } finally {
+    await rm(root, { recursive: true });
+  }
+});
+
+test("cross-checks synthetic file references and rejects foreign clinic bindings", async () => {
+  const { root, inventory, save } = await inventoryFixture();
+  try {
+    expect(await verifyBackupSet(root)).toMatchObject({
+      objectCount: 1,
+      fileCount: 1,
+      bindingCount: 1,
+    });
+    inventory.bindings[0].clinicId = "20000000-0000-4000-8000-000000000002";
+    await save();
+    await expect(verifyBackupSet(root)).rejects.toThrow(
+      "BACKUP_INVENTORY_MISMATCH",
+    );
+    inventory.bindings[0].clinicId = clinicId;
+    inventory.files[0].key = "b".repeat(32);
+    await save();
+    await expect(verifyBackupSet(root)).rejects.toThrow(
+      "BACKUP_INVENTORY_MISMATCH",
+    );
+  } finally {
+    await rm(root, { recursive: true });
+  }
+});
+
+test("rejects missing inventory and altered metadata before reconciliation", async () => {
+  const { root, inventory, save } = await inventoryFixture();
+  try {
+    await rm(path.join(root, "inventory.json"));
+    await expect(verifyBackupSet(root)).rejects.toThrow();
+    await save();
+    await writeFile(path.join(root, "inventory.json"), "tampered");
+    await expect(verifyBackupSet(root)).rejects.toThrow(
+      "BACKUP_INVENTORY_INVALID",
+    );
+    inventory.databaseSha256 = "0".repeat(64);
+    await save();
+    await expect(verifyBackupSet(root)).rejects.toThrow(
+      "BACKUP_INVENTORY_INVALID",
+    );
+  } finally {
+    await rm(root, { recursive: true });
+  }
+});
+
+test("rejects a contradictory object set even when inventory checksum is updated", async () => {
+  const { root, inventory, save } = await inventoryFixture();
+  try {
+    inventory.files = [];
+    inventory.bindings = [];
+    await save();
+    await expect(verifyBackupSet(root)).rejects.toThrow(
+      "BACKUP_INVENTORY_MISMATCH",
     );
   } finally {
     await rm(root, { recursive: true });

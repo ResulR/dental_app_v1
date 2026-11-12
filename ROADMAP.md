@@ -3350,7 +3350,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Non (rapport / décision, sauf document à versionner)
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
-- **Avancement 12/11 :** `scripts/verify-backup-set.mjs` contrôle hors ligne un jeu synthétique déjà déchiffré (dump, objets opaques, taille, SHA-256, doublons, chemins et liens symboliques) en flux borné ; quatre tests ciblés. Ce précontrôle ne prouve ni l'authenticité du manifeste, ni la cohérence du snapshot, le chiffrement distant, RPO/RTO ou la restauration. Destination, pin transactionnel, cadence et exercice isolé restent à réaliser et autoriser.
+- **Avancement 12/11 :** `scripts/verify-backup-set.mjs` contrôle hors ligne un jeu synthétique déjà déchiffré (dump, objets opaques, taille, SHA-256, doublons, chemins et liens symboliques) en flux borné. La version 2 rapproche un inventaire borné des objets et des associations commande/version/clinique, avec refus des références manquantes, altérées ou étrangères ; sept tests ciblés. Ce précontrôle ne prouve ni l'authenticité du manifeste, ni l'extraction de l'inventaire et du dump sous le même snapshot, le chiffrement distant, RPO/RTO ou la restauration. Autres associations, destination, pin transactionnel, cadence et exercice isolé restent à réaliser et autoriser.
 
 ### 19.10 — Tester restauration totale et RTO
 - **Statut :** ☐ À faire
