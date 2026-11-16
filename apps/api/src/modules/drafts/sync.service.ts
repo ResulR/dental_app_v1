@@ -185,10 +185,14 @@ export function createDraftSyncService(database: Database) {
         const deleted = await tx.query<{ revision: string }>(
           `
           WITH changed AS (
-            UPDATE public.drafts SET revision=revision+1,state='deleted',
+            UPDATE public.drafts d SET revision=revision+1,state='deleted',
               deleted_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP
-            WHERE id=$1 AND account_id=$2 AND clinic_id=$3 AND revision=$4 AND state='active'
-            RETURNING id,account_id,clinic_id,revision
+            WHERE d.id=$1 AND d.account_id=$2 AND d.clinic_id=$3
+              AND d.revision=$4 AND d.state='active'
+              AND EXISTS (SELECT 1 FROM public.draft_revisions prior
+                WHERE prior.draft_id=d.id AND prior.revision=d.revision
+                  AND prior.account_id=d.account_id AND prior.clinic_id=d.clinic_id)
+            RETURNING d.id,d.account_id,d.clinic_id,d.revision
           ), history AS (
             INSERT INTO public.draft_revisions(draft_id,account_id,clinic_id,revision,schema_version,payload)
             SELECT c.id,c.account_id,c.clinic_id,c.revision,r.schema_version,r.payload

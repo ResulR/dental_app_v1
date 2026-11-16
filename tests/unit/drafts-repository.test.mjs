@@ -22,8 +22,12 @@ test("one parameterized statement includes owner, CAS, history and receipt", asy
   });
   expect(query).toHaveBeenCalledOnce();
   const [sql, values] = query.mock.calls[0];
-  expect(sql).toContain("account_id=$2 AND clinic_id=$3");
-  expect(sql).toContain("revision=$4 AND state='active'");
+  expect(sql).toContain("d.account_id=$2 AND d.clinic_id=$3");
+  expect(sql).toContain("d.revision=$4 AND d.state='active'");
+  expect(sql).toContain("prior.draft_id=d.id AND prior.revision=d.revision");
+  expect(sql).toContain(
+    "prior.account_id=d.account_id AND prior.clinic_id=d.clinic_id",
+  );
   expect(sql).toContain("public.draft_revisions");
   expect(sql).toContain("public.draft_sync_receipts");
   expect(sql).not.toContain(input.payload.description);

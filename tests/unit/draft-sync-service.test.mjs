@@ -208,6 +208,14 @@ test("delete copies prior version to a tombstone with a CAS guard", async () => 
     replayed: false,
   });
   const sql = query.mock.calls.find(([text]) => text.includes("'delete'"))[0];
-  expect(sql).toContain("state='active'");
+  expect(sql).toContain("d.state='active'");
+  expect(sql).toContain("prior.draft_id=d.id AND prior.revision=d.revision");
+  expect(sql).toContain(
+    "prior.account_id=d.account_id AND prior.clinic_id=d.clinic_id",
+  );
   expect(sql).toContain("r.revision=c.revision-1");
+  const missingHistory = fixture();
+  expect((await missingHistory.service.commit(actor, deleted)).value).toEqual({
+    kind: "conflict",
+  });
 });
