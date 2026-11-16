@@ -8,9 +8,14 @@ import {
   rm,
   writeFile,
   readdir,
+  rename,
+  symlink,
 } from "node:fs/promises";
 import path from "node:path";
-import { stageSyntheticRestore } from "../../scripts/stage-synthetic-restore.mjs";
+import {
+  copySyntheticEntry,
+  stageSyntheticRestore,
+} from "../../scripts/stage-synthetic-restore.mjs";
 
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const key = "c".repeat(64);
@@ -69,6 +74,33 @@ test("fails closed on a partial copy, cleans only its own stage and permits expl
   } finally {
     if (stage) await rm(stage, { recursive: true });
     await rm(root, { recursive: true });
+  }
+});
+
+test("rejects a source file swapped for a symlink after preflight and removes the partial stage", async () => {
+  const { root, parent } = await sourceSet();
+  const sibling = path.join(
+    parent,
+    "synthetic-link-target-" + path.basename(root),
+  );
+  const before = new Set(await readdir(parent));
+  try {
+    await writeFile(sibling, "synthetic database only");
+    await expect(
+      stageSyntheticRestore(root, async (from, to) => {
+        if (from === path.join(root, "database.dump")) {
+          await rename(from, from + ".held");
+          await symlink(sibling, from);
+        }
+        await copySyntheticEntry(from, to);
+      }),
+    ).rejects.toThrow();
+    expect(new Set(await readdir(parent))).toEqual(
+      new Set([...before, path.basename(sibling)]),
+    );
+  } finally {
+    await rm(sibling, { force: true });
+    await rm(root, { recursive: true, force: true });
   }
 });
 

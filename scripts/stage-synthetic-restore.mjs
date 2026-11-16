@@ -1,13 +1,5 @@
 import { constants } from "node:fs";
-import {
-  copyFile,
-  lstat,
-  mkdtemp,
-  open,
-  realpath,
-  rm,
-  mkdir,
-} from "node:fs/promises";
+import { lstat, mkdtemp, open, realpath, rm, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { verifyBackupSet } from "./verify-backup-set.mjs";
@@ -50,9 +42,67 @@ async function readBoundedManifest(source) {
   }
 }
 
+// Open the final source component without following a substituted symlink.
+// The staged set is verified again after copying; the source is a private,
+// operator-controlled synthetic directory rather than a live backup location.
+export async function copySyntheticEntry(from, to) {
+  const input = await open(from, constants.O_RDONLY | constants.O_NOFOLLOW);
+  try {
+    const before = await input.stat();
+    if (!before.isFile() || before.size > MAX_REHEARSAL_BYTES)
+      throw new Error("RESTORE_SOURCE_INVALID");
+    const output = await open(
+      to,
+      constants.O_WRONLY |
+        constants.O_CREAT |
+        constants.O_EXCL |
+        constants.O_NOFOLLOW,
+      0o600,
+    );
+    try {
+      const buffer = Buffer.allocUnsafe(1024 * 1024);
+      let offset = 0;
+      while (offset < before.size) {
+        const { bytesRead } = await input.read(
+          buffer,
+          0,
+          Math.min(buffer.length, before.size - offset),
+          offset,
+        );
+        if (!bytesRead) throw new Error("RESTORE_SOURCE_CHANGED");
+        let written = 0;
+        while (written < bytesRead) {
+          const result = await output.write(
+            buffer,
+            written,
+            bytesRead - written,
+            offset + written,
+          );
+          if (!result.bytesWritten) throw new Error("RESTORE_COPY_FAILED");
+          written += result.bytesWritten;
+        }
+        offset += bytesRead;
+      }
+      const after = await input.stat();
+      if (
+        before.dev !== after.dev ||
+        before.ino !== after.ino ||
+        before.size !== after.size ||
+        before.mtimeMs !== after.mtimeMs ||
+        before.ctimeMs !== after.ctimeMs
+      )
+        throw new Error("RESTORE_SOURCE_CHANGED");
+    } finally {
+      await output.close();
+    }
+  } finally {
+    await input.close();
+  }
+}
+
 // Filesystem-only rehearsal. It never invokes pg_restore, changes application
 // state, decrypts a backup, or accepts production paths.
-export async function stageSyntheticRestore(source, copy = copyFile) {
+export async function stageSyntheticRestore(source, copy = copySyntheticEntry) {
   const parent = await realpath(scratch);
   const parentStat = await lstat(parent);
   if (

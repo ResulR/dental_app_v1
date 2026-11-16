@@ -3367,7 +3367,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Non (rapport / décision, sauf document à versionner)
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
-- **Avancement 12/11 :** `stageSyntheticRestore` copie dans `.local` un petit jeu préalablement vérifié, le revérifie dans un répertoire privé neuf et supprime uniquement ce répertoire en cas d'interruption ; une relance explicite depuis la source intacte réussit. Trois tests synthétiques. Aucun `pg_restore`, aucune base reconstruite, aucun RPO/RTO mesuré ni jeu de production utilisé.
+- **Avancement 12/11 :** `stageSyntheticRestore` copie dans `.local` un petit jeu préalablement vérifié, le revérifie dans un répertoire privé neuf et supprime uniquement ce répertoire en cas d'interruption ; une relance explicite depuis la source intacte réussit. La copie de chaque fichier ouvre le composant final sans suivre les liens symboliques, utilise un tampon borné et refuse une modification durant la lecture ; quatre tests synthétiques, dont substitution de lien après précontrôle. Le répertoire source doit rester privé et contrôlé par l'opérateur. Aucun `pg_restore`, aucune base reconstruite, aucun RPO/RTO mesuré ni jeu de production utilisé.
 
 ### 19.11 — Configurer maintenance et rollback
 - **Statut :** ☐ À faire
