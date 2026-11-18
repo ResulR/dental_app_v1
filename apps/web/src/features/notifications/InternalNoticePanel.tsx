@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   InternalNoticePageSchema,
   InternalNoticeReadResultSchema,
@@ -42,19 +42,26 @@ export function InternalNoticePanel({
   const [conversationOpen, setConversationOpen] = useState(false);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+  const requestEpoch = useRef(0);
   const refresh = useCallback(async (signal?: AbortSignal) => {
-    const result = InternalNoticePageSchema.parse(
-      await post("/api/v1/notifications/internal/list", {}, signal),
-    );
-    if (signal?.aborted) return null;
-    setPage(result);
-    setNotice("");
-    setSelected((previous) =>
-      previous
-        ? (result.items.find((item) => item.id === previous.id) ?? null)
-        : null,
-    );
-    return result;
+    const epoch = ++requestEpoch.current;
+    try {
+      const result = InternalNoticePageSchema.parse(
+        await post("/api/v1/notifications/internal/list", {}, signal),
+      );
+      if (signal?.aborted || epoch !== requestEpoch.current) return null;
+      setPage(result);
+      setNotice("");
+      setSelected((previous) =>
+        previous
+          ? (result.items.find((item) => item.id === previous.id) ?? null)
+          : null,
+      );
+      return result;
+    } catch (error) {
+      if (signal?.aborted || epoch !== requestEpoch.current) return null;
+      throw error;
+    }
   }, []);
   useEffect(() => {
     const controller = new AbortController();
@@ -86,9 +93,11 @@ export function InternalNoticePanel({
   async function older() {
     if (!page?.next_before_at || !page.next_before_id || busy) return;
     setBusy(true);
+    let epoch = requestEpoch.current;
     try {
       const current = await refresh();
       if (!current) return;
+      epoch = requestEpoch.current;
       let cursor = current;
       const items = [...current.items];
       const target = page.items.length + 50;
@@ -105,8 +114,10 @@ export function InternalNoticePanel({
         );
         items.push(...cursor.items);
       }
+      if (epoch !== requestEpoch.current) return;
       setPage({ ...cursor, unread_count: current.unread_count, items });
     } catch {
+      if (epoch !== requestEpoch.current) return;
       setPage(null);
       setSelected(null);
       setNotice("Lejet ose njoftimet nuk u verifikuan.");
@@ -123,7 +134,8 @@ export function InternalNoticePanel({
       );
       // Refresh rechecks the current owner session and destination.
       const current = await refresh();
-      const verified = current?.items.find(
+      if (!current) return;
+      const verified = current.items.find(
         (candidate) => candidate.id === item.id,
       );
       if (!verified) throw new Error("NOTICES_UNAVAILABLE");
