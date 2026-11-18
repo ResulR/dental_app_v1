@@ -86,6 +86,7 @@ export function GeneralMessagingPanel({
   const [messages, setMessages] = useState<Messages | null>(null);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sendUncertain, setSendUncertain] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [reading, setReading] = useState(false);
@@ -515,11 +516,15 @@ export function GeneralMessagingPanel({
         file_ids: [],
       });
       if (result.kind !== "sent") {
-        if (result.kind === "conflict") key.current = null;
-        if (result.kind === "conversation_closed") setClosed(true);
+        if (result.kind === "conflict") setSendUncertain(true);
+        if (result.kind === "conversation_closed") {
+          setClosed(true);
+          key.current = null;
+          setSendUncertain(false);
+        }
         setNotice(
           result.kind === "conflict"
-            ? "Mesazhi ndryshoi. Kontrolloni bisedën para një dërgimi të ri."
+            ? "Çelësi i mesazhit ka përmbajtje tjetër. Kontrolloni bisedën; mos krijoni dërgim të ri pa verifikuar rezultatin."
             : result.kind === "conversation_closed"
               ? "Biseda është mbyllur. Mesazhi nuk u dërgua."
               : "Mesazhi nuk u dërgua. Kontrolloni bisedën.",
@@ -527,9 +532,15 @@ export function GeneralMessagingPanel({
         return;
       }
       key.current = null;
+      setSendUncertain(false);
       setBody("");
-      await refresh();
+      void refresh().catch(() =>
+        setNotice(
+          "Mesazhi u dërgua, por lista nuk u përditësua. Rifreskojeni bisedën.",
+        ),
+      );
     } catch {
+      setSendUncertain(true);
       setNotice(
         "Përgjigjja është e pasigurt. Kontrolloni bisedën ose riprovoni të njëjtin mesazh.",
       );
@@ -573,6 +584,7 @@ export function GeneralMessagingPanel({
               setMessages(null);
               setBody("");
               key.current = null;
+              setSendUncertain(false);
             }}
           >
             <option value="">Zgjidhni klinikën</option>
@@ -778,7 +790,7 @@ export function GeneralMessagingPanel({
                 Mesazh tekstual
                 <textarea
                   value={body}
-                  disabled={busy}
+                  disabled={busy || sendUncertain}
                   maxLength={100000}
                   onChange={(event) => {
                     setBody(event.target.value);
@@ -787,8 +799,29 @@ export function GeneralMessagingPanel({
                 />
               </label>
               <Button type="submit" disabled={busy || !body.trim()}>
-                Dërgo mesazhin
+                {sendUncertain
+                  ? "Rimerr rezultatin e të njëjtit mesazh"
+                  : "Dërgo mesazhin"}
               </Button>
+              {sendUncertain && (
+                <Button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    if (
+                      !window.confirm(
+                        "E kontrolluat bisedën? Një dërgim i ri mund të krijojë mesazh të dyfishtë.",
+                      )
+                    )
+                      return;
+                    key.current = null;
+                    setSendUncertain(false);
+                    setNotice("");
+                  }}
+                >
+                  Përgatit mesazh të ri pas kontrollit
+                </Button>
+              )}
             </form>
           )}
           <p>Skedarët nuk janë të disponueshëm në këtë bisedë.</p>

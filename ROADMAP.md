@@ -2331,7 +2331,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 13.3 — Implémenter réception/envoi des messages
-- **Statut :** ◐ Réception paginée et envoi idempotent textuels intégrés pour conversations générales, commandes et retouches ; fichiers refusés, drapeaux fermés. Tests PostgreSQL réel, navigateur, éditions et fichiers restent ouverts.
+- **Statut :** ◐ Réception paginée et envoi idempotent textuels intégrés pour conversations générales, commandes et retouches ; après réponse ambiguë, l'interface garde le même texte et la même clé jusqu'au reçu ou à une décision explicite après contrôle. Fichiers refusés, drapeaux fermés. Tests PostgreSQL réel, navigateur, éditions et fichiers restent ouverts.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel
@@ -3181,7 +3181,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 18.7 — Auditer concurrence et idempotence serveur
-- **Statut :** ◐ Revue ciblée : soumission, retouche, livraison groupée et messages reposent sur verrous/reçus préexistants ; garde ajoutée aux écritures de brouillons contre une révision historique source absente. Tests avec doubles uniquement ; concurrence PostgreSQL globale, file e-mail et critères complets restent ouverts.
+- **Statut :** ◐ Revue ciblée : soumission, retouche, livraison groupée et messages reposent sur verrous/reçus préexistants ; garde ajoutée aux écritures de brouillons contre une révision historique source absente. Une réponse réseau ambiguë du message conserve maintenant l'intention et interdit sa modification silencieuse côté interface. Tests avec doubles uniquement ; concurrence PostgreSQL globale, file e-mail et critères complets restent ouverts.
 - **Priorité :** Critique
 - **Catégorie / type :** Sécurité / performance
 - **Zone concernée :** Sécurité, fiabilité et performances
