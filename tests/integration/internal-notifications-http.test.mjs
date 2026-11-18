@@ -6,10 +6,11 @@ const id = "91000000-0000-4000-8000-000000000001";
 test("internal notice routes reject foreign origin, missing session and malformed requests", async () => {
   const list = vi.fn(async () => ({ kind: "denied" }));
   const markRead = vi.fn(async () => ({ kind: "denied" }));
+  const get = vi.fn(async () => ({ kind: "denied" }));
   const server = createApp(
     (app) =>
       registerInternalNoticeRoutes(app, {
-        notices: { list, markRead },
+        notices: { list, markRead, get },
         sessions: {
           authenticate: async () => ({ accountId: id, sessionId: id }),
         },
@@ -44,7 +45,19 @@ test("internal notice routes reject foreign origin, missing session and malforme
     );
     expect((await post("list", { before_id: id })).status).toBe(400);
     expect((await post("read", {})).status).toBe(400);
+    expect((await post("get", {}, headers)).status).toBe(400);
+    expect(
+      (
+        await post(
+          "get",
+          { id },
+          { ...headers, origin: "https://evil.example" },
+        )
+      ).status,
+    ).toBe(403);
+    expect((await post("get", { id })).status).toBe(403);
     expect((await post("read", { id })).status).toBe(403);
+    expect(get).toHaveBeenCalledTimes(1);
     expect(markRead).toHaveBeenCalledTimes(1);
     expect(list).not.toHaveBeenCalled();
   } finally {

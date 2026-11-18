@@ -44,6 +44,12 @@ function fixture({
       return { rows: suspended ? [] : [{ id: clinic }] };
     if (sql.startsWith("SELECT count(*)::text AS unread"))
       return { rows: [{ unread: "1" }] };
+    if (
+      missing &&
+      sql.startsWith("SELECT n.id,e.type AS kind") &&
+      sql.includes("AND n.id=$6")
+    )
+      return { rows: [] };
     if (sql.startsWith("SELECT n.id,e.type AS kind"))
       return {
         rows: [
@@ -188,6 +194,39 @@ test("owner list is scoped to recipient and registration event with unread count
     .at(-1);
   expect(paged[1].slice(-2)).toEqual(["2026-10-22T12:00:00.000Z", id]);
   expect(paged[0]).toContain("(n.created_at,n.id)<($6::timestamptz,$7::uuid)");
+});
+test("old notice is revalidated by recipient and current permission without marking it read", async () => {
+  const owner = fixture();
+  const result = await owner.service.get(actor, { id });
+  expect(result.kind).toBe("result");
+  expect(result.result.id).toBe(id);
+  const select = owner.calls.find(([sql]) =>
+    sql.includes("AND n.id=$6 LIMIT 1"),
+  );
+  expect(select[0]).toContain("n.target_account_id=$1");
+  expect(select[0]).toContain("e.type='clinic_registered'");
+  expect(select[1]).toEqual([id, true, true, true, true, id]);
+  expect(
+    owner.calls.some(([sql]) =>
+      sql.includes("UPDATE public.internal_notifications"),
+    ),
+  ).toBe(false);
+  expect(
+    (await fixture({ missing: true }).service.get(actor, { id })).kind,
+  ).toBe("denied");
+  expect(
+    (await fixture({ revoked: true }).service.get(actor, { id })).kind,
+  ).toBe("denied");
+  expect(
+    (
+      await fixture({ profile: "clinic", suspended: true }).service.get(actor, {
+        id,
+      })
+    ).kind,
+  ).toBe("denied");
+  expect((await owner.service.get(actor, { id: "other" })).kind).toBe(
+    "invalid",
+  );
 });
 test("owner read is idempotently scoped; clinic and foreign notification denied", async () => {
   const f = fixture();

@@ -75,6 +75,43 @@ export function createInternalNoticeRepository(
   db: Pick<ReturnType<typeof createApplicationDatabase>, "transaction">,
 ) {
   return {
+    async get(actor: Actor, raw: unknown) {
+      const parsed = InternalNoticeReadSchema.safeParse(raw);
+      if (!parsed.success) return { kind: "invalid" as const };
+      return db.transaction(async (tx) => {
+        const scope = await viewer(tx, actor);
+        if (!scope) return { kind: "denied" as const };
+        const rows = await tx.query(
+          `SELECT n.id,e.type AS kind,e.clinic_id,COALESCE(o.id,mo.id) AS order_id,
+           v.id AS conversation_id,c.name AS clinic_name,c.revision::text AS clinic_revision,n.created_at,n.read_at
+           FROM public.internal_notifications n ${joins}
+           WHERE n.target_account_id=$1 AND ${visible} AND n.id=$6 LIMIT 1`,
+          [...scope, parsed.data.id],
+        );
+        if (rows.rows.length !== 1) return { kind: "denied" as const };
+        const row = rows.rows[0]!;
+        return {
+          kind: "result" as const,
+          result: InternalNoticePageSchema.shape.items.element.parse({
+            id: row.id,
+            kind: row.kind,
+            clinic_id: row.clinic_id,
+            order_id: row.order_id,
+            conversation_id: row.conversation_id,
+            clinic_name: row.clinic_name,
+            clinic_revision: Number(row.clinic_revision),
+            created_at:
+              row.created_at instanceof Date
+                ? row.created_at.toISOString()
+                : row.created_at,
+            read_at:
+              row.read_at instanceof Date
+                ? row.read_at.toISOString()
+                : row.read_at,
+          }),
+        };
+      });
+    },
     async list(actor: Actor, raw: unknown) {
       const parsed = InternalNoticeQuerySchema.safeParse(raw);
       if (!parsed.success) return { kind: "invalid" as const };

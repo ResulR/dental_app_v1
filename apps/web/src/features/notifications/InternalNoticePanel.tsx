@@ -43,19 +43,33 @@ export function InternalNoticePanel({
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const requestEpoch = useRef(0);
+  const selectedRef = useRef(selected);
+  useEffect(() => {
+    selectedRef.current = selected;
+  }, [selected]);
   const refresh = useCallback(async (signal?: AbortSignal) => {
     const epoch = ++requestEpoch.current;
+    const opened = selectedRef.current;
     try {
       const result = InternalNoticePageSchema.parse(
         await post("/api/v1/notifications/internal/list", {}, signal),
       );
+      let verified = opened
+        ? (result.items.find((item) => item.id === opened.id) ?? null)
+        : null;
+      if (opened && !verified)
+        verified = InternalNoticePageSchema.shape.items.element.parse(
+          await post(
+            "/api/v1/notifications/internal/get",
+            { id: opened.id },
+            signal,
+          ),
+        );
       if (signal?.aborted || epoch !== requestEpoch.current) return null;
       setPage(result);
       setNotice("");
       setSelected((previous) =>
-        previous
-          ? (result.items.find((item) => item.id === previous.id) ?? null)
-          : null,
+        previous?.id === opened?.id ? verified : previous,
       );
       return result;
     } catch (error) {
@@ -135,10 +149,11 @@ export function InternalNoticePanel({
       // Refresh rechecks the current owner session and destination.
       const current = await refresh();
       if (!current) return;
-      const verified = current.items.find(
-        (candidate) => candidate.id === item.id,
+      const epoch = requestEpoch.current;
+      const verified = InternalNoticePageSchema.shape.items.element.parse(
+        await post("/api/v1/notifications/internal/get", { id: item.id }),
       );
-      if (!verified) throw new Error("NOTICES_UNAVAILABLE");
+      if (epoch !== requestEpoch.current) return;
       setSelected(verified);
       setConversationOpen(false);
     } catch {
@@ -210,7 +225,13 @@ export function InternalNoticePanel({
       )}
       {selected && (
         <div>
-          <Button type="button" onClick={() => setSelected(null)}>
+          <Button
+            type="button"
+            onClick={() => {
+              requestEpoch.current++;
+              setSelected(null);
+            }}
+          >
             Mbyll
           </Button>
           {selected.kind === "message_created" ? (

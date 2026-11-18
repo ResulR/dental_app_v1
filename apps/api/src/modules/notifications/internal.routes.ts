@@ -18,7 +18,11 @@ export function registerInternalNoticeRoutes(
 ) {
   if (!mutationOriginAllowed(services.origin, services.origin))
     throw new Error("INVALID_INTERNAL_NOTICE_ORIGIN");
-  async function handle(req: Request, res: Response, action: "list" | "read") {
+  async function handle(
+    req: Request,
+    res: Response,
+    action: "list" | "read" | "get",
+  ) {
     if (!mutationOriginAllowed(req.headers.origin, services.origin))
       return sendProblem(res, "FORBIDDEN", 403);
     const parsed = (
@@ -36,7 +40,9 @@ export function registerInternalNoticeRoutes(
     const result =
       action === "list"
         ? await services.notices.list(actor, parsed.data)
-        : await services.notices.markRead(actor, parsed.data);
+        : action === "get"
+          ? await services.notices.get(actor, parsed.data)
+          : await services.notices.markRead(actor, parsed.data);
     if (result.kind !== "result")
       return sendProblem(
         res,
@@ -48,6 +54,10 @@ export function registerInternalNoticeRoutes(
   app.post(
     "/api/v1/notifications/internal/list",
     (req, res) => void handle(req, res, "list"),
+  );
+  app.post(
+    "/api/v1/notifications/internal/get",
+    (req, res) => void handle(req, res, "get"),
   );
   app.post(
     "/api/v1/notifications/internal/read",
