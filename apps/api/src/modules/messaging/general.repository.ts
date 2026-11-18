@@ -420,6 +420,34 @@ export function createGeneralMessagingRepository(
             "UPDATE public.conversation_reads SET last_read_seq=$3,read_by=$4,read_at=statement_timestamp(),revision=revision+1 WHERE conversation_id=$1 AND side=$2",
             [parsed.data.conversation_id, scope.side, through, actor.accountId],
           );
+          // Full read closes the reminder cycle. A partial read preserves it;
+          // message insertion and the dormant generator serialize on c.id.
+          const finished = await tx.query<{ cycle_id: string }>(
+            `SELECT cy.cycle_id FROM public.message_reminder_cycles cy
+             WHERE cy.conversation_id=$1 AND cy.side=$2
+               AND NOT EXISTS (SELECT 1 FROM public.messages m
+                 WHERE m.conversation_id=$1 AND m.sequence_number>$3
+                   AND m.sender_side<>$2) FOR UPDATE OF cy`,
+            [parsed.data.conversation_id, scope.side, through],
+          );
+          if (finished.rows.length) {
+            await tx.query(
+              `UPDATE public.message_reminder_cycles SET cycle_id=$3,
+                last_reminded_seq=0,last_reminder_at=NULL,first_unread_at=NULL,
+                revision=revision+1 WHERE conversation_id=$1 AND side=$2
+                AND (last_reminded_seq>0 OR first_unread_at IS NOT NULL)`,
+              [parsed.data.conversation_id, scope.side, randomUUID()],
+            );
+            await tx.query(
+              `UPDATE public.notification_deliveries d SET state='cancelled',
+                 cancellation_code='CONVERSATION_READ'
+               FROM public.outbox_events e WHERE d.event_id=e.id
+                 AND e.type='message_reminder' AND e.aggregate_type='process'
+                 AND e.aggregate_id=$1 AND d.purpose='message_reminder'
+                 AND d.state='pending' AND d.lease_id IS NULL`,
+              [finished.rows[0]!.cycle_id],
+            );
+          }
         }
         return {
           kind: "result" as const,

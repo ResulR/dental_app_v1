@@ -2536,7 +2536,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 14.6 — Implémenter rappels messages non lus
-- **Statut :** ☐ À faire
+- **Statut :** ◐ En cours — générateur transactionnel dormant des intentions, cycle par côté et annulation à lecture complète préparés avec migration 0027 ; tests avec double. L'envoi reste fermé : réception PostgreSQL, prévol du transport réel, configuration des destinataires et activation autorisée manquent.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Notifications, e-mails et alertes

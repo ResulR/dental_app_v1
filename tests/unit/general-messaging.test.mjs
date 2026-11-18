@@ -19,6 +19,7 @@ function fixture({
   sequence = 1,
   order = false,
   closed = false,
+  reminderCycle = false,
 } = {}) {
   const calls = [];
   let lastReadSeq = 0;
@@ -85,6 +86,10 @@ function fixture({
       lastReadSeq = args[2];
       return { rows: [] };
     }
+    if (
+      sql.startsWith("SELECT cy.cycle_id FROM public.message_reminder_cycles")
+    )
+      return { rows: reminderCycle ? [{ cycle_id: other }] : [] };
     if (sql.includes("FROM public.conversations c\n"))
       return {
         rows: foreign
@@ -222,6 +227,20 @@ test("conversation scope is checked before messages; hidden text stays absent", 
   ).toBe(clinic);
 });
 
+test("full read rotates the reminder cycle and cancels only its unleased pending deliveries", async () => {
+  const f = fixture({ reminderCycle: true });
+  const result = await f.repo.markRead(actor, {
+    conversation_id: clinic,
+    through_seq: 1,
+  });
+  expect(result.kind).toBe("result");
+  expect(f.calls.find(([sql]) => sql.includes("SET cycle_id=$3"))).toBeTruthy();
+  const cancelled = f.calls.find(([sql]) =>
+    sql.includes("cancellation_code='CONVERSATION_READ'"),
+  );
+  expect(cancelled?.[1]).toEqual([other]);
+  expect(cancelled?.[0]).toContain("d.lease_id IS NULL");
+});
 test("read receipt is monotone and an idempotent retry never rewrites the marker", async () => {
   const f = fixture();
   const first = await f.repo.markRead(actor, {
