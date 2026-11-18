@@ -150,3 +150,65 @@ test("suspended recipient, complete read and not-yet-old arrivals create no inte
   expect((await repo.generateBatch()).created).toBe(0);
   expect(state.events).toHaveLength(0);
 });
+
+function recheckFixture({
+  revision = "2",
+  unread = true,
+  recipient = true,
+  leased = false,
+} = {}) {
+  const calls = [];
+  const db = {
+    transaction: (work) =>
+      work({
+        query: async (sql) => {
+          calls.push(sql);
+          if (sql.includes("e.aggregate_id AS cycle_id"))
+            return {
+              rows: [
+                {
+                  cycle_id: conversation,
+                  revision: "2",
+                  clinic_id: clinic,
+                  target_id: recipientId,
+                },
+              ],
+            };
+          if (sql.includes("FOR SHARE OF c"))
+            return {
+              rows: [{ id: conversation, kind: "general", side: "clinic" }],
+            };
+          if (sql.includes("last_reminded_seq::text,revision::text"))
+            return { rows: [{ last_reminded_seq: "2", revision }] };
+          if (sql.includes("lease_id IS NULL FOR UPDATE"))
+            return { rows: leased ? [] : [{ id: conversation }] };
+          if (sql.includes("JOIN public.conversation_reads r"))
+            return { rows: unread ? [{ exists: 1 }] : [] };
+          if (sql.includes("FROM public.clinics c JOIN public.accounts a"))
+            return { rows: recipient ? [{ exists: 1 }] : [] };
+          return { rows: [] };
+        },
+      }),
+  };
+  const recipientId = "91000000-0000-4000-8000-000000000004";
+  return { db, calls };
+}
+test("recheck keeps only a currently unread, authorized, matching cycle", async () => {
+  for (const [input, expected] of [
+    [{}, "eligible"],
+    [{ revision: "3" }, "cancelled"],
+    [{ unread: false }, "cancelled"],
+    [{ recipient: false }, "cancelled"],
+    [{ leased: true }, "lost"],
+  ]) {
+    const f = recheckFixture(input);
+    expect(
+      await createMessageReminderRepository(f.db).recheck(conversation),
+    ).toBe(expected);
+    expect(
+      f.calls.some((sql) =>
+        sql.includes("cancellation_code='REMINDER_OBSOLETE'"),
+      ),
+    ).toBe(expected === "cancelled");
+  }
+});

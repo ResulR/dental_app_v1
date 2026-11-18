@@ -7,6 +7,112 @@ export function createMessageReminderRepository(
   db: Pick<ReturnType<typeof createApplicationDatabase>, "transaction">,
 ) {
   return {
+    // Reconcile a pending, unleased intent before a future transport claims it.
+    // The future transport still needs its own post-lease authorization check.
+    // No address or message body is read; a stale intent is cancelled in place.
+    async recheck(
+      deliveryId: string,
+    ): Promise<"eligible" | "cancelled" | "lost"> {
+      return db.transaction(async (tx) => {
+        const intents = await tx.query<{
+          cycle_id: string;
+          revision: string;
+          clinic_id: string;
+          target_id: string;
+        }>(
+          `SELECT e.aggregate_id AS cycle_id,e.aggregate_revision::text AS revision,
+             e.clinic_id,d.target_account_id AS target_id
+           FROM public.notification_deliveries d
+           JOIN public.outbox_events e ON e.id=d.event_id
+           WHERE d.id=$1 AND d.channel='email' AND d.purpose='message_reminder'
+             AND e.type='message_reminder' AND e.aggregate_type='process'`,
+          [deliveryId],
+        );
+        const intent = intents.rows[0];
+        if (!intent) return "lost";
+        const conversations = await tx.query<{
+          id: string;
+          kind: string;
+          side: string;
+        }>(
+          `SELECT c.id,c.kind,cy.side FROM public.message_reminder_cycles cy
+           JOIN public.conversations c ON c.id=cy.conversation_id
+           WHERE cy.cycle_id=$1 AND c.clinic_id=$2 FOR SHARE OF c`,
+          [intent.cycle_id, intent.clinic_id],
+        );
+        const conversation = conversations.rows[0];
+        const cycles = conversation
+          ? await tx.query<{ last_reminded_seq: string; revision: string }>(
+              `SELECT last_reminded_seq::text,revision::text
+               FROM public.message_reminder_cycles
+               WHERE cycle_id=$1 AND conversation_id=$2 FOR SHARE`,
+              [intent.cycle_id, conversation.id],
+            )
+          : { rows: [] };
+        const deliveries = await tx.query(
+          `SELECT id FROM public.notification_deliveries
+           WHERE id=$1 AND state='pending' AND lease_id IS NULL FOR UPDATE`,
+          [deliveryId],
+        );
+        if (deliveries.rows.length !== 1) return "lost";
+        let valid = Boolean(
+          conversation &&
+          cycles.rows[0] &&
+          cycles.rows[0].revision === intent.revision &&
+          Number(cycles.rows[0].last_reminded_seq) > 0,
+        );
+        if (valid && conversation) {
+          const unread = await tx.query(
+            `SELECT 1 FROM public.messages m
+             JOIN public.conversation_reads r ON r.conversation_id=m.conversation_id
+               AND r.side=$2
+             WHERE m.conversation_id=$1 AND m.sender_side<>$2
+               AND m.sequence_number>r.last_read_seq
+               AND m.sequence_number<=$3 LIMIT 1`,
+            [
+              conversation.id,
+              conversation.side,
+              cycles.rows[0]!.last_reminded_seq,
+            ],
+          );
+          const recipient = await tx.query(
+            conversation.side === "clinic"
+              ? `SELECT 1 FROM public.clinics c JOIN public.accounts a ON a.id=c.account_id
+                 WHERE c.id=$1 AND a.id=$2 AND c.review_state='approved'
+                   AND NOT c.suspended AND a.profile='clinic' AND a.lifecycle='active'
+                   AND NOT a.security_locked AND NOT a.credential_reset_required`
+              : `SELECT 1 FROM public.email_category_recipients r
+                 JOIN public.accounts a ON a.id=r.account_id
+                 WHERE r.category='message_reminder' AND a.id=$2
+                   AND a.profile='admin' AND a.lifecycle='active'
+                   AND NOT a.security_locked AND NOT a.credential_reset_required
+                   AND EXISTS(SELECT 1 FROM public.account_grants g WHERE g.account_id=a.id
+                     AND g.permission_code=$3)
+                   AND ($4::boolean=false OR EXISTS(SELECT 1 FROM public.account_grants g
+                     WHERE g.account_id=a.id AND g.permission_code='orders.read_logistics'))`,
+            conversation.side === "clinic"
+              ? [intent.clinic_id, intent.target_id]
+              : [
+                  intent.clinic_id,
+                  intent.target_id,
+                  conversation.kind === "general"
+                    ? "messaging.general.read"
+                    : "messaging.order.read",
+                  conversation.kind === "order",
+                ],
+          );
+          valid = unread.rows.length === 1 && recipient.rows.length === 1;
+        }
+        if (valid) return "eligible";
+        await tx.query(
+          `UPDATE public.notification_deliveries SET state='cancelled',
+             cancellation_code='REMINDER_OBSOLETE' WHERE id=$1 AND state='pending'
+             AND lease_id IS NULL`,
+          [deliveryId],
+        );
+        return "cancelled";
+      });
+    },
     async generateBatch() {
       return db.transaction(async (tx) => {
         // Message insertion locks the conversation exclusively; markRead holds a
