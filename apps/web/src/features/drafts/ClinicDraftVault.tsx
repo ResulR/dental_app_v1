@@ -20,6 +20,7 @@ import {
 import {
   commitServerDraft,
   listServerDrafts,
+  mergeDraftListPage,
   readServerDraft,
   type ServerDraft,
   type ServerDraftPayload,
@@ -530,14 +531,7 @@ export function ClinicDraftVault<T>({
     if (!syncEnabled || !online) return;
     await run(async () => {
       const page = await listServerDrafts(after);
-      setServerDrafts((previous) =>
-        after && previous
-          ? {
-              items: [...previous.items, ...page.items],
-              next_after: page.next_after,
-            }
-          : page,
-      );
+      setServerDrafts((previous) => mergeDraftListPage(previous, page, after));
     });
   }
   async function importServer(draftId: string) {

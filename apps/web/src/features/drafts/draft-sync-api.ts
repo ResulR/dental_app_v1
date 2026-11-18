@@ -5,6 +5,23 @@ import {
 } from "@dental-lab/contracts";
 
 export type ServerDraft = ReturnType<typeof DraftSnapshotSchema.parse>;
+type DraftList = ReturnType<typeof DraftListResultSchema.parse>;
+export function mergeDraftListPage(
+  previous: DraftList | null,
+  incoming: DraftList,
+  after?: string,
+): DraftList | null {
+  if (!after) return incoming;
+  if (!previous || previous.next_after !== after) return previous;
+  const known = new Set(previous.items.map((item) => item.draft_id));
+  return {
+    items: [
+      ...previous.items,
+      ...incoming.items.filter((item) => !known.has(item.draft_id)),
+    ],
+    next_after: incoming.next_after,
+  };
+}
 export type ServerDraftPayload = NonNullable<ServerDraft["payload"]>;
 export type DraftCommand = {
   draft_id: string;

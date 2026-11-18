@@ -2674,7 +2674,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 15.6 — Implémenter synchronisation des brouillons serveur
-- **Statut :** ◐ API textuelle conditionnelle préparée derrière `DENTAL_LAB_DRAFT_SYNC_ENABLED=false` : création, lecture cloisonnée, révision CAS, tombstone, reçus idempotents et reprise par même intention ; droits et état clinique revérifiés dans la transaction. Sauvegarde et suppression exigent désormais la présence de la révision source avant de modifier la tête, pour éviter une écriture sans historique/reçu si cette révision manque. Tests avec doubles uniquement ; liste API bornée, parcours manuel de coffre chiffré et suppression explicite du brouillon serveur avec conservation locale et reprise après fermeture codés, fichiers et réception PostgreSQL/navigateur restent à faire. Aucune activation.
+- **Statut :** ◐ API textuelle conditionnelle préparée derrière `DENTAL_LAB_DRAFT_SYNC_ENABLED=false` : création, lecture cloisonnée, révision CAS, tombstone, reçus idempotents et reprise par même intention ; droits et état clinique revérifiés dans la transaction. Sauvegarde et suppression exigent désormais la présence de la révision source avant de modifier la tête, pour éviter une écriture sans historique/reçu si cette révision manque. Tests avec doubles uniquement ; liste API bornée, parcours manuel de coffre chiffré et suppression explicite du brouillon serveur avec conservation locale et reprise après fermeture codés. La pagination manuelle ignore désormais une page dont le curseur a changé et déduplique les lignes recoupées ; fichiers et réception PostgreSQL/navigateur restent à faire. Aucune activation.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** PWA, hors ligne et brouillons
@@ -3196,7 +3196,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 18.8 — Auditer politique de données minimales
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Revue ciblée des projections de recherche/détail des commandes, boîte d'actions, notifications, métadonnées de fichiers et réponses d'erreur : restrictions de clinique et de permissions présentes dans les chemins examinés, sans défaut démontré. Exports, rétention et revue complète des journaux restent ouverts ; aucune réception globale de minimisation.
 - **Priorité :** Critique
 - **Catégorie / type :** Sécurité / performance
 - **Zone concernée :** Sécurité, fiabilité et performances

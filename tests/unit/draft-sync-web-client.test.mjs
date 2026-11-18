@@ -2,10 +2,23 @@ import { afterEach, expect, test, vi } from "vitest";
 import {
   commitServerDraft,
   listServerDrafts,
+  mergeDraftListPage,
   readServerDraft,
 } from "../../apps/web/src/features/drafts/draft-sync-api.ts";
 afterEach(() => vi.unstubAllGlobals());
 const id = "90000000-0000-4000-8000-000000000001";
+test("manual draft pagination preserves a newer list and deduplicates overlapping rows", () => {
+  const item = (draft_id) => ({ draft_id, revision: "1" });
+  const first = { items: [item("a"), item("b")], next_after: "b" };
+  const next = { items: [item("b"), item("c")], next_after: null };
+  expect(
+    mergeDraftListPage(first, next, "b")?.items.map((row) => row.draft_id),
+  ).toEqual(["a", "b", "c"]);
+  const latest = { items: [item("z")], next_after: "z" };
+  expect(mergeDraftListPage(latest, next, "b")).toBe(latest);
+  expect(mergeDraftListPage(null, next, "b")).toBeNull();
+  expect(mergeDraftListPage(first, latest)).toBe(latest);
+});
 test("manual API calls retain same intention, same-origin credentials and reject ambiguous responses", async () => {
   const transport = vi
     .fn()
