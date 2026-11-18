@@ -13,9 +13,20 @@ const selected = {
 };
 test("older selected conversation gets its current unread count", () => {
   const fresh = refreshSelectedGeneral(selected, {
-    items: [{ id, clinic_id: clinic, unread_count: 4 }],
+    items: [
+      {
+        id,
+        clinic_id: clinic,
+        clinic_name: "Klinika aktuale",
+        unread_count: 4,
+      },
+    ],
   });
-  expect(fresh).toMatchObject({ conversation_id: id, unread_count: 4 });
+  expect(fresh).toMatchObject({
+    conversation_id: id,
+    clinic_name: "Klinika aktuale",
+    unread_count: 4,
+  });
   expect(selected.unread_count).toBe(1);
 });
 test("missing or foreign scoped conversation is not retained", () => {

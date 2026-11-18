@@ -16,6 +16,10 @@ export function refreshSelectedGeneral(
     (item) => item.id === selected.conversation_id,
   );
   return found && found.clinic_id === selected.clinic_id
-    ? { ...selected, unread_count: found.unread_count }
+    ? {
+        ...selected,
+        clinic_name: found.clinic_name,
+        unread_count: found.unread_count,
+      }
     : null;
 }

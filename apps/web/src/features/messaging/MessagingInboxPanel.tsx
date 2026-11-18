@@ -28,6 +28,7 @@ export function MessagingInboxPanel({
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
   const requestEpoch = useRef(0);
+  const openEpoch = useRef(0);
   const query = useCallback(
     (cursor?: Page) => ({
       ...(filters.search ? { search: filters.search } : {}),
@@ -132,6 +133,42 @@ export function MessagingInboxPanel({
       document.removeEventListener("visibilitychange", resume);
     };
   }, [refresh]);
+  async function open(item: Item) {
+    const epoch = ++openEpoch.current;
+    requestEpoch.current++;
+    setSelected(null);
+    setNotice("");
+    try {
+      let current: Item | null = null;
+      if (item.kind === "order" && item.order_id) {
+        const scoped = await orderConversation({ order_id: item.order_id });
+        if (
+          scoped.id === item.conversation_id &&
+          scoped.clinic_id === item.clinic_id
+        )
+          current = {
+            ...item,
+            closed: scoped.closed,
+            unread_count: scoped.unread_count,
+          };
+      } else if (item.kind === "general") {
+        current = refreshSelectedGeneral(
+          item,
+          await generalConversations({ clinic_id: item.clinic_id }),
+        );
+      }
+      if (epoch !== openEpoch.current) return;
+      if (!current) throw new Error("CONVERSATION_UNAVAILABLE");
+      requestEpoch.current++;
+      setNotice("");
+      setSelected(current);
+    } catch {
+      if (epoch === openEpoch.current) {
+        setSelected(null);
+        setNotice("Biseda nuk është më e disponueshme. Kontrolloni lejet.");
+      }
+    }
+  }
   async function more() {
     if (!page?.next_before_at || loading) return;
     const epoch = requestEpoch.current;
@@ -158,6 +195,7 @@ export function MessagingInboxPanel({
         onSubmit={(event) => {
           event.preventDefault();
           requestEpoch.current++;
+          openEpoch.current++;
           setSelected(null);
           setPage(null);
           setFilters({ search: search.trim(), kind, unreadOnly });
@@ -216,7 +254,7 @@ export function MessagingInboxPanel({
       <ul>
         {page?.items.map((item) => (
           <li key={item.conversation_id}>
-            <Button type="button" onClick={() => setSelected(item)}>
+            <Button type="button" onClick={() => void open(item)}>
               {item.clinic_name} ·{" "}
               {item.kind === "order"
                 ? "Porosia nr. " + item.order_number
@@ -242,7 +280,14 @@ export function MessagingInboxPanel({
               ? "Porosia nr. " + selected.order_number
               : "E përgjithshme"}
           </h4>
-          <Button type="button" onClick={() => setSelected(null)}>
+          <Button
+            type="button"
+            onClick={() => {
+              requestEpoch.current++;
+              openEpoch.current++;
+              setSelected(null);
+            }}
+          >
             Mbyll bisedën
           </Button>
           <GeneralMessagingPanel
