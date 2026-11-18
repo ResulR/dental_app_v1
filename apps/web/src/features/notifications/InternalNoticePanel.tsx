@@ -141,22 +141,27 @@ export function InternalNoticePanel({
   }
   async function open(item: Item) {
     if (busy) return;
+    const epoch = ++requestEpoch.current;
     setBusy(true);
     try {
       InternalNoticeReadResultSchema.parse(
         await post("/api/v1/notifications/internal/read", { id: item.id }),
       );
-      // Refresh rechecks the current owner session and destination.
-      const current = await refresh();
-      if (!current) return;
-      const epoch = requestEpoch.current;
       const verified = InternalNoticePageSchema.shape.items.element.parse(
         await post("/api/v1/notifications/internal/get", { id: item.id }),
       );
       if (epoch !== requestEpoch.current) return;
+      selectedRef.current = verified;
       setSelected(verified);
       setConversationOpen(false);
+      void refresh().catch(() => {
+        setPage(null);
+        setSelected(null);
+        setNotice("Njoftimet nuk u verifikuan.");
+      });
     } catch {
+      if (epoch !== requestEpoch.current) return;
+      selectedRef.current = null;
       setPage(null);
       setSelected(null);
       setNotice("Njoftimi nuk u verifikua. Provoni sërish.");
