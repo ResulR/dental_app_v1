@@ -7,6 +7,7 @@ import {
   orderConversation,
 } from "./general-api.js";
 import { GeneralMessagingPanel } from "./GeneralMessagingPanel.js";
+import { refreshSelectedGeneral } from "./inbox-selection.js";
 type Page = ReturnType<typeof MessagingInboxPageSchema.parse>;
 type Item = Page["items"][number];
 export function MessagingInboxPanel({
@@ -65,11 +66,7 @@ export function MessagingInboxPanel({
               { clinic_id: selected.clinic_id },
               signal,
             );
-            scoped = current.items.some(
-              (item) => item.id === selected.conversation_id,
-            )
-              ? selected
-              : null;
+            scoped = refreshSelectedGeneral(selected, current);
           }
         }
         if (signal?.aborted || epoch !== requestEpoch.current) return;
