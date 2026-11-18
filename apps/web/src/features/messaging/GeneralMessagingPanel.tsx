@@ -6,6 +6,7 @@ import type {
 } from "@dental-lab/contracts";
 import { Button } from "../../shared/Button.js";
 import {
+  appendConversationPage,
   catchUpMessages,
   contiguousReadThrough,
   mergeMessagePage,
@@ -101,6 +102,9 @@ export function GeneralMessagingPanel({
     sequences: Set<number>;
   } | null>(null);
   const readPending = useRef(false);
+  const conversationEpoch = useRef(0);
+  const [loadingConversations, setLoadingConversations] = useState(false);
+  const morePending = useRef(false);
   useEffect(() => {
     latestPage.current = messages;
   }, [messages]);
@@ -125,9 +129,11 @@ export function GeneralMessagingPanel({
   );
   useEffect(() => {
     const controller = new AbortController();
+    const epochRef = conversationEpoch;
+    const epoch = ++epochRef.current;
     void fetchConversations({}, controller.signal)
       .then((page) => {
-        if (!controller.signal.aborted) {
+        if (!controller.signal.aborted && epoch === conversationEpoch.current) {
           setConversations(page);
           if (page.closed !== undefined) setClosed(page.closed);
           if (
@@ -141,10 +147,13 @@ export function GeneralMessagingPanel({
         }
       })
       .catch(() => {
-        if (!controller.signal.aborted)
+        if (!controller.signal.aborted && epoch === conversationEpoch.current)
           setNotice("Bisedat nuk u ngarkuan. Provoni sërish.");
       });
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      if (epochRef.current === epoch) epochRef.current++;
+    };
   }, [clinic, orderId, generalClinicId, fetchConversations]);
   useEffect(() => {
     if (!selected) return;
@@ -168,14 +177,17 @@ export function GeneralMessagingPanel({
     return () => controller.abort();
   }, [selected, fetchMessages]);
   async function reloadConversations() {
+    const epoch = ++conversationEpoch.current;
     setNotice("");
     try {
       const page = await fetchConversations({});
+      if (epoch !== conversationEpoch.current) return;
       setConversations(page);
       if (page.closed !== undefined) setClosed(page.closed);
       if ((clinic || orderId || generalClinicId) && page.items.length === 1)
         setSelected(page.items[0]!.id);
     } catch {
+      if (epoch !== conversationEpoch.current) return;
       setConversations(null);
       setMessages(null);
       setHistory(null);
@@ -185,17 +197,23 @@ export function GeneralMessagingPanel({
     }
   }
   async function moreConversations() {
-    if (!conversations?.next_after) return;
+    if (!conversations?.next_after || morePending.current) return;
+    morePending.current = true;
+    const epoch = conversationEpoch.current;
+    const cursor = conversations.next_after;
+    setLoadingConversations(true);
     try {
-      const page = await fetchConversations({
-        after: conversations.next_after,
-      });
-      setConversations({
-        items: [...conversations.items, ...page.items],
-        next_after: page.next_after,
-      });
+      const page = await fetchConversations({ after: cursor });
+      if (epoch !== conversationEpoch.current) return;
+      setConversations((current) =>
+        appendConversationPage(current, conversations, page, cursor),
+      );
     } catch {
-      setNotice("Klinikat e tjera nuk u ngarkuan.");
+      if (epoch === conversationEpoch.current)
+        setNotice("Klinikat e tjera nuk u ngarkuan.");
+    } finally {
+      morePending.current = false;
+      setLoadingConversations(false);
     }
   }
   async function refresh() {
@@ -570,8 +588,12 @@ export function GeneralMessagingPanel({
         </label>
       )}
       {!clinic && !orderId && !generalClinicId && conversations?.next_after && (
-        <Button type="button" onClick={() => void moreConversations()}>
-          Më shumë klinika
+        <Button
+          type="button"
+          disabled={loadingConversations}
+          onClick={() => void moreConversations()}
+        >
+          {loadingConversations ? "Duke ngarkuar..." : "Më shumë klinika"}
         </Button>
       )}
       {(clinic || orderId || generalClinicId) && conversations?.items[0] && (

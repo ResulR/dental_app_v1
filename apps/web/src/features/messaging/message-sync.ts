@@ -1,4 +1,25 @@
-import type { GeneralMessagePageSchema } from "@dental-lab/contracts";
+import type {
+  GeneralConversationPageSchema,
+  GeneralMessagePageSchema,
+} from "@dental-lab/contracts";
+
+type Conversations = ReturnType<typeof GeneralConversationPageSchema.parse>;
+export function appendConversationPage(
+  current: Conversations | null,
+  expected: Conversations,
+  incoming: Conversations,
+  cursor: string,
+): Conversations | null {
+  if (current !== expected || current.next_after !== cursor) return current;
+  const known = new Set(current.items.map((item) => item.id));
+  return {
+    items: [
+      ...current.items,
+      ...incoming.items.filter((item) => !known.has(item.id)),
+    ],
+    next_after: incoming.next_after,
+  };
+}
 
 type Page = ReturnType<typeof GeneralMessagePageSchema.parse>;
 export function mergeMessagePage(

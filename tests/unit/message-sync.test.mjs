@@ -1,12 +1,34 @@
 import { test, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import {
+  appendConversationPage,
   catchUpMessages,
   contiguousReadThrough,
   mergeMessagePage,
 } from "../../apps/web/src/features/messaging/message-sync.ts";
 
 const id = "91000000-0000-4000-8000-000000000001";
+test("conversation pagination ignores stale refreshes and overlapping rows", () => {
+  const item = (id) => ({
+    id,
+    clinic_id: id,
+    clinic_name: "Test",
+    last_message_seq: 0,
+    unread_count: 0,
+  });
+  const first = { items: [item("a"), item("b")], next_after: "b" };
+  const incoming = { items: [item("b"), item("c")], next_after: null };
+  expect(
+    appendConversationPage(first, first, incoming, "b")?.items.map(
+      (row) => row.id,
+    ),
+  ).toEqual(["a", "b", "c"]);
+  const refreshed = { items: [item("z")], next_after: "z" };
+  expect(appendConversationPage(refreshed, first, incoming, "b")).toBe(
+    refreshed,
+  );
+  expect(appendConversationPage(first, first, incoming, "other")).toBe(first);
+});
 function page(from, to, options = {}) {
   return {
     conversation_id: id,
