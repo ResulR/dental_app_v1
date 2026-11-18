@@ -1,4 +1,5 @@
 import { AuditLogQuerySchema, AuditLogPageSchema } from "./audit-log.js";
+import { EmailQueueQuerySchema, EmailQueuePageSchema } from "./email-queue.js";
 import {
   DeliveryBatchCommandSchema,
   DeliveryBatchReceiptQuerySchema,
@@ -168,6 +169,8 @@ export function exportJsonSchemas() {
   const schemas = {
     AuditLogQuery: AuditLogQuerySchema,
     AuditLogPage: AuditLogPageSchema,
+    EmailQueueQuery: EmailQueueQuerySchema,
+    EmailQueuePage: EmailQueuePageSchema,
     DeliveryBatchCommand: DeliveryBatchCommandSchema,
     DeliveryBatchReceiptQuery: DeliveryBatchReceiptQuerySchema,
     DeliveryBatchResult: DeliveryBatchResultSchema,

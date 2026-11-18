@@ -8,6 +8,12 @@ import {
   assertDraftSyncReady,
 } from "../modules/drafts/index.js";
 import { auditReadEnabled } from "./audit-read-config.js";
+import { emailQueueReadEnabled } from "./email-queue-read-config.js";
+import {
+  createEmailQueueReadService,
+  assertEmailQueueReadReady,
+  registerEmailQueueReadRoutes,
+} from "../modules/notifications/index.js";
 import { internalNoticesEnabled } from "./internal-notices-config.js";
 import {
   createInternalNoticeService,
@@ -191,6 +197,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
   const enableGeneralMessaging = generalMessagingEnabled(env);
   const enableOrderMessaging = orderMessagingEnabled(env);
   const enableAuditRead = auditReadEnabled(env);
+  const enableEmailQueueRead = emailQueueReadEnabled(env);
   const enableDeliveryBatch = deliveryBatchEnabled(env);
   const enableDeliveryPriority = deliveryPriorityEnabled(env);
   const enableDeliveryPlan = deliveryPlanEnabled(env);
@@ -232,6 +239,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     if (enableGeneralMessaging || enableOrderMessaging)
       await assertGeneralMessagingReady(database);
     if (enableAuditRead) await assertAuditReadReady(database);
+    if (enableEmailQueueRead) await assertEmailQueueReadReady(database);
     if (enableDeliveryPriority) await assertDeliveryPriorityReady(database);
     if (enableDeliveryPlan) await assertDeliveryPlanReady(database);
     if (enableLaboratorySettings) await assertLaboratorySettingsReady(database);
@@ -397,6 +405,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
               database,
               enableInternalNotices,
             ),
+            sessions,
+            origin: config.origin,
+          });
+        if (enableEmailQueueRead)
+          registerEmailQueueReadRoutes(app, {
+            reader: createEmailQueueReadService(database),
             sessions,
             origin: config.origin,
           });

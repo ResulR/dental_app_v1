@@ -2551,7 +2551,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 14.7 — Implémenter consultation et renvoi des emails échoués
-- **Statut :** ☐ À faire
+- **Statut :** ◐ En cours — consultation propriétaire paginée et expurgée des états, tentatives, ambiguïtés et codes de rapprochement sous drapeau fermé. Relance manuelle et livraison réelle non activées : contrôle d'obsolescence, réconciliation fournisseur et réception PostgreSQL/navigateur restent nécessaires.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Notifications, e-mails et alertes

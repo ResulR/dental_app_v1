@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from "react";
 import { purgeSuspendedAccount } from "../features/drafts/local-vault.js";
 import { AuditLogPanel } from "../features/audit/AuditLogPanel.js";
+import { EmailQueuePanel } from "../features/notifications/EmailQueuePanel.js";
 import { InternalNoticePanel } from "../features/notifications/InternalNoticePanel.js";
 import { GeneralMessagingPanel } from "../features/messaging/GeneralMessagingPanel.js";
 import { MessagingInboxPanel } from "../features/messaging/MessagingInboxPanel.js";
@@ -237,6 +238,15 @@ export function App() {
               >
                 <CatalogPanel key={identity.account_id + "-catalog"} />
               </PermissionBoundary>
+              {identity.profile === "owner" &&
+                import.meta.env.VITE_DENTAL_LAB_EMAIL_QUEUE_READ_ENABLED ===
+                  "true" && (
+                  <PermissionBoundary identity={identity} allowClinic={false}>
+                    <EmailQueuePanel
+                      key={identity.account_id + "-email-queue"}
+                    />
+                  </PermissionBoundary>
+                )}
               {identity.profile === "owner" &&
                 import.meta.env.VITE_DENTAL_LAB_AUDIT_READ_ENABLED ===
                   "true" && (
