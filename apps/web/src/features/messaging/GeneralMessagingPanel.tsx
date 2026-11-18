@@ -104,6 +104,7 @@ export function GeneralMessagingPanel({
   } | null>(null);
   const readPending = useRef(false);
   const conversationEpoch = useRef(0);
+  const selectionEpoch = useRef(0);
   const [loadingConversations, setLoadingConversations] = useState(false);
   const morePending = useRef(false);
   useEffect(() => {
@@ -219,6 +220,7 @@ export function GeneralMessagingPanel({
   }
   async function refresh() {
     if (!selected) return;
+    const epoch = selectionEpoch.current;
     setNotice("");
     setLoadingMessages(true);
     try {
@@ -229,27 +231,35 @@ export function GeneralMessagingPanel({
           (query) => fetchMessages(query),
           (page) =>
             setMessages((previous) =>
+              epoch === selectionEpoch.current &&
               previous?.conversation_id === selected
                 ? mergeMessagePage(previous, page)
                 : previous,
             ),
         );
-        setConnection(caughtUp ? "connected" : "waiting");
+        if (epoch === selectionEpoch.current)
+          setConnection(caughtUp ? "connected" : "waiting");
       } else {
-        setMessages(await fetchMessages({ conversation_id: selected }));
-        setConnection("connected");
+        const page = await fetchMessages({ conversation_id: selected });
+        if (epoch === selectionEpoch.current) {
+          setMessages(page);
+          setConnection("connected");
+        }
       }
     } catch {
-      setMessages(null);
-      setHistory(null);
-      setEditing(null);
-      setNotice("Mesazhet nuk u ngarkuan ose lejet ndryshuan.");
+      if (epoch === selectionEpoch.current) {
+        setMessages(null);
+        setHistory(null);
+        setEditing(null);
+        setNotice("Mesazhet nuk u ngarkuan ose lejet ndryshuan.");
+      }
     } finally {
-      setLoadingMessages(false);
+      if (epoch === selectionEpoch.current) setLoadingMessages(false);
     }
   }
   async function older() {
     if (!selected || !messages?.next_before_seq || loadingOlder) return;
+    const epoch = selectionEpoch.current;
     setLoadingOlder(true);
     try {
       const page = await fetchMessages({
@@ -257,14 +267,16 @@ export function GeneralMessagingPanel({
         before_seq: messages.next_before_seq,
       });
       setMessages((previous) =>
+        epoch === selectionEpoch.current &&
         previous?.conversation_id === page.conversation_id
           ? mergeMessagePage(previous, page, true)
           : previous,
       );
     } catch {
-      setNotice("Mesazhet e mëparshme nuk u ngarkuan.");
+      if (epoch === selectionEpoch.current)
+        setNotice("Mesazhet e mëparshme nuk u ngarkuan.");
     } finally {
-      setLoadingOlder(false);
+      if (epoch === selectionEpoch.current) setLoadingOlder(false);
     }
   }
   const firstVisible = messages?.messages[0]?.sequence_number;
@@ -482,12 +494,14 @@ export function GeneralMessagingPanel({
   }
   async function openHistory(messageId: string, beforeVersion?: number) {
     if (!selected) return;
+    const epoch = selectionEpoch.current;
     try {
       const page = await textMessageHistory(orderId ? "order" : "general", {
         conversation_id: selected,
         message_id: messageId,
         ...(beforeVersion ? { before_version: beforeVersion } : {}),
       });
+      if (epoch !== selectionEpoch.current) return;
       setHistory((previous) =>
         previous?.id === messageId && beforeVersion
           ? {
@@ -500,7 +514,8 @@ export function GeneralMessagingPanel({
           : { id: messageId, page },
       );
     } catch {
-      setNotice("Historiku nuk u ngarkua. Provoni sërish.");
+      if (epoch === selectionEpoch.current)
+        setNotice("Historiku nuk u ngarkua. Provoni sërish.");
     }
   }
   async function send() {
@@ -578,10 +593,13 @@ export function GeneralMessagingPanel({
             value={selected}
             disabled={busy || reading || loadingMessages || loadingOlder}
             onChange={(e) => {
+              selectionEpoch.current++;
               setLoadingMessages(Boolean(e.target.value));
               setSelected(e.target.value);
               setConnection("waiting");
               setMessages(null);
+              setHistory(null);
+              setEditing(null);
               setBody("");
               key.current = null;
               setSendUncertain(false);
