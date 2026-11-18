@@ -21,7 +21,7 @@ function fixture() {
     state,
     transaction(work) {
       const job = queue.then(async () => {
-        const draft = structuredClone(state);
+        const draft = globalThis.structuredClone(state);
         const tx = {
           query: async (sql, values = []) => {
             if (sql.includes("FOR UPDATE OF o SKIP LOCKED")) {

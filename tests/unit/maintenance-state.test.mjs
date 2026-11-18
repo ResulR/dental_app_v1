@@ -17,7 +17,7 @@ function fixture(profile = "owner") {
     state,
     transaction(work) {
       const job = queue.then(async () => {
-        const draft = structuredClone(state);
+        const draft = globalThis.structuredClone(state);
         const tx = {
           query: async (sql, values = []) => {
             if (sql.startsWith("SELECT a.profile"))
