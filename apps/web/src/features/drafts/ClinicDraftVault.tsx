@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
+import { canChangeLocalDraft, inspectDraftImport } from "./draft-import.js";
 import { Button } from "../../shared/Button.js";
 import {
   prepareVault,
@@ -86,6 +87,10 @@ export function ClinicDraftVault<T>({
     | null
   >(null);
   const [online, setOnline] = useState(navigator.onLine);
+  const canChange = canChangeLocalDraft(
+    disabled,
+    storedSubmission?.state ?? null,
+  );
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
     window.addEventListener("online", update);
@@ -409,6 +414,7 @@ export function ClinicDraftVault<T>({
   async function sync() {
     if (
       !syncEnabled ||
+      !canChange ||
       !online ||
       !db.current ||
       !key.current ||
@@ -472,6 +478,7 @@ export function ClinicDraftVault<T>({
   async function removeServer() {
     if (
       !syncEnabled ||
+      !canChange ||
       !online ||
       !db.current ||
       !key.current ||
@@ -534,8 +541,12 @@ export function ClinicDraftVault<T>({
       setServerDrafts((previous) => mergeDraftListPage(previous, page, after));
     });
   }
-  async function importServer(draftId: string) {
+  async function importServer(selectedDraft: {
+    draft_id: string;
+    revision: string;
+  }) {
     if (
+      !canChange ||
       !db.current ||
       !key.current ||
       !envelope ||
@@ -548,13 +559,29 @@ export function ClinicDraftVault<T>({
     )
       return;
     await run(async () => {
-      const server = await readServerDraft(draftId);
-      if (!server || server.state !== "active" || !server.payload)
-        throw new Error("DRAFT_SYNC_UNAVAILABLE");
+      const server = await readServerDraft(selectedDraft.draft_id);
+      const inspection = inspectDraftImport(selectedDraft, server);
+      if (inspection !== "ready") {
+        setConflict(
+          server?.draft_id === selectedDraft.draft_id
+            ? server
+            : {
+                draft_id: selectedDraft.draft_id,
+                revision: "0",
+                state: "missing",
+                payload: null,
+              },
+        );
+        setMessage(
+          "Drafti në server ndryshoi ose nuk është më aktiv. Rishikoni konfliktin para zgjedhjes.",
+        );
+        return;
+      }
+      if (!server || !server.payload) throw new Error("DRAFT_SYNC_UNAVAILABLE");
       const value = fromServer(server.payload);
       if (!value) throw new Error("VAULT_DRAFT_INVALID");
       const next: RemoteDraft = {
-        draft_id: draftId,
+        draft_id: selectedDraft.draft_id,
         revision: server.revision,
         pending: null,
       };
@@ -578,6 +605,7 @@ export function ClinicDraftVault<T>({
   async function chooseServer() {
     if (
       !conflict ||
+      !canChange ||
       conflict.state === "missing" ||
       !db.current ||
       !envelope ||
@@ -594,16 +622,19 @@ export function ClinicDraftVault<T>({
     }
     if (
       !current ||
+      current.draft_id !== conflict.draft_id ||
       current.revision !== conflict.revision ||
       current.state !== conflict.state
     ) {
       setConflict(
-        current ?? {
-          draft_id: conflict.draft_id,
-          revision: "0",
-          state: "missing",
-          payload: null,
-        },
+        current?.draft_id === conflict.draft_id
+          ? current
+          : {
+              draft_id: conflict.draft_id,
+              revision: "0",
+              state: "missing",
+              payload: null,
+            },
       );
       setMessage("Versioni i serverit ndryshoi përsëri. Rishikoni konfliktin.");
       return;
@@ -647,7 +678,8 @@ export function ClinicDraftVault<T>({
     });
   }
   async function cloneLocal() {
-    if (!conflict || !db.current || !key.current || !envelope) return;
+    if (!conflict || !canChange || !db.current || !key.current || !envelope)
+      return;
     await run(async () => {
       const saved = await readLocalDraft<T>(
         db.current!,
@@ -734,6 +766,7 @@ export function ClinicDraftVault<T>({
       !envelope ||
       !key.current ||
       !revision ||
+      !canChange ||
       remote?.pending ||
       !window.confirm("Të fshihet vetëm drafti lokal nga kjo pajisje?")
     )
@@ -887,7 +920,10 @@ export function ClinicDraftVault<T>({
                   Fshi draftin e kësaj porosie pas konfirmimit
                 </Button>
               )}
-              <Button disabled={busy} onClick={() => void remove()}>
+              <Button
+                disabled={busy || !canChange}
+                onClick={() => void remove()}
+              >
                 Fshi draftin lokal
               </Button>
             </>
@@ -905,7 +941,9 @@ export function ClinicDraftVault<T>({
                 </p>
               )}
               <Button
-                disabled={busy || !revision || confirmed || !online}
+                disabled={
+                  busy || !canChange || !revision || confirmed || !online
+                }
                 onClick={() => void sync()}
               >
                 {remote?.pending
@@ -914,7 +952,7 @@ export function ClinicDraftVault<T>({
               </Button>
               {remote && !remote.pending && (
                 <Button
-                  disabled={busy || !online || confirmed}
+                  disabled={busy || !canChange || !online || confirmed}
                   onClick={() => void removeServer()}
                 >
                   Fshi draftin e serverit (ruaj kopjen lokale)
@@ -929,8 +967,8 @@ export function ClinicDraftVault<T>({
               {serverDrafts?.items.map((item) => (
                 <Button
                   key={item.draft_id}
-                  disabled={busy || !!remote?.pending}
-                  onClick={() => void importServer(item.draft_id)}
+                  disabled={busy || !canChange || !!remote?.pending}
+                  onClick={() => void importServer(item)}
                 >
                   Hap draftin {item.draft_id.slice(0, 8)} · v{item.revision}
                 </Button>
@@ -950,11 +988,17 @@ export function ClinicDraftVault<T>({
                     {conflict.state}). Asgjë nuk u zëvendësua.
                   </p>
                   {conflict.state !== "missing" && (
-                    <Button disabled={busy} onClick={() => void chooseServer()}>
+                    <Button
+                      disabled={busy || !canChange}
+                      onClick={() => void chooseServer()}
+                    >
                       Zgjidh serverin
                     </Button>
                   )}
-                  <Button disabled={busy} onClick={() => void cloneLocal()}>
+                  <Button
+                    disabled={busy || !canChange}
+                    onClick={() => void cloneLocal()}
+                  >
                     Ruaj lokalisht si kopje të re
                   </Button>
                 </div>
