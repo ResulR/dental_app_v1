@@ -6,10 +6,11 @@ export const EmailRecipientCategorySchema = z.enum([
   "cancellation_requested",
   "retouch_requested",
   "correction_resubmitted",
+  "message_reminder",
 ]);
 export const EmailRecipientsSchema = z
   .array(EmailRecipientCategorySchema)
-  .max(6);
+  .max(7);
 export const EmailRecipientCommandSchema = z.strictObject({
   category: EmailRecipientCategorySchema,
   expected_selected: z.boolean(),

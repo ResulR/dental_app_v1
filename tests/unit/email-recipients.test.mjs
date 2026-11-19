@@ -1,5 +1,8 @@
 import { test, expect, vi } from "vitest";
-import { createEmailRecipientsRepository } from "../../apps/api/dist/modules/notifications/email-recipients.repository.js";
+import {
+  createEmailRecipientsRepository,
+  assertEmailRecipientsReady,
+} from "../../apps/api/dist/modules/notifications/email-recipients.repository.js";
 import { emailRecipientsEnabled } from "../../apps/api/dist/app/email-recipients-config.js";
 const owner = "94000000-0000-4000-8000-000000000001";
 const admin = "94000000-0000-4000-8000-000000000002";
@@ -43,7 +46,12 @@ function fixture({
       return { rows: present ? [{ "?column?": 1 }] : [] };
     if (sql.includes("FROM public.email_category_recipients WHERE account_id="))
       return { rows: present ? [{ category: "order_submitted" }] : [] };
-    if (sql.includes("FROM public.account_grants WHERE account_id=$1"))
+    if (
+      sql.includes("FROM public.account_grants WHERE account_id=$1") ||
+      sql.startsWith(
+        "SELECT 1 WHERE EXISTS(SELECT 1 FROM public.account_grants",
+      )
+    )
       return { rows: grants ? [{ "?column?": 1 }] : [] };
     if (sql.startsWith("SELECT id FROM public.sessions"))
       return { rows: [{ id: owner }] };
@@ -128,4 +136,41 @@ test("non-owner and insufficient detail grants cannot configure deliveries", asy
   expect(() =>
     emailRecipientsEnabled({ DENTAL_LAB_EMAIL_RECIPIENTS_ENABLED: "yes" }),
   ).toThrow();
+});
+test("reminder recipient requires current messaging rights and migration 0027", async () => {
+  const eligible = fixture();
+  expect(
+    await createEmailRecipientsRepository(eligible).change(
+      actor,
+      admin,
+      "message_reminder",
+      false,
+      true,
+    ),
+  ).toEqual({ kind: "applied" });
+  const check = eligible.query.mock.calls.find(([sql]) =>
+    sql.startsWith("SELECT 1 WHERE EXISTS"),
+  );
+  expect(check[0]).toContain("messaging.general.read");
+  expect(check[0]).toContain("messaging.order.read");
+  expect(check[0]).toContain("orders.read_logistics");
+  const noGrant = fixture({ grants: false });
+  expect(
+    (
+      await createEmailRecipientsRepository(noGrant).change(
+        actor,
+        admin,
+        "message_reminder",
+        false,
+        true,
+      )
+    ).kind,
+  ).toBe("denied");
+});
+test("recipient management remains closed before the reminder schema is received", async () => {
+  const db = { query: vi.fn(async () => ({ rows: [{ ready: false }] })) };
+  await expect(assertEmailRecipientsReady(db)).rejects.toThrow(
+    "EMAIL_RECIPIENTS_UNAVAILABLE",
+  );
+  expect(db.query.mock.calls[0][0]).toContain("message_reminder");
 });

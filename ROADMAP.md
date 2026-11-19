@@ -2457,7 +2457,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 14.2 — Implémenter destinataires configurables par catégorie
-- **Statut :** ◐ Structure `email_category_recipients` et cinq intentions de catégories commande préparées hors runtime : auteur clinique lié à la commande, propriétaire par défaut, admins explicitement configurés avec grants détaillés/logistiques courants ; inscription clinique conserve son adaptateur. Verrouillage des comptes admissibles et de la commande proposé ; une suppression concurrente de grant/configuration peut encore laisser une intention obsolète, à refuser impérativement avant livraison. Gestion propriétaire des six catégories sous drapeaux fermés, avec droits courants, sélection conditionnelle sérialisée et audit ; tests ciblés avec doubles, réception PostgreSQL et navigateur de cette gestion différées ; scénarios PostgreSQL des intentions couverts par v12 réussis. Aucune intention livrée.
+- **Statut :** ◐ Structure `email_category_recipients` et cinq intentions de catégories commande préparées hors runtime : auteur clinique lié à la commande, propriétaire par défaut, admins explicitement configurés avec grants détaillés/logistiques courants ; inscription clinique conserve son adaptateur. Verrouillage des comptes admissibles et de la commande proposé ; une suppression concurrente de grant/configuration peut encore laisser une intention obsolète, à refuser impérativement avant livraison. Gestion propriétaire des six catégories et du rappel de messagerie (après 0027) sous drapeaux fermés, avec droits courants, sélection conditionnelle sérialisée et audit ; tests ciblés avec doubles, réception PostgreSQL et navigateur de cette gestion différées ; scénarios PostgreSQL des intentions couverts par v12 réussis. Aucune intention livrée.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Notifications, e-mails et alertes
@@ -2536,7 +2536,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 14.6 — Implémenter rappels messages non lus
-- **Statut :** ◐ En cours — générateur transactionnel dormant des intentions, cycle par côté et annulation à lecture complète préparés avec migration 0027 ; réconciliation des intentions non louées contre cycle, lecture et destinataire courants, testée avec double. L'envoi reste fermé : réception PostgreSQL, prévol du transport réel, configuration des destinataires et activation autorisée manquent.
+- **Statut :** ◐ En cours — générateur transactionnel dormant des intentions, cycle par côté et annulation à lecture complète préparés avec migration 0027 ; réconciliation des intentions non louées contre cycle, lecture et destinataire courants, testée avec double. Sélection propriétaire des admins destinataires de rappels préparée sous drapeau fermé et conditionnée à 0027, avec droits de messagerie courants ; tests avec doubles, réception PostgreSQL/navigateur ouverte. L'envoi reste fermé : réception PostgreSQL de 0027 et de la configuration, prévol du transport réel et activation autorisée manquent.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Notifications, e-mails et alertes

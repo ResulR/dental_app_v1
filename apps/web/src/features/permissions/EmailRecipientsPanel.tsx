@@ -17,6 +17,7 @@ const names: Record<
   cancellation_requested: "Kërkesë anulimi",
   retouch_requested: "Kërkesë retushi",
   correction_resubmitted: "Korrigjim i ridërguar",
+  message_reminder: "Kujtesë për mesazhe të palexuara",
 };
 export function EmailRecipientsPanel({ accountId }: { accountId: string }) {
   const [selected, setSelected] = useState<ReturnType<
