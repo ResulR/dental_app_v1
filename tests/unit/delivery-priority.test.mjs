@@ -18,6 +18,12 @@ function fixture(patch = {}) {
     priority: false,
     writes: [],
   };
+  const events = Array.from({ length: patch.eventCount ?? 0 }, (_, n) => ({
+    id: `93000000-0000-4000-8000-${String(n + 1).padStart(12, "0")}`,
+    occurred_at: new Date(Date.UTC(2026, 10, 30 - n)).toISOString(),
+    before: false,
+    after: true,
+  }));
   let queue = Promise.resolve();
   return {
     state,
@@ -99,6 +105,25 @@ function fixture(patch = {}) {
             if (patch.failAt && sql.includes(patch.failAt))
               throw Error("SYNTHETIC_FAILURE");
             next.writes.push(sql);
+          }
+          if (sql.startsWith("SELECT l.revision::text AS logistics_revision"))
+            return {
+              rows: patch.foreign
+                ? []
+                : [{ logistics_revision: String(next.logisticsRevision) }],
+            };
+          if (
+            sql.startsWith(
+              "SELECT id,occurred_at FROM public.order_logistics_events",
+            )
+          )
+            return { rows: events.filter((event) => event.id === values[0]) };
+          if (sql.includes("ORDER BY occurred_at DESC,id DESC LIMIT 21")) {
+            const cursorIndex = events.findIndex(
+              (event) => event.id === values[2],
+            );
+            const offset = cursorIndex < 0 ? 0 : cursorIndex + 1;
+            return { rows: events.slice(offset, offset + 21) };
           }
           if (sql.startsWith("SELECT o.id AS order_id"))
             return {
@@ -238,4 +263,60 @@ test("priority feature is disabled unless explicitly enabled with tracking", () 
       DENTAL_LAB_ORDER_TRACKING_ENABLED: "true",
     }),
   ).toBe(true);
+});
+
+test("priority history pages beyond 20 and refuses stale, foreign and revoked access", async () => {
+  const db = fixture({ eventCount: 24 }),
+    service = createDeliveryPriorityService(db);
+  const context = (await service.context(actor, { order_id: id })).result;
+  expect(context.recent_changes).toHaveLength(20);
+  expect(context.more_history).toBe(true);
+  const next = await service.history(actor, {
+    order_id: id,
+    expected_logistics_revision: 1,
+    before_event_id: context.recent_changes.at(-1).id,
+  });
+  expect(next.result.items).toHaveLength(4);
+  expect(next.result.next_before_event_id).toBeNull();
+  expect(
+    new Set(
+      [...context.recent_changes, ...next.result.items].map(
+        (event) => event.id,
+      ),
+    ).size,
+  ).toBe(24);
+  expect(
+    (
+      await service.history(actor, {
+        order_id: id,
+        expected_logistics_revision: 2,
+      })
+    ).kind,
+  ).toBe("conflict");
+  expect(
+    (
+      await service.history(actor, {
+        order_id: id,
+        expected_logistics_revision: 1,
+        before_event_id: id,
+      })
+    ).kind,
+  ).toBe("invalid");
+  expect(
+    (
+      await createDeliveryPriorityService(fixture({ foreign: true })).history(
+        actor,
+        { order_id: id, expected_logistics_revision: 1 },
+      )
+    ).kind,
+  ).toBe("denied");
+  expect(
+    (
+      await createDeliveryPriorityService(fixture({ revoked: true })).history(
+        actor,
+        { order_id: id, expected_logistics_revision: 1 },
+      )
+    ).kind,
+  ).toBe("denied");
+  expect(db.state.writes).toEqual([]);
 });

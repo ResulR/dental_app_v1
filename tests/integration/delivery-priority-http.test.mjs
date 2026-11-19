@@ -21,10 +21,19 @@ test("priority route verifies origin, session, strict command and outcome", asyn
       more_history: false,
     },
   }));
+  const history = vi.fn(async () => ({
+    kind: "result",
+    result: {
+      order_id: id,
+      logistics_revision: 1,
+      items: [],
+      next_before_event_id: null,
+    },
+  }));
   const server = createApp(
     (app) =>
       registerDeliveryPriorityRoutes(app, {
-        service: { update, context },
+        service: { update, context, history },
         sessions: {
           authenticate: async () => ({ accountId: id, sessionId: id }),
         },
@@ -99,6 +108,57 @@ test("priority route verifies origin, session, strict command and outcome", asyn
     update.mockResolvedValueOnce({ kind: "denied" });
     expect(
       (await fetch(url + "update", { method: "POST", headers, body })).status,
+    ).toBe(403);
+    const historyBody = JSON.stringify({
+      order_id: id,
+      expected_logistics_revision: 1,
+    });
+    expect(
+      (
+        await fetch(url + "history", {
+          method: "POST",
+          headers: { ...headers, cookie: "" },
+          body: historyBody,
+        })
+      ).status,
+    ).toBe(401);
+    expect(
+      (
+        await fetch(url + "history", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ ...JSON.parse(historyBody), clinic_id: id }),
+        })
+      ).status,
+    ).toBe(400);
+    expect(
+      (
+        await fetch(url + "history", {
+          method: "POST",
+          headers,
+          body: historyBody,
+        })
+      ).status,
+    ).toBe(200);
+    history.mockResolvedValueOnce({ kind: "conflict" });
+    expect(
+      (
+        await fetch(url + "history", {
+          method: "POST",
+          headers,
+          body: historyBody,
+        })
+      ).status,
+    ).toBe(409);
+    history.mockResolvedValueOnce({ kind: "denied" });
+    expect(
+      (
+        await fetch(url + "history", {
+          method: "POST",
+          headers,
+          body: historyBody,
+        })
+      ).status,
     ).toBe(403);
   } finally {
     await closeServer(server);

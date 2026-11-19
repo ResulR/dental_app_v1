@@ -1,10 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import type { DeliveryPriorityContext } from "@dental-lab/contracts";
+import type {
+  DeliveryPriorityContext,
+  DeliveryPriorityHistoryPage,
+} from "@dental-lab/contracts";
 import { createDeliveryPriorityClient } from "./delivery-priority-api.js";
+import { appendDeliveryPlanHistory } from "./delivery-plan-history.js";
 import { Button } from "../../shared/Button.js";
 const client = createDeliveryPriorityClient();
 export function DeliveryPriorityPanel({ orderId }: { orderId: string }) {
   const [context, setContext] = useState<DeliveryPriorityContext | null>(null);
+  const [history, setHistory] = useState<DeliveryPriorityHistoryPage | null>(
+    null,
+  );
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const pending = useRef<AbortController | null>(null);
@@ -12,8 +19,10 @@ export function DeliveryPriorityPanel({ orderId }: { orderId: string }) {
     () => () => {
       pending.current?.abort();
       pending.current = null;
+      setContext(null);
+      setHistory(null);
     },
-    [],
+    [orderId],
   );
   async function run(work: (signal: AbortSignal) => Promise<void>) {
     if (pending.current) return;
@@ -27,6 +36,7 @@ export function DeliveryPriorityPanel({ orderId }: { orderId: string }) {
     } catch {
       if (pending.current === c) {
         setContext(null);
+        setHistory(null);
         setMessage(
           "Rezultati nuk u verifikua. Ringarkoni prioritetin; mos e përsërisni automatikisht.",
         );
@@ -42,7 +52,16 @@ export function DeliveryPriorityPanel({ orderId }: { orderId: string }) {
   function load() {
     void run(async (signal) => {
       const value = await client.context(orderId, signal);
-      if (!signal.aborted) setContext(value);
+      if (signal.aborted) return;
+      setContext(value);
+      setHistory({
+        order_id: value.order_id,
+        logistics_revision: value.logistics_revision,
+        items: value.recent_changes,
+        next_before_event_id: value.more_history
+          ? value.recent_changes[value.recent_changes.length - 1]!.id
+          : null,
+      });
     });
   }
   function update(priority: boolean) {
@@ -64,6 +83,7 @@ export function DeliveryPriorityPanel({ orderId }: { orderId: string }) {
       );
       if (signal.aborted) return;
       setContext(null);
+      setHistory(null);
       setMessage(
         result.kind === "updated"
           ? "Prioriteti u ruajt në historik. Ringarkoni pamjen."
@@ -73,6 +93,26 @@ export function DeliveryPriorityPanel({ orderId }: { orderId: string }) {
               ? "Porosia është mbyllur; prioriteti nuk ndryshoi."
               : "Versioni ndryshoi; ringarkoni pamjen.",
       );
+    });
+  }
+  function loadOlder() {
+    if (!history) return;
+    const current = history;
+    const cursor = current.next_before_event_id;
+    if (!cursor) return;
+    void run(async (signal) => {
+      const page = await client.history(
+        {
+          order_id: current.order_id,
+          expected_logistics_revision: current.logistics_revision,
+          before_event_id: cursor,
+        },
+        signal,
+      );
+      if (signal.aborted) return;
+      const merged = appendDeliveryPlanHistory(current, page, cursor);
+      if (!merged) throw new Error("DELIVERY_PRIORITY_STALE_HISTORY");
+      setHistory(merged);
     });
   }
   return (
@@ -93,9 +133,9 @@ export function DeliveryPriorityPanel({ orderId }: { orderId: string }) {
             </Button>
           )}
           <h5>Ndryshimet e fundit</h5>
-          {context.recent_changes.length ? (
+          {history?.items.length ? (
             <ol>
-              {context.recent_changes.map((change) => (
+              {history.items.map((change) => (
                 <li key={change.id}>
                   {change.occurred_at}: {change.before ? "Prioritet" : "Normal"}{" "}
                   → {change.after ? "Prioritet" : "Normal"}
@@ -105,8 +145,10 @@ export function DeliveryPriorityPanel({ orderId }: { orderId: string }) {
           ) : (
             <p>Nuk ka ndryshime të regjistruara.</p>
           )}
-          {context.more_history && (
-            <p>Ka ndryshime më të vjetra; shfaqen vetëm 20 të fundit.</p>
+          {history?.next_before_event_id && (
+            <Button disabled={busy} onClick={loadOlder}>
+              Shfaq ndryshimet më të vjetra
+            </Button>
           )}
         </>
       )}

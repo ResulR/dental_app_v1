@@ -3,6 +3,8 @@ import {
   DeliveryPriorityCommandSchema,
   DeliveryPriorityContextSchema,
   DeliveryPriorityResultSchema,
+  DeliveryPriorityHistoryQuerySchema,
+  DeliveryPriorityHistoryPageSchema,
 } from "@dental-lab/contracts";
 export function createDeliveryPriorityClient(transport: typeof fetch = fetch) {
   async function post(action: string, body: unknown, signal: AbortSignal) {
@@ -31,6 +33,13 @@ export function createDeliveryPriorityClient(transport: typeof fetch = fetch) {
         DeliveryPriorityQuerySchema.parse({ order_id: id }),
         signal,
       ).then((data) => DeliveryPriorityContextSchema.parse(data));
+    },
+    history(raw: unknown, signal: AbortSignal) {
+      return post(
+        "history",
+        DeliveryPriorityHistoryQuerySchema.parse(raw),
+        signal,
+      ).then((data) => DeliveryPriorityHistoryPageSchema.parse(data));
     },
     update(raw: unknown, signal: AbortSignal) {
       return post(

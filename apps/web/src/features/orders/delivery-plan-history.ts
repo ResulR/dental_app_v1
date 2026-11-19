@@ -1,10 +1,13 @@
-import type { DeliveryPlanHistoryPage } from "@dental-lab/contracts";
-
-export function appendDeliveryPlanHistory(
-  current: DeliveryPlanHistoryPage,
-  incoming: DeliveryPlanHistoryPage,
-  cursor: string,
-): DeliveryPlanHistoryPage | null {
+type HistoryPage<T extends { id: string }> = {
+  order_id: string;
+  logistics_revision: number;
+  items: T[];
+  next_before_event_id: string | null;
+};
+export function appendDeliveryPlanHistory<
+  T extends { id: string },
+  P extends HistoryPage<T>,
+>(current: P, incoming: P, cursor: string): P | null {
   if (
     current.order_id !== incoming.order_id ||
     current.logistics_revision !== incoming.logistics_revision ||

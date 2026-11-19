@@ -2,6 +2,7 @@ import type { Express } from "express";
 import {
   DeliveryPriorityQuerySchema,
   DeliveryPriorityCommandSchema,
+  DeliveryPriorityHistoryQuerySchema,
 } from "@dental-lab/contracts";
 import { readSessionCookie, mutationOriginAllowed } from "../identity/index.js";
 import type { createSessionService } from "../identity/index.js";
@@ -17,7 +18,7 @@ export function registerDeliveryPriorityRoutes(
 ) {
   if (!mutationOriginAllowed(services.origin, services.origin))
     throw new Error("INVALID_DELIVERY_PRIORITY_ORIGIN");
-  for (const action of ["context", "update"] as const)
+  for (const action of ["context", "update", "history"] as const)
     app.post("/api/v1/orders/delivery-priority-" + action, async (req, res) => {
       if (!mutationOriginAllowed(req.headers.origin, services.origin)) {
         sendProblem(res, "FORBIDDEN", 403);
@@ -26,7 +27,9 @@ export function registerDeliveryPriorityRoutes(
       const schema =
         action === "context"
           ? DeliveryPriorityQuerySchema
-          : DeliveryPriorityCommandSchema;
+          : action === "history"
+            ? DeliveryPriorityHistoryQuerySchema
+            : DeliveryPriorityCommandSchema;
       if (
         !req.is("application/json") ||
         Object.keys(req.query).length ||
@@ -45,8 +48,16 @@ export function registerDeliveryPriorityRoutes(
       if (checked.kind !== "result") {
         sendProblem(
           res,
-          checked.kind === "denied" ? "FORBIDDEN" : "VALIDATION_FAILED",
-          checked.kind === "denied" ? 403 : 400,
+          checked.kind === "denied"
+            ? "FORBIDDEN"
+            : checked.kind === "conflict"
+              ? "STATE_CONFLICT"
+              : "VALIDATION_FAILED",
+          checked.kind === "denied"
+            ? 403
+            : checked.kind === "conflict"
+              ? 409
+              : 400,
         );
         return;
       }

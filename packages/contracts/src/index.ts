@@ -84,8 +84,13 @@ export {
   DeliveryPriorityCommandSchema,
   DeliveryPriorityContextSchema,
   DeliveryPriorityResultSchema,
+  DeliveryPriorityHistoryQuerySchema,
+  DeliveryPriorityHistoryPageSchema,
 } from "./delivery-priority.js";
-export type { DeliveryPriorityContext } from "./delivery-priority.js";
+export type {
+  DeliveryPriorityContext,
+  DeliveryPriorityHistoryPage,
+} from "./delivery-priority.js";
 export * from "./drafts.js";
 export * from "./maintenance.js";
 

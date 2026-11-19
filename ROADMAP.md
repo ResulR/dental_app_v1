@@ -2768,7 +2768,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 16.2 — Implémenter priorité et urgence
-- **Statut :** ◐ Partiel — priorité manuelle versionnée sous drapeaux inactifs ; repères J-2/retard visuels sur les données suivies et le calendrier. Générateur d'avis internes durables et dédupliqués préparé derrière la migration 0025 non exécutée, sans déclencheur actif ; réception PostgreSQL/navigateur et activation autorisée restent à réaliser (docs/DELIVERY_PRIORITY.md).
+- **Statut :** ◐ Partiel — priorité manuelle versionnée sous drapeaux inactifs ; repères J-2/retard visuels sur les données suivies et le calendrier. Historique des changements de priorité consultable au-delà de 20 événements par pages liées à la révision ; générateur d'avis internes durables et dédupliqués préparé derrière la migration 0025 non exécutée, sans déclencheur actif ; réception PostgreSQL/navigateur et activation autorisée restent à réaliser (docs/DELIVERY_PRIORITY.md).
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Planning, livraisons, archives et recherche

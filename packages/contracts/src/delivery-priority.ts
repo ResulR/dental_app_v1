@@ -10,6 +10,26 @@ export const DeliveryPriorityCommandSchema = z.strictObject({
   expected_logistics_revision: RevisionSchema.min(1),
   priority: z.boolean(),
 });
+const PriorityChangeSchema = z.strictObject({
+  id: z.uuid(),
+  occurred_at: z.iso.datetime(),
+  before: z.boolean(),
+  after: z.boolean(),
+});
+export const DeliveryPriorityHistoryQuerySchema = z.strictObject({
+  order_id: z.uuid(),
+  expected_logistics_revision: RevisionSchema.min(1),
+  before_event_id: z.uuid().optional(),
+});
+export const DeliveryPriorityHistoryPageSchema = z.strictObject({
+  order_id: z.uuid(),
+  logistics_revision: RevisionSchema.min(1),
+  items: z.array(PriorityChangeSchema).max(20),
+  next_before_event_id: z.uuid().nullable(),
+});
+export type DeliveryPriorityHistoryPage = z.output<
+  typeof DeliveryPriorityHistoryPageSchema
+>;
 export const DeliveryPriorityContextSchema = z.strictObject({
   order_id: z.uuid(),
   version_id: z.uuid(),
@@ -17,16 +37,7 @@ export const DeliveryPriorityContextSchema = z.strictObject({
   order_revision: RevisionSchema.min(1),
   logistics_revision: RevisionSchema.min(1),
   priority: z.boolean(),
-  recent_changes: z
-    .array(
-      z.strictObject({
-        id: z.uuid(),
-        occurred_at: z.iso.datetime(),
-        before: z.boolean(),
-        after: z.boolean(),
-      }),
-    )
-    .max(20),
+  recent_changes: z.array(PriorityChangeSchema).max(20),
   more_history: z.boolean(),
 });
 export const DeliveryPriorityResultSchema = z.discriminatedUnion("kind", [

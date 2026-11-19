@@ -3,6 +3,8 @@ import {
   DeliveryPriorityQuerySchema,
   DeliveryPriorityCommandSchema,
   DeliveryPriorityContextSchema,
+  DeliveryPriorityHistoryQuerySchema,
+  DeliveryPriorityHistoryPageSchema,
   DeliveryPriorityResultSchema,
 } from "@dental-lab/contracts";
 import type {
@@ -69,6 +71,63 @@ export function createDeliveryPriorityRepository(
                   : change.occurred_at,
             })),
             more_history: changes.rows.length > 20,
+          }),
+        };
+      });
+    },
+    async history(actor: Actor, raw: unknown) {
+      const parsed = DeliveryPriorityHistoryQuerySchema.safeParse(raw);
+      if (!parsed.success) return { kind: "invalid" as const };
+      const input = parsed.data;
+      return db.transaction(async (tx) => {
+        if (!(await authorized(tx, actor))) return { kind: "denied" as const };
+        const parent = await tx.query(
+          `SELECT l.revision::text AS logistics_revision
+            FROM public.orders o JOIN public.order_logistics l ON l.order_id=o.id AND l.clinic_id=o.clinic_id
+            WHERE o.id=$1 FOR SHARE OF o,l`,
+          [input.order_id],
+        );
+        if (parent.rows.length !== 1) return { kind: "denied" as const };
+        const revision = Number(parent.rows[0]!.logistics_revision);
+        if (revision !== input.expected_logistics_revision)
+          return { kind: "conflict" as const };
+        let cursor: { occurred_at: unknown; id: string } | undefined;
+        if (input.before_event_id) {
+          const found = await tx.query(
+            `SELECT id,occurred_at FROM public.order_logistics_events
+              WHERE id=$1 AND order_id=$2
+                AND before_values->'priority' IS DISTINCT FROM after_values->'priority'`,
+            [input.before_event_id, input.order_id],
+          );
+          cursor = found.rows[0] as typeof cursor;
+          if (!cursor) return { kind: "invalid" as const };
+        }
+        const changes = await tx.query(
+          `SELECT id,occurred_at,
+            before_values->'priority' AS before,
+            after_values->'priority' AS after
+            FROM public.order_logistics_events
+            WHERE order_id=$1
+              AND before_values->'priority' IS DISTINCT FROM after_values->'priority'
+              AND ($2::timestamptz IS NULL OR (occurred_at,id) < ($2::timestamptz,$3::uuid))
+            ORDER BY occurred_at DESC,id DESC LIMIT 21`,
+          [input.order_id, cursor?.occurred_at ?? null, cursor?.id ?? null],
+        );
+        const items = changes.rows.slice(0, 20).map((change) => ({
+          ...change,
+          occurred_at:
+            change.occurred_at instanceof Date
+              ? change.occurred_at.toISOString()
+              : change.occurred_at,
+        }));
+        return {
+          kind: "result" as const,
+          result: DeliveryPriorityHistoryPageSchema.parse({
+            order_id: input.order_id,
+            logistics_revision: revision,
+            items,
+            next_before_event_id:
+              changes.rows.length > 20 ? String(changes.rows[19]!.id) : null,
           }),
         };
       });

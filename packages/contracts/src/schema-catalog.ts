@@ -15,6 +15,8 @@ import {
   DeliveryPriorityCommandSchema,
   DeliveryPriorityContextSchema,
   DeliveryPriorityResultSchema,
+  DeliveryPriorityHistoryQuerySchema,
+  DeliveryPriorityHistoryPageSchema,
 } from "./delivery-priority.js";
 import {
   DeliveryPlanQuerySchema,
@@ -212,6 +214,8 @@ export function exportJsonSchemas() {
     DeliveryPriorityCommand: DeliveryPriorityCommandSchema,
     DeliveryPriorityContext: DeliveryPriorityContextSchema,
     DeliveryPriorityResult: DeliveryPriorityResultSchema,
+    DeliveryPriorityHistoryQuery: DeliveryPriorityHistoryQuerySchema,
+    DeliveryPriorityHistoryPage: DeliveryPriorityHistoryPageSchema,
     DeliveryPlanQuery: DeliveryPlanQuerySchema,
     DeliveryPlanCommand: DeliveryPlanCommandSchema,
     DeliveryPlanContext: DeliveryPlanContextSchema,
