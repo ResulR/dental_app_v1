@@ -8,6 +8,7 @@ import { LaboratoryLinkedWorkForm } from "./LaboratoryLinkedWorkForm.js";
 import { LinkedWorkPanel } from "./LinkedWorkPanel.js";
 import { OrderRetouchForm } from "./OrderRetouchForm.js";
 import { showRetouchEntry } from "./retouch-entry.js";
+import { appendOrderHistory } from "./order-history-page.js";
 import { OrderEditPanel } from "./OrderEditPanel.js";
 import { OrderRequestActions } from "./OrderRequestActions.js";
 import { OrderLifecycleActions } from "./OrderLifecycleActions.js";
@@ -181,15 +182,20 @@ export function OrderTrackingPanel({
     });
   }
   async function open(order_id: string, before_revision?: number) {
+    const expected = detail;
     await run(async (signal) => {
       const next = await api.detail(
         { order_id, ...(before_revision ? { before_revision } : {}) },
         signal,
       );
-      if (!signal.aborted) {
-        setDetail(next);
-        setChatOrder(null);
-      }
+      if (signal.aborted) return;
+      if (next.order.id !== order_id) throw new Error("ORDER_DETAIL_SCOPE");
+      if (before_revision && expected) {
+        const merged = appendOrderHistory(expected, next, before_revision);
+        if (!merged) throw new Error("ORDER_HISTORY_CHANGED");
+        setDetail((current) => (current === expected ? merged : current));
+      } else setDetail(next);
+      setChatOrder(null);
     });
   }
   return (

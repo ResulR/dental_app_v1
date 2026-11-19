@@ -1589,7 +1589,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Interface 28/10 :** Le reçu de dépôt confirmé mène au suivi, numéro serveur prérempli ; recherche explicite, test de rendu réussi. Statut ◐ maintenu.
 
 ### 9.8 — Implémenter interface récap et suivi clinique
-- **Statut :** ◐ Suivi intégré et testé hors ligne — réceptions SQL/navigateur différées
+- **Statut :** ◐ Suivi intégré et testé hors ligne ; la pagination de l’historique conserve les événements déjà chargés, refuse une version courante modifiée et évite les doublons — réceptions SQL/navigateur différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Commande clinique : saisie et dépôt
