@@ -4,6 +4,15 @@ import type {
 } from "@dental-lab/contracts";
 
 type Conversations = ReturnType<typeof GeneralConversationPageSchema.parse>;
+export function hasAuthorizedConversation(
+  page: Conversations,
+  id: string,
+  clinicId?: string,
+) {
+  return page.items.some(
+    (item) => item.id === id && (!clinicId || item.clinic_id === clinicId),
+  );
+}
 export function appendConversationPage(
   current: Conversations | null,
   expected: Conversations,

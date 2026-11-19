@@ -10,6 +10,7 @@ import {
   appendConversationPage,
   catchUpMessages,
   createReadFlight,
+  hasAuthorizedConversation,
   contiguousReadThrough,
   mergeMessagePage,
 } from "./message-sync.js";
@@ -184,15 +185,48 @@ export function GeneralMessagingPanel({
   async function reloadConversations() {
     const epoch = ++conversationEpoch.current;
     setNotice("");
+    const selectedAtStart = selected;
+    const selectionAtStart = selectionEpoch.current;
+    const knownClinic = latestConversations.current?.items.find(
+      (item) => item.id === selectedAtStart,
+    )?.clinic_id;
     try {
-      const page = await fetchConversations({});
-      if (epoch !== conversationEpoch.current) return;
+      const page = selectedAtStart
+        ? await loadConversationCounts(selectedAtStart)
+        : await fetchConversations({});
+      if (
+        epoch !== conversationEpoch.current ||
+        selectionAtStart !== selectionEpoch.current
+      )
+        return;
       setConversations(page);
       if (page.closed !== undefined) setClosed(page.closed);
-      if ((clinic || orderId || generalClinicId) && page.items.length === 1)
+      if (
+        selectedAtStart &&
+        !hasAuthorizedConversation(page, selectedAtStart, knownClinic)
+      ) {
+        selectionEpoch.current++;
+        setSelected("");
+        setMessages(null);
+        closeHistory();
+        setEditing(null);
+        setBody("");
+        key.current = null;
+        setSendUncertain(false);
+        setNotice("Biseda nuk është më e disponueshme për këtë llogari.");
+      } else if (
+        !selectedAtStart &&
+        (clinic || orderId || generalClinicId) &&
+        page.items.length === 1
+      ) {
         setSelected(page.items[0]!.id);
+      }
     } catch {
-      if (epoch !== conversationEpoch.current) return;
+      if (
+        epoch !== conversationEpoch.current ||
+        selectionAtStart !== selectionEpoch.current
+      )
+        return;
       setConversations(null);
       setMessages(null);
       closeHistory();
@@ -605,7 +639,9 @@ export function GeneralMessagingPanel({
           Klinika
           <select
             value={selected}
-            disabled={busy || reading || loadingMessages || loadingOlder}
+            disabled={
+              busy || mutating || reading || loadingMessages || loadingOlder
+            }
             onChange={(e) => {
               selectionEpoch.current++;
               setLoadingMessages(Boolean(e.target.value));

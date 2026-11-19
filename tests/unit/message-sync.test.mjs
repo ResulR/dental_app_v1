@@ -4,6 +4,7 @@ import {
   appendConversationPage,
   catchUpMessages,
   createReadFlight,
+  hasAuthorizedConversation,
   contiguousReadThrough,
   mergeMessagePage,
 } from "../../apps/web/src/features/messaging/message-sync.ts";
@@ -37,6 +38,30 @@ test("conversation pagination ignores stale refreshes and overlapping rows", () 
   );
   expect(repeated?.items.map((row) => row.id)).toEqual(["a", "b", "c"]);
   expect(repeated?.next_after).toBeNull();
+});
+test("a refreshed conversation list must retain the selected clinic and identity", () => {
+  const old = { id: "selected", clinic_id: "clinic-a" };
+  expect(
+    hasAuthorizedConversation(
+      { items: [old], next_after: null },
+      old.id,
+      old.clinic_id,
+    ),
+  ).toBe(true);
+  expect(
+    hasAuthorizedConversation(
+      { items: [], next_after: null },
+      old.id,
+      old.clinic_id,
+    ),
+  ).toBe(false);
+  expect(
+    hasAuthorizedConversation(
+      { items: [{ ...old, clinic_id: "clinic-b" }], next_after: null },
+      old.id,
+      old.clinic_id,
+    ),
+  ).toBe(false);
 });
 function page(from, to, options = {}) {
   return {
