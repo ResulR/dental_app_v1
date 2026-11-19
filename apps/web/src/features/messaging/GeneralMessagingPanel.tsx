@@ -5,6 +5,7 @@ import type {
   MessageHistoryResultSchema,
 } from "@dental-lab/contracts";
 import { Button } from "../../shared/Button.js";
+import { appendMessageHistory } from "./message-history-page.js";
 import {
   appendConversationPage,
   catchUpMessages,
@@ -106,6 +107,7 @@ export function GeneralMessagingPanel({
   const readPending = useRef(createReadFlight());
   const conversationEpoch = useRef(0);
   const selectionEpoch = useRef(0);
+  const historyEpoch = useRef(0);
   const [loadingConversations, setLoadingConversations] = useState(false);
   const morePending = useRef(false);
   useEffect(() => {
@@ -193,7 +195,7 @@ export function GeneralMessagingPanel({
       if (epoch !== conversationEpoch.current) return;
       setConversations(null);
       setMessages(null);
-      setHistory(null);
+      closeHistory();
       setEditing(null);
       setConnection("offline");
       setNotice("Bisedat nuk u ngarkuan ose lejet ndryshuan.");
@@ -250,7 +252,7 @@ export function GeneralMessagingPanel({
     } catch {
       if (epoch === selectionEpoch.current) {
         setMessages(null);
-        setHistory(null);
+        closeHistory();
         setEditing(null);
         setNotice("Mesazhet nuk u ngarkuan ose lejet ndryshuan.");
       }
@@ -419,7 +421,7 @@ export function GeneralMessagingPanel({
           setConnection("offline");
           setMessages(null);
           setConversations(null);
-          setHistory(null);
+          closeHistory();
           setEditing(null);
         }
       } finally {
@@ -501,29 +503,32 @@ export function GeneralMessagingPanel({
       setMutating(false);
     }
   }
+  function closeHistory() {
+    historyEpoch.current++;
+    setHistory(null);
+  }
   async function openHistory(messageId: string, beforeVersion?: number) {
     if (!selected) return;
     const epoch = selectionEpoch.current;
+    const request = ++historyEpoch.current;
     try {
       const page = await textMessageHistory(orderId ? "order" : "general", {
         conversation_id: selected,
         message_id: messageId,
         ...(beforeVersion ? { before_version: beforeVersion } : {}),
       });
-      if (epoch !== selectionEpoch.current) return;
+      if (epoch !== selectionEpoch.current || request !== historyEpoch.current)
+        return;
       setHistory((previous) =>
         previous?.id === messageId && beforeVersion
           ? {
               id: messageId,
-              page: {
-                versions: [...previous.page.versions, ...page.versions],
-                next_before_version: page.next_before_version,
-              },
+              page: appendMessageHistory(previous.page, page, beforeVersion),
             }
           : { id: messageId, page },
       );
     } catch {
-      if (epoch === selectionEpoch.current)
+      if (epoch === selectionEpoch.current && request === historyEpoch.current)
         setNotice("Historiku nuk u ngarkua. Provoni sërish.");
     }
   }
@@ -607,7 +612,7 @@ export function GeneralMessagingPanel({
               setSelected(e.target.value);
               setConnection("waiting");
               setMessages(null);
-              setHistory(null);
+              closeHistory();
               setEditing(null);
               setBody("");
               key.current = null;
@@ -706,7 +711,7 @@ export function GeneralMessagingPanel({
                               revision: message.revision,
                               body: message.body ?? "",
                             });
-                            setHistory(null);
+                            closeHistory();
                           }}
                         >
                           Ndrysho
