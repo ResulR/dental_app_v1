@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { LinkedWorkPage } from "@dental-lab/contracts";
 import { createLinkedWorkClient } from "./linked-work-api.js";
+import { appendLinkedWorkPage } from "./linked-work-page.js";
 import { orderStatusLabels } from "./status-labels.js";
 import { Button } from "../../shared/Button.js";
 const api = createLinkedWorkClient();
@@ -30,6 +31,7 @@ export function LinkedWorkPanel({
   );
   async function load(id = orderId, after?: string) {
     if (pending.current) return;
+    const expected = page;
     const c = new AbortController();
     pending.current = c;
     setBusy(true);
@@ -40,7 +42,12 @@ export function LinkedWorkPanel({
         c.signal,
       );
       if (!c.signal.aborted) {
-        setPage(next);
+        if (next.order.id !== id) throw new Error("LINKED_WORK_SCOPE");
+        setPage((current) =>
+          after && expected
+            ? appendLinkedWorkPage(current, expected, next, after)
+            : next,
+        );
         setMessage("");
       }
     } catch {

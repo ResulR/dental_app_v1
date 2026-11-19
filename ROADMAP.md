@@ -2032,7 +2032,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale :** PostgreSQL/concurrence réelle, navigateur et notifications différés.
 
 ### 11.6 — Implémenter navigation chaîne de commandes et retouches
-- **Statut :** ◐ Navigation bidirectionnelle intégrée — réceptions différées
+- **Statut :** ◐ Navigation bidirectionnelle intégrée ; les pages de liens s’ajoutent sans doublons, conservent la liste antérieure et réévaluent les droits de détail à chaque page — réceptions différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Retouches et refabrications
