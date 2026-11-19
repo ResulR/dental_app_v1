@@ -6,6 +6,7 @@ import type {
 import { createOrderLifecycleClient } from "./lifecycle-api.js";
 import { createDeliveryBatchClient } from "./delivery-batch-api.js";
 import { Button } from "../../shared/Button.js";
+import { canEditReceiptIdentifier } from "./delivery-receipt-input.js";
 const contextClient = createOrderLifecycleClient(),
   batchClient = createDeliveryBatchClient();
 const explanations = {
@@ -30,6 +31,7 @@ export function ReadyDeliveryBatch({
     ),
     [confirmed, setConfirmed] = useState(false),
     [receiptId, setReceiptId] = useState<string | null>(null),
+    [receiptPending, setReceiptPending] = useState(false),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   const pending = useRef<AbortController | null>(null);
@@ -48,6 +50,7 @@ export function ReadyDeliveryBatch({
     setConfirmed(false);
     setReceiptId(null);
     uncertain.current = null;
+    setReceiptPending(false);
   }
   async function run(work: (signal: AbortSignal) => Promise<void>) {
     if (pending.current) return;
@@ -117,6 +120,7 @@ export function ReadyDeliveryBatch({
     const id = crypto.randomUUID();
     setReceiptId(id);
     uncertain.current = id;
+    setReceiptPending(true);
     const command = {
       receipt_id: id,
       confirmed: true,
@@ -141,6 +145,7 @@ export function ReadyDeliveryBatch({
       } else {
         setReceiptId(null);
         uncertain.current = null;
+        setReceiptPending(false);
         setPrepared(null);
         setMessage(
           describe(
@@ -248,12 +253,19 @@ export function ReadyDeliveryBatch({
             value={receiptId ?? ""}
             autoComplete="off"
             maxLength={36}
+            disabled={!canEditReceiptIdentifier(busy, receiptPending)}
             onChange={(e) => {
-              setReceiptId(e.target.value || null);
-              uncertain.current = e.target.value || null;
+              if (canEditReceiptIdentifier(busy, uncertain.current !== null))
+                setReceiptId(e.target.value || null);
             }}
           />
         </label>
+        {receiptPending && (
+          <p role="status">
+            Identifikuesi i këtij dorëzimi ruhet pa ndryshim derisa rezultati të
+            verifikohet. Kopjojeni për kontroll pas ringarkimit.
+          </p>
+        )}
         <Button disabled={busy || !receiptId} onClick={() => void lookup()}>
           Kontrollo faturën
         </Button>

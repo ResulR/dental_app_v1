@@ -2828,7 +2828,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 16.6 — Implémenter livraison individuelle et groupée
-- **Statut :** ◐ Code intégré ; recette PostgreSQL 17 isolée v5 réceptionnée le 21/10/2026 (atomicité, rollback, idempotence, verrous concurrents, permissions, immutabilité des reçus et éligibilité). Preuves conservées dans `.local/delivery-batch-v5/` (`result.json`, `ok`, journaux, états avant/après et empreintes vérifiées) ; PostgreSQL v5 arrêté et services inchangés. Recette navigateur, migration/activation de production et autres scénarios hors 16.6 restent ouverts.
+- **Statut :** ◐ Code intégré ; identifiant du reçu groupé verrouillé durant une réponse incertaine, avec consultation conservée ; recette PostgreSQL 17 isolée v5 réceptionnée le 21/10/2026 (atomicité, rollback, idempotence, verrous concurrents, permissions, immutabilité des reçus et éligibilité). Preuves conservées dans `.local/delivery-batch-v5/` (`result.json`, `ok`, journaux, états avant/après et empreintes vérifiées) ; PostgreSQL v5 arrêté et services inchangés. Recette navigateur, migration/activation de production et autres scénarios hors 16.6 restent ouverts.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Planning, livraisons, archives et recherche
