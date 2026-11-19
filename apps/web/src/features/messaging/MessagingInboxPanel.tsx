@@ -10,6 +10,7 @@ import { GeneralMessagingPanel } from "./GeneralMessagingPanel.js";
 import {
   refreshSelectedGeneral,
   refreshSelectedOrder,
+  mergeInboxPage,
 } from "./inbox-selection.js";
 type Page = ReturnType<typeof MessagingInboxPageSchema.parse>;
 type Item = Page["items"][number];
@@ -168,9 +169,7 @@ export function MessagingInboxPanel({
       const result = await messagingInbox(query(page));
       if (epoch === requestEpoch.current)
         setPage((current) =>
-          current === page
-            ? { ...result, items: [...page.items, ...result.items] }
-            : current,
+          current === page ? mergeInboxPage(page, result) : current,
         );
     } catch {
       if (epoch === requestEpoch.current)
