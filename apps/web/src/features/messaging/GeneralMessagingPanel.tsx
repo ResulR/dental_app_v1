@@ -8,6 +8,7 @@ import { Button } from "../../shared/Button.js";
 import {
   appendConversationPage,
   catchUpMessages,
+  createReadFlight,
   contiguousReadThrough,
   mergeMessagePage,
 } from "./message-sync.js";
@@ -102,7 +103,7 @@ export function GeneralMessagingPanel({
     conversationId: string;
     sequences: Set<number>;
   } | null>(null);
-  const readPending = useRef(false);
+  const readPending = useRef(createReadFlight());
   const conversationEpoch = useRef(0);
   const selectionEpoch = useRef(0);
   const [loadingConversations, setLoadingConversations] = useState(false);
@@ -286,9 +287,11 @@ export function GeneralMessagingPanel({
     if (seen.current?.conversationId !== selected)
       seen.current = { conversationId: selected, sequences: new Set() };
     let active = true;
+    let ownRead: symbol | null = null;
+    const pending = readPending.current;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (document.hidden || readPending.current || !active) return;
+        if (document.hidden || pending.busy || !active) return;
         for (const entry of entries) {
           if (entry.isIntersecting && entry.intersectionRatio >= 1) {
             const sequence = Number(
@@ -303,7 +306,9 @@ export function GeneralMessagingPanel({
           seen.current!.sequences,
         );
         if (through <= messages.last_read_seq) return;
-        readPending.current = true;
+        const token = pending.begin();
+        if (token === null) return;
+        ownRead = token;
         setReading(true);
         void acknowledge({
           conversation_id: selected,
@@ -348,8 +353,9 @@ export function GeneralMessagingPanel({
               setNotice("Leximi nuk u konfirmua. Provoni të rilidheni.");
           })
           .finally(() => {
-            readPending.current = false;
-            setReading(false);
+            if (pending.finish(token)) {
+              setReading(false);
+            }
           });
       },
       { threshold: 1 },
@@ -361,6 +367,9 @@ export function GeneralMessagingPanel({
     return () => {
       active = false;
       observer.disconnect();
+      if (ownRead !== null && pending.finish(ownRead)) {
+        setReading(false);
+      }
     };
   }, [selected, messages, acknowledge, loadConversationCounts]);
   useEffect(() => {

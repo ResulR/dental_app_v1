@@ -124,3 +124,24 @@ export async function catchUpMessages(
   }
   return false;
 }
+
+// UI-only in-flight token. A late completion must not release a newer read;
+// server-side receipts remain the durable, monotone authority.
+export function createReadFlight() {
+  let pending: symbol | null = null;
+  return {
+    get busy() {
+      return pending !== null;
+    },
+    begin() {
+      if (pending !== null) return null;
+      pending = Symbol("read");
+      return pending;
+    },
+    finish(token: symbol) {
+      if (pending !== token) return false;
+      pending = null;
+      return true;
+    },
+  };
+}

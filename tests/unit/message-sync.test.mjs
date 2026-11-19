@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import {
   appendConversationPage,
   catchUpMessages,
+  createReadFlight,
   contiguousReadThrough,
   mergeMessagePage,
 } from "../../apps/web/src/features/messaging/message-sync.ts";
@@ -186,4 +187,17 @@ test("reconnection refuses missing sequences, foreign pages and stale snapshots 
     ).rejects.toThrow();
     expect(accepted).toEqual([]);
   }
+});
+test("cancelled conversation read cannot block or release the next conversation", () => {
+  const flight = createReadFlight();
+  const first = flight.begin();
+  expect(first).not.toBeNull();
+  expect(flight.begin()).toBeNull();
+  expect(flight.finish(first)).toBe(true); // selection changed while response pending
+  const next = flight.begin();
+  expect(next).not.toBeNull();
+  expect(flight.finish(first)).toBe(false); // old response finally arrives
+  expect(flight.busy).toBe(true);
+  expect(flight.finish(next)).toBe(true);
+  expect(flight.busy).toBe(false);
 });
