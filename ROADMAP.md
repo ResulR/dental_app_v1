@@ -1731,7 +1731,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale :** différée (PostgreSQL réel, navigateur, pipeline fichiers et livraison des notifications).
 
 ### 10.5 — Implémenter demandes de modification Acceptée
-- **Statut :** ◐ Propositions et décisions intégrées — fichiers et réceptions différés
+- **Statut :** ◐ Propositions et décisions intégrées ; historique paginé sans doublons ni curseur répété, retiré localement si la relecture ou les droits échouent — fichiers et réceptions différés
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes

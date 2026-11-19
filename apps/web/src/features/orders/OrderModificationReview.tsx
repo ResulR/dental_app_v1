@@ -5,6 +5,7 @@ import type {
   OrderEditView,
 } from "@dental-lab/contracts";
 import { createOrderModificationClient } from "./modification-api.js";
+import { appendModificationHistory } from "./modification-history-page.js";
 import { Button } from "../../shared/Button.js";
 const api = createOrderModificationClient();
 const stateLabel = {
@@ -64,8 +65,9 @@ export function OrderModificationReview({
     } catch {
       if (pending.current === c) {
         setContext(null);
+        setHistory(null);
         setMessage(
-          "Nuk u verifikua një kërkesë ndryshimi në pritje. Ringarkoni porosinë; nuk ka përsëritje automatike.",
+          "Kërkesat ose lejet nuk u verifikuan. Historiku lokal u fsheh; ringarkoni porosinë. Nuk ka përsëritje automatike.",
         );
       }
     } finally {
@@ -91,12 +93,9 @@ export function OrderModificationReview({
     await run(async (signal) => {
       const page = await api.history(orderId, signal, before);
       if (!signal.aborted) {
-        setHistory((previous) => ({
-          items: before
-            ? [...(previous?.items ?? []), ...page.items]
-            : page.items,
-          next_before_request_id: page.next_before_request_id,
-        }));
+        setHistory((previous) =>
+          appendModificationHistory(previous, page, before),
+        );
         setMessage("");
       }
     });
