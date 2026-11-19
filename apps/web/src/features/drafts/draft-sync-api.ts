@@ -14,12 +14,14 @@ export function mergeDraftListPage(
   if (!after) return incoming;
   if (!previous || previous.next_after !== after) return previous;
   const known = new Set(previous.items.map((item) => item.draft_id));
+  const additional = incoming.items.filter((item) => {
+    if (known.has(item.draft_id)) return false;
+    known.add(item.draft_id);
+    return true;
+  });
   return {
-    items: [
-      ...previous.items,
-      ...incoming.items.filter((item) => !known.has(item.draft_id)),
-    ],
-    next_after: incoming.next_after,
+    items: [...previous.items, ...additional],
+    next_after: incoming.next_after === after ? null : incoming.next_after,
   };
 }
 export type ServerDraftPayload = NonNullable<ServerDraft["payload"]>;

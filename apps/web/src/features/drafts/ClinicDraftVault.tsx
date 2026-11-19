@@ -78,6 +78,7 @@ export function ClinicDraftVault<T>({
   const [storedSubmission, setStoredSubmission] =
     useState<StoredSubmission | null>(null);
   const [remote, setRemote] = useState<RemoteDraft | null>(null);
+  const draftListEpoch = useRef(0);
   const [serverDrafts, setServerDrafts] = useState<Awaited<
     ReturnType<typeof listServerDrafts>
   > | null>(null);
@@ -536,9 +537,13 @@ export function ClinicDraftVault<T>({
   }
   async function discover(after?: string) {
     if (!syncEnabled || !online) return;
+    const epoch = after ? draftListEpoch.current : ++draftListEpoch.current;
     await run(async () => {
       const page = await listServerDrafts(after);
-      setServerDrafts((previous) => mergeDraftListPage(previous, page, after));
+      if (epoch === draftListEpoch.current)
+        setServerDrafts((previous) =>
+          mergeDraftListPage(previous, page, after),
+        );
     });
   }
   async function importServer(selectedDraft: {

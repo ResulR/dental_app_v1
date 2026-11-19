@@ -18,6 +18,16 @@ test("manual draft pagination preserves a newer list and deduplicates overlappin
   expect(mergeDraftListPage(latest, next, "b")).toBe(latest);
   expect(mergeDraftListPage(null, next, "b")).toBeNull();
   expect(mergeDraftListPage(first, latest)).toBe(latest);
+  const repeated = mergeDraftListPage(
+    first,
+    {
+      items: [item("c"), item("c")],
+      next_after: "b",
+    },
+    "b",
+  );
+  expect(repeated.items.map((row) => row.draft_id)).toEqual(["a", "b", "c"]);
+  expect(repeated.next_after).toBeNull();
 });
 test("manual API calls retain same intention, same-origin credentials and reject ambiguous responses", async () => {
   const transport = vi
