@@ -7,6 +7,7 @@ import { OrderFilesPanel } from "./OrderFilesPanel.js";
 import { LaboratoryLinkedWorkForm } from "./LaboratoryLinkedWorkForm.js";
 import { LinkedWorkPanel } from "./LinkedWorkPanel.js";
 import { OrderRetouchForm } from "./OrderRetouchForm.js";
+import { showRetouchEntry } from "./retouch-entry.js";
 import { OrderEditPanel } from "./OrderEditPanel.js";
 import { OrderRequestActions } from "./OrderRequestActions.js";
 import { OrderLifecycleActions } from "./OrderLifecycleActions.js";
@@ -388,7 +389,13 @@ export function OrderTrackingPanel({
                 );
                 return urgency ? <p>{deliveryUrgencyLabel(urgency)}</p> : null;
               })()}
-              {clinic && row.status === "delivered" && (
+              {showRetouchEntry(
+                clinic,
+                row.status,
+                row.id,
+                detail?.order.id,
+                "list",
+              ) && (
                 <OrderRetouchForm
                   sourceId={row.id}
                   onFinished={(receipt) => {
@@ -488,6 +495,24 @@ export function OrderTrackingPanel({
             Porosia nr. {detail.order.number} ·{" "}
             {orderStatusLabels[detail.order.status]}
           </h4>
+          {showRetouchEntry(
+            clinic,
+            detail.order.status,
+            detail.order.id,
+            detail.order.id,
+            "detail",
+          ) && (
+            <OrderRetouchForm
+              key={detail.order.id}
+              sourceId={detail.order.id}
+              onFinished={(receipt) => {
+                setPage(null);
+                setDetail(null);
+                setRetouchReceipt(receipt);
+                setMessage("");
+              }}
+            />
+          )}
           <LinkedWorkPanel
             key={detail.order.id}
             orderId={detail.order.id}

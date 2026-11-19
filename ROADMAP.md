@@ -1935,7 +1935,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 ## Chapitre 11 — Retouches et refabrications
 
 ### 11.1 — Implémenter initiation depuis commande livrée
-- **Statut :** ◐ Initiation clinique intégrée — réceptions différées
+- **Statut :** ◐ Initiation clinique intégrée depuis la liste et le détail autorisé d’un travail livré, avec une seule instance de formulaire par travail ouvert — réceptions différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Retouches et refabrications
