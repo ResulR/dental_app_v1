@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import type { DeliveryPlanContext } from "@dental-lab/contracts";
+import type {
+  DeliveryPlanContext,
+  DeliveryPlanHistoryPage,
+} from "@dental-lab/contracts";
 import { createDeliveryPlanClient } from "./delivery-plan-api.js";
+import { appendDeliveryPlanHistory } from "./delivery-plan-history.js";
 import { Button } from "../../shared/Button.js";
 const client = createDeliveryPlanClient();
 export function DeliveryPlanPanel({
@@ -12,6 +16,7 @@ export function DeliveryPlanPanel({
 }) {
   const [context, setContext] = useState<DeliveryPlanContext | null>(null);
   const [date, setDate] = useState("");
+  const [history, setHistory] = useState<DeliveryPlanHistoryPage | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const pending = useRef<AbortController | null>(null);
@@ -19,8 +24,10 @@ export function DeliveryPlanPanel({
     () => () => {
       pending.current?.abort();
       pending.current = null;
+      setContext(null);
+      setHistory(null);
     },
-    [],
+    [orderId],
   );
   async function run(work: (signal: AbortSignal) => Promise<void>) {
     if (pending.current) return;
@@ -34,6 +41,7 @@ export function DeliveryPlanPanel({
     } catch {
       if (pending.current === controller) {
         setContext(null);
+        setHistory(null);
         setMessage(
           "Rezultati nuk u verifikua. Ringarkoni planifikimin; mos e përsërisni ndryshimin automatikisht.",
         );
@@ -51,6 +59,14 @@ export function DeliveryPlanPanel({
       const value = await client.context(orderId, signal);
       if (pending.current === null || signal.aborted) return;
       setContext(value);
+      setHistory({
+        order_id: value.order_id,
+        logistics_revision: value.logistics_revision,
+        items: value.recent_changes,
+        next_before_event_id: value.more_history
+          ? value.recent_changes[value.recent_changes.length - 1]!.id
+          : null,
+      });
       setDate(value.planned_delivery_date ?? "");
     });
   }
@@ -79,6 +95,7 @@ export function DeliveryPlanPanel({
       );
       if (signal.aborted) return;
       setContext(null);
+      setHistory(null);
       if (result.kind === "updated") onUpdated?.();
       setMessage(
         result.kind === "updated"
@@ -89,6 +106,26 @@ export function DeliveryPlanPanel({
               ? "Porosia është mbyllur; data nuk ndryshoi."
               : "Versioni ndryshoi; ringarkoni planifikimin.",
       );
+    });
+  }
+  function loadOlder() {
+    if (!history) return;
+    const current = history;
+    const cursor = current.next_before_event_id;
+    if (!cursor) return;
+    void run(async (signal) => {
+      const page = await client.history(
+        {
+          order_id: current.order_id,
+          expected_logistics_revision: current.logistics_revision,
+          before_event_id: cursor,
+        },
+        signal,
+      );
+      if (signal.aborted) return;
+      const merged = appendDeliveryPlanHistory(current, page, cursor);
+      if (!merged) throw new Error("DELIVERY_PLAN_STALE_HISTORY");
+      setHistory(merged);
     });
   }
   return (
@@ -124,9 +161,9 @@ export function DeliveryPlanPanel({
             </fieldset>
           )}
           <h5>Ndryshimet e fundit të planifikimit</h5>
-          {context.recent_changes.length ? (
+          {history?.items.length ? (
             <ol>
-              {context.recent_changes.map((change) => (
+              {history.items.map((change) => (
                 <li key={change.id}>
                   {change.occurred_at}: {change.before ?? "pa plan"} →{" "}
                   {change.after ?? "pa plan"}
@@ -136,11 +173,10 @@ export function DeliveryPlanPanel({
           ) : (
             <p>Nuk ka ndryshime të regjistruara.</p>
           )}
-          {context.more_history && (
-            <p>
-              Ekzistojnë edhe ndryshime më të vjetra; kjo pamje tregon vetëm 20
-              të fundit.
-            </p>
+          {history?.next_before_event_id && (
+            <Button disabled={busy} onClick={loadOlder}>
+              Shfaq ndryshimet më të vjetra
+            </Button>
           )}
         </>
       )}

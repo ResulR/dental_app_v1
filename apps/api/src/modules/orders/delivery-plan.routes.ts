@@ -2,6 +2,7 @@ import type { Express } from "express";
 import {
   DeliveryPlanQuerySchema,
   DeliveryPlanCommandSchema,
+  DeliveryPlanHistoryQuerySchema,
 } from "@dental-lab/contracts";
 import { readSessionCookie, mutationOriginAllowed } from "../identity/index.js";
 import type { createSessionService } from "../identity/index.js";
@@ -17,7 +18,7 @@ export function registerDeliveryPlanRoutes(
 ) {
   if (!mutationOriginAllowed(services.origin, services.origin))
     throw new Error("INVALID_DELIVERY_PLAN_ORIGIN");
-  for (const action of ["context", "update"] as const)
+  for (const action of ["context", "update", "history"] as const)
     app.post("/api/v1/orders/delivery-plan-" + action, async (req, res) => {
       if (!mutationOriginAllowed(req.headers.origin, services.origin)) {
         sendProblem(res, "FORBIDDEN", 403);
@@ -26,7 +27,9 @@ export function registerDeliveryPlanRoutes(
       const schema =
         action === "context"
           ? DeliveryPlanQuerySchema
-          : DeliveryPlanCommandSchema;
+          : action === "history"
+            ? DeliveryPlanHistoryQuerySchema
+            : DeliveryPlanCommandSchema;
       if (
         !req.is("application/json") ||
         Object.keys(req.query).length ||
@@ -45,8 +48,16 @@ export function registerDeliveryPlanRoutes(
       if (outcome.kind !== "result") {
         sendProblem(
           res,
-          outcome.kind === "denied" ? "FORBIDDEN" : "VALIDATION_FAILED",
-          outcome.kind === "denied" ? 403 : 400,
+          outcome.kind === "denied"
+            ? "FORBIDDEN"
+            : outcome.kind === "conflict"
+              ? "STATE_CONFLICT"
+              : "VALIDATION_FAILED",
+          outcome.kind === "denied"
+            ? 403
+            : outcome.kind === "conflict"
+              ? 409
+              : 400,
         );
         return;
       }

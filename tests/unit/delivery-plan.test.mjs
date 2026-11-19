@@ -17,6 +17,12 @@ function fixture(patch = {}) {
     date: null,
     writes: [],
   };
+  const events = Array.from({ length: patch.eventCount ?? 0 }, (_, n) => ({
+    id: `92000000-0000-4000-8000-${String(n + 1).padStart(12, "0")}`,
+    occurred_at: new Date(Date.UTC(2026, 10, 30 - n)).toISOString(),
+    before: "2026-11-09",
+    after: "2026-11-10",
+  }));
   const calls = [];
   let queue = Promise.resolve();
   const transaction = (work) => {
@@ -100,6 +106,33 @@ function fixture(patch = {}) {
             throw Error("SYNTHETIC_FAILURE");
           copy.writes.push(sql);
         }
+        if (sql.startsWith("SELECT l.revision::text AS logistics_revision"))
+          return {
+            rows: patch.foreign
+              ? []
+              : [{ logistics_revision: String(copy.logisticsRevision) }],
+          };
+        if (
+          sql.startsWith(
+            "SELECT id,occurred_at FROM public.order_logistics_events",
+          )
+        )
+          return {
+            rows: events.filter(
+              (event) => event.id === values[0] && !patch.foreignCursor,
+            ),
+          };
+        if (sql.includes("ORDER BY occurred_at DESC,id DESC LIMIT 21")) {
+          const cursorIndex = events.findIndex(
+            (event) => event.id === values[2],
+          );
+          return {
+            rows: events.slice(
+              cursorIndex < 0 ? 0 : cursorIndex + 1,
+              (cursorIndex < 0 ? 0 : cursorIndex + 1) + 21,
+            ),
+          };
+        }
         if (sql.startsWith("SELECT o.id AS order_id"))
           return {
             rows: [
@@ -114,11 +147,7 @@ function fixture(patch = {}) {
               },
             ],
           };
-        if (
-          sql.includes("FROM public.order_logistics_events") &&
-          sql.startsWith("SELECT id")
-        )
-          return { rows: [] };
+
         return { rows: [] };
       };
       const result = await work({ query });
@@ -259,4 +288,58 @@ test("flag is off by default and requires tracking", () => {
       DENTAL_LAB_ORDER_TRACKING_ENABLED: "true",
     }),
   ).toBe(true);
+});
+
+test("planning history pages beyond 20 retain revision, order, permissions and stable cursor", async () => {
+  const db = fixture({ eventCount: 25 }),
+    service = createDeliveryPlanService(db);
+  const first = (await service.context(actor, { order_id: id })).result;
+  expect(first.recent_changes).toHaveLength(20);
+  expect(first.more_history).toBe(true);
+  const next = await service.history(actor, {
+    order_id: id,
+    expected_logistics_revision: 1,
+    before_event_id: first.recent_changes.at(-1).id,
+  });
+  expect(next.result.items).toHaveLength(5);
+  expect(next.result.next_before_event_id).toBeNull();
+  expect(
+    new Set(
+      [...first.recent_changes, ...next.result.items].map((event) => event.id),
+    ).size,
+  ).toBe(25);
+  expect(
+    (
+      await service.history(actor, {
+        order_id: id,
+        expected_logistics_revision: 2,
+      })
+    ).kind,
+  ).toBe("conflict");
+  expect(
+    (
+      await service.history(actor, {
+        order_id: id,
+        expected_logistics_revision: 1,
+        before_event_id: actor.accountId,
+      })
+    ).kind,
+  ).toBe("invalid");
+  expect(
+    (
+      await createDeliveryPlanService(fixture({ foreign: true })).history(
+        actor,
+        { order_id: id, expected_logistics_revision: 1 },
+      )
+    ).kind,
+  ).toBe("denied");
+  expect(
+    (
+      await createDeliveryPlanService(fixture({ revoked: true })).history(
+        actor,
+        { order_id: id, expected_logistics_revision: 1 },
+      )
+    ).kind,
+  ).toBe("denied");
+  expect(db.state.writes).toEqual([]);
 });

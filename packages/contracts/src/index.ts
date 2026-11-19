@@ -70,11 +70,14 @@ export {
   DeliveryPlanCommandSchema,
   DeliveryPlanContextSchema,
   DeliveryPlanResultSchema,
+  DeliveryPlanHistoryQuerySchema,
+  DeliveryPlanHistoryPageSchema,
 } from "./delivery-plan.js";
 export type {
   DeliveryPlanCommand,
   DeliveryPlanContext,
   DeliveryPlanResult,
+  DeliveryPlanHistoryPage,
 } from "./delivery-plan.js";
 export {
   DeliveryPriorityQuerySchema,

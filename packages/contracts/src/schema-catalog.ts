@@ -21,6 +21,8 @@ import {
   DeliveryPlanCommandSchema,
   DeliveryPlanContextSchema,
   DeliveryPlanResultSchema,
+  DeliveryPlanHistoryQuerySchema,
+  DeliveryPlanHistoryPageSchema,
 } from "./delivery-plan.js";
 import {
   MessageSubmissionSchema,
@@ -214,6 +216,8 @@ export function exportJsonSchemas() {
     DeliveryPlanCommand: DeliveryPlanCommandSchema,
     DeliveryPlanContext: DeliveryPlanContextSchema,
     DeliveryPlanResult: DeliveryPlanResultSchema,
+    DeliveryPlanHistoryQuery: DeliveryPlanHistoryQuerySchema,
+    DeliveryPlanHistoryPage: DeliveryPlanHistoryPageSchema,
     MessageSubmission: MessageSubmissionSchema,
     MessageSubmissionResult: MessageSubmissionResultSchema,
     OrderFilesQuery: OrderFilesQuerySchema,

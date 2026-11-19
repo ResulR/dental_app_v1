@@ -3,6 +3,8 @@ import {
   DeliveryPlanCommandSchema,
   DeliveryPlanContextSchema,
   DeliveryPlanResultSchema,
+  DeliveryPlanHistoryQuerySchema,
+  DeliveryPlanHistoryPageSchema,
 } from "@dental-lab/contracts";
 export function createDeliveryPlanClient(transport: typeof fetch = fetch) {
   async function post(path: string, body: unknown, signal: AbortSignal) {
@@ -27,6 +29,13 @@ export function createDeliveryPlanClient(transport: typeof fetch = fetch) {
         DeliveryPlanQuerySchema.parse({ order_id: orderId }),
         signal,
       ).then((value) => DeliveryPlanContextSchema.parse(value));
+    },
+    history(raw: unknown, signal: AbortSignal) {
+      return post(
+        "history",
+        DeliveryPlanHistoryQuerySchema.parse(raw),
+        signal,
+      ).then((value) => DeliveryPlanHistoryPageSchema.parse(value));
     },
     update(raw: unknown, signal: AbortSignal) {
       return post("update", DeliveryPlanCommandSchema.parse(raw), signal).then(

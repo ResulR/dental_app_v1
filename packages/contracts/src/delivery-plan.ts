@@ -9,6 +9,26 @@ export const DeliveryPlanCommandSchema = z.strictObject({
   expected_logistics_revision: RevisionSchema.min(1),
   planned_delivery_date: DateValue.nullable(),
 });
+const ChangeSchema = z.strictObject({
+  id: z.uuid(),
+  occurred_at: z.iso.datetime(),
+  before: DateValue.nullable(),
+  after: DateValue.nullable(),
+});
+export const DeliveryPlanHistoryQuerySchema = z.strictObject({
+  order_id: z.uuid(),
+  expected_logistics_revision: RevisionSchema.min(1),
+  before_event_id: z.uuid().optional(),
+});
+export const DeliveryPlanHistoryPageSchema = z.strictObject({
+  order_id: z.uuid(),
+  logistics_revision: RevisionSchema.min(1),
+  items: z.array(ChangeSchema).max(20),
+  next_before_event_id: z.uuid().nullable(),
+});
+export type DeliveryPlanHistoryPage = z.output<
+  typeof DeliveryPlanHistoryPageSchema
+>;
 export const DeliveryPlanContextSchema = z.strictObject({
   order_id: z.uuid(),
   version_id: z.uuid(),
@@ -17,16 +37,7 @@ export const DeliveryPlanContextSchema = z.strictObject({
   logistics_revision: RevisionSchema.min(1),
   requested_delivery_date: DateValue,
   planned_delivery_date: DateValue.nullable(),
-  recent_changes: z
-    .array(
-      z.strictObject({
-        id: z.uuid(),
-        occurred_at: z.iso.datetime(),
-        before: DateValue.nullable(),
-        after: DateValue.nullable(),
-      }),
-    )
-    .max(20),
+  recent_changes: z.array(ChangeSchema).max(20),
   more_history: z.boolean(),
 });
 export const DeliveryPlanResultSchema = z.discriminatedUnion("kind", [
