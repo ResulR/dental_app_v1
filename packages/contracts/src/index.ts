@@ -85,3 +85,5 @@ export {
 export type { DeliveryPriorityContext } from "./delivery-priority.js";
 export * from "./drafts.js";
 export * from "./maintenance.js";
+
+export * from "./email-recipients.js";

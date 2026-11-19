@@ -17,3 +17,7 @@ export {
   createPrivateInvitationMailAppender,
   assertPrivateInvitationMailReady,
 } from "./private-invitation-mail.repository.js";
+
+export { assertEmailRecipientsReady } from "./email-recipients.repository.js";
+export { createEmailRecipientsService } from "./email-recipients.service.js";
+export { registerEmailRecipientsRoutes } from "./email-recipients.routes.js";

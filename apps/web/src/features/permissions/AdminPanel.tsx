@@ -1,3 +1,4 @@
+import { EmailRecipientsPanel } from "./EmailRecipientsPanel.js";
 import { useEffect, useRef, useState } from "react";
 import type {
   AdminProfileSchema,
@@ -200,6 +201,10 @@ export function AdminPanel() {
             {profile.email} · Versioni {profile.revision}
           </h4>
           <p>{describe(profile)}</p>
+          {import.meta.env.VITE_DENTAL_LAB_EMAIL_RECIPIENTS_ENABLED ===
+            "true" && (
+            <EmailRecipientsPanel key={profile.id} accountId={profile.id} />
+          )}
           {!confirm && (
             <>
               {profile.lifecycle !== "suspended" && (

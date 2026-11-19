@@ -9,8 +9,12 @@ import {
 } from "../modules/drafts/index.js";
 import { auditReadEnabled } from "./audit-read-config.js";
 import { emailQueueReadEnabled } from "./email-queue-read-config.js";
+import { emailRecipientsEnabled } from "./email-recipients-config.js";
 import {
   createEmailQueueReadService,
+  createEmailRecipientsService,
+  assertEmailRecipientsReady,
+  registerEmailRecipientsRoutes,
   assertEmailQueueReadReady,
   registerEmailQueueReadRoutes,
 } from "../modules/notifications/index.js";
@@ -198,6 +202,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
   const enableOrderMessaging = orderMessagingEnabled(env);
   const enableAuditRead = auditReadEnabled(env);
   const enableEmailQueueRead = emailQueueReadEnabled(env);
+  const enableEmailRecipients = emailRecipientsEnabled(env);
   const enableDeliveryBatch = deliveryBatchEnabled(env);
   const enableDeliveryPriority = deliveryPriorityEnabled(env);
   const enableDeliveryPlan = deliveryPlanEnabled(env);
@@ -240,6 +245,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
       await assertGeneralMessagingReady(database);
     if (enableAuditRead) await assertAuditReadReady(database);
     if (enableEmailQueueRead) await assertEmailQueueReadReady(database);
+    if (enableEmailRecipients) await assertEmailRecipientsReady(database);
     if (enableDeliveryPriority) await assertDeliveryPriorityReady(database);
     if (enableDeliveryPlan) await assertDeliveryPlanReady(database);
     if (enableLaboratorySettings) await assertLaboratorySettingsReady(database);
@@ -405,6 +411,12 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
               database,
               enableInternalNotices,
             ),
+            sessions,
+            origin: config.origin,
+          });
+        if (enableEmailRecipients)
+          registerEmailRecipientsRoutes(app, {
+            repository: createEmailRecipientsService(database),
             sessions,
             origin: config.origin,
           });

@@ -1,6 +1,11 @@
 import { AuditLogQuerySchema, AuditLogPageSchema } from "./audit-log.js";
 import { EmailQueueQuerySchema, EmailQueuePageSchema } from "./email-queue.js";
 import {
+  EmailRecipientCommandSchema,
+  EmailRecipientResultSchema,
+  EmailRecipientsSchema,
+} from "./email-recipients.js";
+import {
   DeliveryBatchCommandSchema,
   DeliveryBatchReceiptQuerySchema,
   DeliveryBatchResultSchema,
@@ -171,6 +176,9 @@ export function exportJsonSchemas() {
     AuditLogPage: AuditLogPageSchema,
     EmailQueueQuery: EmailQueueQuerySchema,
     EmailQueuePage: EmailQueuePageSchema,
+    EmailRecipients: EmailRecipientsSchema,
+    EmailRecipientCommand: EmailRecipientCommandSchema,
+    EmailRecipientResult: EmailRecipientResultSchema,
     DeliveryBatchCommand: DeliveryBatchCommandSchema,
     DeliveryBatchReceiptQuery: DeliveryBatchReceiptQuerySchema,
     DeliveryBatchResult: DeliveryBatchResultSchema,
