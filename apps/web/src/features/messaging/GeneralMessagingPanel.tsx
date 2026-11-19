@@ -12,6 +12,7 @@ import {
   createReadFlight,
   hasAuthorizedConversation,
   contiguousReadThrough,
+  confirmsMutatedMessage,
   mergeMessagePage,
 } from "./message-sync.js";
 import {
@@ -497,6 +498,8 @@ export function GeneralMessagingPanel({
       !window.confirm("Ta fshihni këtë mesazh? Teksti nuk do të shfaqet më.")
     )
       return;
+    const epoch = selectionEpoch.current;
+    const conversationId = selected;
     setMutating(true);
     setNotice("");
     try {
@@ -510,6 +513,7 @@ export function GeneralMessagingPanel({
           ...(action === "edit" ? { body: editing?.body ?? "" } : {}),
         },
       );
+      if (epoch !== selectionEpoch.current) return;
       if (result.kind !== "updated") {
         if (result.kind === "closed") setClosed(true);
         setNotice(
@@ -519,19 +523,34 @@ export function GeneralMessagingPanel({
         );
         return;
       }
-      setEditing(null);
       const page = await fetchMessages({
-        conversation_id: selected,
+        conversation_id: conversationId,
         before_seq: message.sequence_number + 1,
       });
+      if (epoch !== selectionEpoch.current) return;
+      if (
+        result.revision === null ||
+        !confirmsMutatedMessage(
+          page,
+          conversationId,
+          message.id,
+          result.revision,
+        )
+      )
+        throw new Error("MESSAGE_MUTATION_RECEIPT_MISMATCH");
+      setEditing(null);
       setMessages((previous) =>
-        previous?.conversation_id === selected
+        previous?.conversation_id === conversationId
           ? mergeMessagePage(previous, page, true)
           : previous,
       );
     } catch {
+      if (epoch !== selectionEpoch.current) return;
+      setMessages(null);
+      closeHistory();
+      setEditing(null);
       setNotice(
-        "Nuk dihet nëse ndryshimi u ruajt. Ringarkoni bisedën para se të provoni sërish.",
+        "Nuk dihet nëse ndryshimi u ruajt ose lejet ndryshuan. Mesazhet u fshehën; rifreskoni bisedën para se të provoni sërish.",
       );
     } finally {
       setMutating(false);

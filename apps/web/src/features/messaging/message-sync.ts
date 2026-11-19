@@ -33,6 +33,19 @@ export function appendConversationPage(
 }
 
 type Page = ReturnType<typeof GeneralMessagePageSchema.parse>;
+export function confirmsMutatedMessage(
+  page: Page,
+  conversationId: string,
+  messageId: string,
+  revision: number,
+) {
+  return (
+    page.conversation_id === conversationId &&
+    page.messages.some(
+      (message) => message.id === messageId && message.revision >= revision,
+    )
+  );
+}
 export function mergeMessagePage(
   current: Page,
   incoming: Page,

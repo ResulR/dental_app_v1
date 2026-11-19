@@ -6,6 +6,7 @@ import {
   createReadFlight,
   hasAuthorizedConversation,
   contiguousReadThrough,
+  confirmsMutatedMessage,
   mergeMessagePage,
 } from "../../apps/web/src/features/messaging/message-sync.ts";
 
@@ -83,6 +84,17 @@ function page(from, to, options = {}) {
     ...options,
   };
 }
+test("message mutation needs a fresh receipt for the exact conversation and message", () => {
+  const result = page(4, 4);
+  result.messages[0].revision = 2;
+  expect(confirmsMutatedMessage(result, id, id, 2)).toBe(true);
+  expect(confirmsMutatedMessage(result, id, id, 3)).toBe(false);
+  expect(confirmsMutatedMessage(result, "foreign", id, 2)).toBe(false);
+  expect(confirmsMutatedMessage(result, id, "other", 2)).toBe(false);
+  expect(confirmsMutatedMessage({ ...result, messages: [] }, id, id, 2)).toBe(
+    false,
+  );
+});
 test("read cursor only advances through actually visible contiguous messages", () => {
   expect(contiguousReadThrough(0, new Set([71, 72]))).toBe(0);
   expect(contiguousReadThrough(70, new Set([71, 72, 74]))).toBe(72);
