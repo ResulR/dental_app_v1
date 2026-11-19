@@ -2506,7 +2506,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 14.4 — Implémenter e-mails cliniques requis
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Huit événements cliniques autorisés disposent d’un rendu albanais générique vers le portail privé, sans patient, motif, fichier ni adresse ; événements hors matrice refusés. Intentions transactionnelles déjà préparées, mais aucun fournisseur, destinataire vérifié au transport ni e-mail livré ; réception et activation ouvertes.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Notifications, e-mails et alertes
