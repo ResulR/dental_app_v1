@@ -29,6 +29,14 @@ test("conversation pagination ignores stale refreshes and overlapping rows", () 
     refreshed,
   );
   expect(appendConversationPage(first, first, incoming, "other")).toBe(first);
+  const repeated = appendConversationPage(
+    first,
+    first,
+    { items: [item("c"), item("c")], next_after: "b" },
+    "b",
+  );
+  expect(repeated?.items.map((row) => row.id)).toEqual(["a", "b", "c"]);
+  expect(repeated?.next_after).toBeNull();
 });
 function page(from, to, options = {}) {
   return {

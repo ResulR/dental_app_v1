@@ -12,12 +12,14 @@ export function appendConversationPage(
 ): Conversations | null {
   if (current !== expected || current.next_after !== cursor) return current;
   const known = new Set(current.items.map((item) => item.id));
+  const additional = incoming.items.filter((item) => {
+    if (known.has(item.id)) return false;
+    known.add(item.id);
+    return true;
+  });
   return {
-    items: [
-      ...current.items,
-      ...incoming.items.filter((item) => !known.has(item.id)),
-    ],
-    next_after: incoming.next_after,
+    items: [...current.items, ...additional],
+    next_after: incoming.next_after === cursor ? null : incoming.next_after,
   };
 }
 
