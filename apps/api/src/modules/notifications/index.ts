@@ -22,3 +22,5 @@ export { assertEmailRecipientsReady } from "./email-recipients.repository.js";
 export { createEmailRecipientsService } from "./email-recipients.service.js";
 export { registerEmailRecipientsRoutes } from "./email-recipients.routes.js";
 export { clinicalBusinessEmail } from "./clinical-business-email.js";
+
+export { laboratoryBusinessEmail } from "./laboratory-business-email.js";

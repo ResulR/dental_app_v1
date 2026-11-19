@@ -2521,7 +2521,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 14.5 — Implémenter six alertes e-mail laboratoire
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Six catégories disposent d’un rendu albanais générique vers le portail privé, sans patient, motif, fichier ni adresse ; événements hors matrice refusés. Intentions et sélection des destinataires déjà préparées, mais aucun fournisseur, droit final vérifié au transport ni e-mail livré ; réception et activation ouvertes.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Notifications, e-mails et alertes
