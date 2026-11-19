@@ -581,8 +581,17 @@ export function GeneralMessagingPanel({
           : { id: messageId, page },
       );
     } catch {
-      if (epoch === selectionEpoch.current && request === historyEpoch.current)
-        setNotice("Historiku nuk u ngarkua. Provoni sërish.");
+      if (
+        epoch === selectionEpoch.current &&
+        request === historyEpoch.current
+      ) {
+        closeHistory();
+        setMessages(null);
+        setEditing(null);
+        setNotice(
+          "Historiku ose lejet nuk u verifikuan. Mesazhet u fshehën; rifreskoni bisedën.",
+        );
+      }
     }
   }
   async function send() {
@@ -812,7 +821,7 @@ export function GeneralMessagingPanel({
                             Versione më të vjetra
                           </Button>
                         )}
-                        <Button type="button" onClick={() => setHistory(null)}>
+                        <Button type="button" onClick={closeHistory}>
                           Mbyll historikun
                         </Button>
                       </div>
