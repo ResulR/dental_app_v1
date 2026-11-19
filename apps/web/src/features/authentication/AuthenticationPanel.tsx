@@ -4,6 +4,10 @@ import { Button } from "../../shared/Button.js";
 import { Card } from "../../shared/Card.js";
 import { createAuthClient, authFailureMessage } from "./auth-api.js";
 import type { AuthClient, SessionIdentity, SessionResult } from "./auth-api.js";
+import {
+  listenSuspensionAdvisory,
+  publishSuspensionAdvisory,
+} from "./suspension-advisory.js";
 const api = createAuthClient();
 const profiles = {
   owner: "Pronari",
@@ -32,6 +36,14 @@ export function AuthenticationPanel({
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
+  const revalidationEpoch = useRef(0);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const ids = useId();
   function applySession(result: SessionResult) {
     if (result.kind === "authenticated") {
@@ -49,6 +61,7 @@ export function AuthenticationPanel({
       const result = await client.suspension(signal);
       if (result.kind === "suspended") {
         setView(result);
+        publishSuspensionAdvisory(result.accountId);
         try {
           if (!purgeSuspendedAccount) throw new Error("PURGE_UNAVAILABLE");
           await purgeSuspendedAccount(result.accountId);
@@ -100,20 +113,24 @@ export function AuthenticationPanel({
     }
   }
   async function check() {
+    const epoch = revalidationEpoch.current;
     await operation(async () => {
       const current = await client.session();
+      if (epoch !== revalidationEpoch.current) return;
       if (current.kind !== "authenticated") {
         if (current.kind === "denied") await resolveDenied();
         else applySession(current);
         return;
       }
       const renewed = await client.renew();
+      if (epoch !== revalidationEpoch.current) return;
       if (renewed.kind !== "ok") {
         if (renewed.kind === "denied") await resolveDenied();
         setMessage(authFailureMessage(renewed));
         return;
       }
-      applySession(await client.session());
+      const latest = await client.session();
+      if (epoch === revalidationEpoch.current) applySession(latest);
     });
   }
   async function login() {
@@ -140,6 +157,24 @@ export function AuthenticationPanel({
       } else setMessage("Dalja nuk u konfirmua. " + authFailureMessage(result));
     });
   }
+  // A second tab closes its unlocked portal immediately on an advisory, then
+  // asks the server. The advisory itself can never authorize local deletion.
+  useEffect(() => {
+    if (view.kind !== "authenticated" || view.identity.profile !== "clinic")
+      return;
+    const accountId = view.identity.account_id;
+    const stop = listenSuspensionAdvisory(accountId, () => {
+      const epoch = ++revalidationEpoch.current;
+      setView({ kind: "checking" });
+      void client.session().then(async (result) => {
+        if (!mounted.current || epoch !== revalidationEpoch.current) return;
+        if (result.kind === "denied") await resolveDenied();
+        else if (mounted.current && epoch === revalidationEpoch.current)
+          applySession(result);
+      });
+    });
+    return stop;
+  }, [view, client, resolveDenied]);
   // Focus revalidation reads current state before renewal, including after an
   // uncertain response. Cookie stays browser-managed; no local token storage.
   useEffect(() => {
