@@ -1,5 +1,6 @@
 import type {
   GeneralConversationPageSchema,
+  OrderConversationResultSchema,
   MessagingInboxPageSchema,
 } from "@dental-lab/contracts";
 
@@ -20,6 +21,22 @@ export function refreshSelectedGeneral(
         ...selected,
         clinic_name: found.clinic_name,
         unread_count: found.unread_count,
+      }
+    : null;
+}
+
+export function refreshSelectedOrder(
+  selected: InboxItem,
+  current: ReturnType<typeof OrderConversationResultSchema.parse>,
+): InboxItem | null {
+  return selected.kind === "order" &&
+    selected.order_id === current.order_id &&
+    selected.conversation_id === current.id &&
+    selected.clinic_id === current.clinic_id
+    ? {
+        ...selected,
+        closed: current.closed,
+        unread_count: current.unread_count,
       }
     : null;
 }

@@ -7,7 +7,10 @@ import {
   orderConversation,
 } from "./general-api.js";
 import { GeneralMessagingPanel } from "./GeneralMessagingPanel.js";
-import { refreshSelectedGeneral } from "./inbox-selection.js";
+import {
+  refreshSelectedGeneral,
+  refreshSelectedOrder,
+} from "./inbox-selection.js";
 type Page = ReturnType<typeof MessagingInboxPageSchema.parse>;
 type Item = Page["items"][number];
 export function MessagingInboxPanel({
@@ -57,11 +60,7 @@ export function MessagingInboxPanel({
               { order_id: selected.order_id },
               signal,
             );
-            scoped = {
-              ...selected,
-              closed: current.closed,
-              unread_count: current.unread_count,
-            };
+            scoped = refreshSelectedOrder(selected, current);
           } else if (selected.kind === "general") {
             const current = await generalConversations(
               { clinic_id: selected.clinic_id },
@@ -142,15 +141,7 @@ export function MessagingInboxPanel({
       let current: Item | null = null;
       if (item.kind === "order" && item.order_id) {
         const scoped = await orderConversation({ order_id: item.order_id });
-        if (
-          scoped.id === item.conversation_id &&
-          scoped.clinic_id === item.clinic_id
-        )
-          current = {
-            ...item,
-            closed: scoped.closed,
-            unread_count: scoped.unread_count,
-          };
+        current = refreshSelectedOrder(item, scoped);
       } else if (item.kind === "general") {
         current = refreshSelectedGeneral(
           item,
