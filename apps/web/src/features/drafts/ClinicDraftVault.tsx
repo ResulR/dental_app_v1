@@ -4,6 +4,8 @@ import {
   canChangeLocalDraft,
   inspectDraftImport,
   savedFormMatchesVisible,
+  conflictStateLabel,
+  serverChoiceConfirmation,
 } from "./draft-import.js";
 import { Button } from "../../shared/Button.js";
 import {
@@ -625,7 +627,7 @@ export function ClinicDraftVault<T>({
       !db.current ||
       !envelope ||
       !key.current ||
-      !window.confirm("Zgjedhja e serverit zëvendëson draftin lokal. Vazhdoni?")
+      !window.confirm(serverChoiceConfirmation(conflict.state))
     )
       return;
     let current: ServerDraft | null;
@@ -999,8 +1001,13 @@ export function ClinicDraftVault<T>({
               {conflict && (
                 <div role="alert">
                   <p>
-                    Konflikt me versionin {conflict.revision} të serverit (
-                    {conflict.state}). Asgjë nuk u zëvendësua.
+                    Konflikt: drafti lokal i ruajtur është në r{revision}.
+                    Serveri:{" "}
+                    {conflict.state === "missing"
+                      ? "pa version"
+                      : `r${conflict.revision}`}{" "}
+                    — {conflictStateLabel(conflict.state)}. Asgjë nuk u
+                    zëvendësua.
                   </p>
                   {conflict.state !== "missing" && (
                     <Button

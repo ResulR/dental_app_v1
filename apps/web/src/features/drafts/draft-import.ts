@@ -38,3 +38,22 @@ export function savedFormMatchesVisible<T>(
     JSON.stringify(stored) === JSON.stringify(current)
   );
 }
+
+export function conflictStateLabel(
+  state: "active" | "deleted" | "submitted" | "missing",
+) {
+  return {
+    active: "aktiv",
+    deleted: "i fshirë",
+    submitted: "i dërguar si porosi",
+    missing: "i padisponueshëm",
+  }[state];
+}
+
+export function serverChoiceConfirmation(
+  state: "active" | "deleted" | "submitted",
+) {
+  return state === "active"
+    ? "Versioni i serverit do të zëvendësojë draftin lokal të koduar. Vazhdoni?"
+    : "Versioni i serverit është fshirë ose dërguar si porosi. Zgjedhja e tij do të heqë draftin lokal të koduar në këtë pajisje. Mund të ruani një kopje të re lokale në vend të kësaj. Vazhdoni?";
+}

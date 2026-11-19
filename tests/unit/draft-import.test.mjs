@@ -3,6 +3,8 @@ import {
   canChangeLocalDraft,
   inspectDraftImport,
   savedFormMatchesVisible,
+  conflictStateLabel,
+  serverChoiceConfirmation,
 } from "../../apps/web/src/features/drafts/draft-import.ts";
 const id = "90000000-0000-4000-8000-000000000001";
 const other = "90000000-0000-4000-8000-000000000002";
@@ -61,4 +63,12 @@ test("a new sync cannot silently send an older saved form while preserving pendi
       toServer,
     ),
   ).toBe(false);
+});
+
+test("conflict copy makes server deletion and submission consequences explicit", () => {
+  expect(conflictStateLabel("missing")).toBe("i padisponueshëm");
+  expect(conflictStateLabel("submitted")).toContain("porosi");
+  for (const state of ["deleted", "submitted"])
+    expect(serverChoiceConfirmation(state)).toContain("heqë draftin lokal");
+  expect(serverChoiceConfirmation("active")).toContain("zëvendësojë");
 });

@@ -2689,7 +2689,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 15.7 — Implémenter détection des conflits
-- **Statut :** ◐ Le serveur renvoie un conflit sur révision obsolète et sur réutilisation contradictoire d'une clé idempotente, sans écrire. La lecture du tombstone est cloisonnée. Choix explicite serveur/clone local codé pour brouillons textuels ; fichiers et tests multi-appareils restent à faire ; aucun conflit n'est résolu automatiquement.
+- **Statut :** ◐ Le serveur renvoie un conflit sur révision obsolète et sur réutilisation contradictoire d'une clé idempotente, sans écrire. La lecture du tombstone est cloisonnée. Choix explicite serveur/clone local codé pour brouillons textuels, avec comparaison des révisions et confirmation spécifique avant retrait local si le serveur a supprimé ou soumis le brouillon ; fichiers et tests multi-appareils restent à faire ; aucun conflit n'est résolu automatiquement.
 - **Priorité :** Haute
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** PWA, hors ligne et brouillons
