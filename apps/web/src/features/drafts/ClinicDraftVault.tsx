@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
-import { canChangeLocalDraft, inspectDraftImport } from "./draft-import.js";
+import {
+  canChangeLocalDraft,
+  inspectDraftImport,
+  savedFormMatchesVisible,
+} from "./draft-import.js";
 import { Button } from "../../shared/Button.js";
 import {
   prepareVault,
@@ -435,6 +439,12 @@ export function ClinicDraftVault<T>({
       let target = saved.remote;
       let localRevision = saved.revision;
       if (!target?.pending) {
+        if (!savedFormMatchesVisible(saved.value, capture(), toServer)) {
+          setMessage(
+            "Formulari ndryshoi pas ruajtjes lokale. Ruajeni përsëri para sinkronizimit; asgjë nuk u dërgua.",
+          );
+          return;
+        }
         const payload = toServer(saved.value);
         if (!payload) {
           setMessage(

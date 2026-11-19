@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 import {
   canChangeLocalDraft,
   inspectDraftImport,
+  savedFormMatchesVisible,
 } from "../../apps/web/src/features/drafts/draft-import.ts";
 const id = "90000000-0000-4000-8000-000000000001";
 const other = "90000000-0000-4000-8000-000000000002";
@@ -34,4 +35,30 @@ test("a pending or uncertain order submission freezes local draft replacements",
   for (const state of ["prepared", "uncertain"])
     expect(canChangeLocalDraft(false, state)).toBe(false);
   expect(canChangeLocalDraft(true, null)).toBe(false);
+});
+
+test("a new sync cannot silently send an older saved form while preserving pending replay", () => {
+  const toServer = (value) =>
+    value.description ? { description: value.description } : null;
+  expect(
+    savedFormMatchesVisible(
+      { description: "A" },
+      { description: "A" },
+      toServer,
+    ),
+  ).toBe(true);
+  expect(
+    savedFormMatchesVisible(
+      { description: "A" },
+      { description: "B" },
+      toServer,
+    ),
+  ).toBe(false);
+  expect(
+    savedFormMatchesVisible(
+      { description: "A" },
+      { description: "" },
+      toServer,
+    ),
+  ).toBe(false);
 });

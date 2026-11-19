@@ -21,3 +21,20 @@ export function canChangeLocalDraft(
     submissionState !== "uncertain"
   );
 }
+
+// Compare the exact server representation, not a revision counter alone.
+// The caller only uses this before creating a new sync intention; an existing
+// pending intention must always remain replayable with its original payload.
+export function savedFormMatchesVisible<T>(
+  saved: T,
+  visible: T,
+  toServer: (value: T) => unknown | null,
+): boolean {
+  const stored = toServer(saved);
+  const current = toServer(visible);
+  return (
+    stored !== null &&
+    current !== null &&
+    JSON.stringify(stored) === JSON.stringify(current)
+  );
+}
