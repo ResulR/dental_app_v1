@@ -126,6 +126,14 @@ export function App() {
                           : "")
                       }
                       clinic={identity.profile === "clinic"}
+                      accountId={identity.account_id}
+                      onInspectOrder={(number) =>
+                        setSimilarSelection((previous) => ({
+                          accountId: identity.account_id,
+                          number,
+                          sequence: (previous?.sequence ?? 0) + 1,
+                        }))
+                      }
                       initialSearchNumber={
                         similarSelection?.accountId === identity.account_id
                           ? similarSelection.number

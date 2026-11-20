@@ -26,18 +26,19 @@ export function createOrderSubmissionRepository(
         confirmed_warnings,
         draft_id,
         draft_revision,
+        duplicate_source,
       } = parsed.data;
       const fingerprint = createHash("sha256")
         .update(
           JSON.stringify(
-            draft_id
+            draft_id || duplicate_source
               ? {
+                  ...(duplicate_source ? { duplicate_source } : {}),
                   input: {
                     ...input,
                     teeth: [...input.teeth].sort((a, b) => a.fdi - b.fdi),
                   },
-                  draft_id,
-                  draft_revision,
+                  ...(draft_id ? { draft_id, draft_revision } : {}),
                 }
               : {
                   ...input,
@@ -114,6 +115,33 @@ export function createOrderSubmissionRepository(
               };
           }
           return { kind: "result" as const, result: receipt(row, true) };
+        }
+        let source: Record<string, unknown> | undefined;
+        if (duplicate_source) {
+          const scoped = await tx.query(
+            "SELECT id FROM public.orders WHERE id=$1 AND clinic_id=$2",
+            [duplicate_source.order_id, clinicId],
+          );
+          if (scoped.rows.length !== 1) return { kind: "denied" as const };
+          const locked = await tx.query(
+            "SELECT id,status,current_version_id,revision::text FROM public.orders WHERE id=$1 AND clinic_id=$2 FOR UPDATE",
+            [duplicate_source.order_id, clinicId],
+          );
+          source = locked.rows[0];
+          if (
+            !source ||
+            !["rejected", "cancelled"].includes(String(source.status)) ||
+            source.current_version_id !==
+              duplicate_source.expected_version_id ||
+            Number(source.revision) !== duplicate_source.expected_revision
+          )
+            return {
+              kind: "result" as const,
+              result: OrderSubmissionResultSchema.parse({
+                kind: "source_unavailable",
+                persisted: false,
+              }),
+            };
         }
         if (draft_id) {
           const draft = await tx.query<{
@@ -286,6 +314,22 @@ export function createOrderSubmissionRepository(
           "INSERT INTO public.submission_receipts(account_id,intent,idempotency_key,payload_fingerprint,order_id,clinic_id) VALUES($1,'clinic_order',$2,$3,$4,$5) RETURNING id",
           [actor.accountId, idempotency_key, fingerprint, orderId, clinicId],
         );
+        if (duplicate_source) {
+          if (!source || persistedReceipt.rows.length !== 1)
+            throw new Error("RESUBMISSION_RECEIPT_MISSING");
+          await tx.query(
+            "INSERT INTO public.work_links(source_order_id,child_order_id,clinic_id,kind,child_current_status,source_revision,source_status_at_creation,created_by,idempotency_receipt_id) VALUES($1,$2,$3,'resubmission','pending',$4,$5,$6,$7)",
+            [
+              source.id,
+              orderId,
+              clinicId,
+              source.revision,
+              source.status,
+              actor.accountId,
+              persistedReceipt.rows[0]!.id,
+            ],
+          );
+        }
         if (draft_id) {
           if (persistedReceipt.rows.length !== 1)
             throw new Error("ORDER_RECEIPT_MISSING");

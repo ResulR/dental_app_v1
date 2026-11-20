@@ -1627,7 +1627,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 9.10 — Implémenter duplication depuis refusée/annulée
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Parcours de copie clinique et dépôt lié intégrés sous activation existante ; réception PostgreSQL et navigateur différée
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Commande clinique : saisie et dépôt
@@ -1643,6 +1643,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 
 ## Chapitre 10 — Workflow et décisions des commandes
+
+- **Implémentation 19/11 :** la fiche clinique relit la version courante d'une source Refusée/Annulée, préremplit un nouveau formulaire modifiable sans reprendre ses fichiers, puis emploie le dépôt et le coffre chiffré existants. La transaction revérifie clinique, état et version sous verrou, crée un nouveau numéro En attente et un lien `resubmission` rattaché au reçu idempotent. Les autres états, sources étrangères et références/fichiers non valides sont refusés ; aucune modification de la source. Activation et réceptions PostgreSQL/navigateur différées.
 
 ### 10.1 — Implémenter moteur de transitions des commandes
 - **Statut :** ◐ Transitions complémentaires intégrées — autres flux et réceptions différés

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { OrderInstructionsSchema } from "./order-edit.js";
 import { RevisionSchema } from "./schemas.js";
-import { OrderSubmissionResultSchema } from "./order-submission.js";
+import { OrderSubmissionBaseResultSchema } from "./order-submission.js";
 const Command = z
   .strictObject({
     source_order_id: z.uuid(),
@@ -19,7 +19,7 @@ export type LaboratoryLinkedWork = z.output<typeof Command>;
 export const LaboratoryLinkedWorkSchema: z.ZodType<LaboratoryLinkedWork> =
   Command;
 const Result = z.union([
-  OrderSubmissionResultSchema,
+  OrderSubmissionBaseResultSchema,
   z.strictObject({
     kind: z.literal("source_unavailable"),
     persisted: z.literal(false),

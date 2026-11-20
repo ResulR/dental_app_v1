@@ -5,6 +5,13 @@ export const OrderSubmissionSchema = z
     idempotency_key: z.uuid(),
     input: OrderPreflightInputSchema,
     confirmed_warnings: z.boolean(),
+    duplicate_source: z
+      .strictObject({
+        order_id: z.uuid(),
+        expected_version_id: z.uuid(),
+        expected_revision: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER),
+      })
+      .optional(),
     draft_id: z.uuid().optional(),
     draft_revision: z.number().int().min(1).max(2147483647).optional(),
   })
@@ -12,7 +19,7 @@ export const OrderSubmissionSchema = z
     (value) =>
       (value.draft_id === undefined) === (value.draft_revision === undefined),
   );
-export const OrderSubmissionResultSchema = z.discriminatedUnion("kind", [
+export const OrderSubmissionBaseResultSchema = z.discriminatedUnion("kind", [
   z.strictObject({
     kind: z.literal("submitted"),
     persisted: z.literal(true),
@@ -38,6 +45,14 @@ export const OrderSubmissionResultSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("conflict"), persisted: z.literal(false) }),
   z.strictObject({
     kind: z.literal("draft_conflict"),
+    persisted: z.literal(false),
+  }),
+]);
+
+export const OrderSubmissionResultSchema = z.discriminatedUnion("kind", [
+  ...OrderSubmissionBaseResultSchema.options,
+  z.strictObject({
+    kind: z.literal("source_unavailable"),
     persisted: z.literal(false),
   }),
 ]);

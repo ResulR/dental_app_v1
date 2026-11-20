@@ -77,6 +77,42 @@ test("submission HTTP enforces origin session strict body and returns only commi
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(result);
     expect(response.headers.get("cache-control")).toContain("no-store");
+    const duplicate = JSON.stringify({
+      ...JSON.parse(body),
+      duplicate_source: {
+        order_id: id,
+        expected_version_id: id,
+        expected_revision: 3,
+      },
+    });
+    expect(
+      (
+        await fetch(url, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            ...JSON.parse(duplicate),
+            duplicate_source: { order_id: id },
+          }),
+        })
+      ).status,
+    ).toBe(400);
+    expect(
+      (await fetch(url, { method: "POST", headers, body: duplicate })).status,
+    ).toBe(200);
+    expect(submit).toHaveBeenCalledTimes(2);
+    submit.mockResolvedValueOnce({
+      kind: "result",
+      result: { kind: "source_unavailable", persisted: false },
+    });
+    expect(
+      await (
+        await fetch(url, { method: "POST", headers, body: duplicate })
+      ).json(),
+    ).toEqual({
+      kind: "source_unavailable",
+      persisted: false,
+    });
   } finally {
     await closeServer(server);
   }

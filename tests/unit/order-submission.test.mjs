@@ -50,6 +50,23 @@ function fixture(patch = {}) {
           )
         )
           return { rows: patch.unapproved ? [] : [{ id }] };
+        if (sql === "SELECT id FROM public.orders WHERE id=$1 AND clinic_id=$2")
+          return { rows: patch.foreignSource ? [] : [{ id: values[0] }] };
+        if (
+          sql.startsWith(
+            "SELECT id,status,current_version_id,revision::text FROM public.orders",
+          )
+        )
+          return {
+            rows: [
+              {
+                id: values[0],
+                status: patch.sourceStatus ?? "rejected",
+                current_version_id: patch.sourceVersion ?? id,
+                revision: String(patch.sourceRevision ?? 3),
+              },
+            ],
+          };
         if (sql.startsWith("SELECT r.id AS receipt_id"))
           return {
             rows: draft.receipt
@@ -179,6 +196,11 @@ test("official submission writes all aggregate records in one transaction using 
     },
   });
   expect(db.transaction).toHaveBeenCalledTimes(1);
+  expect(
+    db.state.writes.some(([sql]) =>
+      sql.startsWith("INSERT INTO public.work_links("),
+    ),
+  ).toBe(false);
   const sql = db.state.writes.map(([s]) => s).join("\n");
   for (const table of [
     "catalog_reference_snapshots",
@@ -608,4 +630,123 @@ test("draft content and idempotency key must match exactly, with legacy unlinked
     (await createOrderSubmissionService(legacy).submit(actor, command)).result
       .kind,
   ).toBe("submitted");
+});
+
+const duplicated = {
+  ...command,
+  duplicate_source: {
+    order_id: id,
+    expected_version_id: id,
+    expected_revision: 3,
+  },
+};
+test("resubmission links a new pending order to the locked rejected source and replays one receipt", async () => {
+  const db = fixture(),
+    service = createOrderSubmissionService(db);
+  const first = await service.submit(actor, duplicated);
+  expect(first.result).toMatchObject({ kind: "submitted", replayed: false });
+  const link = db.state.writes.find(([sql]) =>
+    sql.startsWith("INSERT INTO public.work_links("),
+  );
+  expect(link[1]).toMatchObject([
+    id,
+    first.result.order_id,
+    id,
+    "3",
+    "rejected",
+    id,
+    id,
+  ]);
+  const count = db.state.writes.length;
+  expect((await service.submit(actor, duplicated)).result).toMatchObject({
+    order_id: first.result.order_id,
+    replayed: true,
+  });
+  expect(db.state.writes).toHaveLength(count);
+  expect(
+    (
+      await service.submit(actor, {
+        ...duplicated,
+        duplicate_source: {
+          ...duplicated.duplicate_source,
+          expected_revision: 4,
+        },
+      })
+    ).result.kind,
+  ).toBe("conflict");
+  expect(db.state.writes).toHaveLength(count);
+});
+test("resubmission rejects a foreign, active or changed source before writes and does not copy source files", async () => {
+  for (const [patch, kind] of [
+    [{ foreignSource: true }, "denied"],
+    [{ sourceStatus: "accepted" }, "source_unavailable"],
+    [{ sourceVersion: shade }, "source_unavailable"],
+    [{ sourceRevision: 4 }, "source_unavailable"],
+  ]) {
+    const db = fixture(patch);
+    const result = await createOrderSubmissionService(db).submit(
+      actor,
+      duplicated,
+    );
+    expect(result.kind === "result" ? result.result.kind : result.kind).toBe(
+      kind,
+    );
+    expect(db.state.writes).toEqual([]);
+  }
+  const db = fixture();
+  const result = await createOrderSubmissionService(db).submit(actor, {
+    ...duplicated,
+    input: { ...input, file_ids: [id] },
+  });
+  expect(result.result).toMatchObject({
+    kind: "blocked",
+    reasons: ["files_not_ready"],
+  });
+  expect(db.state.writes).toEqual([]);
+});
+test("resubmission rollback and lost response preserve one child and link in transactional double", async () => {
+  const failed = fixture({ failAt: "public.work_links(" });
+  await expect(
+    createOrderSubmissionService(failed).submit(actor, duplicated),
+  ).rejects.toThrow();
+  expect(failed.state.writes).toEqual([]);
+  const db = fixture({ lostResponseAfterCommit: true });
+  const service = createOrderSubmissionService(db);
+  await expect(service.submit(actor, duplicated)).rejects.toThrow(
+    "SYNTHETIC_RESPONSE_LOST_AFTER_COMMIT",
+  );
+  const replay = await service.submit(actor, duplicated);
+  expect(replay.result).toMatchObject({ kind: "submitted", replayed: true });
+  expect(
+    db.state.writes.filter(([sql]) =>
+      sql.startsWith("INSERT INTO public.work_links("),
+    ),
+  ).toHaveLength(1);
+  const simultaneous = fixture();
+  const requests = await Promise.all([
+    createOrderSubmissionService(simultaneous).submit(actor, duplicated),
+    createOrderSubmissionService(simultaneous).submit(actor, duplicated),
+  ]);
+  expect(requests.map((r) => r.result.replayed)).toEqual([false, true]);
+  expect(
+    simultaneous.state.writes.filter(([sql]) =>
+      sql.startsWith("INSERT INTO public.work_links("),
+    ),
+  ).toHaveLength(1);
+});
+
+test("cancelled work can be copied without changing the original", async () => {
+  const db = fixture({ sourceStatus: "cancelled" });
+  const result = await createOrderSubmissionService(db).submit(
+    actor,
+    duplicated,
+  );
+  expect(result.result.kind).toBe("submitted");
+  const link = db.state.writes.find(([sql]) =>
+    sql.startsWith("INSERT INTO public.work_links("),
+  );
+  expect(link[1][4]).toBe("cancelled");
+  expect(
+    db.state.writes.some(([sql]) => sql.startsWith("UPDATE public.orders")),
+  ).toBe(false);
 });

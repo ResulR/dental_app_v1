@@ -76,3 +76,39 @@ test("offline rendering disables preflight and offers no submission action", () 
     vi.unstubAllGlobals();
   }
 });
+
+test("duplication prefills editable fields but never old files", () => {
+  vi.stubGlobal("navigator", { onLine: true });
+  try {
+    const source = {
+      order_id: "91000000-0000-4000-8000-000000000001",
+      number: "29",
+      status: "rejected",
+      revision: 3,
+      current_version_id: "91000000-0000-4000-8000-000000000002",
+      input: {
+        patient: { internal_reference: "Synthetic-ref" },
+        requested_delivery_date: "2026-12-04",
+        material_id: "91000000-0000-4000-8000-000000000003",
+        shade_id: "91000000-0000-4000-8000-000000000004",
+        description: "Synthetic description",
+        teeth: [{ fdi: 11, selection: "normal" }],
+        file_ids: ["91000000-0000-4000-8000-000000000005"],
+      },
+    };
+    const html = renderToStaticMarkup(
+      createElement(ClinicOrderForm, {
+        accountId: "91000000-0000-4000-8000-000000000006",
+        duplicateSource: source,
+      }),
+    );
+    expect(html).toContain("Porosi e re nga Nr. 29");
+    expect(html).toContain('value="Synthetic-ref"');
+    expect(html).toContain('value="2026-12-04"');
+    expect(html).toContain("Synthetic description");
+    expect(html).toContain("skedarët e vjetër nuk kopjohen");
+    expect(html).not.toContain(source.input.file_ids[0]);
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});

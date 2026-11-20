@@ -12,6 +12,7 @@ import {
 } from "@dental-lab/contracts";
 import type {
   ActiveCatalogItemSchema,
+  OrderEditView,
   CatalogKindSchema,
   OrderPreflightResultSchema,
   OrderSimilarityResultSchema,
@@ -46,19 +47,29 @@ const issues = {
 export function ClinicOrderForm({
   onInspectOrder,
   accountId,
+  duplicateSource,
 }: {
   onInspectOrder?: (number: string) => void;
   accountId: string;
+  duplicateSource?: OrderEditView;
 }) {
-  const [first, setFirst] = useState(""),
-    [last, setLast] = useState(""),
-    [reference, setReference] = useState(""),
-    [date, setDate] = useState(""),
-    [description, setDescription] = useState("");
+  const [first, setFirst] = useState(
+      duplicateSource?.input.patient.first_name ?? "",
+    ),
+    [last, setLast] = useState(duplicateSource?.input.patient.last_name ?? ""),
+    [reference, setReference] = useState(
+      duplicateSource?.input.patient.internal_reference ?? "",
+    ),
+    [date, setDate] = useState(
+      duplicateSource?.input.requested_delivery_date ?? "",
+    ),
+    [description, setDescription] = useState(
+      duplicateSource?.input.description ?? "",
+    );
   const [selected, setSelected] = useState<Record<Kind, string>>({
-    material: "",
-    shade: "",
-    work_type: "",
+    material: duplicateSource?.input.material_id ?? "",
+    shade: duplicateSource?.input.shade_id ?? "",
+    work_type: duplicateSource?.input.work_type_id ?? "",
   });
   const [entries, setEntries] = useState<Record<Kind, Item[]>>({
     material: [],
@@ -68,7 +79,9 @@ export function ClinicOrderForm({
   const [cursors, setCursors] = useState<Partial<Record<Kind, string | null>>>(
     {},
   );
-  const [teeth, setTeeth] = useState<Tooth[]>([]),
+  const [teeth, setTeeth] = useState<Tooth[]>(
+      duplicateSource?.input.teeth ?? [],
+    ),
     [result, setResult] = useState<ReturnType<
       typeof OrderPreflightResultSchema.parse
     > | null>(null);
@@ -209,6 +222,15 @@ export function ClinicOrderForm({
             idempotency_key: crypto.randomUUID(),
             input: input(),
             confirmed_warnings: ack,
+            ...(duplicateSource
+              ? {
+                  duplicate_source: {
+                    order_id: duplicateSource.order_id,
+                    expected_version_id: duplicateSource.current_version_id,
+                    expected_revision: duplicateSource.revision,
+                  },
+                }
+              : {}),
             ...(link ?? {}),
           });
         setIntent(request);
@@ -368,7 +390,18 @@ export function ClinicOrderForm({
   }
   return (
     <section aria-label="Përgatitja e porosisë">
-      <h3>Përgatitja e porosisë</h3>
+      <h3>
+        {duplicateSource
+          ? `Porosi e re nga Nr. ${duplicateSource.number}`
+          : "Përgatitja e porosisë"}
+      </h3>
+      {duplicateSource && (
+        <p>
+          Porosia e mëparshme mbetet e pandryshuar. Kontrolloni datën dhe
+          referencat; skedarët e vjetër nuk kopjohen. Porosia e re merr numër
+          dhe bisedë të veçantë.
+        </p>
+      )}
       <p>
         Kontrolloni të dhënat, pastaj dërgoni porosinë me konfirmim të qartë.
         Drafti ruhet vetëm me veprim të qartë në kasafortën lokale. Skedarët nuk
@@ -595,6 +628,12 @@ export function ClinicOrderForm({
         <p role="alert">
           Gjendja ndryshoi. Kontrolloni përsëri dhe konfirmoni paralajmërimet
           para dërgimit.
+        </p>
+      )}
+      {submission?.kind === "source_unavailable" && (
+        <p role="alert">
+          Burimi ndryshoi ose nuk është më i refuzuar/anuluar. Ringarkoni
+          porosinë dhe nisni një kopje të re.
         </p>
       )}
       {submission?.kind === "draft_conflict" && (

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { RevisionSchema } from "./schemas.js";
-import { OrderSubmissionResultSchema } from "./order-submission.js";
+import { OrderSubmissionBaseResultSchema } from "./order-submission.js";
 const Input = z.strictObject({
   source_order_id: z.uuid(),
   expected_source_version_id: z.uuid(),
@@ -19,7 +19,7 @@ const Command = z.strictObject({
 export type RetouchSubmission = z.output<typeof Command>;
 export const RetouchSubmissionSchema: z.ZodType<RetouchSubmission> = Command;
 const Result = z.union([
-  OrderSubmissionResultSchema,
+  OrderSubmissionBaseResultSchema,
   z.strictObject({
     kind: z.literal("source_unavailable"),
     persisted: z.literal(false),

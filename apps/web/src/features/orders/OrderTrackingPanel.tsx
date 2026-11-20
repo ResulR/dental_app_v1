@@ -7,6 +7,8 @@ import { OrderFilesPanel } from "./OrderFilesPanel.js";
 import { LaboratoryLinkedWorkForm } from "./LaboratoryLinkedWorkForm.js";
 import { LinkedWorkPanel } from "./LinkedWorkPanel.js";
 import { OrderRetouchForm } from "./OrderRetouchForm.js";
+import { ClinicOrderForm } from "./ClinicOrderForm.js";
+import { createOrderEditClient } from "./edit-api.js";
 import { showRetouchEntry } from "./retouch-entry.js";
 import { appendOrderHistory } from "./order-history-page.js";
 import { OrderEditPanel } from "./OrderEditPanel.js";
@@ -19,20 +21,26 @@ import type {
   OrderTrackingPageSchema,
   OrderTrackingDetailSchema,
   StatusSchema,
+  OrderEditView,
 } from "@dental-lab/contracts";
 import { createOrderTrackingClient } from "./tracking-api.js";
 import { orderStatusLabels } from "./status-labels.js";
 import { Button } from "../../shared/Button.js";
 import type { ReactNode } from "react";
 const api = createOrderTrackingClient();
+const editApi = createOrderEditClient();
 type Status = ReturnType<typeof StatusSchema.parse>;
 export function OrderTrackingPanel({
   clinic,
   permissions,
   renderConversation,
   initialSearchNumber,
+  accountId,
+  onInspectOrder,
 }: {
   clinic: boolean;
+  accountId: string;
+  onInspectOrder?: (number: string) => void;
   initialSearchNumber?: string;
   permissions: ReturnType<
     typeof EffectivePermissionsSchema.parse
@@ -52,6 +60,7 @@ export function OrderTrackingPanel({
     [readyOnly, setReadyOnly] = useState(false),
     [displayedView, setDisplayedView] = useState("active"),
     [message, setMessage] = useState("");
+  const [duplicate, setDuplicate] = useState<OrderEditView | null>(null);
   const [chatOrder, setChatOrder] = useState<{
     id: string;
     number: string;
@@ -196,6 +205,20 @@ export function OrderTrackingPanel({
         setDetail((current) => (current === expected ? merged : current));
       } else setDetail(next);
       setChatOrder(null);
+    });
+  }
+  async function startDuplicate(orderId: string) {
+    setDuplicate(null);
+    await run(async (signal) => {
+      const source = await editApi.context({ order_id: orderId }, signal);
+      if (signal.aborted) return;
+      if (
+        source.order_id !== orderId ||
+        !["rejected", "cancelled"].includes(source.status) ||
+        source.version_id !== source.current_version_id
+      )
+        throw new Error("DUPLICATION_SOURCE_UNAVAILABLE");
+      setDuplicate(source);
     });
   }
   return (
@@ -412,6 +435,14 @@ export function OrderTrackingPanel({
                   }}
                 />
               )}
+              {clinic && ["rejected", "cancelled"].includes(row.status) && (
+                <Button
+                  disabled={busy}
+                  onClick={() => void startDuplicate(row.id)}
+                >
+                  Përgatit porosi të re nga Nr. {row.number}
+                </Button>
+              )}
               <LinkedWorkPanel
                 orderId={row.id}
                 onOpen={(id) => void open(id)}
@@ -468,6 +499,14 @@ export function OrderTrackingPanel({
             </li>
           ))}
         </ul>
+      )}
+      {duplicate && (
+        <ClinicOrderForm
+          key={`${duplicate.order_id}-${duplicate.revision}`}
+          accountId={accountId}
+          duplicateSource={duplicate}
+          {...(onInspectOrder ? { onInspectOrder } : {})}
+        />
       )}
       {page?.items.length === 0 && <p>Nuk u gjet asnjë porosi.</p>}
       {page?.next_after && (

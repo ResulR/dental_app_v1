@@ -21,5 +21,5 @@ checkLockfile(
   JSON.parse(await readFile(new URL("../package-lock.json", import.meta.url))),
 );
 const { contractVersion } = await import("@dental-lab/contracts");
-assert.equal(contractVersion, 4);
+assert.equal(contractVersion, 5);
 console.log("Workspace manifests and shared package resolution OK");

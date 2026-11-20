@@ -13,6 +13,7 @@ export async function assertOrderSubmissionReady(database: DatabaseExecutor) {
     "outbox_dispatches",
     "audit_events",
     "submission_receipts",
+    "work_links",
   ];
   const result = await database.query(
     `SELECT bool_and(to_regclass('public.'||name) IS NOT NULL AND has_table_privilege(current_user,'public.'||name,'SELECT') AND has_table_privilege(current_user,'public.'||name,'INSERT')) AS ready FROM unnest($1::text[]) AS t(name)`,
