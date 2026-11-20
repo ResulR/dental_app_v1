@@ -1996,6 +1996,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Application PostgreSQL :** aucune, feature désactivée par défaut, schéma existant réutilisé.
 - **Réception finale :** PostgreSQL/concurrence réelle, navigateur et notifications différés.
 
+
+- **Reprise 20/11 :** le bouton de récupération du reçu après une réponse incertaine est accessible hors du formulaire désactivé ; il rejoue la même intention en mémoire. Persistance après fermeture et réception navigateur restent à démontrer.
 ### 11.4 — Appliquer états, modifications et annulations des commandes aux retouches
 - **Statut :** ◐ Socle commandes réutilisé — validation bout en bout différée
 - **Priorité :** Critique

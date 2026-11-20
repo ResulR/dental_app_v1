@@ -271,12 +271,12 @@ export function OrderRetouchForm({
               Dërgo kërkesën e retushimit
             </Button>
           </fieldset>
-          {uncertain && (
-            <Button disabled={busy} onClick={() => void submit()}>
-              Rimerr rezultatin e së njëjtës kërkesë
-            </Button>
-          )}
         </>
+      )}
+      {uncertain && source && (
+        <Button disabled={busy} onClick={() => void submit()}>
+          Rimerr rezultatin e së njëjtës kërkesë
+        </Button>
       )}
       {message && <p role="status">{message}</p>}
     </div>
