@@ -359,9 +359,10 @@ export function OrderTrackingPanel({
       {clinic && retouchReceipt && (
         <div>
           <p role="status">
-            Retushimi Nr. {retouchReceipt.number} për porosinë Nr.{" "}
-            {retouchReceipt.sourceNumber} u regjistrua si punë më vete. Në
-            pritje të vendimit të laboratorit.
+            Retushimi Nr. {retouchReceipt.number} u regjistrua si punë më vete
+            {retouchReceipt.sourceNumber
+              ? ` për porosinë Nr. ${retouchReceipt.sourceNumber}`
+              : " për punën burim"}. Në pritje të vendimit të laboratorit.
           </p>
           <Button disabled={busy} onClick={() => void open(retouchReceipt.id)}>
             Hap ndjekjen e retushimit Nr. {retouchReceipt.number}

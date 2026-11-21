@@ -1998,7 +1998,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 
 - **Reprise 20/11 :** le bouton de récupération du reçu après une réponse incertaine est accessible hors du formulaire désactivé ; il rejoue la même intention en mémoire. Persistance après fermeture et réception navigateur restent à démontrer.
-- **Reprise chiffrée 21/11 :** intention et clé de retouche dans le coffre IndexedDB existant, liaison au compte et à la source, récupération manuelle après déverrouillage, même clé rejouée et trace effaçable seulement après réponse confirmée ; réception navigateur et PostgreSQL différée.
+- **Reprise chiffrée 21/11 :** intention et clé de retouche dans le coffre IndexedDB existant, liaison au compte et à la source, récupération manuelle après déverrouillage, même clé rejouée, reçu clinique lisible si le détail source est momentanément indisponible et trace effaçable seulement après réponse confirmée ; réception navigateur et PostgreSQL différée.
 ### 11.4 — Appliquer états, modifications et annulations des commandes aux retouches
 - **Statut :** ◐ Socle commandes réutilisé — validation bout en bout différée
 - **Priorité :** Critique
