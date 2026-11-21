@@ -9,6 +9,9 @@ import { createOrderEditClient } from "./edit-api.js";
 import { createRetouchClient } from "./retouch-api.js";
 import { createCatalogClient } from "../catalog/index.js";
 import { Button } from "../../shared/Button.js";
+import { openLocalVault, readVault } from "../drafts/local-vault.js";
+import { unlockVault, type VaultEnvelope } from "../drafts/vault-crypto.js";
+import { readRetouchIntent, stageRetouchIntent, markRetouchAttempt, settleRetouchIntent, clearRetouchIntent } from "../drafts/retouch-intent.js";
 const sourceApi = createOrderEditClient(),
   api = createRetouchClient(),
   catalog = createCatalogClient();
@@ -16,9 +19,11 @@ type Item = ReturnType<typeof ActiveCatalogItemSchema.parse>;
 type Kind = "material" | "shade";
 export function OrderRetouchForm({
   sourceId,
+  accountId,
   onFinished,
 }: {
   sourceId: string;
+  accountId: string;
   onFinished: (receipt: {
     id: string;
     number: string;
@@ -35,18 +40,56 @@ export function OrderRetouchForm({
     [ack, setAck] = useState(false),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(""),
-    [uncertain, setUncertain] = useState(false);
+    [uncertain, setUncertain] = useState(false),
+    [phrase, setPhrase] = useState(""),
+    [vaultReady, setVaultReady] = useState(false),
+    [storedState, setStoredState] = useState<"prepared" | "uncertain" | "settled" | null>(null);
   const [entries, setEntries] = useState<Record<Kind, Item[]>>({
       material: [],
       shade: [],
     }),
     [cursors, setCursors] = useState<Partial<Record<Kind, string | null>>>({});
+  const vault = useRef<{ db: IDBDatabase; envelope: VaultEnvelope; key: CryptoKey } | null>(null);
+  async function unlock() {
+    let db: IDBDatabase | null = null;
+    try {
+      db = await openLocalVault();
+      const envelope = await readVault(db, accountId);
+      if (!envelope) throw new Error("VAULT_MISSING");
+      const key = await unlockVault(envelope, accountId, phrase, "phrase");
+      const context = { db, envelope, key };
+      const saved = await readRetouchIntent(context);
+      vault.current?.db.close();
+      vault.current = context;
+      db = null;
+      setPhrase("");
+      setVaultReady(true);
+      if (saved) {
+        setStoredState(saved.state);
+        if (saved.sourceId === sourceId && saved.request) {
+          intent.current = saved.request;
+          setUncertain(true);
+          try {
+            const current = await sourceApi.context({ order_id: sourceId }, new AbortController().signal);
+            if (current.order_id === sourceId) setSource(current);
+          } catch { /* The server may be unavailable; keep the encrypted intent. */ }
+          setMessage("Kërkesa u gjet. Rimerrni shprehimisht rezultatin me të njëjtin identifikues.");
+        } else if (saved.sourceId !== sourceId) setMessage("Një kërkesë tjetër ruhet në kasafortë. Hapni punën përkatëse.");
+        else setMessage("Rezultati i konfirmuar ruhet në kasafortë. Mund të hiqni gjurmën lokale.");
+      }
+    } catch {
+      db?.close();
+      setMessage("Kasaforta nuk u hap. Kontrolloni frazën dhe provoni përsëri.");
+    }
+  }
   const pending = useRef<AbortController | null>(null),
     intent = useRef<RetouchSubmission | null>(null);
   useEffect(
     () => () => {
       pending.current?.abort();
       pending.current = null;
+      vault.current?.db.close();
+      vault.current = null;
     },
     [],
   );
@@ -115,8 +158,9 @@ export function OrderRetouchForm({
     });
   }
   async function submit() {
-    if (pending.current || !source) return;
+    if (pending.current || (!source && !intent.current) || !vault.current) return;
     if (!intent.current) {
+      if (!source) return;
       const parsed = RetouchSubmissionSchema.safeParse({
         idempotency_key: crypto.randomUUID(),
         confirmed_warnings: ack,
@@ -140,9 +184,19 @@ export function OrderRetouchForm({
       intent.current = parsed.data;
     }
     const command = intent.current;
+    try {
+      await stageRetouchIntent(vault.current, command);
+      await markRetouchAttempt(vault.current, command);
+      setStoredState("uncertain");
+    } catch {
+      setMessage("Kërkesa nuk u dërgua: ruajtja e koduar nuk u verifikua.");
+      return;
+    }
     await run(async (signal) => {
       const r = await api.submit(command, signal);
       if (signal.aborted) return;
+      await settleRetouchIntent(vault.current!, command, r);
+      setStoredState("settled");
       intent.current = null;
       setUncertain(false);
       if (r.kind === "submitted") {
@@ -150,7 +204,7 @@ export function OrderRetouchForm({
         onFinished({
           id: r.order_id,
           number: r.number,
-          sourceNumber: source.number,
+          sourceNumber: source?.number ?? "",
         });
         return;
       }
@@ -177,12 +231,14 @@ export function OrderRetouchForm({
   }
   return (
     <div>
-      <Button disabled={busy || uncertain} onClick={() => void load()}>
+      {!vaultReady && <div><label>Fraza e kasafortës lokale<input type="password" autoComplete="off" value={phrase} onChange={(e) => setPhrase(e.target.value)} /></label><Button disabled={!phrase || busy} onClick={() => void unlock()}>Hap kasafortën për retushimin</Button></div>}
+      {vaultReady && storedState === "settled" && <Button disabled={busy} onClick={() => void (async () => { try { await clearRetouchIntent(vault.current!, sourceId); setStoredState(null); setMessage("Gjurma lokale u hoq."); } catch { setMessage("Gjurma nuk u hoq; kontrolloni punën burim."); } })()}>Hiq gjurmën e konfirmuar</Button>}
+      <Button disabled={busy || uncertain || !vaultReady || storedState !== null} onClick={() => void load()}>
         Kërko retushim / rifabrikim
       </Button>
       {source && (
         <>
-          <fieldset disabled={busy || uncertain}>
+          <fieldset disabled={busy || uncertain || !vaultReady}>
             <legend>Puna e dorëzuar Nr. {source.number}</legend>
             <p>
               Krijohet punë e re me numër dhe bisedë të veçantë. Puna e
@@ -273,7 +329,7 @@ export function OrderRetouchForm({
           </fieldset>
         </>
       )}
-      {uncertain && source && (
+      {uncertain && (
         <Button disabled={busy} onClick={() => void submit()}>
           Rimerr rezultatin e së njëjtës kërkesë
         </Button>

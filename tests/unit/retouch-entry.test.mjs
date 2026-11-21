@@ -32,9 +32,9 @@ test("no retouch entry for laboratory or a work that is not delivered", () => {
 
 test("uncertain retouch replay remains actionable outside the disabled form", () => {
   const ui = readFileSync(new URL("../../apps/web/src/features/orders/OrderRetouchForm.tsx", import.meta.url), "utf8");
-  const disabledForm = ui.indexOf("<fieldset disabled={busy || uncertain}>");
+  const disabledForm = ui.indexOf("<fieldset disabled={busy || uncertain || !vaultReady}>");
   const end = ui.indexOf("</fieldset>", disabledForm);
-  const replay = ui.indexOf("{uncertain && source && (");
+  const replay = ui.indexOf("{uncertain && (");
   expect(disabledForm).toBeGreaterThan(-1);
   expect(replay).toBeGreaterThan(end);
   expect(ui.slice(replay)).toContain("onClick={() => void submit()}");
