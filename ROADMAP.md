@@ -2002,6 +2002,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Reprise chiffrée 21/11 :** intention et clé de retouche dans le coffre IndexedDB existant, liaison au compte et à la source, récupération manuelle après déverrouillage, même clé rejouée, reçu clinique lisible si le détail source est momentanément indisponible et trace effaçable seulement après réponse confirmée ; réception navigateur et PostgreSQL différée.
 - **Contrôle 24/11 :** déverrouillage concurrent du coffre de retouche sérialisé côté interface pour éviter la fermeture de la connexion active ; recette navigateur isolée toujours ouverte.
 - **Suivi 24/11 :** reçu de retouche confirmé récupérable après réouverture : ouverture explicite du suivi par le numéro serveur depuis le coffre ; la trace locale reste jusqu’au nettoyage contrôlé. Réception navigateur/PostgreSQL ouverte.
+- **Complément 24/11 :** création du même coffre chiffré directement dans le parcours de retouche si aucun coffre du compte n’existe, avec phrase confirmée et code de secours à conserver avant activation. Scénario Chromium synthétique isolé préparé pour fermeture, déverrouillage, même intention/reçu et séparation compte/source ; non exécuté : marge de processus inférieure aux 64 requis par le harnais. Révocation de session et interface complète à recevoir en navigateur ; PostgreSQL réel reste ouvert.
 ### 11.4 — Appliquer états, modifications et annulations des commandes aux retouches
 - **Statut :** ◐ Socle commandes réutilisé — validation bout en bout différée
 - **Priorité :** Critique

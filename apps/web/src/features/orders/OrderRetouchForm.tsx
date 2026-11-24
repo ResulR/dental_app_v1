@@ -9,8 +9,8 @@ import { createOrderEditClient } from "./edit-api.js";
 import { createRetouchClient } from "./retouch-api.js";
 import { createCatalogClient } from "../catalog/index.js";
 import { Button } from "../../shared/Button.js";
-import { openLocalVault, readVault } from "../drafts/local-vault.js";
-import { unlockVault, type VaultEnvelope } from "../drafts/vault-crypto.js";
+import { openLocalVault, readVault, createVault } from "../drafts/local-vault.js";
+import { unlockVault, prepareVault, type VaultEnvelope } from "../drafts/vault-crypto.js";
 import { readRetouchIntent, stageRetouchIntent, markRetouchAttempt, settleRetouchIntent, clearRetouchIntent } from "../drafts/retouch-intent.js";
 const sourceApi = createOrderEditClient(),
   api = createRetouchClient(),
@@ -42,6 +42,10 @@ export function OrderRetouchForm({
     [message, setMessage] = useState(""),
     [uncertain, setUncertain] = useState(false),
     [phrase, setPhrase] = useState(""),
+    [confirmation, setConfirmation] = useState(""),
+    [createMode, setCreateMode] = useState(false),
+    [recoveryCode, setRecoveryCode] = useState(""),
+    [savedCode, setSavedCode] = useState(false),
     [vaultReady, setVaultReady] = useState(false),
     [storedState, setStoredState] = useState<"prepared" | "uncertain" | "settled" | null>(null),
     [recoveredReceipt, setRecoveredReceipt] = useState<{ id: string; number: string } | null>(null);
@@ -52,6 +56,7 @@ export function OrderRetouchForm({
     [cursors, setCursors] = useState<Partial<Record<Kind, string | null>>>({});
   const vault = useRef<{ db: IDBDatabase; envelope: VaultEnvelope; key: CryptoKey } | null>(null);
   const unlocking = useRef(false);
+  const prepared = useRef<Awaited<ReturnType<typeof prepareVault>> | null>(null);
   async function unlock() {
     if (unlocking.current) return;
     unlocking.current = true;
@@ -86,10 +91,61 @@ export function OrderRetouchForm({
           setMessage("Rezultati i konfirmuar ruhet në kasafortë. Mund të hapni punën ose të hiqni gjurmën lokale.");
         }
       }
-    } catch {
+    } catch (error) {
       db?.close();
-      setMessage("Kasaforta nuk u hap. Krijojeni te formulari i porosisë nëse mungon, ose kontrolloni frazën.");
+      if (error instanceof Error && error.message === "VAULT_MISSING") {
+        setCreateMode(true);
+        setMessage("Nuk ka kasafortë për këtë llogari. Krijojeni këtu për të ruajtur kërkesën e retushimit.");
+      } else setMessage("Kasaforta nuk u hap. Kontrolloni frazën dhe llogarinë.");
     } finally {
+      unlocking.current = false;
+      setBusy(false);
+    }
+  }
+  async function prepareCreation() {
+    if (unlocking.current || phrase !== confirmation || phrase.length < 12) {
+      setMessage("Fraza duhet të ketë të paktën 12 shenja dhe të përputhet me konfirmimin.");
+      return;
+    }
+    unlocking.current = true;
+    setBusy(true);
+    try {
+      const value = await prepareVault(accountId, phrase);
+      prepared.current = value;
+      setRecoveryCode(value.recoveryCode);
+      setSavedCode(false);
+      setPhrase("");
+      setConfirmation("");
+      setMessage("Ruani kodin e rikuperimit jashtë pajisjes përpara krijimit.");
+    } catch {
+      setMessage("Kasaforta nuk u përgatit. Kontrolloni mjedisin e sigurt.");
+    } finally {
+      unlocking.current = false;
+      setBusy(false);
+    }
+  }
+  async function confirmCreation() {
+    if (unlocking.current || !savedCode || !prepared.current) return;
+    unlocking.current = true;
+    setBusy(true);
+    let db: IDBDatabase | null = null;
+    try {
+      db = await openLocalVault();
+      const value = prepared.current;
+      await createVault(db, value.envelope);
+      vault.current?.db.close();
+      vault.current = { db, envelope: value.envelope, key: value.active };
+      db = null;
+      prepared.current = null;
+      setRecoveryCode("");
+      setSavedCode(false);
+      setCreateMode(false);
+      setVaultReady(true);
+      setMessage("Kasaforta u krijua. Tani mund të kërkoni retushim.");
+    } catch {
+      setMessage("Krijimi nuk u verifikua. Nëse kasaforta ekziston, hapeni me frazën e saj.");
+    } finally {
+      db?.close();
       unlocking.current = false;
       setBusy(false);
     }
@@ -102,6 +158,7 @@ export function OrderRetouchForm({
       pending.current = null;
       vault.current?.db.close();
       vault.current = null;
+      prepared.current = null;
     },
     [],
   );
@@ -243,7 +300,21 @@ export function OrderRetouchForm({
   }
   return (
     <div>
-      {!vaultReady && <div><label>Fraza e kasafortës lokale<input type="password" autoComplete="off" value={phrase} onChange={(e) => setPhrase(e.target.value)} /></label><Button disabled={!phrase || busy} onClick={() => void unlock()}>Hap kasafortën për retushimin</Button></div>}
+      {!vaultReady && <div>
+        {!recoveryCode && <>
+          <label>Fraza e kasafortës lokale<input type="password" autoComplete="off" value={phrase} onChange={(e) => setPhrase(e.target.value)} /></label>
+          {createMode && <label>Konfirmoni frazën<input type="password" autoComplete="off" value={confirmation} onChange={(e) => setConfirmation(e.target.value)} /></label>}
+          {createMode
+            ? <Button disabled={!phrase || busy} onClick={() => void prepareCreation()}>Përgatit kasafortën</Button>
+            : <Button disabled={!phrase || busy} onClick={() => void unlock()}>Hap kasafortën për retushimin</Button>}
+        </>}
+        {recoveryCode && <>
+          <p>Kodi i rikuperimit shfaqet vetëm tani. Ruajeni në një vend të sigurt jashtë pajisjes.</p>
+          <output>{recoveryCode}</output>
+          <label><input type="checkbox" checked={savedCode} onChange={(e) => setSavedCode(e.target.checked)} /> E ruajta kodin e rikuperimit</label>
+          <Button disabled={!savedCode || busy} onClick={() => void confirmCreation()}>Krijo kasafortën</Button>
+        </>}
+      </div>}
       {vaultReady && storedState === "settled" && recoveredReceipt && (
         <Button disabled={busy} onClick={() => onFinished({ ...recoveredReceipt, sourceNumber: source?.number ?? "" })}>
           Hap ndjekjen e retushimit Nr. {recoveredReceipt.number}
