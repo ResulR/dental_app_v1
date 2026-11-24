@@ -11,6 +11,7 @@ import { ClinicOrderForm } from "./ClinicOrderForm.js";
 import { createOrderEditClient } from "./edit-api.js";
 import { showRetouchEntry } from "./retouch-entry.js";
 import { appendOrderHistory } from "./order-history-page.js";
+import { appendTrackingPage } from "./tracking-page.js";
 import { OrderEditPanel } from "./OrderEditPanel.js";
 import { OrderRequestActions } from "./OrderRequestActions.js";
 import { OrderLifecycleActions } from "./OrderLifecycleActions.js";
@@ -154,7 +155,11 @@ export function OrderTrackingPanel({
       const next = await api.search(parsed.data, signal);
       if (!signal.aborted) {
         lastQuery.current = parsed.data;
-        setPage(next);
+        if (after && page && !readyOnly) {
+          const merged = appendTrackingPage(page, next, after);
+          if (!merged) throw new Error("ORDER_SEARCH_PERMISSION_CHANGED");
+          setPage(merged);
+        } else setPage(next);
         setDisplayedView(parsed.data.view);
         setReadyOnly(ready || (!!after && readyOnly && !archive));
         setDetail(null);

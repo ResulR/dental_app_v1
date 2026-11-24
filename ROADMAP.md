@@ -1610,6 +1610,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Complément 27/10 :** Le numéro d'une correspondance 9.6 préremplit le champ de recherche de la clinique ; le serveur de suivi conserve ses contrôles de portée et permissions. Test de rendu et régressions ciblées réussis ; navigateur et PostgreSQL non reçus, statut ◐ maintenu.
 
 - **Complément 28/10 :** Le reçu de dépôt 9.7 contient un lien vers le suivi, avec le numéro serveur prérempli sous le compte courant. Test de rendu et régressions ciblées réussis ; réception navigateur et SQL de suivi toujours ouvertes.
+- **Complément 24/11 :** le suivi conserve les résultats déjà parcourus pendant la pagination, élimine les recouvrements, stoppe un curseur répété et efface le résultat si le droit de lire les détails change ; la liste groupée « prêts à livrer » reste limitée à sa page de 50 pour respecter son contrat. Réception navigateur différée.
 
 ### 9.9 — Implémenter création au nom de la clinique par le labo
 - **Statut :** ☐ À faire
