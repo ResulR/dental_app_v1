@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ActionInboxPage } from "@dental-lab/contracts";
 import { createActionInboxClient } from "./action-inbox-api.js";
+import { appendActionInboxPage } from "./action-inbox-page.js";
 import { OrderReviewPanel } from "./OrderReviewPanel.js";
 import { OrderLifecycleActions } from "./OrderLifecycleActions.js";
 import { OrderModificationReview } from "./OrderModificationReview.js";
@@ -36,7 +37,10 @@ export function ActionInboxPanel() {
     const c = new AbortController();
     pending.current = c;
     setBusy(true);
-    setSelected(null);
+    if (!next) {
+      setSelected(null);
+      setPage(null);
+    }
     setMessage("");
     const timer = setTimeout(() => c.abort(), 8000);
     try {
@@ -44,7 +48,11 @@ export function ActionInboxPanel() {
         next && page?.next_after ? { after: page.next_after } : {},
         c.signal,
       );
-      if (!c.signal.aborted) setPage(result);
+      if (!c.signal.aborted) {
+        if (next && page && JSON.stringify(page.permissions) !== JSON.stringify(result.permissions))
+          setSelected(null);
+        setPage(next && page ? appendActionInboxPage(page, result) : result);
+      }
     } catch {
       if (pending.current === c) {
         setPage(null);

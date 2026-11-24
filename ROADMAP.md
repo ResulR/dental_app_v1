@@ -1917,6 +1917,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Validation hors ligne :** 7 tests ciblés réussis (doubles/HTTP et régression revue), builds contrats/API/web, types web, lint, frontières, contrats et workspace réussis.
 - **Application PostgreSQL :** aucune, aucune nouvelle migration.
 - **Réception finale :** SQL réel/ACL/concurrence de lecture et navigateur différés.
+- **Complément 24/11 :** la file conserve les pages déjà parcourues sans doublon ; nouvelle lecture repart de zéro et toute variation des permissions abandonne les lignes précédentes. Un curseur répété arrête la pagination. Réception navigateur différée.
 
 ### 10.15 — Tester concurrence métier extrême
 - **Statut :** ☐ À faire
