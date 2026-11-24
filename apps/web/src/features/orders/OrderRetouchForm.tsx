@@ -43,7 +43,8 @@ export function OrderRetouchForm({
     [uncertain, setUncertain] = useState(false),
     [phrase, setPhrase] = useState(""),
     [vaultReady, setVaultReady] = useState(false),
-    [storedState, setStoredState] = useState<"prepared" | "uncertain" | "settled" | null>(null);
+    [storedState, setStoredState] = useState<"prepared" | "uncertain" | "settled" | null>(null),
+    [recoveredReceipt, setRecoveredReceipt] = useState<{ id: string; number: string } | null>(null);
   const [entries, setEntries] = useState<Record<Kind, Item[]>>({
       material: [],
       shade: [],
@@ -79,7 +80,11 @@ export function OrderRetouchForm({
           } catch { /* The server may be unavailable; keep the encrypted intent. */ }
           setMessage("Kërkesa u gjet. Rimerrni shprehimisht rezultatin me të njëjtin identifikues.");
         } else if (saved.sourceId !== sourceId) setMessage("Një kërkesë tjetër ruhet në kasafortë. Hapni punën përkatëse.");
-        else setMessage("Rezultati i konfirmuar ruhet në kasafortë. Mund të hiqni gjurmën lokale.");
+        else {
+          if (saved.reply?.kind === "submitted")
+            setRecoveredReceipt({ id: saved.reply.order_id, number: saved.reply.number });
+          setMessage("Rezultati i konfirmuar ruhet në kasafortë. Mund të hapni punën ose të hiqni gjurmën lokale.");
+        }
       }
     } catch {
       db?.close();
@@ -239,7 +244,12 @@ export function OrderRetouchForm({
   return (
     <div>
       {!vaultReady && <div><label>Fraza e kasafortës lokale<input type="password" autoComplete="off" value={phrase} onChange={(e) => setPhrase(e.target.value)} /></label><Button disabled={!phrase || busy} onClick={() => void unlock()}>Hap kasafortën për retushimin</Button></div>}
-      {vaultReady && storedState === "settled" && <Button disabled={busy} onClick={() => void (async () => { try { await clearRetouchIntent(vault.current!, sourceId); setStoredState(null); setMessage("Gjurma lokale u hoq."); } catch { setMessage("Gjurma nuk u hoq; kontrolloni punën burim."); } })()}>Hiq gjurmën e konfirmuar</Button>}
+      {vaultReady && storedState === "settled" && recoveredReceipt && (
+        <Button disabled={busy} onClick={() => onFinished({ ...recoveredReceipt, sourceNumber: source?.number ?? "" })}>
+          Hap ndjekjen e retushimit Nr. {recoveredReceipt.number}
+        </Button>
+      )}
+      {vaultReady && storedState === "settled" && <Button disabled={busy} onClick={() => void (async () => { try { await clearRetouchIntent(vault.current!, sourceId); setStoredState(null); setRecoveredReceipt(null); setMessage("Gjurma lokale u hoq."); } catch { setMessage("Gjurma nuk u hoq; kontrolloni punën burim."); } })()}>Hiq gjurmën e konfirmuar</Button>}
       <Button disabled={busy || uncertain || !vaultReady || storedState !== null} onClick={() => void load()}>
         Kërko retushim / rifabrikim
       </Button>

@@ -46,3 +46,10 @@ test("repeated unlock clicks cannot close an active vault handle", () => {
   expect(ui).toContain("unlocking.current = true;");
   expect(ui).toContain("unlocking.current = false;");
 });
+
+test("a recovered confirmed retouch requires an explicit tracking action", () => {
+  const ui = readFileSync(new URL("../../apps/web/src/features/orders/OrderRetouchForm.tsx", import.meta.url), "utf8");
+  expect(ui).toContain('saved.reply?.kind === "submitted"');
+  expect(ui).toContain('onClick={() => onFinished({ ...recoveredReceipt');
+  expect(ui).not.toMatch(/setRecoveredReceipt\([^)]*\);\s*onFinished\(/);
+});
