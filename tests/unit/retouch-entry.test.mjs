@@ -39,3 +39,10 @@ test("uncertain retouch replay remains actionable outside the disabled form", ()
   expect(replay).toBeGreaterThan(end);
   expect(ui.slice(replay)).toContain("onClick={() => void submit()}");
 });
+
+test("repeated unlock clicks cannot close an active vault handle", () => {
+  const ui = readFileSync(new URL("../../apps/web/src/features/orders/OrderRetouchForm.tsx", import.meta.url), "utf8");
+  expect(ui).toContain("if (unlocking.current) return;");
+  expect(ui).toContain("unlocking.current = true;");
+  expect(ui).toContain("unlocking.current = false;");
+});

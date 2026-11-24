@@ -50,7 +50,11 @@ export function OrderRetouchForm({
     }),
     [cursors, setCursors] = useState<Partial<Record<Kind, string | null>>>({});
   const vault = useRef<{ db: IDBDatabase; envelope: VaultEnvelope; key: CryptoKey } | null>(null);
+  const unlocking = useRef(false);
   async function unlock() {
+    if (unlocking.current) return;
+    unlocking.current = true;
+    setBusy(true);
     let db: IDBDatabase | null = null;
     try {
       db = await openLocalVault();
@@ -79,7 +83,10 @@ export function OrderRetouchForm({
       }
     } catch {
       db?.close();
-      setMessage("Kasaforta nuk u hap. Kontrolloni frazën dhe provoni përsëri.");
+      setMessage("Kasaforta nuk u hap. Krijojeni te formulari i porosisë nëse mungon, ose kontrolloni frazën.");
+    } finally {
+      unlocking.current = false;
+      setBusy(false);
     }
   }
   const pending = useRef<AbortController | null>(null),
