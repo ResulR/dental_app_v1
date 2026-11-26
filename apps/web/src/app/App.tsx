@@ -82,6 +82,7 @@ export function App() {
                   >
                     {() => (
                       <LaboratoryClinicOrderPanel
+                        accountId={identity.account_id}
                         key={identity.account_id + "-laboratory-clinic-order"}
                       />
                     )}

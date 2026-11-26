@@ -15,7 +15,11 @@ export type RemoteDraft = {
 };
 const NAME = "dental-lab-local-vault-v1";
 const DRAFT = "clinic-order-form";
-export type VaultRecordId = "clinic-order-form" | "clinic-order-submission" | "clinic-retouch-submission";
+export type VaultRecordId =
+  | "clinic-order-form"
+  | "clinic-order-submission"
+  | "clinic-retouch-submission"
+  | "laboratory-clinic-order";
 type StoredDraft = {
   accountId: string;
   draftId: string;
@@ -67,6 +71,7 @@ export async function purgeSuspendedAccount(accountId: string): Promise<void> {
     drafts.delete([accountId, "clinic-order-form"]);
     drafts.delete([accountId, "clinic-order-submission"]);
     drafts.delete([accountId, "clinic-retouch-submission"]);
+    drafts.delete([accountId, "laboratory-clinic-order"]);
     tx.objectStore("vaults").delete(accountId);
     await done;
   } finally {

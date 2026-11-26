@@ -16,6 +16,11 @@ import type {
 import { createCatalogClient } from "../catalog/index.js";
 import { createLaboratoryLinkedWorkClient } from "./laboratory-linked-api.js";
 import { createLaboratoryClinicClient } from "./laboratory-clinic-api.js";
+import {
+  prepareLaboratoryOrderAttempt,
+  settleLaboratoryOrderIntent,
+} from "../drafts/index.js";
+import type { LaboratoryOrderVault } from "../drafts/index.js";
 import { Button } from "../../shared/Button.js";
 type Kind = ReturnType<typeof CatalogKindSchema.parse>;
 type Item = ReturnType<typeof ActiveCatalogItemSchema.parse>;
@@ -33,12 +38,20 @@ export function LaboratoryLinkedWorkForm({
   source,
   clinic,
   onSendingChange,
+  accountId,
+  vault,
+  recovered,
+  onSettled,
   canCancel = false,
   onFinished,
 }: {
   source?: OrderTrackingDetail["order"];
   clinic?: { id: string; name: string };
   onSendingChange?: (locked: boolean) => void;
+  accountId?: string;
+  vault?: LaboratoryOrderVault;
+  recovered?: LaboratoryClinicOrder | null;
+  onSettled?: (value: string) => void;
   canCancel?: boolean;
   onFinished: (text: string) => void;
 }) {
@@ -72,6 +85,7 @@ export function LaboratoryLinkedWorkForm({
   const frozen =
     busy ||
     uncertain ||
+    !!recovered ||
     result?.kind === "submitted" ||
     result?.kind === "conflict" ||
     result?.kind === "source_unavailable";
@@ -150,14 +164,16 @@ export function LaboratoryLinkedWorkForm({
       ].sort((a, b) => a.fdi - b.fdi);
     });
   }
-  async function submit() {
+  async function submit(replay = false) {
     if (
       pending.current ||
       result?.kind === "submitted" ||
       result?.kind === "conflict" ||
-      result?.kind === "source_unavailable"
+      result?.kind === "source_unavailable" ||
+      (!!recovered && !replay)
     )
       return;
+    if (!intent.current && recovered) intent.current = recovered;
     if (!intent.current) {
       const raw = {
         ...(source
@@ -205,11 +221,29 @@ export function LaboratoryLinkedWorkForm({
     const command = intent.current;
     onSendingChange?.(true);
     await run(async (signal) => {
+      if (!source) {
+        if (
+          !vault ||
+          !accountId ||
+          !clinic ||
+          !("clinic_id" in command) ||
+          command.clinic_id !== clinic.id
+        )
+          throw new Error("LABORATORY_INTENT_SCOPE");
+        await prepareLaboratoryOrderAttempt(vault, accountId, command, signal);
+      }
       const response =
         "source_order_id" in command
           ? await api.submit(command, signal)
           : await clinicApi.submit(command, signal);
       if (signal.aborted) return;
+      if (!source && vault && accountId && "clinic_id" in command) {
+        await settleLaboratoryOrderIntent(vault, accountId, command, response);
+        if (signal.aborted) return;
+        onSettled?.(
+          response.kind === "submitted" ? response.number : response.kind,
+        );
+      }
       intent.current = null;
       onSendingChange?.(false);
       setUncertain(false);
@@ -244,6 +278,17 @@ export function LaboratoryLinkedWorkForm({
         source ? "Punë e lidhur nga laboratori" : "Porosi nga laboratori"
       }
     >
+      {recovered && (
+        <div role="status">
+          <p>
+            Porosia e ruajtur për këtë klinikë është e pandryshueshme. Rimerrni
+            shprehimisht rezultatin me të njëjtën kërkesë.
+          </p>
+          <Button disabled={busy} onClick={() => void submit(true)}>
+            Rimerr rezultatin e kërkesës së ruajtur
+          </Button>
+        </div>
+      )}
       <h4>
         {source
           ? `Krijo punë të lidhur nga porosia Nr. ${source.number}`
@@ -252,7 +297,8 @@ export function LaboratoryLinkedWorkForm({
       <p>
         Krijohet punë e veçantë, menjëherë e pranuar, për klinikën{" "}
         {source?.clinic_name ?? clinic?.name}. Të dhënat dhe skedarët e vjetër
-        nuk kopjohen. Mos e mbyllni ekranin nëse rezultati është i pasigurt.
+        nuk kopjohen. Kërkesa ruhet e koduar për ta rimarrë pas një
+        ndërprerjeje.
       </p>
       <form
         onSubmit={(e) => {
@@ -482,7 +528,7 @@ export function LaboratoryLinkedWorkForm({
         </fieldset>
       </form>
       {uncertain && (
-        <Button disabled={busy} onClick={() => void submit()}>
+        <Button disabled={busy} onClick={() => void submit(true)}>
           Rimerr rezultatin e së njëjtës kërkesë
         </Button>
       )}
