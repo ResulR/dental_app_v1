@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type {
   LaboratoryClinicListSchema,
   LaboratoryClinicOrder,
+  LaboratoryClinicOrderResult,
 } from "@dental-lab/contracts";
 import {
   openLocalVault,
@@ -19,8 +20,10 @@ import { createLaboratoryClinicClient } from "./laboratory-clinic-api.js";
 const api = createLaboratoryClinicClient();
 export function LaboratoryClinicOrderPanel({
   accountId,
+  onInspectOrder,
 }: {
   accountId: string;
+  onInspectOrder?: (number: string) => void;
 }) {
   const [page, setPage] = useState<ReturnType<
     typeof LaboratoryClinicListSchema.parse
@@ -46,15 +49,13 @@ export function LaboratoryClinicOrderPanel({
   const [recovered, setRecovered] = useState<LaboratoryClinicOrder | null>(
     null,
   );
-  const [settled, setSettled] = useState<string | null>(null);
+  const [settled, setSettled] = useState<LaboratoryClinicOrderResult | null>(
+    null,
+  );
   async function inspect(context: LaboratoryOrderVault) {
     const saved = await readLaboratoryOrderIntent(context, accountId);
     setRecovered(saved?.request ?? null);
-    setSettled(
-      saved?.reply?.kind === "submitted"
-        ? saved.reply.number
-        : (saved?.reply?.kind ?? null),
-    );
+    setSettled(saved?.reply ?? null);
     setReady(true);
     setMessage(
       saved?.request
@@ -252,7 +253,20 @@ export function LaboratoryClinicOrderPanel({
       )}
       {ready && settled && (
         <div>
-          <p role="status">Rezultati i ruajtur: {settled}</p>
+          <p role="status">
+            Rezultati i ruajtur:{" "}
+            {settled.kind === "submitted"
+              ? `Nr. ${settled.number}`
+              : settled.kind}
+          </p>
+          {settled.kind === "submitted" && onInspectOrder && (
+            <Button
+              disabled={busy}
+              onClick={() => onInspectOrder(settled.number)}
+            >
+              Kërko porosinë Nr. {settled.number} në ndjekjen private
+            </Button>
+          )}
           <Button disabled={busy} onClick={() => void clearSettled()}>
             Hiq gjurmën e përfunduar
           </Button>

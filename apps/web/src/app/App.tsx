@@ -84,6 +84,13 @@ export function App() {
                       <LaboratoryClinicOrderPanel
                         accountId={identity.account_id}
                         key={identity.account_id + "-laboratory-clinic-order"}
+                        onInspectOrder={(number) =>
+                          setSimilarSelection((previous) => ({
+                            accountId: identity.account_id,
+                            number,
+                            sequence: (previous?.sequence ?? 0) + 1,
+                          }))
+                        }
                       />
                     )}
                   </PermissionBoundary>

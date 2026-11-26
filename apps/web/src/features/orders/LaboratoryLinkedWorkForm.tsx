@@ -8,6 +8,7 @@ import type {
   LaboratoryLinkedWork,
   LaboratoryLinkedWorkResult,
   LaboratoryClinicOrder,
+  LaboratoryClinicOrderResult,
   ActiveCatalogItemSchema,
   CatalogKindSchema,
   ToothSchema,
@@ -51,7 +52,7 @@ export function LaboratoryLinkedWorkForm({
   accountId?: string;
   vault?: LaboratoryOrderVault;
   recovered?: LaboratoryClinicOrder | null;
-  onSettled?: (value: string) => void;
+  onSettled?: (reply: LaboratoryClinicOrderResult) => void;
   canCancel?: boolean;
   onFinished: (text: string) => void;
 }) {
@@ -240,9 +241,7 @@ export function LaboratoryLinkedWorkForm({
       if (!source && vault && accountId && "clinic_id" in command) {
         await settleLaboratoryOrderIntent(vault, accountId, command, response);
         if (signal.aborted) return;
-        onSettled?.(
-          response.kind === "submitted" ? response.number : response.kind,
-        );
+        onSettled?.(response);
       }
       intent.current = null;
       onSendingChange?.(false);
