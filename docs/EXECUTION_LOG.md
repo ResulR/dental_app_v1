@@ -1070,3 +1070,7 @@ Services surveillés actifs, PID inchangés (246009/895970/842/619021).
 Restent : décision et validation de réserve/racine privée/analyseur/budgets/TTL ;
 adaptateurs durables, transferts, reprises/réconciliation ; association messages,
 suivi et droits des téléchargements ; réception SQL et navigateur. Aucun nettoyage.
+
+## 26 novembre 2026 UTC — 9.9, reprise de 5062ebe
+Reprise de la tranche non commitée. La création autonome garde l'identité laboratoire et le numéro serveur. Contrôles de clinique et permissions, historique, reçu, avis et intention e-mail dans la transaction. Lien privé vers le suivi autorisé, origine et compte auteur affichés. Le formulaire conserve la clé après réponse incertaine tant qu'il reste ouvert. Imports du coffre de retouche corrigés via son interface publique.
+42 tests synthétiques unitaires et HTTP réussis ; contrats v6, builds API/web, typage web, frontières et résolution workspace contrôlés. Réceptions SQL/navigateur, transport réel et fichiers différés. Suite : actions depuis la fiche privée et reprise des retouches.

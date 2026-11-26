@@ -135,7 +135,7 @@ export function createOrderTrackingRepository(
         );
         if (locked.rows.length !== 1) return { kind: "denied" as const };
         const details = await tx.query(
-          `SELECT o.id,o.number::text,c.name AS clinic_name,o.kind,o.origin,o.status,o.revision::text,o.received_at,to_char(l.planned_delivery_date,'YYYY-MM-DD') AS planned_delivery_date,l.priority,v.id AS version_id,
+          `SELECT o.id,o.number::text,c.name AS clinic_name,o.kind,o.origin,o.created_by,o.status,o.revision::text,o.received_at,to_char(l.planned_delivery_date,'YYYY-MM-DD') AS planned_delivery_date,l.priority,v.id AS version_id,
  jsonb_strip_nulls(jsonb_build_object('first_name',v.patient_first_name,'last_name',v.patient_last_name,'internal_reference',v.patient_reference)) AS patient,
  to_char(v.requested_delivery_date,'YYYY-MM-DD') AS requested_delivery_date,v.description,m.label AS material,s.label AS shade,w.label AS work_type,
  COALESCE((SELECT jsonb_agg(jsonb_build_object('fdi',t.fdi,'selection',t.selection) ORDER BY t.fdi) FROM public.order_version_teeth t WHERE t.version_id=v.id),'[]'::jsonb) AS teeth,

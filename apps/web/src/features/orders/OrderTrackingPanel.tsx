@@ -16,8 +16,8 @@ import { OrderEditPanel } from "./OrderEditPanel.js";
 import { OrderRequestActions } from "./OrderRequestActions.js";
 import { OrderLifecycleActions } from "./OrderLifecycleActions.js";
 import type { EffectivePermissionsSchema } from "@dental-lab/contracts";
-import { useEffect, useRef, useState } from "react";
-import { OrderSearchSchema } from "@dental-lab/contracts";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { OrderSearchSchema, orderIdFromFragment } from "@dental-lab/contracts";
 import type {
   OrderTrackingPageSchema,
   OrderTrackingDetailSchema,
@@ -212,6 +212,34 @@ export function OrderTrackingPanel({
       setChatOrder(null);
     });
   }
+  const followOrderLink = useEffectEvent((id: string) => {
+    pending.current?.abort();
+    pending.current = null;
+    setDuplicate(null);
+    setPage(null);
+    setDetail(null);
+    setChatOrder(null);
+    setRetouchReceipt(null);
+    void open(id);
+  });
+  useEffect(() => {
+    function follow() {
+      const id = orderIdFromFragment(window.location.hash);
+      if (!id) return;
+      window.history.replaceState(
+        window.history.state,
+        "",
+        window.location.pathname + window.location.search,
+      );
+      followOrderLink(id);
+    }
+    const timer = window.setTimeout(follow, 0);
+    window.addEventListener("hashchange", follow);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("hashchange", follow);
+    };
+  }, []);
   async function startDuplicate(orderId: string) {
     setDuplicate(null);
     await run(async (signal) => {
@@ -367,7 +395,8 @@ export function OrderTrackingPanel({
             Retushimi Nr. {retouchReceipt.number} u regjistrua si punë më vete
             {retouchReceipt.sourceNumber
               ? ` për porosinë Nr. ${retouchReceipt.sourceNumber}`
-              : " për punën burim"}. Në pritje të vendimit të laboratorit.
+              : " për punën burim"}
+            . Në pritje të vendimit të laboratorit.
           </p>
           <Button disabled={busy} onClick={() => void open(retouchReceipt.id)}>
             Hap ndjekjen e retushimit Nr. {retouchReceipt.number}
@@ -409,6 +438,7 @@ export function OrderTrackingPanel({
                 Nr. {row.number} · {row.clinic_name} ·{" "}
                 {orderStatusLabels[row.status]} ·{" "}
                 {row.kind === "retouch" ? "Retushim" : "Normale"}
+                {row.origin === "laboratory" && " · Krijuar nga laboratori"}
                 {row.priority ? " · Prioritet" : ""}
               </p>
               <p>
@@ -555,7 +585,7 @@ export function OrderTrackingPanel({
             "detail",
           ) && (
             <OrderRetouchForm
-                  accountId={accountId}
+              accountId={accountId}
               key={detail.order.id}
               sourceId={detail.order.id}
               onFinished={(receipt) => {
@@ -590,6 +620,13 @@ export function OrderTrackingPanel({
           <p>
             {detail.order.clinic_name} · Marrë më {detail.order.received_at} ·
             Rishikimi {detail.order.revision}
+          </p>
+          <p>
+            {detail.order.origin === "laboratory"
+              ? "Krijuar nga laboratori"
+              : "Krijuar nga klinika"}
+            {detail.order.created_by &&
+              ` · Llogaria e autorit: ${detail.order.created_by}`}
           </p>
           <p>
             Pacienti:{" "}

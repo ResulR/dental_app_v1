@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { purgeSuspendedAccount } from "../features/drafts/local-vault.js";
+import { LaboratoryClinicOrderPanel } from "../features/orders/LaboratoryClinicOrderPanel.js";
 import { AuditLogPanel } from "../features/audit/AuditLogPanel.js";
 import { EmailQueuePanel } from "../features/notifications/EmailQueuePanel.js";
 import { InternalNoticePanel } from "../features/notifications/InternalNoticePanel.js";
@@ -71,6 +72,21 @@ export function App() {
               {identity.profile !== "clinic" && (
                 <ActionInboxPanel key={identity.account_id + "-action-inbox"} />
               )}
+              {identity.profile !== "clinic" &&
+                import.meta.env.VITE_DENTAL_LAB_LABORATORY_ORDER_ENABLED ===
+                  "true" && (
+                  <PermissionBoundary
+                    identity={identity}
+                    permission="orders.create_for_clinic"
+                    allowClinic={false}
+                  >
+                    {() => (
+                      <LaboratoryClinicOrderPanel
+                        key={identity.account_id + "-laboratory-clinic-order"}
+                      />
+                    )}
+                  </PermissionBoundary>
+                )}
               {import.meta.env.VITE_DENTAL_LAB_INTERNAL_NOTICES_ENABLED ===
                 "true" &&
                 (identity.profile === "owner" ||

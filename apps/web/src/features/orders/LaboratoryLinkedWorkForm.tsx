@@ -1,8 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { FDI, LaboratoryLinkedWorkSchema } from "@dental-lab/contracts";
+import {
+  FDI,
+  LaboratoryLinkedWorkSchema,
+  LaboratoryClinicOrderSchema,
+} from "@dental-lab/contracts";
 import type {
   LaboratoryLinkedWork,
   LaboratoryLinkedWorkResult,
+  LaboratoryClinicOrder,
   ActiveCatalogItemSchema,
   CatalogKindSchema,
   ToothSchema,
@@ -10,6 +15,7 @@ import type {
 } from "@dental-lab/contracts";
 import { createCatalogClient } from "../catalog/index.js";
 import { createLaboratoryLinkedWorkClient } from "./laboratory-linked-api.js";
+import { createLaboratoryClinicClient } from "./laboratory-clinic-api.js";
 import { Button } from "../../shared/Button.js";
 type Kind = ReturnType<typeof CatalogKindSchema.parse>;
 type Item = ReturnType<typeof ActiveCatalogItemSchema.parse>;
@@ -21,14 +27,19 @@ const labels: Record<Kind, string> = {
   work_type: "Lloji i punës (opsional)",
 };
 const catalog = createCatalogClient(),
-  api = createLaboratoryLinkedWorkClient();
+  api = createLaboratoryLinkedWorkClient(),
+  clinicApi = createLaboratoryClinicClient();
 export function LaboratoryLinkedWorkForm({
   source,
-  canCancel,
+  clinic,
+  onSendingChange,
+  canCancel = false,
   onFinished,
 }: {
-  source: OrderTrackingDetail["order"];
-  canCancel: boolean;
+  source?: OrderTrackingDetail["order"];
+  clinic?: { id: string; name: string };
+  onSendingChange?: (locked: boolean) => void;
+  canCancel?: boolean;
   onFinished: (text: string) => void;
 }) {
   const [kind, setKind] = useState<"replacement" | "supplement">("supplement"),
@@ -57,7 +68,7 @@ export function LaboratoryLinkedWorkForm({
     [result, setResult] = useState<LaboratoryLinkedWorkResult | null>(null),
     [uncertain, setUncertain] = useState(false);
   const pending = useRef<AbortController | null>(null),
-    intent = useRef<LaboratoryLinkedWork | null>(null);
+    intent = useRef<LaboratoryLinkedWork | LaboratoryClinicOrder | null>(null);
   const frozen =
     busy ||
     uncertain ||
@@ -148,12 +159,16 @@ export function LaboratoryLinkedWorkForm({
     )
       return;
     if (!intent.current) {
-      const parsed = LaboratoryLinkedWorkSchema.safeParse({
-        source_order_id: source.id,
-        expected_source_version_id: source.version_id,
-        expected_source_revision: source.revision,
-        kind,
-        ...(reason.trim() ? { reason } : {}),
+      const raw = {
+        ...(source
+          ? {
+              source_order_id: source.id,
+              expected_source_version_id: source.version_id,
+              expected_source_revision: source.revision,
+              kind,
+              ...(reason.trim() ? { reason } : {}),
+            }
+          : { clinic_id: clinic?.id }),
         ...(exception.trim() ? { exception_reason: exception } : {}),
         idempotency_key: crypto.randomUUID(),
         confirmed_warnings: ack,
@@ -173,20 +188,30 @@ export function LaboratoryLinkedWorkForm({
           teeth,
           file_ids: [],
         },
-      });
+      };
+      const parsed = source
+        ? LaboratoryLinkedWorkSchema.safeParse(raw)
+        : LaboratoryClinicOrderSchema.safeParse(raw);
       if (!parsed.success) {
         setMessage(
-          "Plotësoni pacientin ose referencën, materialin, ngjyrën dhe arsyen e zëvendësimit.",
+          source && kind === "replacement"
+            ? "Kontrolloni pacientin ose referencën, materialin, ngjyrën dhe arsyen e zëvendësimit."
+            : "Kontrolloni emrin dhe mbiemrin ose referencën e pacientit, materialin dhe ngjyrën.",
         );
         return;
       }
       intent.current = parsed.data;
     }
     const command = intent.current;
+    onSendingChange?.(true);
     await run(async (signal) => {
-      const response = await api.submit(command, signal);
+      const response =
+        "source_order_id" in command
+          ? await api.submit(command, signal)
+          : await clinicApi.submit(command, signal);
       if (signal.aborted) return;
       intent.current = null;
+      onSendingChange?.(false);
       setUncertain(false);
       setResult(response);
       if (response.kind === "submitted") {
@@ -214,12 +239,20 @@ export function LaboratoryLinkedWorkForm({
     });
   }
   return (
-    <section aria-label="Punë e lidhur nga laboratori">
-      <h4>Krijo punë të lidhur nga porosia Nr. {source.number}</h4>
+    <section
+      aria-label={
+        source ? "Punë e lidhur nga laboratori" : "Porosi nga laboratori"
+      }
+    >
+      <h4>
+        {source
+          ? `Krijo punë të lidhur nga porosia Nr. ${source.number}`
+          : `Krijo porosi për klinikën ${clinic?.name ?? ""}`}
+      </h4>
       <p>
         Krijohet punë e veçantë, menjëherë e pranuar, për klinikën{" "}
-        {source.clinic_name}. Të dhënat dhe skedarët e vjetër nuk kopjohen. Mos
-        e mbyllni ekranin nëse rezultati është i pasigurt.
+        {source?.clinic_name ?? clinic?.name}. Të dhënat dhe skedarët e vjetër
+        nuk kopjohen. Mos e mbyllni ekranin nëse rezultati është i pasigurt.
       </p>
       <form
         onSubmit={(e) => {
@@ -227,44 +260,47 @@ export function LaboratoryLinkedWorkForm({
           if (!frozen) void submit();
         }}
       >
-        <fieldset disabled={frozen}>
-          <legend>Lidhja</legend>
-          <label>
-            Lloji
-            <select
-              value={kind}
-              onChange={(e) => {
-                edit();
-                setKind(e.target.value as typeof kind);
-              }}
-            >
-              <option value="supplement">Punë shtesë</option>
-              <option
-                value="replacement"
-                disabled={source.status === "manufacturing" && !canCancel}
+        {source && (
+          <fieldset disabled={frozen}>
+            <legend>Lidhja</legend>
+            <label>
+              Lloji
+              <select
+                value={kind}
+                onChange={(e) => {
+                  edit();
+                  setKind(e.target.value as typeof kind);
+                }}
               >
-                Zëvendësim
-              </option>
-            </select>
-          </label>
-          <p>
-            {kind === "replacement" && source.status === "manufacturing"
-              ? "Kujdes: porosia burim në fabrikim do të anulohet në të njëjtin veprim. Arsyeja është e detyrueshme."
-              : "Porosia burim, statusi dhe historiku i saj ruhen pa ndryshime."}
-          </p>
-          <label>
-            Arsyeja {kind === "replacement" ? "(e detyrueshme)" : "(opsionale)"}
-            <textarea
-              value={reason}
-              maxLength={2000}
-              required={kind === "replacement"}
-              onChange={(e) => {
-                edit();
-                setReason(e.target.value);
-              }}
-            />
-          </label>
-        </fieldset>
+                <option value="supplement">Punë shtesë</option>
+                <option
+                  value="replacement"
+                  disabled={source.status === "manufacturing" && !canCancel}
+                >
+                  Zëvendësim
+                </option>
+              </select>
+            </label>
+            <p>
+              {kind === "replacement" && source.status === "manufacturing"
+                ? "Kujdes: porosia burim në fabrikim do të anulohet në të njëjtin veprim. Arsyeja është e detyrueshme."
+                : "Porosia burim, statusi dhe historiku i saj ruhen pa ndryshime."}
+            </p>
+            <label>
+              Arsyeja{" "}
+              {kind === "replacement" ? "(e detyrueshme)" : "(opsionale)"}
+              <textarea
+                value={reason}
+                maxLength={2000}
+                required={kind === "replacement"}
+                onChange={(e) => {
+                  edit();
+                  setReason(e.target.value);
+                }}
+              />
+            </label>
+          </fieldset>
+        )}
         <fieldset disabled={frozen}>
           <legend>Identifikimi i pacientit</legend>
           <label>

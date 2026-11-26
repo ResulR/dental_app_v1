@@ -43,6 +43,7 @@ const OrderDetailQueryDefinition = z.strictObject({
 const OrderTrackingDetailDefinition = z.strictObject({
   order: OrderReviewPageSchema.shape.items.element.extend({
     status: StatusSchema,
+    created_by: z.uuid().optional(),
     received_at: z.iso.datetime(),
     planned_delivery_date: z.iso.date().nullable(),
     priority: z.boolean(),

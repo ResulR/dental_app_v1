@@ -9,9 +9,10 @@ import { createOrderEditClient } from "./edit-api.js";
 import { createRetouchClient } from "./retouch-api.js";
 import { createCatalogClient } from "../catalog/index.js";
 import { Button } from "../../shared/Button.js";
-import { openLocalVault, readVault, createVault } from "../drafts/local-vault.js";
-import { unlockVault, prepareVault, type VaultEnvelope } from "../drafts/vault-crypto.js";
-import { readRetouchIntent, stageRetouchIntent, markRetouchAttempt, settleRetouchIntent, clearRetouchIntent } from "../drafts/retouch-intent.js";
+import {
+  openLocalVault, readVault, createVault, unlockVault, prepareVault, type VaultEnvelope,
+  readRetouchIntent, stageRetouchIntent, markRetouchAttempt, settleRetouchIntent, clearRetouchIntent,
+} from "../drafts/index.js";
 const sourceApi = createOrderEditClient(),
   api = createRetouchClient(),
   catalog = createCatalogClient();

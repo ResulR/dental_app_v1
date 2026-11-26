@@ -115,6 +115,10 @@ def plan(name):
         "check:boundaries": [(node("scripts/check-boundaries.mjs"), "boundaries")],
         "check:workspace": [(node("scripts/check-workspace.mjs"), "workspace")],
     }
+    if name == "lint:sequential":
+        groups = [["apps/api"], ["apps/web"], ["packages"], ["tests"],
+                  [*sorted(glob.glob("scripts/*.mjs")), *sorted(glob.glob("*.mjs"))]]
+        return [(node("node_modules/eslint/bin/eslint.js", *group), "lint " + group[0]) for group in groups]
     if name == "format:changed":
         paths = subprocess.check_output(["git", "diff", "--name-only", "HEAD", "-z"], cwd=ROOT).split(b"\0")
         paths += subprocess.check_output(["git", "ls-files", "--others", "--exclude-standard", "-z"], cwd=ROOT).split(b"\0")
@@ -144,6 +148,12 @@ def plan(name):
     commands["test:logo-pipeline"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/logo-pipeline.test.mjs"), "targeted fail-closed logo pipeline")]
     commands["test:linked-work-tracking"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/linked-work-tracking.test.mjs", "tests/integration/linked-work-tracking-http.test.mjs"), "targeted scoped linked work tracking")]
     commands["test:action-inbox"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/action-inbox.test.mjs", "tests/integration/action-inbox-http.test.mjs", "tests/integration/order-review-http.test.mjs"), "targeted action inbox and review route regression")]
+    commands["test:laboratory-clinic-order"] = [(node("node_modules/vitest/vitest.mjs", "run",
+        "tests/unit/laboratory-linked.test.mjs", "tests/integration/laboratory-linked-http.test.mjs",
+        "tests/unit/internal-notifications.test.mjs", "tests/integration/internal-notifications-http.test.mjs",
+        "tests/unit/clinical-business-email.test.mjs", "tests/unit/clinical-mail-intent.test.mjs",
+        "tests/unit/order-tracking.test.mjs", "tests/integration/order-tracking-http.test.mjs"),
+        "laboratory clinic order, visibility and dormant notification intents")]
     commands["test:laboratory-linked"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/laboratory-linked.test.mjs", "tests/integration/laboratory-linked-http.test.mjs"), "targeted laboratory linked creation")]
     commands["test:retouch"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/retouch.test.mjs", "tests/integration/retouch-http.test.mjs"), "targeted clinical retouch submission")]
     commands["test:order-modification"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/order-edit.test.mjs", "tests/unit/order-modification.test.mjs", "tests/integration/order-modification-http.test.mjs"), "targeted modification requests")]

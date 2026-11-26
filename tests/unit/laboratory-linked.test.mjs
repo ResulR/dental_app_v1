@@ -71,13 +71,32 @@ function fixture(patch = {}) {
                   },
                 ],
           };
+        if (sql.startsWith("SELECT e.type,d.state"))
+          return {
+            rows: [{ type: "laboratory_order_created", state: "pending" }],
+          };
+        if (
+          sql.startsWith("SELECT o.id FROM public.outbox_events") ||
+          sql.startsWith("SELECT a.id FROM public.outbox_events")
+        )
+          return { rows: [{ id }] };
+        if (sql.startsWith("SELECT id,account_id FROM public.clinics"))
+          return {
+            rows: patch.missing ? [] : [{ id: values[0], account_id: shade }],
+          };
+        if (sql.startsWith("SELECT c.id AS clinic_id"))
+          return { rows: patch.missing ? [] : [{ clinic_id: values[0] }] };
+        if (sql.startsWith("SELECT c.id,c.name"))
+          return {
+            rows: patch.missing ? [] : [{ id, name: "Synthetic clinic" }],
+          };
         if (sql.startsWith("SELECT id,clinic_id FROM public.orders"))
           return {
             rows: patch.missing ? [] : [{ id: values[0], clinic_id: id }],
           };
         if (sql.startsWith("SELECT r.payload_fingerprint"))
           return {
-            rows: draft.receipts[values[1]] ? [draft.receipts[values[1]]] : [],
+            rows: draft.receipts[values[2]] ? [draft.receipts[values[2]]] : [],
           };
         if (sql.startsWith("SELECT id FROM public.catalog_references"))
           return { rows: values[0].map((id) => ({ id })) };
@@ -127,10 +146,14 @@ function fixture(patch = {}) {
             };
             return { rows: [order] };
           }
+          if (sql.startsWith("INSERT INTO public.internal_notifications"))
+            return { rows: patch.noticeUnavailable ? [] : [{ id }] };
+          if (sql.startsWith("INSERT INTO public.notification_deliveries"))
+            return { rows: patch.mailUnavailable ? [] : [{ id }] };
           if (sql.startsWith("INSERT INTO public.submission_receipts"))
-            draft.receipts[values[2]] = {
+            draft.receipts[values[3]] = {
               ...order,
-              payload_fingerprint: values[3],
+              payload_fingerprint: values[4],
             };
           if (sql.startsWith("UPDATE public.orders")) {
             if (patch.casFailure) return { rows: [] };
@@ -453,4 +476,199 @@ test("configuration stays disabled; readiness failure is fatal; client verifies 
   await expect(
     createLaboratoryLinkedWorkClient(fake).submit(command, signal),
   ).rejects.toThrow();
+});
+
+test("9.9 laboratory creates accepted standalone clinic order with one clinic notice and a stable receipt", async () => {
+  const db = fixture({
+    grants: [
+      "orders.read_logistics",
+      "orders.read_details",
+      "orders.create_for_clinic",
+    ],
+  });
+  const direct = {
+    clinic_id: id,
+    input: command.input,
+    idempotency_key: shade,
+    confirmed_warnings: false,
+  };
+  const service = createLaboratoryLinkedWorkService(db, true);
+  const [first, replay] = await Promise.all([
+    service.submitStandalone(actor, direct),
+    service.submitStandalone(actor, direct),
+  ]);
+  expect(first.result).toMatchObject({ kind: "submitted", replayed: false });
+  expect(replay.result).toMatchObject({
+    order_id: first.result.order_id,
+    replayed: true,
+  });
+  const sql = db.state.writes.map(([text]) => text).join("\n");
+  expect(sql).toContain("'normal','laboratory'");
+  expect(sql).toContain("'accepted',1");
+  expect(sql).toContain("'laboratory_order_created'");
+  expect(sql).toContain("INSERT INTO public.internal_notifications");
+  expect(sql).not.toContain("INSERT INTO public.work_links");
+  expect(sql).not.toContain("UPDATE public.orders");
+  expect(
+    db.state.writes.filter(([text]) =>
+      text.startsWith("INSERT INTO public.orders"),
+    ),
+  ).toHaveLength(1);
+  const receipt = db.state.writes.find(([text]) =>
+    text.startsWith("INSERT INTO public.submission_receipts"),
+  );
+  expect(receipt[1][2]).toBe("laboratory_clinic_order");
+  expect(
+    (await service.submitStandalone(actor, { ...direct, clinic_id: shade }))
+      .result.kind,
+  ).toBe("conflict");
+  expect(
+    (
+      await service.submitStandalone(actor, {
+        ...direct,
+        input: { ...direct.input, description: "Another work" },
+      })
+    ).result.kind,
+  ).toBe("conflict");
+});
+
+test("9.9 denies absent clinic and missing current right without writing", async () => {
+  const direct = {
+    clinic_id: id,
+    input: command.input,
+    idempotency_key: shade,
+    confirmed_warnings: false,
+  };
+  for (const patch of [
+    { missing: true },
+    { grants: ["orders.read_details"] },
+    { profile: "clinic" },
+    { suspended: true },
+  ]) {
+    const db = fixture(patch);
+    expect(
+      (
+        await createLaboratoryLinkedWorkService(db, true).submitStandalone(
+          actor,
+          direct,
+        )
+      ).kind,
+    ).toBe("denied");
+    expect(db.state.writes).toHaveLength(0);
+  }
+});
+
+test("9.9 clinic selector exposes only minimal authorized rows and client never retries a failed submission", async () => {
+  const db = fixture({
+    grants: [
+      "orders.read_logistics",
+      "orders.read_details",
+      "orders.create_for_clinic",
+    ],
+  });
+  const listed = await createLaboratoryLinkedWorkService(db, true).clinics(
+    actor,
+  );
+  expect(listed).toEqual({
+    items: [{ id, name: "Synthetic clinic" }],
+    next_after: null,
+  });
+  const sql = db.calls.find(([text]) =>
+    text.startsWith("SELECT c.id,c.name"),
+  )[0];
+  expect(sql).toContain("c.review_state='approved' AND NOT c.suspended");
+  expect(sql).toContain("a.lifecycle='active'");
+  const forbidden = fixture({ grants: ["orders.read_details"] });
+  expect(
+    await createLaboratoryLinkedWorkService(forbidden).clinics(actor),
+  ).toBeNull();
+  expect(
+    forbidden.calls.some(([text]) => text.startsWith("SELECT c.id,c.name")),
+  ).toBe(false);
+  const { createLaboratoryClinicClient } =
+    await import("../../apps/web/src/features/orders/laboratory-clinic-api.ts");
+  const fetcher = vi.fn(async () => ({ status: 503 }));
+  await expect(
+    createLaboratoryClinicClient(fetcher).submit(
+      {
+        clinic_id: id,
+        input: command.input,
+        idempotency_key: shade,
+        confirmed_warnings: false,
+      },
+      new globalThis.AbortController().signal,
+    ),
+  ).rejects.toThrow("ORDER_SUBMISSION_UNCERTAIN");
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(fetcher.mock.calls[0][0]).toBe("/api/v1/orders/laboratory-clinic");
+});
+
+test("9.9 keeps the actual account and rolls the order back if either clinic notification cannot be prepared", async () => {
+  const direct = {
+    clinic_id: shade,
+    input: command.input,
+    idempotency_key: id,
+    confirmed_warnings: false,
+  };
+  for (const patch of [
+    { noticeUnavailable: true },
+    { mailUnavailable: true },
+  ]) {
+    const db = fixture(patch);
+    await expect(
+      createLaboratoryLinkedWorkService(db, true).submitStandalone(
+        actor,
+        direct,
+      ),
+    ).rejects.toThrow();
+    expect(db.state.writes).toEqual([]);
+    expect(db.state.receipts).toEqual({});
+  }
+  const db = fixture();
+  const service = createLaboratoryLinkedWorkService(db, true);
+  const first = await service.submitStandalone(actor, direct);
+  await service.submitStandalone(actor, direct);
+  const valuesFor = (table) =>
+    db.state.writes
+      .filter(([sql]) => sql.startsWith("INSERT INTO public." + table + "("))
+      .map(([, values]) => values);
+  expect(valuesFor("orders")).toEqual([
+    [first.result.order_id, shade, actor.accountId, expect.any(String)],
+  ]);
+  expect(valuesFor("order_status_events")[0].slice(0, 3)).toEqual([
+    first.result.order_id,
+    shade,
+    actor.accountId,
+  ]);
+  expect(valuesFor("internal_notifications")).toHaveLength(1);
+  expect(
+    db.state.writes.filter(([sql]) =>
+      sql.startsWith("INSERT INTO public.notification_deliveries"),
+    ),
+  ).toHaveLength(1);
+  expect(
+    (
+      await createLaboratoryLinkedWorkService(fixture()).submitStandalone(
+        actor,
+        direct,
+      )
+    ).kind,
+  ).toBe("denied");
+});
+
+test("9.9 activation requires clinic notices, order tracking and submission", async () => {
+  const { laboratoryOrderEnabled } =
+    await import("../../apps/api/dist/app/laboratory-order-config.js");
+  const valid = {
+    DENTAL_LAB_LABORATORY_ORDER_ENABLED: "true",
+    DENTAL_LAB_ORDER_TRACKING_ENABLED: "true",
+    DENTAL_LAB_ORDER_SUBMISSION_ENABLED: "true",
+    DENTAL_LAB_INTERNAL_NOTICES_ENABLED: "true",
+  };
+  expect(laboratoryOrderEnabled({})).toBe(false);
+  expect(laboratoryOrderEnabled(valid)).toBe(true);
+  for (const key of Object.keys(valid).slice(1))
+    expect(() =>
+      laboratoryOrderEnabled({ ...valid, [key]: "false" }),
+    ).toThrow();
 });

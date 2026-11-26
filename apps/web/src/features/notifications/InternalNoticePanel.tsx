@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  privateOrderFragment,
   InternalNoticePageSchema,
   InternalNoticeReadResultSchema,
 } from "@dental-lab/contracts";
@@ -198,6 +199,7 @@ export function InternalNoticePanel({
                 order_submitted: "Porosi e re",
                 correction_resubmitted: "Korrigjim i ridërguar",
                 correction_requested: "Korrigjim i kërkuar",
+                laboratory_order_created: "Porosi e krijuar nga laboratori",
                 cancellation_requested: "Kërkesë anulimi",
                 modification_requested: "Kërkesë ndryshimi",
                 retouch_requested: "Retushim i kërkuar",
@@ -283,7 +285,11 @@ export function InternalNoticePanel({
             />
           ) : selected.order_id ? (
             <div key={selected.id}>
-              {selected.kind === "cancellation_requested" ? (
+              {selected.kind === "laboratory_order_created" && clinic ? (
+                <a href={privateOrderFragment(selected.order_id)}>
+                  Hap porosinë në ndjekje
+                </a>
+              ) : selected.kind === "cancellation_requested" ? (
                 <OrderRequestActions
                   orderId={selected.order_id}
                   clinic={false}

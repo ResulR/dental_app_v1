@@ -385,7 +385,7 @@ test("correction notice is scoped to approved clinic and current order on both l
     sql.startsWith("SELECT n.id,e.type AS kind"),
   )[0];
   expect(listSql).toContain(
-    "e.type='correction_requested' AND e.aggregate_type='order'",
+    "e.type IN ('correction_requested','laboratory_order_created') AND e.aggregate_type='order'",
   );
   expect(listSql).toContain("o.id IS NOT NULL AND c.account_id=$1");
   expect(listSql).toContain("c.review_state='approved'");
@@ -395,7 +395,9 @@ test("correction notice is scoped to approved clinic and current order on both l
   const readSql = f.calls.find(([sql]) =>
     sql.startsWith("SELECT n.read_at FROM"),
   )[0];
-  expect(readSql).toContain("e.type='correction_requested'");
+  expect(readSql).toContain(
+    "e.type IN ('correction_requested','laboratory_order_created')",
+  );
   expect(readSql).toContain("FOR UPDATE OF n");
   expect(
     (
@@ -413,4 +415,27 @@ test("correction notice is scoped to approved clinic and current order on both l
       DENTAL_LAB_ORDER_LIFECYCLE_ENABLED: "true",
     }),
   ).toThrow("CORRECTION_NOTICES_DESTINATION_UNAVAILABLE");
+});
+
+test("laboratory-created order notice is readable only by its approved clinic with current order relation", async () => {
+  const f = fixture({ profile: "clinic", kind: "laboratory_order_created" });
+  expect((await f.service.list(actor, {})).result.items[0]).toMatchObject({
+    kind: "laboratory_order_created",
+    clinic_id: clinic,
+    order_id: id,
+  });
+  const sql = f.calls.find(([text]) =>
+    text.startsWith("SELECT n.id,e.type AS kind"),
+  )[0];
+  expect(sql).toContain("'laboratory_order_created'");
+  expect(sql).toContain("o.id IS NOT NULL AND c.account_id=$1");
+  expect(
+    (
+      await fixture({
+        profile: "clinic",
+        kind: "laboratory_order_created",
+        suspended: true,
+      }).service.list(actor, {})
+    ).kind,
+  ).toBe("denied");
 });

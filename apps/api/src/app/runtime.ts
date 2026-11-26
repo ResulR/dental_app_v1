@@ -65,10 +65,12 @@ import {
   registerActionInboxRoutes,
 } from "../modules/orders/index.js";
 import { laboratoryLinkedEnabled } from "./laboratory-linked-config.js";
+import { laboratoryOrderEnabled } from "./laboratory-order-config.js";
 import {
   createLaboratoryLinkedWorkService,
   registerLaboratoryLinkedWorkRoutes,
   assertLaboratoryLinkedReady,
+  assertLaboratoryOrderReady,
 } from "../modules/linked-works/index.js";
 import { retouchEnabled } from "./retouch-config.js";
 import {
@@ -208,6 +210,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
   const enableDeliveryPlan = deliveryPlanEnabled(env);
   const enableActionInbox = actionInboxEnabled(env);
   const enableLaboratoryLinked = laboratoryLinkedEnabled(env);
+  const enableLaboratoryOrder = laboratoryOrderEnabled(env);
   const enableRetouch = retouchEnabled(env);
   const enableOrderModification = orderModificationEnabled(env);
   const enableOrderEdit = orderEditEnabled(env);
@@ -258,6 +261,7 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
     if (enableOrderRequest) await assertCancellationRequestReady(database);
     if (enableOrderEdit) await assertOrderEditReady(database);
     if (enableRetouch) await assertRetouchReady(database);
+    if (enableLaboratoryOrder) await assertLaboratoryOrderReady(database);
     if (enableLaboratoryLinked) await assertLaboratoryLinkedReady(database);
     if (enableAdminManagement) await assertAdminStorageReady(database);
     if (enableAccountState) await assertAccountStateStorageReady(database);
@@ -374,11 +378,16 @@ export async function createRuntime(env: NodeJS.ProcessEnv) {
             sessions,
             origin: config.origin,
           });
-        if (enableLaboratoryLinked)
+        if (enableLaboratoryLinked || enableLaboratoryOrder)
           registerLaboratoryLinkedWorkRoutes(app, {
-            service: createLaboratoryLinkedWorkService(database),
+            service: createLaboratoryLinkedWorkService(
+              database,
+              enableInternalNotices,
+            ),
             sessions,
             origin: config.origin,
+            linked: enableLaboratoryLinked,
+            standalone: enableLaboratoryOrder,
           });
         if (enableRetouch)
           registerRetouchRoutes(app, {

@@ -49,3 +49,34 @@ test("no unrelated event, transport URL, credentials or free text enters the cop
       clinicalBusinessEmail({ eventType: events[0], origin }),
     ).toThrow("INVALID_CLINICAL_EMAIL_ORIGIN");
 });
+
+test("private order fragment round trips from the clinical email and never accepts a URL or a free-form identifier", async () => {
+  const { orderIdFromFragment, privateOrderFragment } =
+    await import("@dental-lab/contracts");
+  const id = "91000000-0000-4000-8000-000000000001";
+  const args = {
+    origin: "https://dental.example.test",
+    eventType: "laboratory_order_created",
+    orderId: id,
+  };
+  const link = new URL(
+    clinicalBusinessEmail(args).text.match(/https:\/\/[^\s]+/)[0],
+  );
+  expect([link.origin, link.pathname, link.search]).toEqual([
+    args.origin,
+    "/",
+    "",
+  ]);
+  expect(link.hash).toBe(privateOrderFragment(id));
+  expect(orderIdFromFragment(link.hash)).toBe(id);
+  for (const value of [
+    "",
+    "#order-tracking",
+    link.hash + "?extra",
+    "#/orders/https://example.test/",
+  ])
+    expect(orderIdFromFragment(value)).toBeNull();
+  expect(() =>
+    clinicalBusinessEmail({ ...args, orderId: id + "?extra" }),
+  ).toThrow();
+});

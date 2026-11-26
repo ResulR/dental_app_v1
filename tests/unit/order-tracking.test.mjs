@@ -70,6 +70,8 @@ function fixture(patch = {}) {
           rows: [
             {
               ...summary,
+              origin: "laboratory",
+              created_by: other,
               revision: "3",
               version_id: id,
               patient: { internal_reference: "Synthetic" },
@@ -113,7 +115,14 @@ test("clinic search and detail always constrain current clinic, foreign order de
     )[1][0],
   ).toBe(id);
   const detail = await service.detail(actor, { order_id: id });
-  expect(detail.detail.order.material).toBe("Old material");
+  expect(detail.detail.order).toMatchObject({
+    material: "Old material",
+    origin: "laboratory",
+    created_by: other,
+  });
+  expect(
+    db.query.mock.calls.find(([sql]) => sql.includes("m.label AS material"))[0],
+  ).toContain("o.created_by");
   expect(detail.detail.history[0].next_status).toBe("manufacturing");
   expect(
     db.query.mock.calls.find(([s]) =>

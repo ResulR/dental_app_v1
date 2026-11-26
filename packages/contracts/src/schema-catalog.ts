@@ -37,6 +37,10 @@ import {
 } from "./action-inbox.js";
 import {
   LaboratoryLinkedWorkSchema,
+  LaboratoryClinicOrderSchema,
+  LaboratoryClinicOrderResultSchema,
+  LaboratoryClinicListQuerySchema,
+  LaboratoryClinicListSchema,
   LaboratoryLinkedWorkResultSchema,
 } from "./laboratory-linked-work.js";
 import {
@@ -191,6 +195,10 @@ export function exportJsonSchemas() {
     ActionInboxQuery: ActionInboxQuerySchema,
     ActionInboxPage: ActionInboxPageSchema,
     LaboratoryLinkedWork: LaboratoryLinkedWorkSchema,
+    LaboratoryClinicOrder: LaboratoryClinicOrderSchema,
+    LaboratoryClinicOrderResult: LaboratoryClinicOrderResultSchema,
+    LaboratoryClinicListQuery: LaboratoryClinicListQuerySchema,
+    LaboratoryClinicList: LaboratoryClinicListSchema,
     LaboratoryLinkedWorkResult: LaboratoryLinkedWorkResultSchema,
     RetouchSubmission: RetouchSubmissionSchema,
     RetouchSubmissionResult: RetouchSubmissionResultSchema,

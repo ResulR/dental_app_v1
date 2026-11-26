@@ -1,3 +1,4 @@
+import { privateOrderFragment } from "@dental-lab/contracts";
 import { businessMailIntent } from "./business-event-policy.js";
 
 // Transient, generic copy for the eight clinical events already represented by
@@ -32,6 +33,7 @@ const copy = {
 export function clinicalBusinessEmail(input: {
   eventType: string;
   origin: string;
+  orderId?: string;
 }): { subject: string; text: string } {
   if (
     businessMailIntent(input.eventType)?.audience !== "clinic" ||
@@ -54,9 +56,11 @@ export function clinicalBusinessEmail(input: {
     url.hash
   )
     throw new Error("INVALID_CLINICAL_EMAIL_ORIGIN");
+  const fragment =
+    input.orderId === undefined ? "" : privateOrderFragment(input.orderId);
   const [subject, instruction] = copy[input.eventType as keyof typeof copy];
   return {
     subject,
-    text: `${instruction}\n\nPër hollësitë, hyni në portalin privat: ${url.origin}/\nKjo lidhje kërkon hyrje dhe lejet aktuale. Mos iu përgjigjni këtij e-maili me të dhëna të pacientit.`,
+    text: `${instruction}\n\nPër hollësitë, hyni në portalin privat: ${url.origin}/${fragment}\nKjo lidhje kërkon hyrje dhe lejet aktuale. Mos iu përgjigjni këtij e-maili me të dhëna të pacientit.`,
   };
 }

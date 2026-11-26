@@ -21,6 +21,7 @@ export function PermissionBoundary({
     | "catalog.manage"
     | "settings.manage"
     | "orders.read_details"
+    | "orders.create_for_clinic"
     | "orders.read_logistics"
     | "messaging.general.read"
     | "messaging.order.read";

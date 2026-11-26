@@ -1,5 +1,5 @@
 // Public runtime schema/type source; no server configuration or persistence.
-export const contractVersion = 5 as const;
+export const contractVersion = 6 as const;
 export * from "./schemas.js";
 export * from "./clinic-profile.js";
 export { exportJsonSchemas } from "./schema-catalog.js";
@@ -34,6 +34,7 @@ export * from "./order-decision.js";
 export * from "./order-review.js";
 
 export * from "./order-tracking.js";
+export * from "./private-order-link.js";
 
 export * from "./order-lifecycle.js";
 export * from "./delivery-batch.js";

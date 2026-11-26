@@ -32,3 +32,27 @@ const Result = z.union([
 export type LaboratoryLinkedWorkResult = z.output<typeof Result>;
 export const LaboratoryLinkedWorkResultSchema: z.ZodType<LaboratoryLinkedWorkResult> =
   Result;
+
+// A new order for an existing clinic has no parent work and no clinic approval
+// step. The laboratory actor remains the author of the accepted version.
+const ClinicOrder = z.strictObject({
+  clinic_id: z.uuid(),
+  input: OrderInstructionsSchema,
+  idempotency_key: z.uuid(),
+  confirmed_warnings: z.boolean(),
+  exception_reason: z.string().trim().min(1).max(2000).optional(),
+});
+export type LaboratoryClinicOrder = z.output<typeof ClinicOrder>;
+export const LaboratoryClinicOrderSchema: z.ZodType<LaboratoryClinicOrder> =
+  ClinicOrder;
+export const LaboratoryClinicOrderResultSchema = Result;
+export type LaboratoryClinicOrderResult = z.output<typeof Result>;
+export const LaboratoryClinicListQuerySchema = z.strictObject({
+  after: z.uuid().optional(),
+});
+export const LaboratoryClinicListSchema = z.strictObject({
+  items: z
+    .array(z.strictObject({ id: z.uuid(), name: z.string().min(1) }))
+    .max(50),
+  next_after: z.uuid().nullable(),
+});
