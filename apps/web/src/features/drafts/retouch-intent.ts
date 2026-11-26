@@ -41,6 +41,14 @@ export async function markRetouchAttempt(context: Context, request: Request) {
   const revision = await saveLocalDraft(context.db, context.envelope, context.key, value, old.revision, null, recordId);
   return { ...value, revision };
 }
+// Persist the exact request before the caller may contact the server.
+export async function prepareRetouchAttempt(context: Context, request: Request, signal: AbortSignal) {
+  signal.throwIfAborted();
+  await stageRetouchIntent(context, request);
+  signal.throwIfAborted();
+  await markRetouchAttempt(context, request);
+  signal.throwIfAborted();
+}
 export async function settleRetouchIntent(context: Context, request: Request, reply: Reply) {
   const old = await readRetouchIntent(context);
   if (!old?.request || old.state !== "uncertain" || JSON.stringify(old.request) !== JSON.stringify(request)) throw new Error("RETOUCH_INTENT_PENDING");

@@ -426,3 +426,19 @@ test("pending request blocks manufacturing under existing decision service", asy
   ).toEqual({ kind: "blocked", reason: "pending_request" });
   expect(db.state.writes).toEqual([]);
 });
+
+test("the detail actions reject a well-formed context for a different order", async () => {
+  const { createOrderRequestClient } = await import("../../apps/web/src/features/orders/request-api.ts");
+  const { createOrderLifecycleClient } = await import("../../apps/web/src/features/orders/lifecycle-api.ts");
+  const wanted = "94000000-0000-4000-8000-000000000001";
+  const other = "94000000-0000-4000-8000-000000000002";
+  const order = {order_id:other,version_id:other,number:"2",status:"accepted",revision:1};
+  const transport = (value) => async () => ({status:200,json:async () => value});
+  const signal = new globalThis.AbortController().signal;
+  const requests = createOrderRequestClient(transport({order,pending:null}));
+  const lifecycle = createOrderLifecycleClient(transport(order));
+  await expect(requests.context(wanted,signal)).rejects.toThrow("ORDER_REQUEST_SCOPE_CHANGED");
+  await expect(lifecycle.context(wanted,signal)).rejects.toThrow("ORDER_LIFECYCLE_SCOPE_CHANGED");
+  expect((await requests.context(other,signal)).order.order_id).toBe(other);
+  expect((await lifecycle.context(other,signal)).order_id).toBe(other);
+});

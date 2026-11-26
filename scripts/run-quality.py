@@ -155,6 +155,13 @@ def plan(name):
         "tests/unit/order-tracking.test.mjs", "tests/integration/order-tracking-http.test.mjs"),
         "laboratory clinic order, visibility and dormant notification intents")]
     commands["test:laboratory-linked"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/laboratory-linked.test.mjs", "tests/integration/laboratory-linked-http.test.mjs"), "targeted laboratory linked creation")]
+    commands["test:work-detail-actions"] = [(node("node_modules/vitest/vitest.mjs", "run",
+        "tests/unit/order-edit.test.mjs", "tests/unit/order-modification.test.mjs", "tests/unit/order-requests.test.mjs",
+        "tests/integration/order-modification-http.test.mjs", "tests/integration/order-requests-http.test.mjs",
+        "tests/unit/similar-order-consultation.test.mjs", "tests/unit/retouch-attempt.test.mjs",
+        "tests/unit/retouch-entry.test.mjs", "tests/unit/retouch-intent.test.mjs",
+        "tests/unit/retouch.test.mjs", "tests/integration/retouch-http.test.mjs"),
+        "order detail actions and interrupted retouch submission")]
     commands["test:retouch"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/retouch.test.mjs", "tests/integration/retouch-http.test.mjs"), "targeted clinical retouch submission")]
     commands["test:order-modification"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/order-edit.test.mjs", "tests/unit/order-modification.test.mjs", "tests/integration/order-modification-http.test.mjs"), "targeted modification requests")]
     commands["test:order-edit"] = [(node("node_modules/vitest/vitest.mjs", "run", "tests/unit/order-edit.test.mjs", "tests/integration/order-edit-http.test.mjs"), "targeted versioned order editing")]

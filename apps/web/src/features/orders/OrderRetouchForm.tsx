@@ -11,7 +11,7 @@ import { createCatalogClient } from "../catalog/index.js";
 import { Button } from "../../shared/Button.js";
 import {
   openLocalVault, readVault, createVault, unlockVault, prepareVault, type VaultEnvelope,
-  readRetouchIntent, stageRetouchIntent, markRetouchAttempt, settleRetouchIntent, clearRetouchIntent,
+  readRetouchIntent, prepareRetouchAttempt, settleRetouchIntent, clearRetouchIntent,
 } from "../drafts/index.js";
 const sourceApi = createOrderEditClient(),
   api = createRetouchClient(),
@@ -254,18 +254,23 @@ export function OrderRetouchForm({
       intent.current = parsed.data;
     }
     const command = intent.current;
-    try {
-      await stageRetouchIntent(vault.current, command);
-      await markRetouchAttempt(vault.current, command);
-      setStoredState("uncertain");
-    } catch {
-      setMessage("Kërkesa nuk u dërgua: ruajtja e koduar nuk u verifikua.");
-      return;
-    }
+    const context = vault.current;
     await run(async (signal) => {
+      try {
+        await prepareRetouchAttempt(context, command, signal);
+        signal.throwIfAborted();
+      } catch {
+        if (vault.current === context) {
+          setUncertain(true);
+          setMessage("Kërkesa nuk u dërgua. Kontrolloni kasafortën dhe riprovoni të njëjtën kërkesë.");
+        }
+        return;
+      }
+      setStoredState("uncertain");
       const r = await api.submit(command, signal);
-      if (signal.aborted) return;
-      await settleRetouchIntent(vault.current!, command, r);
+      signal.throwIfAborted();
+      await settleRetouchIntent(context, command, r);
+      if (vault.current !== context) return;
       setStoredState("settled");
       intent.current = null;
       setUncertain(false);

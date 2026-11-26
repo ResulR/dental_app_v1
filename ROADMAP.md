@@ -1754,6 +1754,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Application PostgreSQL :** aucune, nouvelle activation désactivée par défaut.
 - **Complément 28/10 :** historique paginé des demandes de modification, décisions motivées et comparatif des deux versions historiques accessibles aux acteurs autorisés ; tests ciblés hors PostgreSQL. Statut ◐ maintenu.
 - **Réception finale :** PostgreSQL réel, navigateur, fichiers et notifications différés.
+- **Complément 26/11 :** Depuis le lien privé de la fiche, la clinique peut ouvrir la proposition de modification sans relancer une recherche. Le client vérifie la commande et la version renvoyées avant d’afficher le formulaire.
 
 ### 10.6 — Implémenter retrait des demandes pendantes
 - **Statut :** ◐ Retrait clinique versionné intégré — réceptions différées
@@ -1805,6 +1806,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 - **Implémentation16/10 :** API/UI albanaise, droits actuels, CAS commande/demande et audit/outbox transactionnels ; docs/ORDER_REQUESTS.md. Tests hors ligne avec doublesSQL ; aucune application PostgreSQL, réception finale différée. Propositions de modification non créées par ce lot.
+- **Complément 26/11 :** Les demandes d’annulation sont accessibles depuis le détail privé. La liste et le détail partagent les mêmes contrôles, avec une seule instance par travail. Le client vérifie l’identité de la commande renvoyée.
 
 ### 10.9 — Implémenter annulation directe côté labo
 - **Statut :** ◐ Annulation laboratoire intégrée — réceptions différées
@@ -1922,7 +1924,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Complément 24/11 :** la file conserve les pages déjà parcourues sans doublon ; nouvelle lecture repart de zéro et toute variation des permissions abandonne les lignes précédentes. Un curseur répété arrête la pagination. Réception navigateur différée.
 
 ### 10.15 — Tester concurrence métier extrême
-- **Statut :** ☐ À faire
+- **Statut :** ◐ Scénarios hors ligne en cours ; réception concurrente PostgreSQL différée
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -1935,7 +1937,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
-
+- **Complément 26/11 :** Scénario synthétique de correction d’une retouche face à son renvoi simultané, dans les deux ordres de sérialisation. Vérifications des versions, du statut, de l’audit, de l’événement et de l’avis. Verrous et concurrence PostgreSQL réelle à réceptionner.
 
 ## Chapitre 11 — Retouches et refabrications
 
@@ -2005,6 +2007,8 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Contrôle 24/11 :** déverrouillage concurrent du coffre de retouche sérialisé côté interface pour éviter la fermeture de la connexion active ; recette navigateur isolée toujours ouverte.
 - **Suivi 24/11 :** reçu de retouche confirmé récupérable après réouverture : ouverture explicite du suivi par le numéro serveur depuis le coffre ; la trace locale reste jusqu’au nettoyage contrôlé. Réception navigateur/PostgreSQL ouverte.
 - **Complément 24/11 :** création du même coffre chiffré directement dans le parcours de retouche si aucun coffre du compte n’existe, avec phrase confirmée et code de secours à conserver avant activation. Scénario Chromium synthétique isolé préparé pour fermeture, déverrouillage, même intention/reçu et séparation compte/source ; non exécuté : marge de processus inférieure aux 64 requis par le harnais. Révocation de session et interface complète à recevoir en navigateur ; PostgreSQL réel reste ouvert.
+- **Complément 26/11 :** Le verrou de soumission couvre la préparation chiffrée, la tentative réseau et son règlement. Une interruption pendant l’écriture locale empêche le départ réseau et conserve la même intention pour la reprise.
+
 ### 11.4 — Appliquer états, modifications et annulations des commandes aux retouches
 - **Statut :** ◐ Socle commandes réutilisé — validation bout en bout différée
 - **Priorité :** Critique

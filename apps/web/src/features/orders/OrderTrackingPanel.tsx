@@ -240,6 +240,21 @@ export function OrderTrackingPanel({
       window.removeEventListener("hashchange", follow);
     };
   }, []);
+  function orderActions(orderId: string) {
+    function finished(text: string) {
+      setPage(null);
+      setDetail(null);
+      setMessage(text);
+    }
+    const props = { orderId, clinic, permissions, onFinished: finished };
+    return (
+      <div key={orderId}>
+        <OrderEditPanel {...props} />
+        <OrderRequestActions {...props} />
+        <OrderLifecycleActions {...props} />
+      </div>
+    );
+  }
   async function startDuplicate(orderId: string) {
     setDuplicate(null);
     await run(async (signal) => {
@@ -484,36 +499,7 @@ export function OrderTrackingPanel({
                 orderId={row.id}
                 onOpen={(id) => void open(id)}
               />
-              <OrderEditPanel
-                orderId={row.id}
-                clinic={clinic}
-                permissions={permissions}
-                onFinished={(text) => {
-                  setPage(null);
-                  setDetail(null);
-                  setMessage(text);
-                }}
-              />
-              <OrderRequestActions
-                orderId={row.id}
-                clinic={clinic}
-                permissions={permissions}
-                onFinished={(text) => {
-                  setPage(null);
-                  setDetail(null);
-                  setMessage(text);
-                }}
-              />
-              <OrderLifecycleActions
-                orderId={row.id}
-                clinic={clinic}
-                permissions={permissions}
-                onFinished={(text) => {
-                  setPage(null);
-                  setDetail(null);
-                  setMessage(text);
-                }}
-              />
+              {detail?.order.id !== row.id && orderActions(row.id)}
               {canReadChat && (
                 <Button
                   type="button"
@@ -577,6 +563,7 @@ export function OrderTrackingPanel({
             Porosia nr. {detail.order.number} ·{" "}
             {orderStatusLabels[detail.order.status]}
           </h4>
+          {orderActions(detail.order.id)}
           {showRetouchEntry(
             clinic,
             detail.order.status,

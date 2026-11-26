@@ -567,3 +567,44 @@ test("authorized clinic reads the current correction motive while an unrelated c
     ),
   ).toBe(false);
 });
+
+test("editing and retouch preload reject another order or a different version, including a stale current read", async () => {
+  const { createOrderEditClient } = await import("../../apps/web/src/features/orders/edit-api.ts");
+  const original = (await createOrderEditService(fixture()).context(actor, { order_id: id })).result;
+  const signal = new globalThis.AbortController().signal;
+  async function context(query, changes) {
+    const api = createOrderEditClient(async () => ({status:200, json:async () => ({...original,...changes})}));
+    return api.context(query,signal);
+  }
+  await expect(context({order_id:id},{order_id:other})).rejects.toThrow("ORDER_EDIT_SCOPE_CHANGED");
+  await expect(context({order_id:id},{version_id:other})).rejects.toThrow("ORDER_EDIT_SCOPE_CHANGED");
+  await expect(context({order_id:id,version_id:other},{})).rejects.toThrow("ORDER_EDIT_SCOPE_CHANGED");
+  expect((await context({order_id:id},{})).version_id).toBe(id);
+  expect((await context({order_id:id,version_id:other},{version_id:other})).version_id).toBe(other);
+});
+
+test.each(["save", "resubmit_correction"])(
+  "10.15 a competing retouch correction and resubmission share one revision (%s first)",
+  async (first) => {
+    const db = fixture({ kind: "retouch", status: "correction_requested" });
+    const service = createOrderEditService(db, true);
+    const save = { ...command, input: { ...input, teeth: [], description: "Korrigjim fiktiv" } };
+    const resubmit = {
+      order_id: id, expected_version_id: id, expected_revision: 1,
+      action: "resubmit_correction", confirmed_warnings: false,
+    };
+    const attempts = first === "save" ? [save, resubmit] : [resubmit, save];
+    const [winner, loser] = await Promise.all(attempts.map((value) => service.decide(actor, value)));
+    expect(winner.result.kind).toBe("updated");
+    expect(loser.result.kind).toBe("conflict");
+    expect(db.state.revision).toBe(2);
+    const writesTo = (table) => db.state.writes.filter(([sql]) => sql.startsWith("INSERT INTO public." + table + "("));
+    expect(writesTo("outbox_events")).toHaveLength(1);
+    expect(writesTo("audit_events")).toHaveLength(1);
+    expect(writesTo("order_versions")).toHaveLength(first === "save" ? 1 : 0);
+    expect(writesTo("order_status_events")).toHaveLength(first === "save" ? 0 : 1);
+    expect(writesTo("internal_notifications")).toHaveLength(first === "save" ? 0 : 1);
+    expect(db.state.status).toBe(first === "save" ? "correction_requested" : "pending");
+    expect(db.state.version === id).toBe(first !== "save");
+  },
+);

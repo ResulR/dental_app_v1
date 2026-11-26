@@ -22,13 +22,15 @@ export function createOrderRequestClient(transport: typeof fetch = fetch) {
   }
   return {
     async context(order_id: string, signal: AbortSignal) {
-      return OrderRequestContextSchema.parse(
+      const context = OrderRequestContextSchema.parse(
         await post(
           "request-context",
           OrderLifecycleContextQuerySchema.parse({ order_id }),
           signal,
         ),
       );
+      if (context.order.order_id !== order_id) throw new Error("ORDER_REQUEST_SCOPE_CHANGED");
+      return context;
     },
     async decide(raw: unknown, signal: AbortSignal) {
       return OrderRequestResultSchema.parse(

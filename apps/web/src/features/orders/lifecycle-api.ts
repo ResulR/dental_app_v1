@@ -22,13 +22,15 @@ export function createOrderLifecycleClient(transport: typeof fetch = fetch) {
   }
   return {
     async context(order_id: string, signal: AbortSignal) {
-      return OrderLifecycleContextSchema.parse(
+      const context = OrderLifecycleContextSchema.parse(
         await post(
           "lifecycle-context",
           OrderLifecycleContextQuerySchema.parse({ order_id }),
           signal,
         ),
       );
+      if (context.order_id !== order_id) throw new Error("ORDER_LIFECYCLE_SCOPE_CHANGED");
+      return context;
     },
     async decide(raw: unknown, signal: AbortSignal) {
       return OrderLifecycleResultSchema.parse(

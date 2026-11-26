@@ -22,9 +22,13 @@ export function createOrderEditClient(transport: typeof fetch = fetch) {
   }
   return {
     async context(raw: unknown, signal: AbortSignal) {
-      return OrderEditViewSchema.parse(
-        await post("edit-context", OrderEditQuerySchema.parse(raw), signal),
-      );
+      const query = OrderEditQuerySchema.parse(raw);
+      const view = OrderEditViewSchema.parse(await post("edit-context", query, signal));
+      if (view.order_id !== query.order_id ||
+          view.version_id !== (query.version_id ?? view.current_version_id)) {
+        throw new Error("ORDER_EDIT_SCOPE_CHANGED");
+      }
+      return view;
     },
     async decide(raw: unknown, signal: AbortSignal) {
       return OrderEditResultSchema.parse(
