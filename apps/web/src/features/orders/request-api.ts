@@ -29,17 +29,29 @@ export function createOrderRequestClient(transport: typeof fetch = fetch) {
           signal,
         ),
       );
-      if (context.order.order_id !== order_id) throw new Error("ORDER_REQUEST_SCOPE_CHANGED");
+      if (context.order.order_id !== order_id)
+        throw new Error("ORDER_REQUEST_SCOPE_CHANGED");
       return context;
     },
     async decide(raw: unknown, signal: AbortSignal) {
-      return OrderRequestResultSchema.parse(
-        await post(
-          "cancellation-request",
-          OrderCancellationRequestSchema.parse(raw),
-          signal,
-        ),
+      const command = OrderCancellationRequestSchema.parse(raw);
+      const reply = OrderRequestResultSchema.parse(
+        await post("cancellation-request", command, signal),
       );
+      const expected = {
+        request_cancellation: "pending",
+        withdraw: "withdrawn",
+        accept_cancellation: "accepted",
+        reject_cancellation: "rejected",
+      } as const;
+      if (
+        reply.kind === "updated" &&
+        (reply.order_id !== command.order_id ||
+          reply.state !== expected[command.action] ||
+          ("request_id" in command && reply.request_id !== command.request_id))
+      )
+        throw new Error("ORDER_REQUEST_REPLY_CONTRADICTORY");
+      return reply;
     },
   };
 }

@@ -1082,3 +1082,5 @@ La préparation chiffrée de la retouche s’exécute sous le même verrou de so
 
 ## 26 novembre 2026 — 9.9, reprise après fermeture
 Base 0815033, arbre propre, identité dental-ai. Services nginx, postgresql, dental-site et dental-ai-remote actifs avant intervention. Coffre local étendu à l’intention autonome du laboratoire, liée au compte, au record et à la clinique. Le formulaire conserve le corps et la clé, sans soumission automatique. Rejeu explicite après déverrouillage et nouvelle sélection serveur de la clinique ; le reçu est conservé et effacé explicitement. Tests synthétiques ciblés, build et vérifications qualité à reporter au commit. Recettes navigateur et PostgreSQL, ainsi que livraison réelle des e-mails différées.
+
+- 26/11/2026 — 10.5/10.8 : garde client contre les reçus contradictoires après modification/annulation ; comparaison des snapshots liée à la commande et à la demande. Doubles SQL et HTTP ciblés ; aucune recette PostgreSQL ni navigateur.

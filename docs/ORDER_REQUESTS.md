@@ -13,3 +13,7 @@ Outbox unique request_decided pour une décision : évite de produire à la fois
 UI albanaise : charger contexte, demander, retirer, accepter/refuser et afficher résultat ; garde contre doubles clics, timeout8s, purge après tentative, aucune répétition automatique. Réception navigateur encore nécessaire.
 
 Tests unitaires/doubles transactionnels et HTTP local ne prouvent pas les verrous, contraintes ou privilèges PostgreSQL réels. Restent : édition versionnée et renvoi de correction, création/comparaison/approbation des propositions de modification, historique détaillé des demandes, retouches et réceptions SQL/navigateur. Les deux scripts historiques v2/v3 et leurs preuves restent intacts.
+
+## Réponses contradictoires — 26 novembre 2026
+
+Le client contrôle le reçu typé `updated` : même commande, même demande pour une décision/retrait et état attendu de l’action. Une divergence, une erreur réseau ou une expiration de session impose de relire le contexte courant ; aucun rejeu automatique. Le serveur garde le verrou, le CAS et l’historique comme autorité. Tests ciblés avec réponse contradictoire ; recette navigateur et PostgreSQL inchangées.

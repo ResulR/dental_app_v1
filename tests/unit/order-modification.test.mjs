@@ -486,3 +486,55 @@ test("decided modification remains comparable by authorized clinic, foreign scop
     ),
   ).toBe(false);
 });
+
+test("modification client rejects contradictory successes and foreign comparison snapshots", async () => {
+  const signal = new AbortController().signal;
+  const reply = (value) =>
+    createOrderModificationClient(async () => ({
+      status: 200,
+      json: async () => value,
+    }));
+  const accepted = {
+    kind: "updated",
+    order_id: id,
+    version_id: proposed,
+    revision: 3,
+    status: "accepted",
+  };
+  expect((await reply(accepted).decide(command, signal)).order_id).toBe(id);
+  await expect(
+    reply({ ...accepted, order_id: shade }).decide(command, signal),
+  ).rejects.toThrow("MODIFICATION_REPLY_CONTRADICTORY");
+  await expect(
+    reply({ ...accepted, status: "cancelled" }).decide(command, signal),
+  ).rejects.toThrow("MODIFICATION_REPLY_CONTRADICTORY");
+  await expect(
+    reply(accepted).decide(
+      {
+        order_id: id,
+        expected_version_id: id,
+        expected_revision: 2,
+        request_id: id,
+        expected_request_revision: 1,
+        action: "reject_modification",
+        reason: "Non conforme",
+      },
+      signal,
+    ),
+  ).rejects.toThrow("MODIFICATION_REPLY_CONTRADICTORY");
+  const record = await createOrderModificationService(fixture()).context(
+    actor,
+    { order_id: id },
+  );
+  expect(record.kind).toBe("result");
+  expect((await reply(record.result).context(id, signal)).request_id).toBe(id);
+  await expect(
+    reply({
+      ...record.result,
+      proposal: { ...record.result.proposal, order_id: shade },
+    }).context(id, signal),
+  ).rejects.toThrow("MODIFICATION_CONTEXT_SCOPE_CHANGED");
+  await expect(reply(record.result).context(id, signal, shade)).rejects.toThrow(
+    "MODIFICATION_CONTEXT_SCOPE_CHANGED",
+  );
+});

@@ -25,22 +25,31 @@ export function createOrderModificationClient(transport: typeof fetch = fetch) {
   }
   return {
     async propose(raw: unknown, signal: AbortSignal) {
-      return OrderEditResultSchema.parse(
-        await post(
-          "propose",
-          OrderModificationProposalSchema.parse(raw),
-          signal,
-        ),
+      const command = OrderModificationProposalSchema.parse(raw);
+      const reply = OrderEditResultSchema.parse(
+        await post("propose", command, signal),
       );
+      if (
+        reply.kind === "updated" &&
+        (reply.order_id !== command.order_id || reply.status !== "accepted")
+      )
+        throw new Error("MODIFICATION_REPLY_CONTRADICTORY");
+      return reply;
     },
     async decide(raw: unknown, signal: AbortSignal) {
-      return OrderEditResultSchema.parse(
-        await post(
-          "decide",
-          OrderModificationDecisionSchema.parse(raw),
-          signal,
-        ),
+      const command = OrderModificationDecisionSchema.parse(raw);
+      const reply = OrderEditResultSchema.parse(
+        await post("decide", command, signal),
       );
+      if (
+        reply.kind === "updated" &&
+        (reply.order_id !== command.order_id ||
+          reply.status !== "accepted" ||
+          (command.action === "reject_modification" &&
+            reply.version_id !== command.expected_version_id))
+      )
+        throw new Error("MODIFICATION_REPLY_CONTRADICTORY");
+      return reply;
     },
     async history(
       order_id: string,
@@ -59,13 +68,21 @@ export function createOrderModificationClient(transport: typeof fetch = fetch) {
       );
     },
     async context(order_id: string, signal: AbortSignal, request_id?: string) {
-      return OrderModificationContextSchema.parse(
+      const context = OrderModificationContextSchema.parse(
         await post(
           "context",
           OrderModificationContextQuerySchema.parse({ order_id, request_id }),
           signal,
         ),
       );
+      if (
+        context.base.order_id !== order_id ||
+        context.proposal.order_id !== order_id ||
+        context.base.version_id === context.proposal.version_id ||
+        (request_id && context.request_id !== request_id)
+      )
+        throw new Error("MODIFICATION_CONTEXT_SCOPE_CHANGED");
+      return context;
     },
   };
 }

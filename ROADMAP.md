@@ -1756,6 +1756,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Complément 28/10 :** historique paginé des demandes de modification, décisions motivées et comparatif des deux versions historiques accessibles aux acteurs autorisés ; tests ciblés hors PostgreSQL. Statut ◐ maintenu.
 - **Réception finale :** PostgreSQL réel, navigateur, fichiers et notifications différés.
 - **Complément 26/11 :** Depuis le lien privé de la fiche, la clinique peut ouvrir la proposition de modification sans relancer une recherche. Le client vérifie la commande et la version renvoyées avant d’afficher le formulaire.
+- **Contrôle 26/11 :** le client rejette les comparaisons de versions appartenant à une autre commande, la demande historique inattendue et les réponses de décision contraires à la commande ou au statut ; relecture obligatoire, sans répétition automatique.
 
 ### 10.6 — Implémenter retrait des demandes pendantes
 - **Statut :** ◐ Retrait clinique versionné intégré — réceptions différées
@@ -1808,6 +1809,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 - **Implémentation16/10 :** API/UI albanaise, droits actuels, CAS commande/demande et audit/outbox transactionnels ; docs/ORDER_REQUESTS.md. Tests hors ligne avec doublesSQL ; aucune application PostgreSQL, réception finale différée. Propositions de modification non créées par ce lot.
 - **Complément 26/11 :** Les demandes d’annulation sont accessibles depuis le détail privé. La liste et le détail partagent les mêmes contrôles, avec une seule instance par travail. Le client vérifie l’identité de la commande renvoyée.
+- **Contrôle 26/11 :** une réponse `updated` doit mentionner la commande, la demande et l’état attendus pour l’action envoyée ; toute contradiction déclenche une relecture sans rejouer le POST.
 
 ### 10.9 — Implémenter annulation directe côté labo
 - **Statut :** ◐ Annulation laboratoire intégrée — réceptions différées

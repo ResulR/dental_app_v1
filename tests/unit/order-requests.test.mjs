@@ -428,17 +428,76 @@ test("pending request blocks manufacturing under existing decision service", asy
 });
 
 test("the detail actions reject a well-formed context for a different order", async () => {
-  const { createOrderRequestClient } = await import("../../apps/web/src/features/orders/request-api.ts");
-  const { createOrderLifecycleClient } = await import("../../apps/web/src/features/orders/lifecycle-api.ts");
+  const { createOrderRequestClient } =
+    await import("../../apps/web/src/features/orders/request-api.ts");
+  const { createOrderLifecycleClient } =
+    await import("../../apps/web/src/features/orders/lifecycle-api.ts");
   const wanted = "94000000-0000-4000-8000-000000000001";
   const other = "94000000-0000-4000-8000-000000000002";
-  const order = {order_id:other,version_id:other,number:"2",status:"accepted",revision:1};
-  const transport = (value) => async () => ({status:200,json:async () => value});
+  const order = {
+    order_id: other,
+    version_id: other,
+    number: "2",
+    status: "accepted",
+    revision: 1,
+  };
+  const transport = (value) => async () => ({
+    status: 200,
+    json: async () => value,
+  });
   const signal = new globalThis.AbortController().signal;
-  const requests = createOrderRequestClient(transport({order,pending:null}));
+  const requests = createOrderRequestClient(
+    transport({ order, pending: null }),
+  );
   const lifecycle = createOrderLifecycleClient(transport(order));
-  await expect(requests.context(wanted,signal)).rejects.toThrow("ORDER_REQUEST_SCOPE_CHANGED");
-  await expect(lifecycle.context(wanted,signal)).rejects.toThrow("ORDER_LIFECYCLE_SCOPE_CHANGED");
-  expect((await requests.context(other,signal)).order.order_id).toBe(other);
-  expect((await lifecycle.context(other,signal)).order_id).toBe(other);
+  await expect(requests.context(wanted, signal)).rejects.toThrow(
+    "ORDER_REQUEST_SCOPE_CHANGED",
+  );
+  await expect(lifecycle.context(wanted, signal)).rejects.toThrow(
+    "ORDER_LIFECYCLE_SCOPE_CHANGED",
+  );
+  expect((await requests.context(other, signal)).order.order_id).toBe(other);
+  expect((await lifecycle.context(other, signal)).order_id).toBe(other);
+});
+
+test("uncertain cancellation reply cannot affirm a different order, request or action", async () => {
+  const { createOrderRequestClient } =
+    await import("../../apps/web/src/features/orders/request-api.ts");
+  const signal = new AbortController().signal;
+  const reply = (value) =>
+    createOrderRequestClient(async () => ({
+      status: 200,
+      json: async () => value,
+    }));
+  const valid = {
+    kind: "updated",
+    order_id: id,
+    request_id: other,
+    revision: 2,
+    state: "pending",
+  };
+  expect((await reply(valid).decide(command, signal)).state).toBe("pending");
+  for (const wrong of [
+    { ...valid, order_id: other },
+    { ...valid, state: "accepted" },
+    { ...valid, request_id: id, state: "withdrawn" },
+  ])
+    await expect(reply(wrong).decide(command, signal)).rejects.toThrow(
+      "ORDER_REQUEST_REPLY_CONTRADICTORY",
+    );
+  const withdrawal = {
+    order_id: id,
+    expected_version_id: id,
+    expected_revision: 1,
+    request_id: other,
+    expected_request_revision: 1,
+    action: "withdraw",
+    confirmed: true,
+  };
+  await expect(
+    reply({ ...valid, state: "withdrawn", request_id: id }).decide(
+      withdrawal,
+      signal,
+    ),
+  ).rejects.toThrow("ORDER_REQUEST_REPLY_CONTRADICTORY");
 });
