@@ -23,3 +23,7 @@ Quatre tests unitaires et un HTTP ciblent la consultation des deux côtés, le r
 Après un reçu `submitted` (y compris la reprise idempotente), le suivi clinique conserve le numéro et l'identifiant enfant et propose d'ouvrir directement son détail. L'accès à ce détail et à ses liens source/enfant est relu par les API existantes avec les droits actuels ; le reçu ne vaut pas autorisation de lecture. Chaque travail garde son numéro et son historique. L'interface ne prétend pas avoir testé la navigation navigateur : TypeScript et tests des contrats/permissions hors ligne uniquement ; recette réelle différée.
 
 La revue laboratoire affiche désormais les liens de la retouche sélectionnée et permet de relire le détail actuel de la source via l'API de suivi avant sa décision. La version et la révision de la retouche restent celles du panneau de décision et sont contrôlées par le serveur ; consulter la source ne les remplace pas. L'accès aux liens et au détail reste soumis aux permissions actuelles, sans données incorporées au reçu.
+
+## Reprise et session révoquée — 26 novembre 2026
+
+Le service relit la session valide et la clinique approuvée avant de consulter le reçu d’idempotence, y compris lors du rejeu. Un test avec double SQL vérifie la séquence création, révocation, refus avant lecture du reçu, puis récupération après une nouvelle autorisation avec la même clé et sans écriture supplémentaire. Le SQL réel filtre `revoked_at`, l’échéance et l’époque d’authentification ; son exécution et le navigateur isolé restent à réceptionner.

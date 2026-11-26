@@ -41,20 +41,21 @@ function fixture(patch = {}) {
         calls.push([sql, values]);
         if (sql.startsWith("SELECT a.profile"))
           return {
-            rows: patch.denied
-              ? []
-              : [
-                  {
-                    profile: patch.profile ?? "clinic",
-                    lifecycle: "active",
-                    sessionValid: true,
-                    securityLocked: false,
-                    resetRequired: false,
-                    clinicId: id,
-                    clinicSuspended: false,
-                    grants: [],
-                  },
-                ],
+            rows:
+              patch.denied || patch.sessionValid === false
+                ? []
+                : [
+                    {
+                      profile: patch.profile ?? "clinic",
+                      lifecycle: "active",
+                      sessionValid: patch.sessionValid ?? true,
+                      securityLocked: false,
+                      resetRequired: false,
+                      clinicId: id,
+                      clinicSuspended: false,
+                      grants: [],
+                    },
+                  ],
           };
         if (
           sql.startsWith(
@@ -186,6 +187,29 @@ test("retouch owner notice is emitted once on creation, not replay, and rolls ba
     createRetouchService(failed, undefined, true).submit(actor, command),
   ).rejects.toThrow("ORDER_OWNER_NOTIFICATION_UNAVAILABLE");
   expect(failed.state.writes).toEqual([]);
+});
+test("a revoked session cannot recover a committed retouch receipt; a newly authorized session may", async () => {
+  const permissions = { sessionValid: true };
+  const db = fixture(permissions);
+  const service = createRetouchService(db);
+  const initial = await service.submit(actor, command);
+  expect(initial.result.kind).toBe("submitted");
+  const writeCount = db.state.writes.length;
+  permissions.sessionValid = false;
+  db.calls.length = 0;
+  expect((await service.submit(actor, command)).kind).toBe("denied");
+  expect(
+    db.calls.some(([sql]) => sql.startsWith("SELECT r.payload_fingerprint")),
+  ).toBe(false);
+  expect(db.state.writes).toHaveLength(writeCount);
+  permissions.sessionValid = true;
+  const restored = await service.submit(actor, command);
+  expect(restored.result).toMatchObject({
+    kind: "submitted",
+    replayed: true,
+    order_id: initial.result.order_id,
+  });
+  expect(db.state.writes).toHaveLength(writeCount);
 });
 test("creates a distinct numbered child and conversation linked to the actual delivered source, never mutates source", async () => {
   const db = fixture(),

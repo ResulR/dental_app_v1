@@ -2011,6 +2011,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Suivi 24/11 :** reçu de retouche confirmé récupérable après réouverture : ouverture explicite du suivi par le numéro serveur depuis le coffre ; la trace locale reste jusqu’au nettoyage contrôlé. Réception navigateur/PostgreSQL ouverte.
 - **Complément 24/11 :** création du même coffre chiffré directement dans le parcours de retouche si aucun coffre du compte n’existe, avec phrase confirmée et code de secours à conserver avant activation. Scénario Chromium synthétique isolé préparé pour fermeture, déverrouillage, même intention/reçu et séparation compte/source ; non exécuté : marge de processus inférieure aux 64 requis par le harnais. Révocation de session et interface complète à recevoir en navigateur ; PostgreSQL réel reste ouvert.
 - **Complément 26/11 :** Le verrou de soumission couvre la préparation chiffrée, la tentative réseau et son règlement. Une interruption pendant l’écriture locale empêche le départ réseau et conserve la même intention pour la reprise.
+- **Contrôle 26/11 :** test hors ligne du reçu déjà créé face à une session révoquée : le faux SQL de la session n’autorise plus la lecture du reçu et aucune nouvelle écriture ne survient ; après une nouvelle session autorisée, la même clé retrouve le reçu sans double commande. Ce test ne vaut pas recette PostgreSQL de révocation.
 
 ### 11.4 — Appliquer états, modifications et annulations des commandes aux retouches
 - **Statut :** ◐ Socle commandes réutilisé — validation bout en bout différée
