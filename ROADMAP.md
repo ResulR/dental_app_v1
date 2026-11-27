@@ -1759,6 +1759,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale :** PostgreSQL réel, navigateur, fichiers et notifications différés.
 - **Complément 26/11 :** Depuis le lien privé de la fiche, la clinique peut ouvrir la proposition de modification sans relancer une recherche. Le client vérifie la commande et la version renvoyées avant d’afficher le formulaire.
 - **Contrôle 26/11 :** le client rejette les comparaisons de versions appartenant à une autre commande, la demande historique inattendue et les réponses de décision contraires à la commande ou au statut ; relecture obligatoire, sans répétition automatique.
+- **Complément 27/11 :** contrôle de la révision du reçu de proposition/décision (`révision attendue + 1`) et de la version officielle inchangée lors d’une proposition ou d’un refus. Tests de réponses contradictoires sur doubles HTTP.
 
 ### 10.6 — Implémenter retrait des demandes pendantes
 - **Statut :** ◐ Retrait clinique versionné intégré — réceptions différées
@@ -1812,6 +1813,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Implémentation16/10 :** API/UI albanaise, droits actuels, CAS commande/demande et audit/outbox transactionnels ; docs/ORDER_REQUESTS.md. Tests hors ligne avec doublesSQL ; aucune application PostgreSQL, réception finale différée. Propositions de modification non créées par ce lot.
 - **Complément 26/11 :** Les demandes d’annulation sont accessibles depuis le détail privé. La liste et le détail partagent les mêmes contrôles, avec une seule instance par travail. Le client vérifie l’identité de la commande renvoyée.
 - **Contrôle 26/11 :** une réponse `updated` doit mentionner la commande, la demande et l’état attendus pour l’action envoyée ; toute contradiction déclenche une relecture sans rejouer le POST.
+- **Complément 27/11 :** le reçu de succès doit porter la révision attendue augmentée d’une unité ; un numéro de révision obsolète ne confirme plus une décision.
 
 ### 10.9 — Implémenter annulation directe côté labo
 - **Statut :** ◐ Annulation laboratoire intégrée — réceptions différées
@@ -1943,6 +1945,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 - **Complément 26/11 :** Scénario synthétique de correction d’une retouche face à son renvoi simultané, dans les deux ordres de sérialisation. Vérifications des versions, du statut, de l’audit, de l’événement et de l’avis. Verrous et concurrence PostgreSQL réelle à réceptionner.
+- **Complément 27/11 :** refus client des reçus de demande/annulation ou de modification dont la révision ne correspond pas à la transaction attendue, sans répétition automatique ; test hors ligne. Aucun verrou PostgreSQL réel validé.
 
 ## Chapitre 11 — Retouches et refabrications
 

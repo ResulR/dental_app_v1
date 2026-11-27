@@ -479,6 +479,7 @@ test("uncertain cancellation reply cannot affirm a different order, request or a
   expect((await reply(valid).decide(command, signal)).state).toBe("pending");
   for (const wrong of [
     { ...valid, order_id: other },
+    { ...valid, revision: 1 },
     { ...valid, state: "accepted" },
     { ...valid, request_id: id, state: "withdrawn" },
   ])

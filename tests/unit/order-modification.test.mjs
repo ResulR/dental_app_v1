@@ -509,6 +509,12 @@ test("modification client rejects contradictory successes and foreign comparison
     reply({ ...accepted, status: "cancelled" }).decide(command, signal),
   ).rejects.toThrow("MODIFICATION_REPLY_CONTRADICTORY");
   await expect(
+    reply({ ...accepted, revision: 2 }).decide(command, signal),
+  ).rejects.toThrow("MODIFICATION_REPLY_CONTRADICTORY");
+  await expect(
+    reply({ ...accepted, version_id: id }).decide(command, signal),
+  ).rejects.toThrow("MODIFICATION_REPLY_CONTRADICTORY");
+  await expect(
     reply(accepted).decide(
       {
         order_id: id,
@@ -527,6 +533,24 @@ test("modification client rejects contradictory successes and foreign comparison
     { order_id: id },
   );
   expect(record.kind).toBe("result");
+  const proposal = {
+    order_id: id,
+    expected_version_id: id,
+    expected_revision: 2,
+    action: "propose_modification",
+    confirmed_warnings: false,
+    input: record.result.base.input,
+  };
+  const proposedReply = { ...accepted, version_id: id };
+  expect((await reply(proposedReply).propose(proposal, signal)).kind).toBe(
+    "updated",
+  );
+  await expect(reply(accepted).propose(proposal, signal)).rejects.toThrow(
+    "MODIFICATION_REPLY_CONTRADICTORY",
+  );
+  await expect(
+    reply({ ...proposedReply, revision: 2 }).propose(proposal, signal),
+  ).rejects.toThrow("MODIFICATION_REPLY_CONTRADICTORY");
   expect((await reply(record.result).context(id, signal)).request_id).toBe(id);
   await expect(
     reply({

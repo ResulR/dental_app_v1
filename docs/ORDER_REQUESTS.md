@@ -17,3 +17,5 @@ Tests unitaires/doubles transactionnels et HTTP local ne prouvent pas les verrou
 ## Réponses contradictoires — 26 novembre 2026
 
 Le client contrôle le reçu typé `updated` : même commande, même demande pour une décision/retrait et état attendu de l’action. Une divergence, une erreur réseau ou une expiration de session impose de relire le contexte courant ; aucun rejeu automatique. Le serveur garde le verrou, le CAS et l’historique comme autorité. Tests ciblés avec réponse contradictoire ; recette navigateur et PostgreSQL inchangées.
+
+Le reçu `updated` doit aussi porter `expected_revision + 1` ; une révision ancienne ou anticipée est traitée comme une réponse incertaine et impose la relecture.

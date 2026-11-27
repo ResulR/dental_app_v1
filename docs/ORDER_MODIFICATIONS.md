@@ -21,3 +21,5 @@ Cette extension reste soumise aux activations existantes. Les fichiers privés, 
 ## Réponses et comparaisons contradictoires — 26 novembre 2026
 
 Le client refuse une comparaison dont les deux versions ne concernent pas la commande demandée, dont l’identifiant de demande historique diffère ou dont les versions de base et proposée coïncident. Un succès de proposition/décision doit conserver l’identité de commande et le statut Acceptée ; un refus garde aussi la version officielle demandée. Après une réponse contradictoire, la vue se vide et exige une relecture, sans répéter la décision. Ces contrôles ne remplacent ni l’autorisation ni le CAS du serveur.
+
+La proposition et les décisions confirment seulement la révision `expected_revision + 1`. La proposition conserve la version officielle, le refus aussi ; une acceptation remplace la version officielle. Les réponses discordantes sont rejetées avant tout message de succès.

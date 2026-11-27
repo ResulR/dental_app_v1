@@ -31,7 +31,10 @@ export function createOrderModificationClient(transport: typeof fetch = fetch) {
       );
       if (
         reply.kind === "updated" &&
-        (reply.order_id !== command.order_id || reply.status !== "accepted")
+        (reply.order_id !== command.order_id ||
+          reply.status !== "accepted" ||
+          reply.revision !== command.expected_revision + 1 ||
+          reply.version_id !== command.expected_version_id)
       )
         throw new Error("MODIFICATION_REPLY_CONTRADICTORY");
       return reply;
@@ -45,8 +48,10 @@ export function createOrderModificationClient(transport: typeof fetch = fetch) {
         reply.kind === "updated" &&
         (reply.order_id !== command.order_id ||
           reply.status !== "accepted" ||
-          (command.action === "reject_modification" &&
-            reply.version_id !== command.expected_version_id))
+          reply.revision !== command.expected_revision + 1 ||
+          (command.action === "reject_modification"
+            ? reply.version_id !== command.expected_version_id
+            : reply.version_id === command.expected_version_id))
       )
         throw new Error("MODIFICATION_REPLY_CONTRADICTORY");
       return reply;

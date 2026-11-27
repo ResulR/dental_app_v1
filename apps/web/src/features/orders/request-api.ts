@@ -48,6 +48,7 @@ export function createOrderRequestClient(transport: typeof fetch = fetch) {
         reply.kind === "updated" &&
         (reply.order_id !== command.order_id ||
           reply.state !== expected[command.action] ||
+          reply.revision !== command.expected_revision + 1 ||
           ("request_id" in command && reply.request_id !== command.request_id))
       )
         throw new Error("ORDER_REQUEST_REPLY_CONTRADICTORY");
