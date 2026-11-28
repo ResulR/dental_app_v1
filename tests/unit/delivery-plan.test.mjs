@@ -1,6 +1,7 @@
 import { test, expect } from "vitest";
 import { createDeliveryPlanService } from "../../apps/api/dist/modules/orders/index.js";
 import { deliveryPlanEnabled } from "../../apps/api/dist/app/delivery-plan-config.js";
+import { createDeliveryPlanClient } from "../../apps/web/src/features/orders/delivery-plan-api.ts";
 const id = "91000000-0000-4000-8000-000000000001";
 const actor = { accountId: id, sessionId: id };
 const command = {
@@ -342,4 +343,25 @@ test("planning history pages beyond 20 retain revision, order, permissions and s
     ).kind,
   ).toBe("denied");
   expect(db.state.writes).toEqual([]);
+});
+
+test("planning context never shows another order after a contradictory response", async () => {
+  const other = "92000000-0000-4000-8000-000000000002";
+  const context = (
+    await createDeliveryPlanService(fixture()).context(actor, { order_id: id })
+  ).result;
+  const signal = new AbortController().signal;
+  const transport = (value) => async () => ({
+    status: 200,
+    json: async () => value,
+  });
+  expect(
+    (await createDeliveryPlanClient(transport(context)).context(id, signal))
+      .order_id,
+  ).toBe(id);
+  await expect(
+    createDeliveryPlanClient(
+      transport({ ...context, order_id: other }),
+    ).context(id, signal),
+  ).rejects.toThrow("DELIVERY_PLAN_SCOPE_CHANGED");
 });

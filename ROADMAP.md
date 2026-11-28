@@ -2824,6 +2824,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 
 
 - **Complément 28/11 :** le calendrier réutilise la fusion paginée du suivi : une commande n’est affichée qu’une fois malgré les chevauchements de pages, un curseur répété termine la pagination, et une variation des droits de détail purge les lignes conservées.
+- **Contrôle 28/11 :** le formulaire de planification refuse un contexte de date appartenant à une autre commande, même si la réponse respecte le schéma ; relecture nécessaire.
 
 ### 16.4 — Implémenter ajustement date par glisser-déposer desktop
 - **Statut :** ◐ Partiel — glisser-déposer sous permission et drapeau de planification, relecture serveur, confirmation/annulation et commande versionnée ; formulaire mobile/clavier relié au rechargement du calendrier après confirmation ; historique paginé des dates lié à la révision et consultable au-delà de 20 événements. Recette navigateur desktop/mobile et PostgreSQL restent nécessaires.

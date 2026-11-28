@@ -23,12 +23,17 @@ export function createDeliveryPlanClient(transport: typeof fetch = fetch) {
     return value;
   }
   return {
-    context(orderId: string, signal: AbortSignal) {
-      return post(
-        "context",
-        DeliveryPlanQuerySchema.parse({ order_id: orderId }),
-        signal,
-      ).then((value) => DeliveryPlanContextSchema.parse(value));
+    async context(orderId: string, signal: AbortSignal) {
+      const value = DeliveryPlanContextSchema.parse(
+        await post(
+          "context",
+          DeliveryPlanQuerySchema.parse({ order_id: orderId }),
+          signal,
+        ),
+      );
+      if (value.order_id !== orderId)
+        throw new Error("DELIVERY_PLAN_SCOPE_CHANGED");
+      return value;
     },
     history(raw: unknown, signal: AbortSignal) {
       return post(
