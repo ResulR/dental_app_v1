@@ -2034,6 +2034,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 - **Implémentation19/10 :** retouche créée comme orders.kind=retouch, mêmes décisions/lifecycle/édition/demandes, absence de dents et problème obligatoire vérifiés par édition. Synchronisation work_links via FK existante. Aucun rejeu des recettes historiques ; parcours PostgreSQL complet encore à réceptionner.
+- **Revue fonctionnelle 28/11 :** dépôt et lien source, autorisation clinique, décision manuelle labo, corrections/versions/demandes, annulation, fabrication, livraison et historique réutilisent les mêmes modules que les commandes normales. Aucun écart métier concret supplémentaire constaté dans ces chemins ; réception de la chaîne sur PostgreSQL et dans le navigateur encore ouverte. Les pièces jointes de retouche restent indisponibles tant que le pipeline privé n’est pas qualifié.
 
 ### 11.5 — Implémenter nouvelle retouche après refus/annulation/livraison
 - **Statut :** ◐ Nouvelle demande après état terminal intégrée — réceptions différées
@@ -2820,6 +2821,9 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Preuves attendues :** résultat vérifiable (test, journal expurgé, capture, rapport ou requête d'audit) + diff Git lorsque applicable ; noter les impossibilités.
 - **Commit Git :** Oui si un fichier versionné change ; sinon sans objet
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
+
+
+- **Complément 28/11 :** le calendrier réutilise la fusion paginée du suivi : une commande n’est affichée qu’une fois malgré les chevauchements de pages, un curseur répété termine la pagination, et une variation des droits de détail purge les lignes conservées.
 
 ### 16.4 — Implémenter ajustement date par glisser-déposer desktop
 - **Statut :** ◐ Partiel — glisser-déposer sous permission et drapeau de planification, relecture serveur, confirmation/annulation et commande versionnée ; formulaire mobile/clavier relié au rechargement du calendrier après confirmation ; historique paginé des dates lié à la révision et consultable au-delà de 20 événements. Recette navigateur desktop/mobile et PostgreSQL restent nécessaires.

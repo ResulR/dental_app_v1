@@ -13,6 +13,7 @@ import {
 } from "./calendar-period.js";
 import type { CalendarMode } from "./calendar-period.js";
 import { createOrderTrackingClient } from "./tracking-api.js";
+import { appendTrackingPage } from "./tracking-page.js";
 import { orderStatusLabels } from "./status-labels.js";
 import { deliveryUrgency, deliveryUrgencyLabel } from "./delivery-urgency.js";
 const api = createOrderTrackingClient();
@@ -94,12 +95,9 @@ function CalendarResults({
         controller.signal,
       );
       if (controller.signal.aborted) return;
-      if (
-        next.can_read_details !== page.can_read_details ||
-        (next.next_after && next.next_after === after)
-      )
-        throw new Error("CALENDAR_PAGE_CONFLICT");
-      setPage({ ...next, items: [...page.items, ...next.items] });
+      const combined = appendTrackingPage(page, next, after);
+      if (!combined) throw new Error("CALENDAR_PAGE_CONFLICT");
+      setPage(combined);
     } catch {
       if (!controller.signal.aborted) {
         setPage(null);
