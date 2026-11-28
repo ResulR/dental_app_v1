@@ -2356,7 +2356,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 13.3 — Implémenter réception/envoi des messages
-- **Statut :** ◐ Réception paginée et envoi idempotent textuels intégrés pour conversations générales, commandes et retouches ; après réponse ambiguë, l'interface garde le même texte et la même clé jusqu'au reçu ou à une décision explicite après contrôle. Fichiers refusés, drapeaux fermés. Tests PostgreSQL réel, navigateur, éditions et fichiers restent ouverts.
+- **Statut :** ◐ Réception paginée et envoi idempotent textuels intégrés pour conversations générales, commandes et retouches ; l'intention exacte et sa clé sont chiffrées dans le coffre lié au compte avant l'appel réseau et récupérables après fermeture/reconnexion. Aucun renvoi automatique ; reprise manuelle avec contrôle de la conversation et des permissions actuelles, reçu `sent` recoupé avec le message propre, puis conservé jusqu'au retrait explicite. Une fermeture confirmée est conservée comme refus, sans faux reçu ; contradiction/échec restent en attente. Pièces jointes refusées, drapeaux fermés. Tests ciblés avec doubles ; PostgreSQL réel, navigateur, éditions et fichiers restent ouverts.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Messagerie temps réel
@@ -3025,7 +3025,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 17.8 — Implémenter bandeau maintenance planifiée
-- **Statut :** ◐ Partiel — affichage de la date/heure et de l’historique corrigé vers le fuseau IANA compatible avec le jour civil kosovar ; champs de date/message et historique versionné dans 0026 non exécutée ; routes propriétaire, lecture autorisée et bandeau albanais derrière drapeaux fermés ; annulation explicite, préservation du formulaire non enregistré pendant le rafraîchissement et schémas publics de version 3 ajoutés. Réception PostgreSQL et navigateur et activation restent à faire ; aucune annonce publiée.
+- **Statut :** ◐ Partiel — affichage de la date/heure et de l’historique corrigé vers le fuseau IANA compatible avec le jour civil kosovar ; test déterministe des bascules été/hiver 2026 et du passage UTC → jour civil (API/stockage) ; champs de date/message et historique versionné dans 0026 non exécutée ; routes propriétaire, lecture autorisée et bandeau albanais derrière drapeaux fermés ; annulation explicite, préservation du formulaire non enregistré pendant le rafraîchissement et schémas publics de version 3 ajoutés. Réception PostgreSQL et navigateur et activation restent à faire ; aucune annonce publiée.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Administration, audit, rétention et conformité

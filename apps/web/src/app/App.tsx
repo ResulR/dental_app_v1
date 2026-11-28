@@ -111,6 +111,7 @@ export function App() {
                   >
                     {(snapshot) => (
                       <InternalNoticePanel
+                        accountId={identity.account_id}
                         key={identity.account_id + "-notices"}
                         clinic={identity.profile === "clinic"}
                         permissions={snapshot.permissions}
@@ -166,6 +167,7 @@ export function App() {
                       permissions={snapshot.permissions}
                       renderConversation={(orderId) => (
                         <GeneralMessagingPanel
+                          accountId={identity.account_id}
                           key={orderId}
                           orderId={orderId}
                           clinic={identity.profile === "clinic"}
@@ -214,6 +216,7 @@ export function App() {
                   >
                     {(snapshot) => (
                       <MessagingInboxPanel
+                        accountId={identity.account_id}
                         key={identity.account_id + "-inbox"}
                         permissions={snapshot.permissions}
                       />
@@ -229,6 +232,7 @@ export function App() {
                 >
                   {(snapshot) => (
                     <GeneralMessagingPanel
+                      accountId={identity.account_id}
                       key={identity.account_id + "-general"}
                       clinic={identity.profile === "clinic"}
                       canReply={

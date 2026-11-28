@@ -32,7 +32,9 @@ async function post(path: string, body: unknown, signal?: AbortSignal) {
 export function InternalNoticePanel({
   permissions,
   clinic,
+  accountId,
 }: {
+  accountId: string;
   clinic: boolean;
   permissions: ReturnType<
     typeof EffectivePermissionsSchema.parse
@@ -263,6 +265,7 @@ export function InternalNoticePanel({
                 </Button>
                 {conversationOpen && (
                   <GeneralMessagingPanel
+                    accountId={accountId}
                     key={selected.conversation_id}
                     clinic={clinic}
                     canReply={

@@ -5,6 +5,7 @@ import type {
   MessageHistoryResultSchema,
 } from "@dental-lab/contracts";
 import { Button } from "../../shared/Button.js";
+import { MessageSendForm } from "./MessageSendForm.js";
 import { appendMessageHistory } from "./message-history-page.js";
 import {
   appendConversationPage,
@@ -19,11 +20,9 @@ import {
   generalConversations,
   generalMessages,
   markGeneralRead,
-  sendGeneralMessage,
   orderConversation,
   orderMessages,
   markOrderRead,
-  sendOrderMessage,
   mutateTextMessage,
   textMessageHistory,
 } from "./general-api.js";
@@ -35,11 +34,13 @@ export function GeneralMessagingPanel({
   canReply,
   orderId,
   generalClinicId,
+  accountId,
 }: {
   clinic: boolean;
   canReply: boolean;
   orderId?: string;
   generalClinicId?: string;
+  accountId: string;
 }) {
   const [conversations, setConversations] = useState<Conversations | null>(
     null,
@@ -57,7 +58,6 @@ export function GeneralMessagingPanel({
   const [mutating, setMutating] = useState(false);
   const fetchMessages = orderId ? orderMessages : generalMessages;
   const acknowledge = orderId ? markOrderRead : markGeneralRead;
-  const submit = orderId ? sendOrderMessage : sendGeneralMessage;
   const fetchConversations = useCallback(
     async (
       raw: unknown,
@@ -88,9 +88,6 @@ export function GeneralMessagingPanel({
     [orderId, generalClinicId],
   );
   const [messages, setMessages] = useState<Messages | null>(null);
-  const [body, setBody] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [sendUncertain, setSendUncertain] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [reading, setReading] = useState(false);
@@ -100,7 +97,6 @@ export function GeneralMessagingPanel({
   >("waiting");
   const latestPage = useRef<Messages | null>(null);
   const latestConversations = useRef<Conversations | null>(null);
-  const key = useRef<string | null>(null);
   const messageList = useRef<HTMLOListElement>(null);
   const seen = useRef<{
     conversationId: string;
@@ -211,9 +207,6 @@ export function GeneralMessagingPanel({
         setMessages(null);
         closeHistory();
         setEditing(null);
-        setBody("");
-        key.current = null;
-        setSendUncertain(false);
         setNotice("Biseda nuk është më e disponueshme për këtë llogari.");
       } else if (
         !selectedAtStart &&
@@ -594,51 +587,6 @@ export function GeneralMessagingPanel({
       }
     }
   }
-  async function send() {
-    if (!selected || !body.trim() || busy) return;
-    setBusy(true);
-    setNotice("");
-    key.current ??= crypto.randomUUID();
-    try {
-      const result = await submit({
-        conversation_id: selected,
-        idempotency_key: key.current,
-        body: body.trim(),
-        file_ids: [],
-      });
-      if (result.kind !== "sent") {
-        if (result.kind === "conflict") setSendUncertain(true);
-        if (result.kind === "conversation_closed") {
-          setClosed(true);
-          key.current = null;
-          setSendUncertain(false);
-        }
-        setNotice(
-          result.kind === "conflict"
-            ? "Çelësi i mesazhit ka përmbajtje tjetër. Kontrolloni bisedën; mos krijoni dërgim të ri pa verifikuar rezultatin."
-            : result.kind === "conversation_closed"
-              ? "Biseda është mbyllur. Mesazhi nuk u dërgua."
-              : "Mesazhi nuk u dërgua. Kontrolloni bisedën.",
-        );
-        return;
-      }
-      key.current = null;
-      setSendUncertain(false);
-      setBody("");
-      void refresh().catch(() =>
-        setNotice(
-          "Mesazhi u dërgua, por lista nuk u përditësua. Rifreskojeni bisedën.",
-        ),
-      );
-    } catch {
-      setSendUncertain(true);
-      setNotice(
-        "Përgjigjja është e pasigurt. Kontrolloni bisedën ose riprovoni të njëjtin mesazh.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
   return (
     <section
       aria-label={orderId ? "Biseda e porosisë" : "Biseda e përgjithshme"}
@@ -667,9 +615,7 @@ export function GeneralMessagingPanel({
           Klinika
           <select
             value={selected}
-            disabled={
-              busy || mutating || reading || loadingMessages || loadingOlder
-            }
+            disabled={mutating || reading || loadingMessages || loadingOlder}
             onChange={(e) => {
               selectionEpoch.current++;
               setLoadingMessages(Boolean(e.target.value));
@@ -678,9 +624,6 @@ export function GeneralMessagingPanel({
               setMessages(null);
               closeHistory();
               setEditing(null);
-              setBody("");
-              key.current = null;
-              setSendUncertain(false);
             }}
           >
             <option value="">Zgjidhni klinikën</option>
@@ -875,52 +818,25 @@ export function GeneralMessagingPanel({
               mesazhe të reja.
             </p>
           )}
-          {canReply && !closed && (
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                void send();
-              }}
-            >
-              <label>
-                Mesazh tekstual
-                <textarea
-                  value={body}
-                  disabled={busy || sendUncertain}
-                  maxLength={100000}
-                  onChange={(event) => {
-                    setBody(event.target.value);
-                    key.current = null;
-                  }}
-                />
-              </label>
-              <Button type="submit" disabled={busy || !body.trim()}>
-                {sendUncertain
-                  ? "Rimerr rezultatin e të njëjtit mesazh"
-                  : "Dërgo mesazhin"}
-              </Button>
-              {sendUncertain && (
-                <Button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => {
-                    if (
-                      !window.confirm(
-                        "E kontrolluat bisedën? Një dërgim i ri mund të krijojë mesazh të dyfishtë.",
-                      )
-                    )
-                      return;
-                    key.current = null;
-                    setSendUncertain(false);
-                    setNotice("");
-                  }}
-                >
-                  Përgatit mesazh të ri pas kontrollit
-                </Button>
-              )}
-            </form>
-          )}
-          <p>Skedarët nuk janë të disponueshëm në këtë bisedë.</p>
+          <MessageSendForm
+            key={selected}
+            accountId={accountId}
+            conversationId={selected}
+            clinicId={
+              conversations?.items.find((item) => item.id === selected)
+                ?.clinic_id ?? ""
+            }
+            {...(orderId ? { orderId } : {})}
+            canReply={canReply}
+            closed={closed}
+            onSent={() =>
+              void refresh().catch(() =>
+                setNotice(
+                  "Mesazhi u verifikua, por lista nuk u përditësua. Rifreskoni bisedën.",
+                ),
+              )
+            }
+          />
         </>
       )}
       {notice && <p role="alert">{notice}</p>}

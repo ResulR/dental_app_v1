@@ -16,7 +16,9 @@ type Page = ReturnType<typeof MessagingInboxPageSchema.parse>;
 type Item = Page["items"][number];
 export function MessagingInboxPanel({
   permissions,
+  accountId,
 }: {
+  accountId: string;
   permissions: ReadonlyArray<string>;
 }) {
   const [search, setSearch] = useState("");
@@ -281,6 +283,7 @@ export function MessagingInboxPanel({
             Mbyll bisedën
           </Button>
           <GeneralMessagingPanel
+            accountId={accountId}
             key={selected.conversation_id}
             clinic={false}
             canReply={permissions.includes(
