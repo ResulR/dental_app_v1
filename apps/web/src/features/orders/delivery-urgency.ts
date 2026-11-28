@@ -17,7 +17,7 @@ export function deliveryUrgency(
   const date = planned ?? requested;
   if (!date) return null;
   const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Europe/Brussels",
+    timeZone: "Europe/Skopje",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

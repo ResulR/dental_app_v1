@@ -32,6 +32,7 @@ export const InternalNoticePageSchema = z.strictObject({
         clinic_revision: z.number().int().positive(),
         created_at: z.iso.datetime(),
         read_at: z.iso.datetime().nullable(),
+        current: z.boolean(),
       }),
     )
     .max(50),

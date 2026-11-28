@@ -31,6 +31,7 @@ function fixture() {
               expect(sql).toContain(
                 "NOT IN ('delivered','rejected','cancelled')",
               );
+              expect(sql).toContain("Europe/Skopje");
               return {
                 rows:
                   draft.closed ||

@@ -71,6 +71,22 @@ const visible = `(
       OR (NOT $3::boolean AND m.sender_side='laboratory' AND c.account_id=$1
         AND c.review_state='approved' AND NOT c.suspended)))
 )`;
+// Keep historic notices visible for audit while removing stale deadlines from the
+// active unread count and marking them as no longer actionable.
+const deadlineCurrent = `(e.type NOT IN ('order_due_soon','order_overdue') OR (
+  o.id IS NOT NULL AND o.status NOT IN ('delivered','rejected','cancelled')
+  AND e.aggregate_revision=o.revision
+  AND EXISTS (
+    SELECT 1 FROM public.order_logistics dl
+    JOIN public.order_versions dv ON dv.id=o.current_version_id AND dv.order_id=o.id AND dv.clinic_id=o.clinic_id
+    WHERE dl.order_id=o.id AND dl.clinic_id=o.clinic_id
+      AND COALESCE(dl.planned_delivery_date,dv.requested_delivery_date) IS NOT NULL
+      AND COALESCE(dl.planned_delivery_date,dv.requested_delivery_date)
+        <= (statement_timestamp() AT TIME ZONE 'Europe/Skopje')::date + 2
+      AND CASE WHEN COALESCE(dl.planned_delivery_date,dv.requested_delivery_date)
+        < (statement_timestamp() AT TIME ZONE 'Europe/Skopje')::date
+        THEN 'order_overdue' ELSE 'order_due_soon' END=e.type
+  )))`;
 export function createInternalNoticeRepository(
   db: Pick<ReturnType<typeof createApplicationDatabase>, "transaction">,
 ) {
@@ -83,7 +99,8 @@ export function createInternalNoticeRepository(
         if (!scope) return { kind: "denied" as const };
         const rows = await tx.query(
           `SELECT n.id,e.type AS kind,e.clinic_id,COALESCE(o.id,mo.id) AS order_id,
-           v.id AS conversation_id,c.name AS clinic_name,c.revision::text AS clinic_revision,n.created_at,n.read_at
+           v.id AS conversation_id,c.name AS clinic_name,c.revision::text AS clinic_revision,n.created_at,n.read_at,
+           (${deadlineCurrent}) AS deadline_current
            FROM public.internal_notifications n ${joins}
            WHERE n.target_account_id=$1 AND ${visible} AND n.id=$6 LIMIT 1`,
           [...scope, parsed.data.id],
@@ -104,6 +121,7 @@ export function createInternalNoticeRepository(
               row.created_at instanceof Date
                 ? row.created_at.toISOString()
                 : row.created_at,
+            current: row.deadline_current,
             read_at:
               row.read_at instanceof Date
                 ? row.read_at.toISOString()
@@ -120,12 +138,14 @@ export function createInternalNoticeRepository(
         if (!scope) return { kind: "denied" as const };
         const counts = await tx.query(
           `SELECT count(*)::text AS unread FROM public.internal_notifications n
-           ${joins} WHERE n.target_account_id=$1 AND n.read_at IS NULL AND ${visible}`,
+           ${joins} WHERE n.target_account_id=$1 AND n.read_at IS NULL AND ${visible}
+             AND ${deadlineCurrent}`,
           [...scope],
         );
         const rows = await tx.query(
           `SELECT n.id,e.type AS kind,e.clinic_id,COALESCE(o.id,mo.id) AS order_id,
-           v.id AS conversation_id,c.name AS clinic_name,c.revision::text AS clinic_revision,n.created_at,n.read_at
+           v.id AS conversation_id,c.name AS clinic_name,c.revision::text AS clinic_revision,n.created_at,n.read_at,
+           (${deadlineCurrent}) AS deadline_current
            FROM public.internal_notifications n ${joins}
            WHERE n.target_account_id=$1 AND ${visible}
              AND ($6::timestamptz IS NULL OR (n.created_at,n.id)<($6::timestamptz,$7::uuid))
@@ -148,6 +168,7 @@ export function createInternalNoticeRepository(
             row.created_at instanceof Date
               ? row.created_at.toISOString()
               : row.created_at,
+          current: row.deadline_current,
           read_at:
             row.read_at instanceof Date
               ? row.read_at.toISOString()

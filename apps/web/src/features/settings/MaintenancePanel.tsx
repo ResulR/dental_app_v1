@@ -134,7 +134,7 @@ export function MaintenancePanel({ owner }: { owner: boolean }) {
           Mirëmbajtje e planifikuar:{" "}
           <time dateTime={notice.planned_at}>
             {new Date(notice.planned_at).toLocaleString("sq-XK", {
-              timeZone: "Europe/Brussels",
+              timeZone: "Europe/Skopje",
             })}
           </time>{" "}
           · {notice.planned_message}
@@ -208,7 +208,7 @@ export function MaintenancePanel({ owner }: { owner: boolean }) {
               <li key={item.revision}>
                 <time dateTime={item.occurred_at}>
                   {new Date(item.occurred_at).toLocaleString("sq-XK", {
-                    timeZone: "Europe/Brussels",
+                    timeZone: "Europe/Skopje",
                   })}
                 </time>{" "}
                 · r{item.revision} ·{" "}

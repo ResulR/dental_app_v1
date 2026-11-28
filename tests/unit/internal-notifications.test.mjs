@@ -13,6 +13,7 @@ function fixture({
   revoked = false,
   suspended = false,
   grants = [],
+  current = true,
 } = {}) {
   const calls = [];
   const readAt = new Date("2026-10-22T12:00:00.000Z");
@@ -43,7 +44,7 @@ function fixture({
     )
       return { rows: suspended ? [] : [{ id: clinic }] };
     if (sql.startsWith("SELECT count(*)::text AS unread"))
-      return { rows: [{ unread: "1" }] };
+      return { rows: [{ unread: current ? "1" : "0" }] };
     if (
       missing &&
       sql.startsWith("SELECT n.id,e.type AS kind") &&
@@ -66,6 +67,7 @@ function fixture({
             clinic_revision: "2",
             created_at: readAt,
             read_at: null,
+            deadline_current: current,
           },
         ],
       };
@@ -227,6 +229,27 @@ test("old notice is revalidated by recipient and current permission without mark
   expect((await owner.service.get(actor, { id: "other" })).kind).toBe(
     "invalid",
   );
+});
+test("stale deadline remains historic but leaves active unread count", async () => {
+  const f = fixture({ kind: "order_due_soon", current: false });
+  const listed = await f.service.list(actor, {});
+  expect(listed.result.unread_count).toBe(0);
+  expect(listed.result.items[0]).toMatchObject({
+    kind: "order_due_soon",
+    current: false,
+  });
+  const count = f.calls.find(([sql]) =>
+    sql.startsWith("SELECT count(*)::text AS unread"),
+  );
+  expect(count[0]).toContain("AND e.aggregate_revision=o.revision");
+  expect(count[0]).toContain("Europe/Skopje");
+  expect(count[0]).toContain(
+    "o.status NOT IN ('delivered','rejected','cancelled')",
+  );
+  expect(count[0]).toContain(
+    "THEN 'order_overdue' ELSE 'order_due_soon' END=e.type",
+  );
+  expect((await f.service.get(actor, { id })).result.current).toBe(false);
 });
 test("owner read is idempotently scoped; clinic and foreign notification denied", async () => {
   const f = fixture();

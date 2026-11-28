@@ -41,7 +41,7 @@ test("terminal orders never emit progression alerts", () => {
     ).toBeNull();
 });
 
-test("civil day is evaluated in Brussels around midnight and DST, not UTC", () => {
+test("civil day is evaluated in Pristina around midnight and DST, not UTC", () => {
   expect(
     deliveryUrgency(
       "manufacturing",

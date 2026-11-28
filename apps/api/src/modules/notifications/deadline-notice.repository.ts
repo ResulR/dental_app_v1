@@ -12,12 +12,12 @@ export function createDeadlineNoticeRepository(
   return {
     async generateBatch() {
       return db.transaction(async (tx) => {
-        // The civil date follows the existing Brussels display policy. The
+        // The civil date follows the validated Pristina display policy. The
         // database supplies the clock; no browser-provided date is trusted.
         const candidates = await tx.query(
           `SELECT o.id,o.clinic_id,o.revision::text AS revision,
              CASE WHEN COALESCE(l.planned_delivery_date,v.requested_delivery_date)
-               < (statement_timestamp() AT TIME ZONE 'Europe/Brussels')::date
+               < (statement_timestamp() AT TIME ZONE 'Europe/Skopje')::date
                THEN 'order_overdue' ELSE 'order_due_soon' END AS kind
            FROM public.orders o
            JOIN public.order_logistics l ON l.order_id=o.id AND l.clinic_id=o.clinic_id
@@ -26,13 +26,13 @@ export function createDeadlineNoticeRepository(
            WHERE o.status NOT IN ('delivered','rejected','cancelled')
              AND COALESCE(l.planned_delivery_date,v.requested_delivery_date) IS NOT NULL
              AND COALESCE(l.planned_delivery_date,v.requested_delivery_date)
-               <= (statement_timestamp() AT TIME ZONE 'Europe/Brussels')::date + 2
+               <= (statement_timestamp() AT TIME ZONE 'Europe/Skopje')::date + 2
              AND NOT EXISTS (
                SELECT 1 FROM public.outbox_events e
                WHERE e.aggregate_type='order' AND e.aggregate_id=o.id
                  AND e.aggregate_revision=o.revision
                  AND e.type=CASE WHEN COALESCE(l.planned_delivery_date,v.requested_delivery_date)
-                   < (statement_timestamp() AT TIME ZONE 'Europe/Brussels')::date
+                   < (statement_timestamp() AT TIME ZONE 'Europe/Skopje')::date
                    THEN 'order_overdue' ELSE 'order_due_soon' END)
            ORDER BY COALESCE(l.planned_delivery_date,v.requested_delivery_date),o.id
            LIMIT 100 FOR UPDATE OF o SKIP LOCKED`,

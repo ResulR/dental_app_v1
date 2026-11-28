@@ -210,7 +210,11 @@ export function InternalNoticePanel({
             }{" "}
             · {item.clinic_name} ·{" "}
             <time dateTime={item.created_at}>{item.created_at}</time>
-            {item.read_at ? " · Lexuar" : " · I palexuar"}
+            {!item.current
+              ? " · Historik, jo aktual"
+              : item.read_at
+                ? " · Lexuar"
+                : " · I palexuar"}
             <Button
               type="button"
               disabled={busy}
@@ -232,6 +236,12 @@ export function InternalNoticePanel({
       )}
       {selected && (
         <div>
+          {!selected.current && (
+            <p role="status">
+              Ky sinjal afati nuk është më aktual. Gjendja e porosisë duhet
+              rilexuar.
+            </p>
+          )}
           <Button
             type="button"
             onClick={() => {
@@ -285,7 +295,13 @@ export function InternalNoticePanel({
             />
           ) : selected.order_id ? (
             <div key={selected.id}>
-              {selected.kind === "laboratory_order_created" && clinic ? (
+              {!selected.current &&
+              (selected.kind === "order_due_soon" ||
+                selected.kind === "order_overdue") ? (
+                <a href={privateOrderFragment(selected.order_id)}>
+                  Shiko gjendjen aktuale të porosisë
+                </a>
+              ) : selected.kind === "laboratory_order_created" && clinic ? (
                 <a href={privateOrderFragment(selected.order_id)}>
                   Hap porosinë në ndjekje
                 </a>

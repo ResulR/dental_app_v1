@@ -2793,7 +2793,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 16.2 — Implémenter priorité et urgence
-- **Statut :** ◐ Partiel — priorité manuelle versionnée sous drapeaux inactifs ; repères J-2/retard visuels sur les données suivies et le calendrier. Historique des changements de priorité consultable au-delà de 20 événements par pages liées à la révision ; générateur d'avis internes durables et dédupliqués préparé derrière la migration 0025 non exécutée, sans déclencheur actif ; réception PostgreSQL/navigateur et activation autorisée restent à réaliser (docs/DELIVERY_PRIORITY.md).
+- **Statut :** ◐ Partiel — priorité manuelle versionnée sous drapeaux inactifs ; repères J-2/retard visuels sur les données suivies et le calendrier. Historique des changements de priorité consultable au-delà de 20 événements par pages liées à la révision ; générateur d'avis internes durables et dédupliqués préparé derrière la migration 0025 non exécutée, sans déclencheur actif ; jour civil kosovar aligné sur le cahier des charges via le fuseau IANA compatible `Europe/Skopje` (alias métier `Europe/Pristina` non reconnu par Intl), et avis historiques devenus obsolètes signalés dans le portail puis exclus du compteur actif selon révision, statut, date et type J-2/retard. Réconciliation calculée à la lecture, traces conservées ; concurrence et horloge PostgreSQL réelles, navigateur et activation autorisée restent à réceptionner (docs/DELIVERY_PRIORITY.md).
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Planning, livraisons, archives et recherche
@@ -3025,7 +3025,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 17.8 — Implémenter bandeau maintenance planifiée
-- **Statut :** ◐ Partiel — champs de date/message et historique versionné dans 0026 non exécutée ; routes propriétaire, lecture autorisée et bandeau albanais derrière drapeaux fermés ; annulation explicite, préservation du formulaire non enregistré pendant le rafraîchissement et schémas publics de version 3 ajoutés. Réception PostgreSQL et navigateur et activation restent à faire ; aucune annonce publiée.
+- **Statut :** ◐ Partiel — affichage de la date/heure et de l’historique corrigé vers le fuseau IANA compatible avec le jour civil kosovar ; champs de date/message et historique versionné dans 0026 non exécutée ; routes propriétaire, lecture autorisée et bandeau albanais derrière drapeaux fermés ; annulation explicite, préservation du formulaire non enregistré pendant le rafraîchissement et schémas publics de version 3 ajoutés. Réception PostgreSQL et navigateur et activation restent à faire ; aucune annonce publiée.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Administration, audit, rétention et conformité
