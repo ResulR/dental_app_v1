@@ -6,6 +6,7 @@ import {
   settleBatchIntent,
   clearBatchIntent,
   matchesBatchReceipt,
+  matchesStoredBatchReceipt,
 } from "../../apps/web/src/features/drafts/delivery-batch-intent.ts";
 import {
   readLocalDraft,
@@ -83,6 +84,12 @@ test("account, receipt, order membership, revisions and changed payload are reje
   await expect(readBatchIntent(vault, uuid(8))).rejects.toThrow(
     "BATCH_INTENT_ACCOUNT",
   );
+  expect(
+    matchesStoredBatchReceipt(reply, {
+      ...reply,
+      delivered_at: "2026-11-29T09:00:00Z",
+    }),
+  ).toBe(false);
   expect(matchesBatchReceipt(command, { ...reply, receipt_id: uuid(98) })).toBe(
     false,
   );

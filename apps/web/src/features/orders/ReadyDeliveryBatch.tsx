@@ -19,6 +19,7 @@ import {
   settleBatchIntent,
   clearBatchIntent,
   matchesBatchReceipt,
+  matchesStoredBatchReceipt,
   type BatchIntent,
 } from "../drafts/delivery-batch-intent.js";
 import { Button } from "../../shared/Button.js";
@@ -225,6 +226,15 @@ export function ReadyDeliveryBatch({
         JSON.stringify(current.command) !== JSON.stringify(command)
       )
         throw new Error("BATCH_INTENT_CONFLICT");
+      if (
+        current.state === "settled" &&
+        (!current.reply || !matchesStoredBatchReceipt(current.reply, response))
+      ) {
+        setMessage(
+          "Fatura e serverit bie ndesh me faturën e ruajtur. Kontaktoni administratorin.",
+        );
+        return;
+      }
       const saved =
         current.state === "settled"
           ? current

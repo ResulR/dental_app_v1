@@ -38,6 +38,10 @@ export function matchesBatchReceipt(
   );
 }
 
+export function matchesStoredBatchReceipt(stored: Receipt, next: Receipt) {
+  return JSON.stringify(stored) === JSON.stringify(next);
+}
+
 export function parseBatchIntent(
   raw: unknown,
   revision: number,
