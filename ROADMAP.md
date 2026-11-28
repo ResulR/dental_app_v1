@@ -1738,7 +1738,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Réception finale :** différée (PostgreSQL réel, navigateur, pipeline fichiers et livraison des notifications).
 
 ### 10.5 — Implémenter demandes de modification Acceptée
-- **Statut :** ◐ Propositions et décisions intégrées ; historique paginé sans doublons ni curseur répété, retiré localement si la relecture ou les droits échouent — fichiers et réceptions différés
+- **Statut :** ◐ Propositions et décisions intégrées ; historique paginé sans doublons ni curseur répété, retiré localement si la relecture ou les droits échouent. Le formulaire d’édition refuse maintenant un contexte ou reçu qui concerne une autre commande, y compris une version historique différente de celle demandée — fichiers et réceptions différés
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -1796,7 +1796,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Implémentation16/10 :** voir docs/ORDER_LIFECYCLE.md : cinq actions versionnées, audit/outbox et fermeture/réouverture atomiques. Validation hors ligne avec doublesSQL ; aucune application PostgreSQL ni réception finale.
 
 ### 10.8 — Implémenter annulation sur demande Acceptée
-- **Statut :** ◐ Demande et décision d’annulation intégrées — réceptions différées
+- **Statut :** ◐ Demande et décision d’annulation intégrées ; l’interface refuse un contexte ou reçu d’une autre commande avant action/confirmation — réceptions différées
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Workflow et décisions des commandes
@@ -2842,7 +2842,7 @@ Une étape ne devient `☑ Validé` qu'avec : **(1)** l'inventaire de l'état in
 - **Pourquoi maintenant :** respecter l'ordre des dépendances et obtenir une preuve de clôture avant la suite.
 
 ### 16.5 — Implémenter Prêts à livrer
-- **Statut :** ◐ Partiel — raccourci laboratoire réservé à `delivery.mark_delivered`, liste serveur filtrée `Terminée`, pagination et action individuelle existante avec mode/confirmation ; recette PostgreSQL et UX restent à réaliser.
+- **Statut :** ◐ Partiel — raccourci laboratoire réservé à `delivery.mark_delivered`, liste serveur filtrée `Terminée`, pagination et action individuelle existante avec mode/confirmation ; son panneau rejette un contexte ou reçu d’une autre commande avant décision ; recette PostgreSQL et UX restent à réaliser.
 - **Priorité :** Critique
 - **Catégorie / type :** Implémentation / test
 - **Zone concernée :** Planning, livraisons, archives et recherche

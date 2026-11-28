@@ -101,6 +101,11 @@ export function OrderEditPanel({
         },
         signal,
       );
+      if (
+        next.order_id !== orderId ||
+        (version_id && next.version_id !== version_id)
+      )
+        throw new Error("ORDER_CONTEXT_MISMATCH");
       if (!signal.aborted) {
         setView(next);
         if (!version_id) setCurrentSnapshot(next);
@@ -165,6 +170,8 @@ export function OrderEditPanel({
       const r = await (action === "propose_modification"
         ? modifications.propose(parsed.data, signal)
         : api.decide(parsed.data, signal));
+      if (r.kind === "updated" && r.order_id !== orderId)
+        throw new Error("ORDER_RESULT_MISMATCH");
       if (signal.aborted) return;
       if (r.kind === "confirmation_required") {
         setMessage(

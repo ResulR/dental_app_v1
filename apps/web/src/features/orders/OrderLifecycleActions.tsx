@@ -73,6 +73,7 @@ export function OrderLifecycleActions({
   async function load() {
     await run(async (signal) => {
       const next = await api.context(orderId, signal);
+      if (next.order_id !== orderId) throw new Error("ORDER_CONTEXT_MISMATCH");
       if (!signal.aborted) {
         setContext(next);
         setReason("");
@@ -97,6 +98,8 @@ export function OrderLifecycleActions({
     };
     await run(async (signal) => {
       const result = await api.decide(command, signal);
+      if (result.kind === "updated" && result.order_id !== orderId)
+        throw new Error("ORDER_RESULT_MISMATCH");
       if (signal.aborted) return;
       setContext(null);
       onFinished(

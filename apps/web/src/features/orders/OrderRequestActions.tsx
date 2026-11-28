@@ -60,6 +60,8 @@ export function OrderRequestActions({
   async function load() {
     await run(async (signal) => {
       const c = await api.context(orderId, signal);
+      if (c.order.order_id !== orderId)
+        throw new Error("ORDER_CONTEXT_MISMATCH");
       if (!signal.aborted) {
         setContext(c);
         setConfirmed(false);
@@ -87,6 +89,8 @@ export function OrderRequestActions({
     };
     await run(async (signal) => {
       const r = await api.decide(command, signal);
+      if (r.kind === "updated" && r.order_id !== orderId)
+        throw new Error("ORDER_RESULT_MISMATCH");
       if (signal.aborted) return;
       setContext(null);
       const labels = {
