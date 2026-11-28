@@ -819,7 +819,7 @@ export function GeneralMessagingPanel({
             </p>
           )}
           <MessageSendForm
-            key={selected}
+            key={`${accountId}:${selected}`}
             accountId={accountId}
             conversationId={selected}
             clinicId={
