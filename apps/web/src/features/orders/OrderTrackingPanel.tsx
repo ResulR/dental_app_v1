@@ -424,6 +424,7 @@ export function OrderTrackingPanel({
         permissions.includes("delivery.mark_delivered") &&
         import.meta.env.VITE_DENTAL_LAB_DELIVERY_BATCH_ENABLED === "true" && (
           <ReadyDeliveryBatch
+            accountId={accountId}
             key={page.items.map((row) => row.id).join(":")}
             rows={page.items}
             onFinished={(text) => {

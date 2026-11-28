@@ -19,7 +19,8 @@ export type VaultRecordId =
   | "clinic-order-form"
   | "clinic-order-submission"
   | "clinic-retouch-submission"
-  | "laboratory-clinic-order";
+  | "laboratory-clinic-order"
+  | "laboratory-delivery-batch";
 type StoredDraft = {
   accountId: string;
   draftId: string;
@@ -72,6 +73,7 @@ export async function purgeSuspendedAccount(accountId: string): Promise<void> {
     drafts.delete([accountId, "clinic-order-submission"]);
     drafts.delete([accountId, "clinic-retouch-submission"]);
     drafts.delete([accountId, "laboratory-clinic-order"]);
+    drafts.delete([accountId, "laboratory-delivery-batch"]);
     tx.objectStore("vaults").delete(accountId);
     await done;
   } finally {
